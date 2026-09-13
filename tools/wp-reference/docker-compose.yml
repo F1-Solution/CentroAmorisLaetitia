@@ -1,0 +1,58 @@
+# Istanza WordPress di RIFERIMENTO — solo per la parità visiva (D2b, opzione A).
+#
+# NON è parte del prodotto: il runtime finale non usa WordPress, PHP o MySQL (DR-002).
+# Contiene dati reali: resta locale, non si espone in rete, non si committa,
+# si distrugge a fine Fase 1E.
+#
+# Avvio:   docker compose -f tools/wp-reference/docker-compose.yml up -d
+# Stop:    docker compose -f tools/wp-reference/docker-compose.yml down
+# Purge:   docker compose -f tools/wp-reference/docker-compose.yml down -v
+
+name: wpref
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${WPREF_DB_ROOT_PASSWORD:?definire in .env}
+      MARIADB_DATABASE: ${WPREF_DB_NAME:-wpref}
+      MARIADB_USER: ${WPREF_DB_USER:-wpref}
+      MARIADB_PASSWORD: ${WPREF_DB_PASSWORD:?definire in .env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-name-resolve
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      # Solo loopback: non raggiungibile dalla rete locale.
+      - "127.0.0.1:${WPREF_DB_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  wp:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WPREF_DB_HOST: db
+      WPREF_DB_NAME: ${WPREF_DB_NAME:-wpref}
+      WPREF_DB_USER: ${WPREF_DB_USER:-wpref}
+      WPREF_DB_PASSWORD: ${WPREF_DB_PASSWORD:?definire in .env}
+      WPREF_SITE_URL: ${WPREF_SITE_URL:-http://localhost:8080}
+    volumes:
+      # Copia di lavoro dei file WordPress, mai la sorgente in source-private/.
+      - ../../.reference/html:/var/www/html
+      - ./wp-config.reference.php:/var/www/html/wp-config.php:ro
+    ports:
+      - "127.0.0.1:${WPREF_HTTP_PORT:-8080}:80"
+
+volumes:
+  dbdata:
