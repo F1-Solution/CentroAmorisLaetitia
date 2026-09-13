@@ -1,0 +1,178 @@
+# Rischi di migrazione — Fase 1A, wave 1A-W5
+
+Aggiornato il 2026-09-13 sui dati reali della sorgente. Sostituisce le valutazioni
+di Fase 0, che erano basate sui documenti storici.
+
+Scala: probabilità e impatto in bassa / media / alta.
+
+---
+
+## 1. Variazioni rispetto alla valutazione di Fase 0
+
+| # | Rischio di Fase 0 | Stato oggi |
+|---|---|---|
+| R-01 | Markup Divi non semantico, fedeltà difficile | **ridotto** da alto a medio |
+| R-02 | Media post-2021 assenti | **chiuso** |
+| R-03 | Nessun riferimento per gli screenshot | **chiuso** |
+| R-04 | Dati personali nel dump | **ridimensionato ma aperto**, e ora accettato per decisione |
+| R-05 | Conteggi errati nei documenti storici | **confermato**, 11 correzioni |
+| R-06 | Tensione fedeltà visiva ↔ editabilità CMS | **aperto**, resta il rischio principale |
+| R-07 | Interruzioni con team di una persona | aperto, mitigato dal protocollo |
+| R-08 | Backup annidati in `uploads/` | **chiuso** |
+
+---
+
+## 2. Rischi attivi
+
+### R-06 — Fedeltà visiva contro editabilità del CMS
+**Probabilità alta · Impatto alto · È il rischio principale della Fase 1**
+
+L'HTML fedele al sito attuale è quasi ingestibile da un redattore; i blocchi React
+sono editabili ma possono divergere dal pixel. Le due condizioni del gate — parità
+provata (punto 6) e CMS realmente usabile (punto 7) — tirano in direzioni opposte.
+
+*Mitigazione:* strategia di conversione progressiva definita in 1B-W5 — HTML
+sanitizzato dove serve la fedeltà, blocchi strutturati dove serve l'editabilità,
+scelta dichiarata **per tipo di contenuto** e non improvvisata per pagina. I 5
+shortcode strutturali coprono il 97% delle occorrenze e si mappano bene su blocchi.
+La Fase 1G collauda l'editabilità reale, non presunta.
+
+*Rientro:* se su una pagina le due cose non convivono, la decisione è dell'utente,
+non dell'agente, e va registrata come difformità approvata.
+
+### R-01 — Rendering Divi
+**Probabilità media · Impatto medio** *(era alta/alto)*
+
+Solo 10 shortcode distinti; 60 contenuti su 107 non usano affatto il page builder.
+Resta la coda difficile: `et_pb_video` (7), `et_pb_map` e `et_pb_map_pin` (2+2),
+`et_pb_contact_form` e `et_pb_contact_field` (1+4).
+
+Divi genera inoltre CSS dinamico per pagina in `wp-content/et-cache/`: due
+installazioni possono produrre CSS diverso a parità di contenuto.
+
+*Mitigazione:* affrontare per prime le 29 pagine e i 18 articoli con Divi; congelare
+l'istanza di riferimento con la sua `et-cache` così com'è, senza rigenerarla.
+
+### R-04 — Dati personali importati senza bonifica
+**Probabilità certa · Impatto alto**
+
+Per decisione esplicita dell'utente (DR-025, opzione C) si importa tutto: **425
+compilazioni di form** con 3.710 valori di campo, 187 log di invio email con
+destinatari, 1 account amministratore.
+
+Sono dati di persone che hanno richiesto consulenze familiari o si sono iscritte a
+corsi: rientrano nella categoria che `prompt_iniziale.md` equipara alla privacy
+medica (RN-02). Finiranno in un database che, in Fase 1, non ha ancora ruoli, audit
+log, cifratura a riposo né policy di conservazione.
+
+*Mitigazione applicabile subito, senza modificare i dati:* il database di sviluppo
+resta locale e non esposto; nessun dato reale entra in Git, screenshot, log,
+documentazione o fixture; nessun ambiente condiviso riceve questi dati prima che
+esistano i controlli.
+
+*Rientro:* prima del passaggio in produzione (Fase 1F) servono, e vanno verificati
+da un professionista: base giuridica del trattamento, informativa, tempi di
+conservazione, procedura di cancellazione, cifratura a riposo, audit log.
+**Non è possibile dichiarare qui alcuna conformità GDPR.**
+
+### R-09 — Redirect nativi delle pagine allegato *(nuovo)*
+**Probabilità alta · Impatto medio**
+
+169 URL di pagina allegato rispondono oggi **301** verso il file. È comportamento
+nativo di WordPress, quindi facile da non replicare per distrazione. Se il nuovo
+sito rispondesse 200 o 404 su quegli URL, 169 indirizzi indicizzati cambierebbero
+comportamento.
+
+*Mitigazione:* i 301 sono già misurati e registrati in `url-matrix.csv`, colonna
+`destinazione_redirect`. Vanno importati come regole di redirect, non riprodotti a
+mano. Lo stesso per i 4 `wpdmpro` verso `/download/`.
+
+### R-10 — Metadati SEO praticamente assenti *(nuovo)*
+**Probabilità certa · Impatto medio**
+
+Su 282 record: 2 title personalizzati, 0 description, 0 og_image. Copiare i record
+darebbe un sito **senza** description, mentre oggi le description esistono, generate
+dai template di AIOSEO.
+
+*Mitigazione:* in Fase 1B estrarre i template da `wp_options.aioseo_options` e
+riprodurre le regole di generazione, non i record. Verificare in Fase 1E
+confrontando i `<title>` e le description **renderizzati**, non quelli a database.
+
+### R-11 — Funzione dei form in Fase 1 non decisa *(nuovo)*
+**Probabilità alta · Impatto medio**
+
+25 form WPForms compaiono nelle pagine pubbliche. Il form builder è funzione della
+fase gestionale, ma le pagine che li contengono devono superare la parità **ora**.
+Un form visivamente identico che non recapita nulla è peggio di un form assente:
+l'utente finale non se ne accorge e la richiesta va persa.
+
+*Mitigazione:* decidere in Fase 1B fra tre strade — form resi ma disabilitati con
+messaggio esplicito; form minimale che recapita via email; pagina che rimanda a un
+contatto. È una decisione dell'utente, non tecnica.
+
+### R-12 — Voci di menu condizionate al ruolo *(nuovo)*
+**Probabilità bassa · Impatto medio**
+
+`nav-menu-roles` è attivo e il menu ha 64 voci. Se qualcuna è nascosta agli utenti
+anonimi, il menu confrontato da autenticati e da anonimi è diverso, e la parità
+misurata su uno dei due casi è falsa.
+
+*Mitigazione:* rilevare in Fase 1B quali voci hanno restrizioni; eseguire i
+confronti visivi **da utente anonimo**, che è la condizione del sito pubblico.
+
+### R-13 — OptinMonster non verificato *(nuovo)*
+**Probabilità bassa · Impatto medio**
+
+Plugin attivo, nessun popup rilevato nelle pagine campione. Se esistesse su altre
+pagine o dopo un ritardo, sarebbe un elemento visibile non censito.
+
+*Mitigazione:* verifica esplicita in Fase 1B su tutte le pagine ad alta priorità,
+con attesa sufficiente a far comparire eventuali popup differiti.
+
+### R-14 — Chiave API Google Maps esposta *(nuovo)*
+**Probabilità certa · Impatto medio**
+
+La chiave è in chiaro nell'HTML pubblico. È una chiave client-side, quindi
+l'esposizione è per progetto, ma senza restrizioni per referrer è utilizzabile da
+terzi a spese del Centro.
+
+*Mitigazione:* limitarla per referrer e ruotarla prima del passaggio al nuovo
+dominio. È un'azione sull'account Google del Centro: spetta all'utente.
+
+### R-07 — Interruzioni e team di una persona
+**Probabilità alta · Impatto medio**
+
+*Mitigazione:* protocollo `PROGRESS.md` dopo ogni wave; commit per wave; alla
+ripresa si riporta ultima wave completata e wave rimanenti prima di proseguire.
+
+### R-15 — Deriva della sorgente durante lo sviluppo *(nuovo)*
+**Probabilità media · Impatto medio**
+
+Il sito resta in produzione per tutta la durata della Fase 1. Se qualcuno pubblica o
+modifica contenuti, l'inventario e gli screenshot di riferimento invecchiano.
+
+*Mitigazione:* l'istanza di riferimento è congelata al 2026-09-13 ed è quella contro
+cui si misura la parità. Prima del passaggio in produzione (1F) va eseguito un
+**delta** fra la sorgente congelata e quella viva, e i contenuti nuovi vanno
+importati.
+
+*Rientro:* se le modifiche fossero molte, si rifà l'import, non la ricostruzione: lo
+schema e i componenti non cambiano.
+
+---
+
+## 3. Riepilogo
+
+| # | Rischio | Prob. | Impatto | Chiuso in |
+|---|---|---|---|---|
+| R-06 | Fedeltà visiva ↔ editabilità | alta | alto | 1B-W5, collaudo 1G |
+| R-04 | Dati personali senza bonifica | certa | alto | prima della 1F, con verifica legale |
+| R-01 | Rendering Divi | media | medio | 1E |
+| R-09 | Redirect pagine allegato | alta | medio | 1D |
+| R-10 | Metadati SEO assenti | certa | medio | 1B, verifica in 1E |
+| R-11 | Funzione dei form in Fase 1 | alta | medio | 1B, decisione utente |
+| R-12 | Menu condizionato al ruolo | bassa | medio | 1B |
+| R-13 | OptinMonster non verificato | bassa | medio | 1B |
+| R-14 | Chiave Google Maps esposta | certa | medio | azione dell'utente |
+| R-15 | Deriva della sorgente | media | medio | delta prima della 1F |
+| R-07 | Interruzioni | alta | medio | continuo |

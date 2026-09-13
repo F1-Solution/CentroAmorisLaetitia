@@ -80,13 +80,36 @@ Solo scelte reversibili e di forma.
 
 ---
 
-## 5. Decisioni aperte
+## 5. Round 2 di `grill-me` — risposte del 2026-09-13
 
-Elencate in `docs/discovery/open-questions.md`. Nessuna viene registrata qui prima
-di una risposta esplicita dell'utente.
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-025 | 2026-09-13 | Istanza di riferimento (D2b) | **Opzione A** — costruita in Docker dal backup e dal dump, poi congelata | Stack PHP/MySQL dell'utente; solo sito online | «Opzione A ottima» | Proprietario | Fase 1A, 1E | sì — l'istanza si distrugge a fine 1E | D2b, HO-001 |
+| DR-026 | 2026-09-13 | Ambito dell'importazione (D3) | **Opzione C — importare tutto, senza bonifica dei dati** | Import minimale; minimale più utenze redazionali | «Ho bisogno che quei dati siano presenti anche se le verifiche di privacy le aggiungeremo dopo» | Proprietario | Schema PostgreSQL, importer, privacy | sì, ma la cancellazione successiva va progettata | D3, R-04, MI-06 |
+| DR-027 | 2026-09-13 | Politica di commit | Commit **e push** alla fine di ogni fase o wave, anche in assenza di test; lavoro direttamente su `main` | Feature branch e pull request | «Sono l'unico a lavorare sul progetto» | Proprietario | Git | sì | — |
+| DR-028 | 2026-09-13 | Perimetro delle proposte UI/UX (D10) | **Opzione B** — proposte sull'intera area amministrativa futura, con il CMS come primo modulo | Solo perimetro CMS | — | Proprietario | Fase 1B | sì | D10 |
+| DR-029 | 2026-09-13 | Riconferma delle decisioni storiche (D11) | **Opzione A** — poche per volta, quando la fase che le riguarda sta per partire | Documento unico da approvare in blocco | — | Proprietario | Tutte le fasi | sì | D11, DR-022 |
+| DR-030 | 2026-09-13 | Perimetro della PWA (D12) | **Opzione A** — la PWA riguarda **solo l'area di backend**, dopo il gate. Il sito pubblico resta un sito, senza manifest né service worker | PWA già in Fase 1 | «L'area di backend è l'unica che va sulla PWA» | Proprietario | Fase 1E e fasi post-gate | sì | D12, DR-017 |
 
-Aperte al 2026-09-13: **D2b** (istanza di riferimento), **D3** (ambito
-dell'importazione — risposta ricevuta ma ambigua, da chiarire), **D5** (ADR API,
-ORM, proxy), **D6** (hosting e provider), **D7** (lingua dei nomi DB), **D8**
-(WhatsApp), **D10** (ambito delle proposte UI/UX), **D11** (riconferma delle
-decisioni storiche).
+### Nota sulla portata di DR-026
+
+La decisione è registrata come espressa dall'utente: si importa **tutto**, senza
+bonifica. Restano vincolanti, perché riguardano un ambito diverso e non sono state
+revocate:
+
+- **DR-010** continua ad applicarsi a test, seed, fixture, screenshot, log,
+  documentazione e Git: lì i dati reali non entrano comunque.
+- La valutazione privacy delle 425 compilazioni di form è **rimandata**, non
+  cancellata: è tracciata come rischio R-04 e come input mancante MI-06, e richiede
+  **validazione legale** prima della messa in produzione.
+
+---
+
+## 6. Decisioni ancora aperte
+
+Nessuna viene registrata qui prima di una risposta esplicita dell'utente.
+
+Aperte al 2026-09-13: **D5** (ADR su framework API, ORM, reverse proxy), **D6**
+(hosting, provider e costi), **D7** (lingua dei nomi di tabelle e colonne), **D8**
+(WhatsApp), più gli input mancanti **MI-01**, **MI-02**, **MI-03** e **MI-10** che
+diventeranno decisioni nel Round 3, all'apertura della Fase 1B.
