@@ -449,3 +449,10 @@ test-results
 .env*
 
 /source-private
+# --- Progetto Centro Amoris Laetitia ---
+# Copia di lavoro WordPress per l istanza di riferimento (dati reali, mai committare)
+/.reference/
+
+# I file di esempio degli ambienti DEVONO essere versionati
+!.env.example
+!**/.env.example

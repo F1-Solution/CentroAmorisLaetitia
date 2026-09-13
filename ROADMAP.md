@@ -1,0 +1,112 @@
+# ROADMAP — Centro per la Famiglia Amoris Laetitia
+
+Derivata da `docs/discovery/phase-plan.md`. Una fase non parte senza approvazione
+esplicita della precedente. Le decisioni approvate sono in
+`docs/decisions/decision-register.md`.
+
+## Prodotto finale
+
+Piattaforma con sito pubblico pixel-perfect rispetto all'attuale sito WordPress,
+frontend React + Next.js, backend Node.js + TypeScript, PostgreSQL, CMS interno,
+futura area gestionale del consultorio, deployment containerizzato.
+
+Il runtime finale **non dipende** da WordPress, PHP, MySQL o MariaDB.
+
+---
+
+## Gate assoluto di Fase 1
+
+Nessuna fase gestionale può essere **pianificata**, avviata o rilasciata finché il
+gate non è superato per intero. Le 15 condizioni sono elencate in
+`docs/discovery/phase-plan.md` §3 e verificate dalla skill `deployment-gate`.
+
+**Stato: NON SUPERATO.**
+
+---
+
+## Milestone
+
+| # | Milestone | Fasi | Stato |
+|---|---|---|---|
+| M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso |
+| M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
+
+---
+
+## Fasi
+
+### Fase 0 — Discovery (sola lettura) — **APPROVATA**
+
+Output in `docs/discovery/`: indice documenti, requisiti consolidati, registro
+decisioni, matrice legacy→target, decisioni aperte, piano di fase.
+
+### Fase 1A — Audit WordPress (sola lettura)
+
+Sorgente autorevole: `source-private/wordpress-2026-09-13/` (installazione completa)
+e `source-private/BackupDB-2026-09-13/` (dump, 53 tabelle). Il materiale di marzo
+in `source-private/wordpress/` è **superato** e vale solo come riscontro storico.
+
+| Wave | Attività | Output |
+|---|---|---|
+| `1A-W1` | Inventario tecnico: versioni, tema, plugin, page builder, CPT, tassonomie, shortcode, form, SEO, redirect, cache, font, CSS/JS, dipendenze esterne | `docs/migration/wp-source-inventory.md` |
+| `1A-W2` | Inventario contenuti da dump: pagine, articoli, CPT, allegati, termini, menu, con stato, gerarchia e date | `docs/migration/content-inventory.csv` |
+| `1A-W3` | Matrice URL completa, inclusi URL numerici, alias, allegati, feed, tassonomie | `docs/migration/url-matrix.csv` |
+| `1A-W4` | Mappa plugin → funzionalità pubblica osservabile, con destinazione dichiarata | `docs/migration/plugin-and-feature-map.md` |
+| `1A-W5` | Rischi di migrazione e input mancanti | `docs/migration/migration-risks.md`, `docs/migration/missing-inputs.md` |
+
+### Fase 1B — Architettura della migrazione e piano eseguibile
+
+ADR (API framework, ORM, storage, admin, auth, editor, modello a blocchi, hosting),
+schema PostgreSQL, mapping campo per campo, specifica importer, strategia Divi e
+shortcode, piano di visual regression e criteri di accettazione.
+
+**Include** le 4 proposte di UI e le 4 proposte di UX per l'area amministrativa
+(vedi `docs/design/` quando prodotto). Il backend **non deve assomigliare a
+WordPress**.
+
+### Fase 1C — Fondazione locale
+
+Monorepo pnpm + Turborepo, Docker Compose con PostgreSQL e MinIO, `.env.example`,
+migrazioni iniziali, health check, CI minima, fondazione dei test.
+
+### Fase 1D — Importazione e CMS minimo
+
+Importer idempotente con dry-run, import media, ricostruzione di menu, routing,
+contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
+
+### Fase 1E — Ricostruzione React e parità visiva
+
+Design token dal sito originale, tutte le route e i template, responsive,
+screenshot e visual diff Playwright, chiusura delle difformità, report QA in
+`docs/qa/visual-parity-report.md`.
+
+### Fase 1G — Collaudo redazionale del CMS
+
+Verifica che contenuti, articoli, media, menu, SEO, redirect e impostazioni siano
+**realmente** modificabili dall'interfaccia. Richiesta dalla condizione 7 del gate.
+Si svolge in parallelo alla 1E.
+
+### Fase 1F — Staging e produzione
+
+Staging isolato, security review, prova di backup e restore, smoke test,
+performance, piano di rollback, proposta provider e costi, deploy solo dopo
+approvazione puntuale, verifica post-deploy, report di rilascio in `docs/deploy/`.
+
+---
+
+## Fasi successive — bloccate dal gate
+
+Non pianificabili prima dell'approvazione della Fase 1F: utenti, soci e ruoli ·
+corsi, iscrizioni, quote, presenze, supervisione · consultorio e appuntamenti ·
+documenti · contabilità, prima nota, movimenti bancari, rendiconti RUNTS ·
+form builder · comunicazioni email, WhatsApp, newsletter, social · analytics e SEO
+evoluta · **PWA installabile** (sostituisce l'app nativa) · hardening, disaster
+recovery, manuali e formazione.
+
+---
+
+## Avanzamento
+
+Stato per wave in `PROGRESS.md`. Decisioni aperte in
+`docs/discovery/open-questions.md`.
