@@ -81,10 +81,25 @@ Termine: prima della Fase 1D.
 Il backend **non deve assomigliare a WordPress**: vincolo rispettato da tutte e otto
 le proposte di design.
 
-### Fase 1C — Fondazione locale — **sbloccata** da DR-038
+### Fase 1C — Fondazione locale — **COMPLETATA, in attesa di approvazione**
 
-Monorepo pnpm + Turborepo, Docker Compose con PostgreSQL e MinIO, `.env.example`,
-migrazioni iniziali, health check, CI minima, fondazione dei test.
+Otto wave eseguite il 2026-09-14, audit superato
+(`.planning/phases/1C/AUDIT.md`): 11 criteri di uscita su 11, 11 difetti trovati e
+corretti, CI verde alla prima corsa.
+
+| Wave | Output |
+|---|---|
+| `1C-W0` | `.planning/phases/1C/CONTEXT.md`, `PLAN.md` |
+| `1C-W1` | monorepo pnpm + Turborepo, TypeScript strict, ESLint, Prettier, `.gitignore` riscritto |
+| `1C-W2` | `infra/compose/` — PostgreSQL 17 con collazione italiana, storage a oggetti con i due bucket, `Caddyfile`, `.env.example` |
+| `1C-W3` | `packages/db` — schema Drizzle delle 32 tabelle, migrazione iniziale, `pnpm db:verify` |
+| `1C-W4` | `apps/api` — Fastify, configurazione validata all'avvio, stato del servizio, OpenAPI |
+| `1C-W5` | `apps/web` e `apps/admin` — due applicazioni distinte, con le regole di ADR-008 §3.3 verificate |
+| `1C-W6` | fondazione dei test: 24 test su tre livelli |
+| `1C-W7` | `.github/workflows/ci.yml` |
+
+Il gate di Fase 1 **non avanza**: questa fase costruisce l'impalcatura, non il
+prodotto.
 
 ### Fase 1D — Importazione e CMS minimo
 
