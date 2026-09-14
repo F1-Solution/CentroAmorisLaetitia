@@ -186,3 +186,26 @@ per non mescolare cose che si scelgono con criteri diversi.
 | **MI-06** | Verifica privacy e legale sulle 425 compilazioni | prima della produzione. **Richiede un professionista** |
 | **HO-003** | Rimozione della pagina di diagnostica dal sito in produzione | appena puoi |
 | **HO-004** | Le cinque domande sul design dell'area amministrativa | prima della Fase 1D |
+
+---
+
+## Esiti — risposte ricevute il 2026-09-14
+
+| id | Risposta dell'utente | Registrata come |
+|---|---|---|
+| **D15** | Opzione A — **ADR approvate in blocco** | DR-038 |
+| **D14** | Opzione B — raccolta più rimando al pagamento PayPal | DR-039 |
+| **D13** | Opzione C — metadati corretti **e** titolo principale restituito alle 29 pagine | DR-040 |
+| **D16** | Opzione A — foglio di stile per la stampa **fuori perimetro** | DR-041 |
+| **HO-003** | Protezione con password anziché cancellazione; file consegnati | DR-042, HO-005 |
+| **HO-004** | **Non ancora risposta.** L'utente ha chiesto uno strumento di scelta visiva: prodotto in `docs/design/chooser/` | — |
+| Push di Fase 1B | Autorizzata, e autorizzata in via permanente al commit finale di ogni fase | DR-043 |
+
+Le tre raccomandazioni disattese vanno dette: su **D15** raccomandavo l'approvazione
+una per una e l'utente ha scelto il blocco; le precisazioni su ADR-007 e ADR-009
+restano scritte nelle ADR e valgono comunque. Su **D13** e **D16** la scelta coincide
+con la raccomandazione. Su **D14** pure.
+
+Restano aperte **D6** (fornitore, termine Fase 1F), **D8** (WhatsApp, dopo il gate),
+**MI-06** (verifica legale, richiede un professionista) e **HO-004** (cinque domande
+di design, termine prima della Fase 1D).

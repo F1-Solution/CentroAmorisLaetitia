@@ -8,6 +8,11 @@ dell'area amministrativa futura, con il CMS come primo modulo).
 |---|---|---|
 | [`ui-proposals.md`](ui-proposals.md) | 4 proposte di UI: palette, tipografia, griglia, componenti, mockup, accessibilità, costo | **in attesa di scelta** |
 | [`ux-proposals.md`](ux-proposals.md) | 4 proposte di UX: architettura, navigazione, ruoli, riservatezza, flussi, punti deboli | **in attesa di scelta** |
+| [`chooser/index.html`](chooser/index.html) | Le otto proposte rese a schermo, con palette e caratteri reali, interruttore chiaro/scuro e schermo/telefono, matrice di compatibilità e le cinque domande | strumento di scelta |
+
+Il modo più rapido per scegliere è aprire `chooser/index.html` con un doppio clic:
+è una pagina autonoma, non richiede installazioni e non manda nulla da nessuna parte
+(carica solo i caratteri da Google Fonts, per mostrarli davvero).
 
 La scelta si fa rispondendo alle cinque domande dell'handoff
 [`../handoff/HO-004-scelta-ui-ux-area-amministrativa.md`](../handoff/HO-004-scelta-ui-ux-area-amministrativa.md).

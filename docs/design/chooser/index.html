@@ -1,0 +1,1389 @@
+<title>Che aspetto avrà l'area amministrativa?</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Libre+Franklin:wght@600;700&family=Inter:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ===================================================================
+   Chrome della pagina. Volutamente neutro e senza personalità forte:
+   il colore lo devono portare le otto proposte, non il contenitore.
+   =================================================================== */
+:root{
+  --bg:#EDECE8; --surface:#FFFFFF; --surface-2:#F6F5F2;
+  --ink:#1C1B19; --ink-2:#5F5C55; --ink-3:#8A867E;
+  --rule:#D9D7D0; --rule-strong:#B3AFA6;
+  --accent:#5C3B54; --accent-ink:#FFFFFF; --accent-soft:#F3EAF0;
+  --ok:#2C6244; --warn:#8A5200; --bad:#993028;
+  --sans:"IBM Plex Sans",system-ui,"Segoe UI",sans-serif;
+  --display:"Libre Franklin",system-ui,"Segoe UI",sans-serif;
+  --maxw:1180px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#15151A; --surface:#1E1E24; --surface-2:#26262D;
+    --ink:#EAE8E3; --ink-2:#A6A29A; --ink-3:#7B776F;
+    --rule:#32323A; --rule-strong:#4C4C56;
+    --accent:#DAA8C9; --accent-ink:#1E1E24; --accent-soft:#2D2430;
+    --ok:#7FC79B; --warn:#E0AB53; --bad:#F09189;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15151A; --surface:#1E1E24; --surface-2:#26262D;
+  --ink:#EAE8E3; --ink-2:#A6A29A; --ink-3:#7B776F;
+  --rule:#32323A; --rule-strong:#4C4C56;
+  --accent:#DAA8C9; --accent-ink:#1E1E24; --accent-soft:#2D2430;
+  --ok:#7FC79B; --warn:#E0AB53; --bad:#F09189;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  padding:0 20px 200px; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw); margin:0 auto}
+h1,h2,h3,h4{font-family:var(--display); text-wrap:balance; margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
+
+/* ---- intestazione ---- */
+.top{padding-block:48px 28px; display:flex; flex-direction:column; gap:18px}
+.eyebrow{
+  font-size:11.5px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-3);
+}
+h1{font-size:clamp(30px,5vw,46px); line-height:1.1; font-weight:700; letter-spacing:-.02em}
+.lede{font-size:17px; color:var(--ink-2); max-width:62ch}
+.facts{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--rule); border-radius:3px; background:var(--surface); overflow:hidden}
+.fact{flex:1 1 170px; padding:14px 18px; border-right:1px solid var(--rule)}
+.fact:last-child{border-right:0}
+.fact dt{font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.fact dd{margin:3px 0 0; font-size:15px; font-weight:500}
+
+/* ---- barra strumenti ---- */
+.toolbar{
+  position:sticky; top:0; z-index:40; background:var(--bg);
+  border-bottom:1px solid var(--rule);
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px;
+  padding-block:12px; margin-bottom:8px;
+}
+.toolbar .tlabel{font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
+.seg{display:inline-flex; border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; background:var(--surface)}
+.seg button{
+  font:inherit; font-size:13.5px; font-weight:500; padding:6px 13px; border:0; cursor:pointer;
+  background:transparent; color:var(--ink-2);
+}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink)}
+.toolbar .spacer{flex:1}
+.jump{font-size:13.5px; color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--rule-strong)}
+
+/* ---- sezioni ---- */
+section.part{padding-block:44px 8px}
+.part-head{border-top:2px solid var(--ink); padding-top:14px; margin-bottom:26px}
+.part-head h2{font-size:26px; font-weight:700; letter-spacing:-.01em}
+.part-head p{margin:6px 0 0; color:var(--ink-2); max-width:64ch}
+
+/* ---- lastra di una proposta ---- */
+.slab{background:var(--surface); border:1px solid var(--rule); border-radius:4px; margin-bottom:26px; overflow:hidden}
+.slab-head{display:flex; gap:18px; align-items:flex-start; padding:20px 22px 16px; border-bottom:1px solid var(--rule)}
+.num{
+  flex:none; width:38px; height:38px; display:grid; place-items:center;
+  border:1.5px solid var(--ink); border-radius:50%;
+  font-family:var(--display); font-weight:700; font-size:16px; font-variant-numeric:tabular-nums;
+}
+.slab-head h3{font-size:21px; font-weight:700}
+.slab-head .id{margin:4px 0 0; color:var(--ink-2); max-width:70ch; font-size:15px}
+.slab-body{padding:22px}
+.cols{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:26px; align-items:start}
+@media (max-width:900px){ .cols{grid-template-columns:minmax(0,1fr)} }
+.side h4,.detail h4{
+  font-family:var(--sans); font-size:11.5px; font-weight:600; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink-3); margin:0 0 8px;
+}
+.side section+section{margin-top:20px}
+
+/* palette */
+.sw{display:grid; grid-template-columns:repeat(auto-fill,minmax(66px,1fr)); gap:6px}
+.sw div{border:1px solid var(--rule); border-radius:2px; padding:4px 5px; font-size:10.5px; line-height:1.35}
+.sw i{display:block; height:26px; border-radius:1px; margin-bottom:5px; border:1px solid rgba(0,0,0,.14)}
+.sw b{display:block; font-weight:600; color:var(--ink)}
+.sw code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:9.5px; color:var(--ink-3)}
+
+/* specimen tipografico */
+.spec{border:1px solid var(--rule); border-radius:3px; padding:12px 14px; background:var(--surface-2)}
+.spec .fam{font-size:12px; color:var(--ink-3); margin-bottom:6px}
+.spec .big{font-size:26px; line-height:1.15; margin-bottom:2px}
+.spec .small{font-size:13px; color:var(--ink-2)}
+
+/* liste pro/contro */
+ul.pts{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+ul.pts li{font-size:14px; padding-left:20px; position:relative; color:var(--ink-2)}
+ul.pts li::before{position:absolute; left:0; top:0; font-weight:700}
+ul.pts li.p::before{content:"+"; color:var(--ok)}
+ul.pts li.c::before{content:"−"; color:var(--bad)}
+ul.pts li strong{color:var(--ink); font-weight:600}
+
+/* cornice del mockup */
+.frame{border:1px solid var(--rule-strong); border-radius:4px; background:var(--surface-2); overflow:hidden}
+.frame-bar{
+  display:flex; align-items:center; gap:8px; padding:6px 10px;
+  border-bottom:1px solid var(--rule); background:var(--surface);
+  font-size:11.5px; color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; font-weight:600;
+}
+.dots{display:flex; gap:4px}
+.dots i{width:8px; height:8px; border-radius:50%; background:var(--rule-strong)}
+.scroller{overflow-x:auto}
+.scroller>.mk{min-width:1000px}
+body[data-w="phone"] .scroller>.mk{min-width:0; width:382px; margin:16px auto; border:1px solid var(--rule-strong); border-radius:14px; overflow:hidden}
+body[data-w="phone"] .scroller{overflow-x:hidden; background:var(--surface-2)}
+.only-wide{display:block} .only-phone{display:none}
+body[data-w="phone"] .only-wide{display:none} body[data-w="phone"] .only-phone{display:block}
+
+/* ===================================================================
+   MOCKUP — token comuni, valorizzati per proposta.
+   I valori HEX vengono da docs/design/ui-proposals.md, §2 di ciascuna.
+   Nomi, titoli, date e percorsi sono inventati (audit 1B, verifica 15).
+   =================================================================== */
+.mk{
+  font-family:var(--m-font); color:var(--m-text); background:var(--m-bg);
+  font-size:var(--m-fs,14px); line-height:1.45;
+}
+.mk *{box-sizing:border-box}
+.mk .surf{background:var(--m-surface)}
+.mk .muted{color:var(--m-text2)}
+.mk .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.mk button,.mk .btn{font:inherit; cursor:default}
+
+/* Proposta 1 — Scrivania */
+.mk[data-p="1"]{
+  --m-bg:#F4F6F9; --m-surface:#FFFFFF; --m-text:#17212E; --m-text2:#4E5A6B;
+  --m-border:#D7DDE5; --m-border-strong:#7E8A99; --m-accent:#14538F; --m-on-accent:#FFFFFF;
+  --m-success:#15693F; --m-warning:#8A5200; --m-danger:#A3201A; --m-restricted:#6D28A8;
+  --m-restricted-bg:#F2E9FB; --m-restricted-ink:#4B1C75;
+  --m-font:"Inter",system-ui,"Segoe UI",sans-serif; --m-fs:14px; --m-radius:4px;
+}
+[data-mk-theme="dark"] .mk[data-p="1"]{
+  --m-bg:#0F151C; --m-surface:#19212B; --m-text:#E7ECF2; --m-text2:#A2AFBF;
+  --m-border:#2E3945; --m-border-strong:#6C7A8A; --m-accent:#7FB6F0; --m-on-accent:#0F151C;
+  --m-success:#5FD39A; --m-warning:#E2A33A; --m-danger:#F08076; --m-restricted:#C39BF0;
+  --m-restricted-bg:#241A31; --m-restricted-ink:#E4D3F7;
+}
+/* Proposta 2 — Accoglienza */
+.mk[data-p="2"]{
+  --m-bg:#FAF6F1; --m-surface:#FFFFFF; --m-text:#2B2420; --m-text2:#5F5349;
+  --m-border:#E6DCCF; --m-border-strong:#93856F; --m-accent:#2F6154; --m-on-accent:#FFFFFF;
+  --m-accent2:#A8471A; --m-success:#2E6B41; --m-warning:#8A5A00; --m-danger:#A32015;
+  --m-restricted:#6B3E86; --m-restricted-bg:#F3ECF7; --m-restricted-ink:#4A2A5E;
+  --m-font:"Open Sans",system-ui,"Segoe UI",sans-serif; --m-fs:17px; --m-radius:8px;
+}
+[data-mk-theme="dark"] .mk[data-p="2"]{
+  --m-bg:#1A1613; --m-surface:#241F1A; --m-text:#F0E9E1; --m-text2:#BCAE9F;
+  --m-border:#3A322A; --m-border-strong:#8B7C6A; --m-accent:#7FC0AE; --m-on-accent:#1A1613;
+  --m-accent2:#E39A62; --m-success:#86CF9F; --m-warning:#E6B44E; --m-danger:#F58C7E;
+  --m-restricted:#C7A2DE; --m-restricted-bg:#2A2130; --m-restricted-ink:#E8DAF3;
+}
+/* Proposta 3 — Comando */
+.mk[data-p="3"]{
+  --m-bg:#FFFFFF; --m-surface:#F6F6F7; --m-text:#0A0A0B; --m-text2:#5C5C63;
+  --m-border:#E3E3E6; --m-border-strong:#8A8A90; --m-accent:#0B4FD4; --m-on-accent:#FFFFFF;
+  --m-success:#17643C; --m-warning:#7E5300; --m-danger:#B01B14; --m-restricted:#5B2FAF;
+  --m-restricted-bg:#EFEAFB; --m-restricted-ink:#3D1F78;
+  --m-font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --m-fs:14px; --m-radius:4px;
+}
+[data-mk-theme="dark"] .mk[data-p="3"]{
+  --m-bg:#0A0A0B; --m-surface:#151517; --m-text:#F5F5F6; --m-text2:#A4A4AC;
+  --m-border:#2A2A2F; --m-border-strong:#77777E; --m-accent:#8AB0FF; --m-on-accent:#0A0A0B;
+  --m-success:#5CCB92; --m-warning:#E0A83C; --m-danger:#FF8B80; --m-restricted:#B79BFF;
+  --m-restricted-bg:#1B1626; --m-restricted-ink:#DCCDFF;
+}
+/* Proposta 4 — Quaderno */
+.mk[data-p="4"]{
+  --m-bg:#FAF8F3; --m-surface:#FFFFFF; --m-text:#1E211F; --m-text2:#565F5B;
+  --m-border:#E2DCCD; --m-border-strong:#8C8577; --m-accent:#1D5B54; --m-on-accent:#FFFFFF;
+  --m-accent2:#7A5A10; --m-success:#2C6B45; --m-warning:#8A5200; --m-danger:#9E2622;
+  --m-restricted:#6A3B7A; --m-restricted-bg:#F4EDF6; --m-restricted-ink:#4A2857;
+  --m-font:"Source Sans 3",system-ui,"Segoe UI",sans-serif;
+  --m-font-doc:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --m-fs:15px; --m-radius:6px;
+}
+[data-mk-theme="dark"] .mk[data-p="4"]{
+  --m-bg:#15191A; --m-surface:#1D2224; --m-text:#ECEFEC; --m-text2:#A6B0AC;
+  --m-border:#313A3C; --m-border-strong:#7C8783; --m-accent:#6FBDB0; --m-on-accent:#15191A;
+  --m-accent2:#D9B05C; --m-success:#79CFA0; --m-warning:#E3AE4E; --m-danger:#F08C82;
+  --m-restricted:#C79FD6; --m-restricted-bg:#2A2130; --m-restricted-ink:#EBDBF2;
+}
+
+/* pezzi comuni dei mockup */
+.mk .topbar{display:flex; align-items:center; gap:12px; padding:0 14px; border-bottom:1px solid var(--m-border); background:var(--m-surface)}
+.mk .brand{font-weight:600}
+.mk .grow{flex:1}
+.mk .pill{
+  display:inline-flex; align-items:center; gap:6px; border:1px solid var(--m-border-strong);
+  border-radius:99px; padding:3px 10px; font-size:12px; font-weight:600; letter-spacing:.04em;
+}
+.mk .pill.strong{border-width:2px}
+.mk .avatar{width:26px; height:26px; border-radius:50%; background:var(--m-accent); color:var(--m-on-accent); display:grid; place-items:center; font-size:11px; font-weight:700}
+.mk .search{border:1px solid var(--m-border-strong); border-radius:var(--m-radius); padding:5px 10px; color:var(--m-text2); font-size:13px; min-width:200px}
+.mk .cta{background:var(--m-accent); color:var(--m-on-accent); border:0; border-radius:var(--m-radius); padding:8px 14px; font-weight:600; font-size:13px}
+.mk .ghost{background:transparent; color:var(--m-text); border:1px solid var(--m-border-strong); border-radius:var(--m-radius); padding:7px 13px; font-weight:600; font-size:13px}
+.mk .dot{width:8px; height:8px; border-radius:50%; display:inline-block}
+.mk .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid currentColor; border-radius:99px; padding:1px 9px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase}
+.mk .st-pub{color:var(--m-success)} .mk .st-draft{color:var(--m-warning)} .mk .st-res{color:var(--m-restricted)}
+
+/* P1 layout */
+.p1{display:grid; grid-template-columns:56px 216px minmax(0,1fr)}
+.p1 .rail{background:var(--m-surface); border-right:1px solid var(--m-border); padding:10px 0; display:flex; flex-direction:column; gap:4px; align-items:center}
+.p1 .rail span{width:34px; height:34px; border-radius:var(--m-radius); display:grid; place-items:center; font-size:12px; font-weight:700; color:var(--m-text2); border:1px solid transparent}
+.p1 .rail span.on{background:var(--m-accent); color:var(--m-on-accent)}
+.p1 .sect{background:var(--m-surface); border-right:1px solid var(--m-border); padding:12px 0}
+.p1 .sect h5{margin:14px 14px 6px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--m-text2); font-weight:600}
+.p1 .sect a{display:flex; justify-content:space-between; padding:7px 14px; text-decoration:none; color:var(--m-text); font-size:13.5px; border-left:3px solid transparent}
+.p1 .sect a.on{border-left-color:var(--m-accent); color:var(--m-accent); font-weight:600; background:color-mix(in srgb,var(--m-accent) 8%,transparent)}
+.p1 .work{padding:0}
+.p1 .wtop{display:flex; align-items:center; gap:10px; padding:14px 18px 10px}
+.p1 .wtop h4{font-size:22px; font-weight:600; margin:0}
+.p1 .filters{display:flex; gap:8px; padding:0 18px 12px; flex-wrap:wrap}
+.p1 .chip{border:1px solid var(--m-border-strong); border-radius:var(--m-radius); padding:5px 10px; font-size:12.5px; color:var(--m-text2)}
+.p1 table{width:100%; border-collapse:collapse; font-size:13.5px; font-variant-numeric:tabular-nums}
+.p1 th{text-align:left; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--m-text2); font-weight:600; padding:8px 18px; border-block:1px solid var(--m-border); background:var(--m-surface)}
+.p1 td{padding:0 18px; height:44px; border-bottom:1px solid var(--m-border)}
+.p1 tr.res td:first-child{box-shadow:inset 4px 0 0 var(--m-restricted)}
+.p1 .foot{display:flex; justify-content:space-between; padding:10px 18px; font-size:12.5px; color:var(--m-text2)}
+.p1 .save{display:flex; align-items:center; gap:14px; padding:9px 18px; border-top:1px solid var(--m-border); background:var(--m-surface); font-size:12.5px; color:var(--m-text2)}
+
+/* P2 layout */
+.p2 .nav{display:flex; gap:4px; padding:0 20px; border-bottom:1px solid var(--m-border); background:var(--m-surface)}
+.p2 .nav a{padding:13px 14px; text-decoration:none; color:var(--m-text2); font-size:15px; border-bottom:3px solid transparent}
+.p2 .nav a.on{color:var(--m-accent); font-weight:600; border-bottom-color:var(--m-accent)}
+.p2 .page{max-width:940px; margin:0 auto; padding:26px 24px 30px}
+.p2 .crumb{font-size:14px; color:var(--m-text2); margin-bottom:6px}
+.p2 h4{font-size:30px; font-weight:700; margin:0 0 4px; font-family:inherit}
+.p2 .sub{color:var(--m-text2); margin:0 0 20px}
+.p2 .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+.p2 .card{background:var(--m-surface); border:1px solid var(--m-border); border-radius:var(--m-radius); padding:18px 20px; box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.p2 .card.res{border:2px solid var(--m-restricted)}
+.p2 .card h5{margin:0 0 4px; font-size:20px; font-weight:600}
+.p2 .card p{margin:0 0 14px; color:var(--m-text2); font-size:15px}
+.p2 .card .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.p2 .resbar{background:var(--m-restricted-bg); color:var(--m-restricted-ink); font-size:13px; font-weight:600; letter-spacing:.08em; padding:6px 10px; border-radius:var(--m-radius); margin:-4px 0 12px}
+.p2 .steps{display:flex; gap:8px; align-items:center; margin-bottom:18px; flex-wrap:wrap; font-size:14px; color:var(--m-text2)}
+.p2 .steps b{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; border:2px solid var(--m-border-strong); font-size:13px}
+.p2 .steps .now b{background:var(--m-accent2); border-color:var(--m-accent2); color:#fff}
+.p2 .steps .now{color:var(--m-text); font-weight:600}
+
+/* P3 layout */
+.p3 .bar{display:flex; align-items:center; gap:10px; height:40px; padding:0 12px; border-bottom:1px solid var(--m-border); background:var(--m-surface); font-size:12.5px}
+.p3 .bar .crumb{color:var(--m-text2)}
+.p3 .bar .crumb b{color:var(--m-text)}
+.p3 .kbd{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px; border:1px solid var(--m-border-strong); border-radius:3px; padding:1px 5px; color:var(--m-text2)}
+.p3 table{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums}
+.p3 th{text-align:left; font-size:11px; font-weight:500; color:var(--m-text2); padding:5px 12px; background:var(--m-surface); border-bottom:1px solid var(--m-border)}
+.p3 td{padding:0 12px; height:28px; border-bottom:1px solid var(--m-border)}
+.p3 tr.sel td{background:var(--m-accent); color:var(--m-on-accent)}
+.p3 tr.sel td .muted,.p3 tr.sel td .mono{color:var(--m-on-accent)}
+.p3 tr.res td:first-child{box-shadow:inset 3px 0 0 var(--m-restricted)}
+.p3 .status{display:flex; align-items:center; gap:16px; height:28px; padding:0 12px; border-top:1px solid var(--m-border); background:var(--m-surface); font-size:11.5px; color:var(--m-text2)}
+.p3 .palette{
+  position:relative; margin:18px auto; width:600px; max-width:92%;
+  border:1px solid var(--m-border-strong); border-radius:var(--m-radius); background:var(--m-bg);
+  box-shadow:0 12px 34px rgba(0,0,0,.22); overflow:hidden;
+}
+.p3 .palette .q{padding:12px 14px; border-bottom:1px solid var(--m-border); font-size:15px}
+.p3 .palette .r{display:flex; gap:10px; align-items:center; padding:7px 14px; font-size:13px}
+.p3 .palette .r.on{background:var(--m-accent); color:var(--m-on-accent)}
+.p3 .palette .r.on .kbd{border-color:var(--m-on-accent); color:var(--m-on-accent)}
+.p3 .palette .k{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--m-text2); padding:8px 14px 2px}
+
+/* P4 layout */
+.p4{display:grid; grid-template-columns:238px minmax(0,1fr) 262px}
+.p4 .tree{background:var(--m-surface); border-right:1px solid var(--m-border); padding:14px 0; font-size:14px}
+.p4 .tree a{display:block; padding:5px 16px; text-decoration:none; color:var(--m-text)}
+.p4 .tree a.sub{padding-left:32px; color:var(--m-text2); font-size:13.5px}
+.p4 .tree a.on{background:color-mix(in srgb,var(--m-accent) 12%,transparent); font-weight:600; color:var(--m-accent)}
+.p4 .tree hr{border:0; border-top:1px solid var(--m-border); margin:12px 16px}
+.p4 .tree h5{margin:0 16px 6px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--m-text2)}
+.p4 .desk{padding:26px 22px; display:flex; justify-content:center}
+.p4 .sheet{
+  width:100%; max-width:660px; background:var(--m-surface);
+  border:1px solid var(--m-border); border-left:6px solid var(--m-restricted);
+  box-shadow:0 2px 10px rgba(0,0,0,.07); padding:30px 34px 36px;
+}
+.p4 .sheet h1{font-family:var(--m-font-doc); font-size:32px; font-weight:600; line-height:1.25; margin:0 0 14px}
+.p4 .sheet h2{font-family:var(--m-font-doc); font-size:24px; font-weight:600; margin:26px 0 8px}
+.p4 .sheet p{font-family:var(--m-font-doc); font-size:17px; line-height:1.7; margin:0 0 14px}
+.p4 .sheet .imgblock{border:1px dashed var(--m-border-strong); border-radius:var(--m-radius); padding:22px; text-align:center; color:var(--m-text2); font-size:13.5px}
+.p4 .sheet .addline{margin-top:20px; color:var(--m-accent); font-weight:600; font-size:14px}
+.p4 .margin{border-left:1px solid var(--m-border); padding:20px 18px; font-size:13.5px; background:var(--m-bg)}
+.p4 .margin h5{margin:0 0 4px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--m-text2)}
+.p4 .margin .grp{padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--m-border)}
+.p4 .margin .grp:last-child{border:0; margin:0; padding:0}
+.p4 .margin .rule{height:3px; background:var(--m-restricted); margin-bottom:8px; width:44px}
+
+/* mockup su telefono */
+.mkphone{padding:0}
+.mkphone .pbar{display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--m-border); background:var(--m-surface); font-weight:600}
+.mkphone .plist{display:flex; flex-direction:column}
+.mkphone .pitem{padding:12px 14px; border-bottom:1px solid var(--m-border)}
+.mkphone .pitem.res{box-shadow:inset 4px 0 0 var(--m-restricted)}
+.mkphone .ptabs{display:flex; border-top:1px solid var(--m-border); background:var(--m-surface)}
+.mkphone .ptabs span{flex:1; text-align:center; padding:10px 4px; font-size:11.5px; color:var(--m-text2)}
+.mkphone .ptabs span.on{color:var(--m-accent); font-weight:700}
+.mkphone .pfab{padding:12px 14px}
+
+/* ---- tabelle comparative ---- */
+.cmp{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
+.cmp caption{text-align:left; font-size:11.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:600; padding-bottom:10px}
+.cmp th,.cmp td{padding:9px 10px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:middle}
+.cmp thead th{font-size:12px; letter-spacing:.05em; color:var(--ink-2); border-bottom:1px solid var(--rule-strong)}
+.cmp td.n,.cmp th.n{text-align:right; width:118px}
+.cmp tr.tot td{font-weight:700; border-bottom:0; border-top:1px solid var(--rule-strong)}
+.meter{display:inline-flex; gap:2px; vertical-align:middle; margin-right:8px}
+.meter i{width:7px; height:12px; background:var(--rule); border-radius:1px}
+.meter i.on{background:var(--accent)}
+.tblwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--rule); border-radius:4px; padding:18px 20px; margin-bottom:26px}
+
+/* ---- blocchi di domanda ---- */
+.q{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:4px; padding:20px 22px; margin-bottom:26px}
+.q h3{font-size:19px; font-weight:700}
+.q .code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:12px; color:var(--ink-3); letter-spacing:.04em}
+.q>p{color:var(--ink-2); margin:6px 0 16px; max-width:68ch}
+.opts{display:grid; gap:10px}
+.opts.two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.opt{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--rule-strong); border-radius:3px; padding:12px 14px; cursor:pointer; background:var(--surface)}
+.opt:hover{border-color:var(--accent)}
+.opt input{margin:3px 0 0; accent-color:var(--accent); width:16px; height:16px; flex:none}
+.opt .t{font-weight:600; font-size:15px}
+.opt .d{font-size:13.5px; color:var(--ink-2); margin-top:2px}
+.opt:has(input:checked){border-color:var(--accent); border-width:2px; padding:11px 13px; background:var(--accent-soft)}
+.rec{display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); border:1px solid var(--accent); border-radius:99px; padding:0 7px; margin-left:8px; vertical-align:2px}
+.warnline{margin-top:14px; font-size:14px; padding:10px 12px; border-radius:3px; background:var(--surface-2); border:1px solid var(--rule)}
+
+/* scelta dentro la lastra */
+.pick{border-top:1px solid var(--rule); background:var(--surface-2); padding:14px 22px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.pick label{display:flex; align-items:center; gap:10px; font-weight:600; cursor:pointer; font-size:15px}
+.pick input{width:18px; height:18px; accent-color:var(--accent)}
+.pick .hint{font-size:13px; color:var(--ink-3)}
+
+/* ---- matrice di compatibilità ---- */
+.mx{width:100%; border-collapse:collapse; font-size:13.5px}
+.mx th,.mx td{border:1px solid var(--rule); padding:8px 10px; text-align:center}
+.mx th:first-child,.mx td:first-child{text-align:left; font-weight:600}
+.mx td.hit{outline:2px solid var(--accent); outline-offset:-2px; background:var(--accent-soft)}
+.mx .ok{color:var(--ok); font-weight:700}
+.mx .tol{color:var(--warn); font-weight:700}
+.mx .no{color:var(--bad); font-weight:700}
+
+/* ---- riquadro risposta ---- */
+.answer{position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--surface); border-top:2px solid var(--accent); box-shadow:0 -6px 24px rgba(0,0,0,.14)}
+.answer .inner{max-width:var(--maxw); margin:0 auto; padding:12px 20px 14px; display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+.answer .prog{font-size:13px; color:var(--ink-2); font-weight:600; white-space:nowrap}
+.answer .chips{display:flex; gap:6px; flex-wrap:wrap; flex:1}
+.chip2{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11.5px; border:1px solid var(--rule-strong); border-radius:3px; padding:3px 8px; color:var(--ink-3)}
+.chip2.set{border-color:var(--accent); color:var(--accent); font-weight:500}
+.answer textarea{
+  width:100%; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:13px;
+  border:1px solid var(--rule-strong); border-radius:3px; padding:9px 11px; resize:vertical;
+  background:var(--surface-2); color:var(--ink); min-height:52px;
+}
+.answer .cta{background:var(--accent); color:var(--accent-ink); border:0; border-radius:3px; padding:9px 16px; font:inherit; font-weight:600; cursor:pointer}
+.answer .togg{background:transparent; border:1px solid var(--rule-strong); border-radius:3px; padding:8px 14px; font:inherit; font-size:13.5px; cursor:pointer; color:var(--ink)}
+.answer .full{max-width:var(--maxw); margin:0 auto; padding:0 20px 16px; display:flex; flex-direction:column; gap:10px}
+.answer[data-open="false"] .full{display:none}
+.note{font-size:13px; color:var(--ink-2)}
+
+footer{border-top:1px solid var(--rule); margin-top:40px; padding-top:20px; font-size:13.5px; color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">HO-004 · Fase 1B · wave 1B-W7</div>
+  <h1>Che aspetto avrà l'area amministrativa?</h1>
+  <p class="lede">Quattro proposte di <strong>aspetto</strong> e quattro di <strong>struttura</strong>, prodotte da due agenti di design che hanno lavorato in parallelo sullo stesso contesto. Qui non le leggi: le guardi. Gli otto riquadri qui sotto sono resi con le palette, i caratteri e le densità dichiarati nei due documenti, non con un'approssimazione.</p>
+  <dl class="facts">
+    <div class="fact"><dt>Cosa scegli</dt><dd>5 risposte</dd></div>
+    <div class="fact"><dt>Tempo</dt><dd>20–30 minuti</dd></div>
+    <div class="fact"><dt>Blocca</dt><dd>il design del CMS in Fase 1D</dd></div>
+    <div class="fact"><dt>Dati mostrati</dt><dd>tutti inventati</dd></div>
+  </dl>
+  <p class="note">Nessuna delle otto proposte assomiglia a wp-admin: era il vincolo di DR-018 ed è stato verificato. Puoi anche rispondere «nessuna»: in fondo alla pagina c'è come farlo in modo utile.</p>
+</header>
+
+<div class="toolbar">
+  <span class="tlabel">Riquadri</span>
+  <div class="seg" role="group" aria-label="Tema dei riquadri">
+    <button type="button" id="mkLight" aria-pressed="true">Tema chiaro</button>
+    <button type="button" id="mkDark" aria-pressed="false">Tema scuro</button>
+  </div>
+  <div class="seg" role="group" aria-label="Larghezza dei riquadri">
+    <button type="button" id="wWide" aria-pressed="true">Schermo</button>
+    <button type="button" id="wPhone" aria-pressed="false">Telefono</button>
+  </div>
+  <span class="spacer"></span>
+  <a class="jump" href="#ux">Vai alla struttura ↓</a>
+  <a class="jump" href="#risposta">Vai alla risposta ↓</a>
+</div>
+
+<!-- ============================ PARTE 1 — UI ============================ -->
+<section class="part" id="ui">
+  <div class="part-head">
+    <h2>Parte 1 · L'aspetto</h2>
+    <p>Tutte e quattro mostrano la stessa schermata — l'elenco delle pagine del sito nel CMS — così che la differenza che vedi sia solo di linguaggio visivo. I contrasti dichiarati nelle palette sono stati ricalcolati uno per uno: tutti i colori di testo superano 4,5:1 sul proprio fondo.</p>
+  </div>
+
+  <!-- ---------- PROPOSTA 1 ---------- -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">1</div>
+      <div>
+        <h3>Scrivania</h3>
+        <p class="id">Un banco di lavoro: due colonne di navigazione sempre presenti e tabelle compatte che mostrano molte righe insieme. Per chi entra tutti i giorni e vuole vedere tutto senza aprire nulla.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> Contenuti · Pagine</div>
+        <div class="scroller">
+          <div class="mk only-wide" data-p="1">
+            <div class="topbar" style="height:48px">
+              <span class="brand">Amoris · Area di gestione</span>
+              <span class="search">Cerca o esegui un comando</span>
+              <span class="grow"></span>
+              <span class="pill">Ruolo: REDAZIONE ▾</span>
+              <span class="avatar">AB</span>
+            </div>
+            <div class="p1">
+              <nav class="rail" aria-hidden="true">
+                <span class="on">Co</span><span>So</span><span>Ag</span><span>Do</span><span>Ct</span><span>Mo</span><span>Cm</span><span>St</span>
+              </nav>
+              <nav class="sect">
+                <h5>Contenuti</h5>
+                <a href="#ui" class="on">Pagine <em class="muted" style="font-style:normal">24</em></a>
+                <a href="#ui">Notizie <em class="muted" style="font-style:normal">58</em></a>
+                <a href="#ui">Media <em class="muted" style="font-style:normal">312</em></a>
+                <a href="#ui">Menu <em class="muted" style="font-style:normal">4</em></a>
+                <a href="#ui">SEO e redirect</a>
+                <a href="#ui">Impostazioni</a>
+                <h5>Gestione</h5>
+                <a href="#ui">Soci e volontari</a>
+                <a href="#ui">Corsi ed eventi</a>
+                <a href="#ui">Appuntamenti</a>
+                <a href="#ui">Contabilità</a>
+              </nav>
+              <div class="work">
+                <div class="wtop">
+                  <h4>Pagine</h4>
+                  <span class="muted" style="font-size:13px">24 pagine · 3 bozze · 1 riservata</span>
+                  <span class="grow"></span>
+                  <span class="cta">+ Nuova pagina</span>
+                </div>
+                <div class="filters">
+                  <span class="chip">Cerca…</span><span class="chip">Stato: tutti ▾</span><span class="chip">Autore ▾</span><span class="chip">Ordina: ultima modifica ▾</span>
+                </div>
+                <table>
+                  <thead><tr><th style="width:44%">Titolo</th><th>Percorso</th><th>Stato</th><th>Modifica</th><th>Autore</th></tr></thead>
+                  <tbody>
+                    <tr><td>Chi siamo</td><td class="muted">/chi-siamo</td><td><span class="badge st-pub"><span class="dot" style="background:currentColor"></span>Pubblicata</span></td><td class="muted">12/09</td><td class="muted">M. Rossi</td></tr>
+                    <tr><td>Servizi alla famiglia</td><td class="muted">/servizi</td><td><span class="badge st-pub"><span class="dot" style="background:currentColor"></span>Pubblicata</span></td><td class="muted">11/09</td><td class="muted">M. Rossi</td></tr>
+                    <tr><td>Corsi 2027</td><td class="muted">/corsi-2027</td><td><span class="badge st-draft"><span class="dot" style="background:currentColor"></span>Bozza</span></td><td class="muted">10/09</td><td class="muted">A. Bianchi</td></tr>
+                    <tr><td>Equipe clinica</td><td class="muted">/equipe</td><td><span class="badge st-pub"><span class="dot" style="background:currentColor"></span>Pubblicata</span></td><td class="muted">09/09</td><td class="muted">A. Bianchi</td></tr>
+                    <tr class="res"><td>Note interne <span class="badge st-res" style="margin-left:6px">Riservato</span></td><td class="muted">/note-interne</td><td><span class="badge st-res"><span class="dot" style="background:currentColor"></span>Privata</span></td><td class="muted">09/09</td><td class="muted">Segreteria</td></tr>
+                    <tr><td>Dove siamo</td><td class="muted">/contatti</td><td><span class="badge st-pub"><span class="dot" style="background:currentColor"></span>Pubblicata</span></td><td class="muted">05/09</td><td class="muted">M. Rossi</td></tr>
+                  </tbody>
+                </table>
+                <div class="foot"><span>Selezionate: 0</span><span>‹ 1 2 3 ›&nbsp;&nbsp;25 per pagina</span></div>
+                <div class="save"><span>Registro: M. Rossi ha pubblicato «Servizi alla famiglia» · 11/09 16:40</span><span class="grow"></span><span class="ghost">Apri registro</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mk mkphone only-phone" data-p="1">
+            <div class="pbar"><span>☰</span><span>Pagine</span><span class="grow"></span><span class="pill">REDAZIONE ▾</span></div>
+            <div style="display:flex; gap:8px; padding:10px 12px"><span class="search" style="flex:1; min-width:0">Cerca</span><span class="chip" style="border:1px solid var(--m-border-strong); border-radius:4px; padding:5px 10px; font-size:12px">Filtri (1)</span></div>
+            <div class="plist">
+              <div class="pitem"><div style="font-weight:600">Chi siamo</div><div class="muted" style="font-size:12.5px">/chi-siamo</div><div class="muted" style="font-size:12.5px">Pubblicata · 12/09 · M. Rossi</div></div>
+              <div class="pitem"><div style="font-weight:600">Corsi 2027</div><div class="muted" style="font-size:12.5px">/corsi-2027</div><div class="muted" style="font-size:12.5px">Bozza · 10/09 · A. Bianchi</div></div>
+              <div class="pitem res"><div style="font-weight:600">Note interne <span class="badge st-res">Riservato</span></div><div class="muted" style="font-size:12.5px">/note-interne</div><div class="muted" style="font-size:12.5px">Privata · 09/09 · Segreteria</div></div>
+            </div>
+            <div class="pfab"><span class="cta" style="display:block; text-align:center">+ Nuova pagina</span></div>
+            <div class="ptabs"><span class="on">Contenuti</span><span>Soci</span><span>Agenda</span><span>Altro</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:22px">
+        <div class="detail">
+          <h4>Punti di forza e punti deboli</h4>
+          <ul class="pts">
+            <li class="p"><strong>Regge nove moduli con gli stessi mattoni.</strong> Un modulo nuovo è una composizione di elenco, filtri, dettaglio e pannello: 3–5 giornate, non un linguaggio nuovo.</li>
+            <li class="p"><strong>Tratta nativamente le viste a molte righe</strong> — contabilità, libro soci, presenze — che nel perimetro ci sono già.</li>
+            <li class="p"><strong>Riservatezza sempre visibile</strong>: barra colorata, etichetta testuale e lucchetto, leggibili anche in scala di grigi.</li>
+            <li class="c"><strong>La densità può intimidire</strong> il volontario che entra due volte l'anno. Si mitiga con la densità comoda come valore predefinito e gli aiuti sotto i campi.</li>
+            <li class="c"><strong>Due colonne tolgono 296 px</strong> di larghezza: su uno schermo da 1280 px l'area di lavoro è accettabile ma non generosa.</li>
+          </ul>
+          <h4 style="margin-top:20px">Costo dichiarato</h4>
+          <p class="note">5–7 giornate per il sistema di design, 20–25 per il modulo CMS. Librerie: Radix UI Primitives e TanStack Table, entrambe senza stile proprio.</p>
+        </div>
+        <div class="side">
+          <section>
+            <h4>Palette · tema chiaro</h4>
+            <div class="sw">
+              <div><i style="background:#F4F6F9"></i><b>fondo</b><code>#F4F6F9</code></div>
+              <div><i style="background:#17212E"></i><b>testo</b><code>#17212E</code></div>
+              <div><i style="background:#14538F"></i><b>azione</b><code>#14538F</code></div>
+              <div><i style="background:#15693F"></i><b>online</b><code>#15693F</code></div>
+              <div><i style="background:#8A5200"></i><b>bozza</b><code>#8A5200</code></div>
+              <div><i style="background:#6D28A8"></i><b>riservato</b><code>#6D28A8</code></div>
+            </div>
+          </section>
+          <section>
+            <h4>Carattere</h4>
+            <div class="spec" style="font-family:'Inter',system-ui,sans-serif">
+              <div class="fam">Inter · 400 500 600 700 · self-hosted</div>
+              <div class="big" style="font-weight:600">Pagine del sito</div>
+              <div class="small">Cifre tabellari sulle date: 12/09 · 11/09 · 09/09</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick">
+      <label><input type="radio" name="dui1" value="a"> Scelgo «Scrivania» come base</label>
+      <span class="rec">Raccomandata</span>
+      <span class="hint">domanda D-UI-1, opzione (a)</span>
+    </div>
+  </article>
+
+  <!-- ---------- PROPOSTA 2 ---------- -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">2</div>
+      <div>
+        <h3>Accoglienza</h3>
+        <p class="id">Nessuna colonna di navigazione: schede grandi, percorsi a passi numerati, testo a 17 px. Accompagna chi usa l'area raramente e non vuole imparare nulla prima di cominciare.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> Il sito · Pagine</div>
+        <div class="scroller">
+          <div class="mk only-wide" data-p="2">
+            <div class="topbar" style="height:56px">
+              <span class="brand" style="font-size:18px">Amoris · Area di gestione</span>
+              <span class="grow"></span>
+              <span class="muted">Sto operando come: <strong style="color:var(--m-text)">REDAZIONE</strong> ▾</span>
+              <span class="avatar">AB</span>
+            </div>
+            <div class="p2">
+              <nav class="nav">
+                <a href="#ui" class="on">Il sito</a><a href="#ui">Le persone</a><a href="#ui">I corsi</a><a href="#ui">L'agenda</a><a href="#ui">I documenti</a><a href="#ui">Altro ▾</a>
+              </nav>
+              <div class="page">
+                <div class="crumb">Il sito › Pagine</div>
+                <h4>Pagine del sito</h4>
+                <p class="sub">Le pagine che restano sempre uguali: chi siamo, i servizi, i contatti. Qui ce ne sono 24, di cui 3 non ancora online.</p>
+                <div class="steps">
+                  <span class="now"><b>1</b> Scegli la pagina</span><span>→</span><span><b>2</b> Modifica</span><span>→</span><span><b>3</b> Chi la vede</span><span>→</span><span><b>4</b> Pubblica</span>
+                </div>
+                <div class="cards">
+                  <div class="card">
+                    <h5>Chi siamo</h5>
+                    <p>Pubblicata il 12 settembre da M. Rossi · si trova su <strong>/chi-siamo</strong></p>
+                    <div class="row"><span class="cta">Modifica la pagina</span><span class="ghost">Vedi sul sito</span></div>
+                  </div>
+                  <div class="card">
+                    <h5>Corsi 2027</h5>
+                    <p><strong style="color:var(--m-warning)">In bozza — non è ancora online.</strong> Ultima modifica il 10 settembre.</p>
+                    <div class="row"><span class="cta">Riprendi da dove eri</span><span class="ghost">Vedi anteprima</span></div>
+                  </div>
+                  <div class="card res">
+                    <div class="resbar">*** RISERVATA ***</div>
+                    <h5>Note interne</h5>
+                    <p>Visibile solo a segreteria e amministrazione. Non compare sul sito e non finisce nei motori di ricerca.</p>
+                    <div class="row"><span class="ghost">Chi può vederla</span></div>
+                  </div>
+                  <div class="card">
+                    <h5>Dove siamo</h5>
+                    <p>Pubblicata il 5 settembre · contiene la mappa e gli orari di apertura.</p>
+                    <div class="row"><span class="cta">Modifica la pagina</span><span class="ghost">Vedi sul sito</span></div>
+                  </div>
+                </div>
+                <p style="margin-top:18px"><span class="ghost">Mostra altre 20 pagine</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mk mkphone only-phone" data-p="2">
+            <div class="pbar"><span style="font-size:16px">Pagine del sito</span></div>
+            <div style="padding:12px 14px" class="muted">24 pagine, 3 non ancora online.</div>
+            <div style="padding:0 14px 14px; display:flex; flex-direction:column; gap:12px">
+              <div class="card" style="background:var(--m-surface); border:1px solid var(--m-border); border-radius:8px; padding:14px 16px">
+                <div style="font-size:19px; font-weight:600">Chi siamo</div>
+                <div class="muted" style="font-size:15px; margin:4px 0 12px">Pubblicata il 12 settembre</div>
+                <div class="cta" style="display:block; text-align:center">Modifica la pagina</div>
+              </div>
+              <div class="card" style="background:var(--m-surface); border:2px solid var(--m-restricted); border-radius:8px; padding:14px 16px">
+                <div class="resbar" style="background:var(--m-restricted-bg); color:var(--m-restricted-ink); font-size:12px; font-weight:700; letter-spacing:.08em; padding:5px 8px; border-radius:6px; margin-bottom:8px">*** RISERVATA ***</div>
+                <div style="font-size:19px; font-weight:600">Note interne</div>
+                <div class="muted" style="font-size:15px; margin-top:4px">Solo segreteria e amministrazione</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:22px">
+        <div class="detail">
+          <h4>Punti di forza e punti deboli</h4>
+          <ul class="pts">
+            <li class="p"><strong>È di gran lunga la più comprensibile</strong> e la migliore su telefono: una colonna, bottoni con un verbo esplicito, nessuna finestra sovrapposta.</li>
+            <li class="p"><strong>Corpo del testo a 17 px</strong>: pensata per volontari con vista affaticata, senza bisogno di zoom.</li>
+            <li class="p"><strong>Stati scritti in parole</strong>: «In bozza — non è online», non una pastiglia da decifrare.</li>
+            <li class="c"><strong>La bassa densità non regge contabilità, libro soci e presenze.</strong> Servirebbe comunque una seconda vista tabellare, cioè due sistemi da mantenere.</li>
+            <li class="c"><strong>I percorsi guidati non si riusano</strong> da un modulo all'altro: ogni modulo nuovo è progettazione nuova.</li>
+          </ul>
+          <h4 style="margin-top:20px">Nota sul carattere</h4>
+          <p class="note">È l'unica proposta che mantiene <strong>Open Sans</strong>, lo stesso del sito pubblico. Se rispondi (a) alla domanda sul carattere, questa proposta è già allineata.</p>
+        </div>
+        <div class="side">
+          <section>
+            <h4>Palette · tema chiaro</h4>
+            <div class="sw">
+              <div><i style="background:#FAF6F1"></i><b>fondo</b><code>#FAF6F1</code></div>
+              <div><i style="background:#2B2420"></i><b>testo</b><code>#2B2420</code></div>
+              <div><i style="background:#2F6154"></i><b>azione</b><code>#2F6154</code></div>
+              <div><i style="background:#A8471A"></i><b>accento</b><code>#A8471A</code></div>
+              <div><i style="background:#8A5A00"></i><b>bozza</b><code>#8A5A00</code></div>
+              <div><i style="background:#6B3E86"></i><b>riservato</b><code>#6B3E86</code></div>
+            </div>
+          </section>
+          <section>
+            <h4>Carattere</h4>
+            <div class="spec" style="font-family:'Open Sans',system-ui,sans-serif">
+              <div class="fam">Open Sans · 400 600 700 · come il sito pubblico</div>
+              <div class="big" style="font-weight:700">Pagine del sito</div>
+              <div class="small">Corpo a 17 px, bottoni alti 48 px</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick">
+      <label><input type="radio" name="dui1" value="b"> Scelgo «Accoglienza» come base</label>
+      <span class="hint">domanda D-UI-1, opzione (b)</span>
+    </div>
+  </article>
+
+  <!-- ---------- PROPOSTA 3 ---------- -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">3</div>
+      <div>
+        <h3>Comando</h3>
+        <p class="id">Nessun menu permanente: si arriva ovunque scrivendo, da una barra richiamata con Ctrl+K. Quasi monocromatica e densissima, circa 22 righe visibili dove le altre ne mostrano sei.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> contenuti / pagine</div>
+        <div class="scroller">
+          <div class="mk only-wide" data-p="3">
+            <div class="p3">
+              <div class="bar">
+                <span class="crumb">contenuti / <b>pagine</b></span>
+                <span class="grow"></span>
+                <span class="kbd">Ctrl+K</span>
+                <span class="muted" style="letter-spacing:.08em; text-transform:uppercase; font-size:11px; font-weight:600">Redazione · A. Bianchi</span>
+              </div>
+              <table>
+                <thead><tr><th style="width:34%">titolo</th><th>percorso</th><th>stato</th><th>modifica</th><th>autore</th><th style="width:40px">r</th></tr></thead>
+                <tbody>
+                  <tr><td>Chi siamo</td><td class="mono muted">/chi-siamo</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-09-12</td><td class="muted">m.rossi</td><td></td></tr>
+                  <tr class="sel"><td>Servizi alla famiglia</td><td class="mono">/servizi</td><td><span class="dot" style="background:currentColor"></span> pubblicata</td><td class="mono">2026-09-11</td><td>m.rossi</td><td></td></tr>
+                  <tr><td>Corsi 2027</td><td class="mono muted">/corsi-2027</td><td><span class="dot" style="background:var(--m-warning)"></span> bozza</td><td class="mono muted">2026-09-10</td><td class="muted">a.bianchi</td><td></td></tr>
+                  <tr><td>Equipe clinica</td><td class="mono muted">/equipe</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-09-09</td><td class="muted">a.bianchi</td><td></td></tr>
+                  <tr class="res"><td>Note interne</td><td class="mono muted">/note-interne</td><td><span class="dot" style="background:var(--m-restricted)"></span> privata</td><td class="mono muted">2026-09-09</td><td class="muted">segreteria</td><td class="mono" style="color:var(--m-restricted)">(R)</td></tr>
+                  <tr><td>Dove siamo</td><td class="mono muted">/contatti</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-09-05</td><td class="muted">m.rossi</td><td></td></tr>
+                  <tr><td>Orari estivi</td><td class="mono muted">/orari-estivi</td><td><span class="dot" style="background:var(--m-warning)"></span> bozza</td><td class="mono muted">2026-09-05</td><td class="muted">a.bianchi</td><td></td></tr>
+                  <tr><td>Incontri per genitori</td><td class="mono muted">/incontri-genitori</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-09-02</td><td class="muted">m.rossi</td><td></td></tr>
+                  <tr><td>Consulenza di coppia</td><td class="mono muted">/consulenza-coppia</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-08-30</td><td class="muted">m.rossi</td><td></td></tr>
+                  <tr><td>Sostegno alla genitorialità</td><td class="mono muted">/sostegno-genitorialita</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-08-28</td><td class="muted">a.bianchi</td><td></td></tr>
+                  <tr><td>Volontariato</td><td class="mono muted">/volontariato</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-08-21</td><td class="muted">m.rossi</td><td></td></tr>
+                  <tr><td>Trasparenza</td><td class="mono muted">/trasparenza</td><td><span class="dot" style="background:var(--m-success)"></span> pubblicata</td><td class="mono muted">2026-08-14</td><td class="muted">segreteria</td><td></td></tr>
+                </tbody>
+              </table>
+              <div class="palette">
+                <div class="q">nuova pa<span style="opacity:.45">│</span></div>
+                <div class="k">azioni</div>
+                <div class="r on"><span>Crea una nuova pagina</span><span class="grow"></span><span class="kbd">Ctrl+N</span></div>
+                <div class="r"><span>Crea una nuova notizia</span><span class="grow"></span><span class="kbd">Ctrl+Shift+N</span></div>
+                <div class="k">destinazioni</div>
+                <div class="r"><span class="muted">Pagine</span></div>
+                <div class="r"><span class="muted">Registro delle operazioni</span></div>
+                <div class="k">record</div>
+                <div class="r"><span class="muted">Pagina · Corsi 2027</span></div>
+              </div>
+              <div class="status"><span>riga 2 di 24</span><span>3 bozze</span><span>1 riservata</span><span class="grow"></span><span><span class="kbd">j</span>/<span class="kbd">k</span> muovi</span><span><span class="kbd">e</span> modifica</span><span><span class="kbd">p</span> pubblica</span></div>
+            </div>
+          </div>
+
+          <div class="mk mkphone only-phone" data-p="3">
+            <div class="pbar"><span class="crumb muted" style="font-size:12px">contenuti / <b style="color:var(--m-text)">pagine</b></span><span class="grow"></span><span class="kbd">⌕</span></div>
+            <div class="plist">
+              <div class="pitem" style="padding:9px 12px"><div style="display:flex; gap:8px"><span class="dot" style="background:var(--m-success); margin-top:6px"></span><div><div>Chi siamo</div><div class="mono muted" style="font-size:11.5px">/chi-siamo · 2026-09-12</div></div></div></div>
+              <div class="pitem" style="padding:9px 12px"><div style="display:flex; gap:8px"><span class="dot" style="background:var(--m-warning); margin-top:6px"></span><div><div>Corsi 2027</div><div class="mono muted" style="font-size:11.5px">/corsi-2027 · 2026-09-10</div></div></div></div>
+              <div class="pitem res" style="padding:9px 12px"><div style="display:flex; gap:8px"><span class="dot" style="background:var(--m-restricted); margin-top:6px"></span><div><div>Note interne <span class="mono" style="color:var(--m-restricted)">(R)</span></div><div class="mono muted" style="font-size:11.5px">/note-interne · 2026-09-09</div></div></div></div>
+            </div>
+            <div class="status" style="display:flex; align-items:center; gap:12px; height:28px; padding:0 12px; border-top:1px solid var(--m-border); background:var(--m-surface); font-size:11px; color:var(--m-text2)">riga 1 di 24 · 3 bozze</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:22px">
+        <div class="detail">
+          <h4>Punti di forza e punti deboli</h4>
+          <ul class="pts">
+            <li class="p"><strong>Densità e scalabilità eccellenti</strong>: nove moduli senza che nessun menu cresca, perché non c'è menu.</li>
+            <li class="p"><strong>Nessun font da scaricare</strong> per l'interfaccia: pila di sistema, zero spostamenti di impaginazione al caricamento.</li>
+            <li class="c"><strong>Presuppone un utente che questa area non ha.</strong> Un volontario che entra due volte l'anno, davanti a una schermata senza menu, non sa da dove cominciare.</li>
+            <li class="c"><strong>È la più costosa da costruire bene</strong>: la barra di comando, la navigazione da tastiera e lo scorrimento virtualizzato sono lavoro vero, prima ancora del CMS.</li>
+            <li class="c"><strong>Accessibilità più fragile</strong>: chi non usa la tastiera dipende interamente dai ripieghi previsti.</li>
+          </ul>
+        </div>
+        <div class="side">
+          <section>
+            <h4>Palette · tema chiaro</h4>
+            <div class="sw">
+              <div><i style="background:#FFFFFF"></i><b>fondo</b><code>#FFFFFF</code></div>
+              <div><i style="background:#0A0A0B"></i><b>testo</b><code>#0A0A0B</code></div>
+              <div><i style="background:#0B4FD4"></i><b>azione</b><code>#0B4FD4</code></div>
+              <div><i style="background:#17643C"></i><b>online</b><code>#17643C</code></div>
+              <div><i style="background:#7E5300"></i><b>bozza</b><code>#7E5300</code></div>
+              <div><i style="background:#5B2FAF"></i><b>riservato</b><code>#5B2FAF</code></div>
+            </div>
+            <p class="note" style="margin-top:8px">È l'unica proposta il cui tema scuro è quello curato per primo: provalo con l'interruttore in alto.</p>
+          </section>
+          <section>
+            <h4>Carattere</h4>
+            <div class="spec">
+              <div class="fam">Pila di sistema + JetBrains Mono</div>
+              <div class="big" style="font-weight:600">pagine</div>
+              <div class="small mono" style="font-family:'JetBrains Mono',monospace">/chi-siamo · 2026-09-12 · Ctrl+K</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick">
+      <label><input type="radio" name="dui1" value="c"> Scelgo «Comando» come base</label>
+      <span class="hint">domanda D-UI-1, opzione (c)</span>
+    </div>
+  </article>
+
+  <!-- ---------- PROPOSTA 4 ---------- -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">4</div>
+      <div>
+        <h3>Quaderno</h3>
+        <p class="id">Il documento al centro, largo quanto una colonna di lettura; la struttura del sito a sinistra come un indice, i dati di servizio a destra come note a margine. Modificare una pagina somiglia a scrivere su un foglio.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> Struttura · Chi siamo</div>
+        <div class="scroller">
+          <div class="mk only-wide" data-p="4">
+            <div class="topbar" style="height:46px">
+              <span class="brand">Amoris</span>
+              <span class="grow"></span>
+              <span class="muted" style="letter-spacing:.1em; text-transform:uppercase; font-size:11.5px; font-weight:600">Redazione ▾</span>
+              <span class="avatar">AB</span>
+            </div>
+            <div class="p4">
+              <nav class="tree">
+                <h5>Struttura del sito</h5>
+                <a href="#ui">▾ Pagine</a>
+                <a href="#ui" class="sub on">Chi siamo</a>
+                <a href="#ui" class="sub">Servizi alla famiglia</a>
+                <a href="#ui" class="sub">Equipe clinica</a>
+                <a href="#ui" class="sub">Note interne (R)</a>
+                <a href="#ui" class="sub">Dove siamo</a>
+                <a href="#ui">▸ Notizie</a>
+                <a href="#ui">▸ Media</a>
+                <a href="#ui">▸ Menu</a>
+                <hr>
+                <h5>Altri moduli</h5>
+                <a href="#ui">Persone</a><a href="#ui">Corsi</a><a href="#ui">Agenda</a><a href="#ui">Conti</a>
+              </nav>
+              <div class="desk">
+                <article class="sheet">
+                  <h1>Chi siamo</h1>
+                  <p>Il Centro per la Famiglia accompagna le coppie e i genitori del territorio con ascolto, consulenza e percorsi di gruppo.</p>
+                  <h2>La nostra storia</h2>
+                  <p>Nata nel 2011 su iniziativa di un gruppo di volontari, l'associazione offre oggi quattro servizi stabili e collabora con le scuole del quartiere.</p>
+                  <div class="imgblock">Blocco immagine · sede-esterno.jpg</div>
+                  <p class="addline">+ testo &nbsp;·&nbsp; + immagine &nbsp;·&nbsp; + citazione</p>
+                </article>
+              </div>
+              <aside class="margin">
+                <div class="grp">
+                  <div class="rule"></div>
+                  <h5>Riservato</h5>
+                  <div>Visibile a segreteria e amministrazione.</div>
+                </div>
+                <div class="grp">
+                  <h5>Pubblicazione</h5>
+                  <div>Stato: <strong>bozza</strong></div>
+                  <div class="muted">14/09/2026 · 09:00</div>
+                </div>
+                <div class="grp">
+                  <h5>Percorso</h5>
+                  <div class="mono" style="font-size:12.5px">/chi-siamo</div>
+                </div>
+                <div class="grp">
+                  <h5>Come ci trovano</h5>
+                  <div class="muted">Titolo: Chi siamo — Centro</div>
+                  <div class="muted">Descrizione: mancante</div>
+                </div>
+                <div class="grp">
+                  <h5>Revisioni</h5>
+                  <div class="muted">14/09 09:12 · A. Bianchi</div>
+                  <div class="muted">12/09 17:03 · M. Rossi</div>
+                </div>
+                <div class="grp">
+                  <h5>Stai modificando come</h5>
+                  <div>Redazione</div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="mk mkphone only-phone" data-p="4">
+            <div class="pbar"><span>☰</span><span style="font-weight:400" class="muted">Pagine ›</span><span style="font-weight:600">Chi siamo</span></div>
+            <div style="padding:18px 16px; background:var(--m-surface); border-left:6px solid var(--m-restricted)">
+              <div style="font-family:var(--m-font-doc); font-size:26px; font-weight:600; line-height:1.25">Chi siamo</div>
+              <p style="font-family:var(--m-font-doc); font-size:16px; line-height:1.7">Il Centro per la Famiglia accompagna le coppie e i genitori del territorio con ascolto, consulenza e percorsi di gruppo.</p>
+            </div>
+            <div style="padding:14px 16px; border-top:1px solid var(--m-border)">
+              <h5 style="margin:0 0 4px; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase" class="muted">Note a margine</h5>
+              <div>Stato: <strong>bozza</strong> · <span class="mono" style="font-size:12.5px">/chi-siamo</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols" style="margin-top:22px">
+        <div class="detail">
+          <h4>Punti di forza e punti deboli</h4>
+          <ul class="pts">
+            <li class="p"><strong>Perfetta per contenuti e documenti</strong>, che sono esattamente il perimetro della Fase 1: il testo si modifica con la tipografia che avrà sul sito.</li>
+            <li class="p"><strong>Il marcatore di riservatezza più chiaro delle quattro</strong>: un bordo spesso 6 px su tutto il lato del foglio, impossibile da non vedere.</li>
+            <li class="c"><strong>Rischia di spaccarsi in due linguaggi</strong> quando arrivano i moduli a dati: contabilità e presenze avrebbero comunque bisogno di una vista tabellare.</li>
+            <li class="c"><strong>L'editor in posizione è la voce di costo più alta</strong> fra le quattro proposte.</li>
+            <li class="c"><strong>Due famiglie di caratteri</strong> da mantenere e servire.</li>
+          </ul>
+        </div>
+        <div class="side">
+          <section>
+            <h4>Palette · tema chiaro</h4>
+            <div class="sw">
+              <div><i style="background:#FAF8F3"></i><b>fondo</b><code>#FAF8F3</code></div>
+              <div><i style="background:#1E211F"></i><b>testo</b><code>#1E211F</code></div>
+              <div><i style="background:#1D5B54"></i><b>azione</b><code>#1D5B54</code></div>
+              <div><i style="background:#7A5A10"></i><b>revisioni</b><code>#7A5A10</code></div>
+              <div><i style="background:#8A5200"></i><b>bozza</b><code>#8A5200</code></div>
+              <div><i style="background:#6A3B7A"></i><b>riservato</b><code>#6A3B7A</code></div>
+            </div>
+          </section>
+          <section>
+            <h4>Caratteri</h4>
+            <div class="spec">
+              <div class="fam">Source Serif 4 (documento) + Source Sans 3 (interfaccia)</div>
+              <div class="big" style="font-family:'Source Serif 4',Georgia,serif; font-weight:600">Chi siamo</div>
+              <div class="small" style="font-family:'Source Sans 3',system-ui,sans-serif">Note a margine, albero, bottoni</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick">
+      <label><input type="radio" name="dui1" value="d"> Scelgo «Quaderno» come base</label>
+      <span class="hint">domanda D-UI-1, opzione (d)</span>
+    </div>
+  </article>
+
+  <div class="tblwrap">
+    <table class="cmp">
+      <caption>Come le ha valutate chi le ha prodotte — 1 scarso, 5 ottimo</caption>
+      <thead><tr><th>Criterio</th><th class="n">1 Scrivania</th><th class="n">2 Accoglienza</th><th class="n">3 Comando</th><th class="n">4 Quaderno</th></tr></thead>
+      <tbody>
+        <tr><td>Leggibilità per un volontario non tecnico</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="2"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Densità informativa</td><td class="n" data-v="5"></td><td class="n" data-v="2"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td></tr>
+        <tr><td>Accessibilità</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Scalabilità ai 9 moduli</td><td class="n" data-v="5"></td><td class="n" data-v="2"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td></tr>
+        <tr><td>Costo per un team di una persona</td><td class="n" data-v="4"></td><td class="n" data-v="4"></td><td class="n" data-v="2"></td><td class="n" data-v="2"></td></tr>
+        <tr><td>Resa su telefono</td><td class="n" data-v="3"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Distanza da WordPress</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="5"></td><td class="n" data-v="5"></td></tr>
+        <tr class="tot"><td>Totale</td><td class="n">29</td><td class="n">28</td><td class="n">25</td><td class="n">25</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px">I totali servono a leggere la forma dei compromessi, non a decidere: i criteri non hanno lo stesso peso, e il peso è una tua decisione.</p>
+  </div>
+
+  <div class="q">
+    <div class="code">D-UI-2</div>
+    <h3>Si mantiene Open Sans, il carattere del sito pubblico, anche nell'area amministrativa?</h3>
+    <p>Il sito pubblico usa Open Sans. L'area amministrativa può ereditarlo per continuità, o usare un carattere d'interfaccia proprio. È una scelta di identità, non tecnica.</p>
+    <div class="opts two">
+      <label class="opt"><input type="radio" name="dui2" value="a"><span><span class="t">(a) Sì, Open Sans ovunque</span><span class="d">Continuità con il sito. Chi gestisce e chi legge vedono le stesse forme.</span></span></label>
+      <label class="opt"><input type="radio" name="dui2" value="b"><span><span class="t">(b) No, un carattere d'interfaccia distinto <span class="rec">Raccomandata</span></span><span class="d">L'area amministrativa deve essere riconoscibilmente un'altra cosa, e i caratteri d'interfaccia sono disegnati per dimensioni piccole.</span></span></label>
+    </div>
+    <p class="warnline" id="fontWarn" hidden></p>
+  </div>
+</section>
+
+<!-- ============================ PARTE 2 — UX ============================ -->
+<section class="part" id="ux">
+  <div class="part-head">
+    <h2>Parte 2 · La struttura</h2>
+    <p>Qui non cambia il colore: cambia <strong>da dove si entra</strong> e come si arriva alle cose. Per ciascuna proposta vedi la navigazione con il solo CMS, che è la Fase 1, e la stessa navigazione a regime con nove moduli — perché la differenza vera fra le quattro si vede solo confrontando i due momenti.</p>
+  </div>
+
+  <!-- UX A -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">A</div>
+      <div>
+        <h3>La scrivania dei compiti</h3>
+        <p class="id">La navigazione è fatta di <strong>cose da fare</strong>, non di contenitori di dati: si entra in una coda personale di lavoro e si sceglie un'azione, non una sezione.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="cols">
+        <div class="detail">
+          <div class="frame"><div class="frame-bar">Oggi, in Fase 1 · solo CMS</div>
+            <div class="mk" data-p="1" style="padding:18px 20px">
+              <div style="font-size:20px; font-weight:600; margin-bottom:4px">La mia scrivania</div>
+              <div class="muted" style="font-size:13px; margin-bottom:14px">Due cose aspettano te</div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:12px 14px; margin-bottom:8px"><strong>Bozza ferma da 9 giorni: «Orari estivi»</strong><div class="muted" style="font-size:13px">Sito · pubblicala o archiviala</div></div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:12px 14px; margin-bottom:16px"><strong>Manca l'immagine di copertina: «Chi siamo»</strong><div class="muted" style="font-size:13px">Sito · si vede quando qualcuno condivide il link</div></div>
+              <div style="font-size:11px; letter-spacing:.11em; text-transform:uppercase; font-weight:600" class="muted">Azioni rapide</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+                <span class="cta">Pubblicare una notizia</span><span class="ghost">Modificare una pagina</span><span class="ghost">Caricare una foto</span><span class="ghost">Cambiare il menu</span>
+              </div>
+            </div>
+          </div>
+          <div class="frame" style="margin-top:14px"><div class="frame-bar">A regime · nove moduli</div>
+            <div class="mk" data-p="1" style="padding:18px 20px">
+              <div style="font-size:20px; font-weight:600; margin-bottom:10px">La mia scrivania</div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 14px; margin-bottom:6px">Confermare la data proposta per un colloquio <span class="badge" style="color:var(--m-text2); margin-left:6px">Consultorio</span></div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 14px; margin-bottom:6px">12 quote sociali non ancora registrate <span class="badge" style="color:var(--m-text2); margin-left:6px">Soci</span></div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 14px; margin-bottom:6px">Verbale dell'assemblea da caricare <span class="badge" style="color:var(--m-text2); margin-left:6px">Documenti</span></div>
+              <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 14px">Bozza ferma da 9 giorni: «Orari estivi» <span class="badge" style="color:var(--m-text2); margin-left:6px">Sito</span></div>
+              <p class="muted" style="font-size:13px; margin:12px 0 0">Il primo livello non cresce: crescono le voci della coda. Gli archivi restano al secondo livello, per quando non hai un compito ma una domanda.</p>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <section><h4>Primo livello</h4><p style="margin:0; font-size:15px"><strong>4 voci</strong> con un modulo, <strong>4 voci</strong> con nove. Non cresce mai.</p></section>
+          <section><h4>Ruoli multipli</h4><p class="note" style="margin:0">I ruoli si <strong>sommano</strong> in un'unica coda. Non si cambia veste: ogni atto dichiara «sarà registrato a nome di Rosalba, in qualità di tesoriere».</p></section>
+          <section><h4>Riservatezza</h4><p class="note" style="margin:0">Anagrafiche separate, coda che non trasporta contenuto riservato, e una soglia esplicita per entrare nell'area delle consulenze.</p></section>
+          <section><h4>Punti deboli</h4>
+            <ul class="pts"><li class="c">È la più costosa: ogni modulo deve saper generare i compiti giusti, e <strong>una coda che sbaglia è peggio di nessuna coda</strong>.</li><li class="c">Chi ha una domanda invece che un compito deve scendere di un livello.</li></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick"><label><input type="radio" name="dux1" value="a"> Scelgo «La scrivania dei compiti»</label><span class="hint">domanda D-UX-1, opzione (a)</span></div>
+  </article>
+
+  <!-- UX B -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">B</div>
+      <div>
+        <h3>Le aree di responsabilità</h3>
+        <p class="id">Si sceglie <strong>in quale veste si sta lavorando</strong> e l'intera applicazione si riconfigura su quella veste: ogni area è un ambiente chiuso, con il proprio menu, la propria home e i propri dati.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="cols">
+        <div class="detail">
+          <div class="frame"><div class="frame-bar">Schermata di ingresso · in Fase 1 ci sono due aree</div>
+            <div class="mk" data-p="1" style="padding:24px 20px">
+              <div style="font-size:22px; font-weight:600; margin-bottom:16px">In quale veste vuoi lavorare?</div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap">
+                <div class="surf" style="flex:1 1 220px; border:2px solid var(--m-accent); border-radius:var(--m-radius); padding:18px 20px"><div style="font-weight:700; letter-spacing:.08em">REDAZIONE</div><div class="muted" style="font-size:13px">3 cose aperte</div></div>
+                <div class="surf" style="flex:1 1 220px; border:1px solid var(--m-border-strong); border-radius:var(--m-radius); padding:18px 20px"><div style="font-weight:700; letter-spacing:.08em">DIREZIONE</div><div class="muted" style="font-size:13px">nulla in sospeso</div></div>
+              </div>
+              <p class="muted" style="font-size:13px; margin:14px 0 0">Chi possiede una sola area non vede mai questa schermata: entra diretto.</p>
+            </div>
+          </div>
+          <div class="frame" style="margin-top:14px"><div class="frame-bar">A regime · sei aree, ognuna con il proprio menu</div>
+            <div class="mk" data-p="1" style="padding:18px 20px">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px">
+                <span class="pill strong" style="border-color:var(--m-accent); color:var(--m-accent)">REDAZIONE</span><span class="pill">SEGRETERIA</span><span class="pill">TESORERIA</span><span class="pill">FORMAZIONE</span><span class="pill">CONSULENZA</span><span class="pill">DIREZIONE</span>
+              </div>
+              <div style="display:grid; grid-template-columns:200px 1fr; gap:16px">
+                <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 0">
+                  <div style="padding:5px 14px; font-weight:600; color:var(--m-accent); border-left:3px solid var(--m-accent)">Situazione dell'area</div>
+                  <div style="padding:5px 14px">Pagine e notizie</div>
+                  <div style="padding:5px 14px">Struttura del sito</div>
+                  <div style="padding:5px 14px">Immagini e file</div>
+                  <div style="padding:5px 14px">Come ci trovano</div>
+                </div>
+                <div>
+                  <div style="font-weight:600; margin-bottom:6px">Stai lavorando come <strong style="color:var(--m-accent)">Redazione</strong></div>
+                  <p class="muted" style="font-size:13.5px; margin:0 0 10px">Il menu a sinistra cambia per intero quando cambi veste. Un movimento registrato in Tesoreria risulta «registrato da Rosalba, area Tesoreria».</p>
+                  <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:10px 14px; font-size:13.5px">Questo dato sta in Segreteria. <strong>Vuoi passare?</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <section><h4>Primo livello</h4><p style="margin:0; font-size:15px"><strong>2 aree</strong> in Fase 1, <strong>6 aree</strong> a regime. È l'unica in cui il primo livello cresce — di quattro voci, non di nove.</p></section>
+          <section><h4>Ruoli multipli</h4><p class="note" style="margin:0">Il ruolo non è un attributo invisibile: è <strong>il luogo in cui ti trovi</strong>. Un clic per aprire, uno per scegliere.</p></section>
+          <section><h4>Riservatezza</h4><p class="note" style="margin:0">La più forte delle quattro: la sessione è vincolata all'area, e il sistema <strong>rifiuta i dati di Consulenza anche a chi avrebbe il permesso</strong>, se non è nell'area giusta. Non è aggirabile per distrazione.</p></section>
+          <section><h4>Punti deboli</h4>
+            <ul class="pts"><li class="c">Il lavoro che attraversa due aree costa un cambio di veste ogni volta.</li><li class="c">Se in pratica «fanno tutti tutto», gran parte del vantaggio sparisce — <strong>è la domanda D-UX-2</strong>.</li></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick"><label><input type="radio" name="dux1" value="b"> Scelgo «Le aree di responsabilità»</label><span class="rec">Raccomandata</span><span class="hint">domanda D-UX-1, opzione (b)</span></div>
+  </article>
+
+  <!-- UX C -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">C</div>
+      <div>
+        <h3>Il registro degli oggetti</h3>
+        <p class="id">Tutto ciò che esiste è un <strong>oggetto schedato</strong> — una pagina, una persona, un movimento, un appuntamento — e si lavora cercando e filtrando, non navigando un albero di sezioni.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="cols">
+        <div class="detail">
+          <div class="frame"><div class="frame-bar">La forma non cambia fra Fase 1 e nove moduli: cambiano i tipi nei filtri</div>
+            <div class="mk" data-p="1" style="padding:0">
+              <div class="topbar" style="height:46px"><span class="search" style="flex:1">Cerca o scrivi un comando…</span><span class="cta">+ Crea</span><span class="pill">Chi sono io ▾</span></div>
+              <div style="display:grid; grid-template-columns:220px 1fr">
+                <div class="surf" style="border-right:1px solid var(--m-border); padding:12px 0; font-size:13.5px">
+                  <div style="padding:4px 14px">★ Assegnati a me</div>
+                  <div style="padding:4px 14px; color:var(--m-accent); font-weight:600">★ Bozze ferme da 7 giorni</div>
+                  <div style="padding:4px 14px">★ Pagine senza immagine</div>
+                  <div style="padding:4px 14px">★ Quote non pagate 2026</div>
+                  <div style="margin:10px 14px 6px; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase" class="muted">Tipi di oggetto</div>
+                  <div style="padding:4px 14px">Contenuti · Persone · Movimenti</div>
+                  <div style="margin:10px 14px 6px; font-size:10.5px; letter-spacing:.11em; text-transform:uppercase" class="muted">Condivise con me</div>
+                  <div style="padding:4px 14px">«Cosa fa il tesoriere ad aprile»</div>
+                </div>
+                <div style="padding:14px 16px">
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px"><span class="pill">Tipo: Pagina ▾</span><span class="pill">Stato: Bozza ▾</span><span class="pill">Chi: chiunque ▾</span><span class="pill">Quando: sempre ▾</span></div>
+                  <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:9px 12px; margin-bottom:6px">Orari estivi <span class="muted">· Pagina · Bozza · Marilena</span></div>
+                  <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:9px 12px; margin-bottom:6px">Corsi 2027 <span class="muted">· Pagina · Bozza · Donato</span></div>
+                  <div class="surf" style="border:1px solid var(--m-border); border-radius:var(--m-radius); padding:9px 12px">Incontro del 12 ottobre <span class="muted">· Notizia · Online · Marilena</span></div>
+                  <p class="muted" style="font-size:13px; margin:12px 0 0">Gli oggetti riservati <strong>non compaiono</strong>: non sono filtrati dopo, non sono proprio nell'indice.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <section><h4>Primo livello</h4><p style="margin:0; font-size:15px">Non esiste un primo livello di sezioni: ci sono <strong>viste salvate</strong>, che crea l'utente. La forma non cambia mai.</p></section>
+          <section><h4>Ruoli multipli</h4><p class="note" style="margin:0">Il ruolo <strong>non si sceglie</strong>: determina cosa la ricerca trova. Chi non è tesoriere non trova i movimenti, e per lui la parola «movimento» non produce risultati.</p></section>
+          <section><h4>Riservatezza</h4><p class="note" style="margin:0">Dipende dalla correttezza permanente della classificazione. Una vista condivisa gira <strong>con i permessi di chi la apre</strong>, non di chi l'ha creata.</p></section>
+          <section><h4>Punti deboli</h4>
+            <ul class="pts"><li class="c">Chi rientra dopo sei mesi deve <strong>ricordare il vocabolario</strong>, che è esattamente ciò che ha perso.</li><li class="c">È la migliore per il segretario quotidiano e la peggiore per tutti gli altri.</li></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick"><label><input type="radio" name="dux1" value="c"> Scelgo «Il registro degli oggetti»</label><span class="hint">domanda D-UX-1, opzione (c)</span></div>
+  </article>
+
+  <!-- UX D -->
+  <article class="slab">
+    <div class="slab-head">
+      <div class="num">D</div>
+      <div>
+        <h3>L'anno associativo</h3>
+        <p class="id">La navigazione è il <strong>tempo</strong>: si entra in «Oggi», si scorre avanti e indietro lungo l'anno, e i moduli si raggiungono attraverso il momento che li richiede.</p>
+      </div>
+    </div>
+    <div class="slab-body">
+      <div class="cols">
+        <div class="detail">
+          <div class="frame"><div class="frame-bar">Oggi · lunedì 14 settembre</div>
+            <div class="mk" data-p="1" style="padding:0">
+              <div class="topbar" style="height:44px"><span>◀ Settembre 2026 ▶</span><span class="pill">Oggi</span><span class="pill">L'anno</span><span class="grow"></span><span class="search">Cerca</span></div>
+              <div style="padding:16px 20px">
+                <div style="font-size:11px; letter-spacing:.11em; text-transform:uppercase; font-weight:600" class="muted">Oggi</div>
+                <div style="padding:6px 0">· La notizia «Iscrizioni aperte» va online oggi</div>
+                <div style="padding:6px 0; border-bottom:1px solid var(--m-border); margin-bottom:10px">· Bozza ferma da 9 giorni: «Orari estivi»</div>
+                <div style="font-size:11px; letter-spacing:.11em; text-transform:uppercase; font-weight:600" class="muted">Questa settimana</div>
+                <div style="padding:6px 0; border-bottom:1px solid var(--m-border); margin-bottom:10px">· giovedì: scade la pubblicazione dell'avviso</div>
+                <div style="font-size:11px; letter-spacing:.11em; text-transform:uppercase; font-weight:600" class="muted">Più avanti</div>
+                <div style="padding:6px 0">· 1 ottobre: aggiornare la pagina «Attività» per l'anno nuovo</div>
+              </div>
+            </div>
+          </div>
+          <div class="frame" style="margin-top:14px"><div class="frame-bar">L'anno · dodici mesi in una schermata</div>
+            <div class="mk" data-p="1" style="padding:18px 20px">
+              <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:600; letter-spacing:.06em; margin-bottom:10px" class="muted"><span>GEN</span><span>FEB</span><span style="color:var(--m-accent)">MAR</span><span>APR</span><span>MAG</span><span>GIU</span><span>LUG</span><span>AGO</span><span>SET</span><span>OTT</span><span>NOV</span><span>DIC</span></div>
+              <div style="height:8px; background:var(--m-accent); opacity:.7; border-radius:4px; width:32%; margin-bottom:6px"></div>
+              <div style="font-size:12.5px; margin-bottom:12px" class="muted">corso di primavera · iscrizioni dal 1° marzo</div>
+              <div style="height:8px; background:var(--m-warning); opacity:.7; border-radius:4px; width:22%; margin-left:58%; margin-bottom:6px"></div>
+              <div style="font-size:12.5px" class="muted">rendiconto · quote entro il 30 aprile · 770 dal 1° novembre</div>
+              <p class="muted" style="font-size:13px; margin:14px 0 0">Le cose senza data — pagine stabili, menu, impostazioni — stanno nelle schede «fuori dal tempo». In Fase 1 il CMS è <strong>quasi tutto lì</strong>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <section><h4>Primo livello</h4><p style="margin:0; font-size:15px"><strong>3 voci</strong> con un modulo, <strong>3 voci</strong> con nove: Oggi · L'anno · fuori dal tempo. Il più stabile delle quattro.</p></section>
+          <section><h4>Ruoli multipli</h4><p class="note" style="margin:0">Nessun cambio di veste: il ruolo <strong>filtra la linea del tempo</strong>. Per chi ha più vesti è la proposta meno faticosa.</p></section>
+          <section><h4>Riservatezza</h4><p class="note" style="margin:0">L'opaco come valore predefinito — stanza occupata, nessun nome. Ma il calendario condiviso resta la superficie da cui la riservatezza scappa più facilmente.</p></section>
+          <section><h4>Punti deboli</h4>
+            <ul class="pts"><li class="c"><strong>Dà il peggio di sé proprio sulla Fase 1</strong>: il CMS è contenuto senza data, e finirebbe tutto nel «fuori dal tempo».</li><li class="c">Il motore delle ricorrenze non è banale da costruire.</li></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="pick"><label><input type="radio" name="dux1" value="d"> Scelgo «L'anno associativo»</label><span class="hint">domanda D-UX-1, opzione (d)</span></div>
+  </article>
+
+  <div class="tblwrap">
+    <table class="cmp">
+      <caption>Come le ha valutate chi le ha prodotte — 1 inadeguato, 5 ottimo</caption>
+      <thead><tr><th>Criterio</th><th class="n">A Compiti</th><th class="n">B Aree</th><th class="n">C Oggetti</th><th class="n">D Anno</th></tr></thead>
+      <tbody>
+        <tr><td>Rientro dopo sei mesi</td><td class="n" data-v="5"></td><td class="n" data-v="4"></td><td class="n" data-v="2"></td><td class="n" data-v="5"></td></tr>
+        <tr><td>Primo apprendimento</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="2"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Riservatezza</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Da 1 a 9 moduli</td><td class="n" data-v="5"></td><td class="n" data-v="3"></td><td class="n" data-v="5"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Ruoli multipli</td><td class="n" data-v="4"></td><td class="n" data-v="5"></td><td class="n" data-v="3"></td><td class="n" data-v="4"></td></tr>
+        <tr><td>Telefono e PWA</td><td class="n" data-v="4"></td><td class="n" data-v="4"></td><td class="n" data-v="4"></td><td class="n" data-v="5"></td></tr>
+        <tr><td>Costo per un solo sviluppatore</td><td class="n" data-v="2"></td><td class="n" data-v="4"></td><td class="n" data-v="3"></td><td class="n" data-v="3"></td></tr>
+        <tr><td>Scadenze e stagionalità</td><td class="n" data-v="4"></td><td class="n" data-v="4"></td><td class="n" data-v="3"></td><td class="n" data-v="5"></td></tr>
+        <tr class="tot"><td>Totale</td><td class="n">32</td><td class="n">34</td><td class="n">25</td><td class="n">34</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tblwrap">
+    <h4 style="font-family:var(--display); font-size:17px; margin:0 0 4px">Le due scelte vanno d'accordo?</h4>
+    <p class="note" style="margin:0 0 14px">La matrice valuta se una struttura <strong>regge</strong> su una certa direzione di navigazione. Scegli sopra una UI e una UX: la casella corrispondente si accende.</p>
+    <table class="mx" id="mxTable">
+      <thead><tr><th>Struttura ↓ &nbsp; Aspetto →</th><th>1 Scrivania</th><th>2 Accoglienza</th><th>3 Comando</th><th>4 Quaderno</th></tr></thead>
+      <tbody>
+        <tr data-ux="a"><td>A · Compiti</td><td data-ui="a" class="tol">tollerabile</td><td data-ui="b" class="ok">buono</td><td data-ui="c" class="ok">ottimo</td><td data-ui="d" class="tol">tollerabile</td></tr>
+        <tr data-ux="b"><td>B · Aree</td><td data-ui="a" class="ok">ottimo</td><td data-ui="b" class="ok">buono</td><td data-ui="c" class="no">da evitare</td><td data-ui="d" class="tol">tollerabile</td></tr>
+        <tr data-ux="c"><td>C · Oggetti</td><td data-ui="a" class="ok">ottimo</td><td data-ui="b" class="tol">tollerabile</td><td data-ui="c" class="tol">tollerabile</td><td data-ui="d" class="ok">ottimo</td></tr>
+        <tr data-ux="d"><td>D · Anno</td><td data-ui="a" class="tol">tollerabile</td><td data-ui="b" class="ok">ottimo</td><td data-ui="c" class="ok">buono</td><td data-ui="d" class="no">da evitare</td></tr>
+      </tbody>
+    </table>
+    <p class="warnline" id="mxMsg" hidden></p>
+    <p class="note" style="margin-top:12px">Una precisazione onesta: la matrice originale valuta <em>direzioni di navigazione</em> (laterale, superiore, contestuale, a pannelli). Le colonne qui sopra traducono le quattro proposte in quelle direzioni; per la 4 «Quaderno», che ne combina due, è riportata la valutazione peggiore delle due.</p>
+  </div>
+
+  <div class="q">
+    <div class="code">D-UX-2</div>
+    <h3>Il Centro si organizza per aree, o «fanno tutti tutto»?</h3>
+    <p>La proposta B presuppone sei aree: Redazione, Segreteria, Tesoreria, Formazione, Consulenza, Direzione. È una descrizione realistica di come lavorate? <strong>È la domanda che può ribaltare la raccomandazione</strong>, quindi conta più delle altre.</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="dux2" value="a"><span><span class="t">(a) Sì, le persone hanno ruoli abbastanza distinti</span><span class="d">La proposta B mantiene tutto il suo vantaggio.</span></span></label>
+      <label class="opt"><input type="radio" name="dux2" value="b"><span><span class="t">(b) No, in pratica poche persone fanno di tutto</span><span class="d">La proposta B perde gran parte del suo vantaggio e sale la A.</span></span></label>
+      <label class="opt"><input type="radio" name="dux2" value="c"><span><span class="t">(c) Via di mezzo: alcune aree sono distinte, altre no</span><span class="d">B resta praticabile, ma con aree meno numerose di sei.</span></span></label>
+    </div>
+    <p class="warnline" id="ux2Warn" hidden></p>
+  </div>
+
+  <div class="q">
+    <div class="code">D-UX-3</div>
+    <h3>Come funziona il cambio di ruolo?</h3>
+    <p>Una persona può essere amministratore, tesoriere e socio insieme. È <strong>la scelta più costosa da cambiare dopo</strong>: tocca permessi, registro delle operazioni e intestazione di ogni schermata. Lo schema del database è compatibile con tutte e tre; l'interfaccia no.</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="dux3" value="a"><span><span class="t">(a) Un solo ruolo attivo per volta, scelto esplicitamente <span class="rec">Raccomandata</span></span><span class="d">L'interfaccia mostra solo ciò che quel ruolo può fare. Rende leggibile il registro delle operazioni e riduce il rischio di operare per errore con poteri estesi su dati riservati.</span></span></label>
+      <label class="opt"><input type="radio" name="dux3" value="b"><span><span class="t">(b) Tutti i ruoli insieme, unione dei permessi</span><span class="d">Nessuna commutazione. Più comodo, ma il registro non distingue in quale veste è stato compiuto un atto.</span></span></label>
+      <label class="opt"><input type="radio" name="dux3" value="c"><span><span class="t">(c) Tutti attivi, con un filtro visivo commutabile</span><span class="d">Via di mezzo: i permessi sono sempre tutti, cambia solo cosa si vede.</span></span></label>
+    </div>
+    <p class="warnline" id="ux3Warn" hidden></p>
+  </div>
+</section>
+
+<!-- ============================ RISPOSTA ============================ -->
+<section class="part" id="risposta">
+  <div class="part-head">
+    <h2>La tua risposta</h2>
+    <p>Le cinque scelte compongono una riga sola da incollare nel prossimo messaggio. Se aggiungi il <em>perché</em>, tanto meglio: per il registro delle decisioni il motivo vale più della lettera, perché è il motivo che si dimentica.</p>
+  </div>
+  <div class="q">
+    <h3>Se nessuna ti convince</h3>
+    <p style="margin-bottom:0">È una risposta legittima e va detta. In quel caso servono due cose: <strong>quale ti si avvicina di più</strong> e <strong>che cosa non va</strong>. Con quelle due informazioni un secondo giro è rapido; senza, sarebbe un altro tiro al buio. Puoi anche rispondere «mi piace la 1 ma con i colori della 2»: le proposte sono combinabili.</p>
+  </div>
+  <footer>
+    Documento della wave <code>1B-W7</code>, reso navigabile su tua richiesta. Le palette, le dimensioni dei caratteri, le densità e i marcatori di riservatezza sono quelli dichiarati in <code>docs/design/ui-proposals.md</code> e <code>docs/design/ux-proposals.md</code>: questa pagina non aggiunge scelte di design, le mostra. Tutti i nomi, i titoli, le date e i percorsi sono inventati.
+  </footer>
+</section>
+</div>
+
+<aside class="answer" data-open="false" aria-label="La tua risposta">
+  <div class="inner">
+    <span class="prog" id="prog">0 di 5</span>
+    <span class="chips" id="chips"></span>
+    <button type="button" class="togg" id="toggleAns" aria-expanded="false">Mostra la riga da copiare</button>
+  </div>
+  <div class="full">
+    <label for="outText" class="note">Copia questa riga nel prossimo messaggio. Aggiungi pure una spiegazione a parole.</label>
+    <textarea id="outText" readonly rows="2"></textarea>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+      <button type="button" class="cta" id="copyBtn">Copia</button>
+      <span class="note" id="copyMsg" role="status"></span>
+    </div>
+  </div>
+</aside>
+
+<script>
+(function(){
+  "use strict";
+  var body = document.body;
+  body.dataset.w = "wide";
+  document.documentElement.setAttribute("data-mk-theme","light");
+
+  function pair(onId, offId, apply){
+    var on = document.getElementById(onId), off = document.getElementById(offId);
+    function set(isOn){
+      on.setAttribute("aria-pressed", String(isOn));
+      off.setAttribute("aria-pressed", String(!isOn));
+      apply(isOn);
+    }
+    on.addEventListener("click", function(){ set(true); });
+    off.addEventListener("click", function(){ set(false); });
+  }
+  pair("mkLight","mkDark", function(light){
+    document.documentElement.setAttribute("data-mk-theme", light ? "light" : "dark");
+  });
+  pair("wWide","wPhone", function(wide){ body.dataset.w = wide ? "wide" : "phone"; });
+
+  // meter delle tabelle comparative
+  document.querySelectorAll(".cmp td.n[data-v]").forEach(function(td){
+    var v = parseInt(td.getAttribute("data-v"), 10), m = "";
+    for (var i = 1; i <= 5; i++) m += '<i class="' + (i <= v ? "on" : "") + '"></i>';
+    td.innerHTML = '<span class="meter" aria-hidden="true">' + m + "</span>" + v;
+  });
+
+  var QS = [
+    { name:"dui1", code:"D-UI-1" },
+    { name:"dux1", code:"D-UX-1" },
+    { name:"dux2", code:"D-UX-2" },
+    { name:"dux3", code:"D-UX-3" },
+    { name:"dui2", code:"D-UI-2" }
+  ];
+  var UI_NAME = { a:"Scrivania", b:"Accoglienza", c:"Comando", d:"Quaderno" };
+  var UX_NAME = { a:"La scrivania dei compiti", b:"Le aree di responsabilità", c:"Il registro degli oggetti", d:"L'anno associativo" };
+
+  function val(name){
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : null;
+  }
+
+  function show(el, html){
+    if (!html) { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false; el.innerHTML = html;
+  }
+
+  function render(){
+    var chips = document.getElementById("chips"), n = 0, html = "";
+    QS.forEach(function(q){
+      var v = val(q.name);
+      if (v) n++;
+      html += '<span class="chip2' + (v ? " set" : "") + '">' + q.code + " = " + (v || "—") + "</span>";
+    });
+    chips.innerHTML = html;
+    document.getElementById("prog").textContent = n + " di 5";
+
+    var line = "HO-004: " + QS.map(function(q){ return q.code + " = " + (val(q.name) || "?"); }).join(" · ");
+    if (n < 5) line += "\n(mancano " + (5 - n) + " risposte)";
+    document.getElementById("outText").value = line;
+
+    // matrice di compatibilità
+    var ui = val("dui1"), ux = val("dux1");
+    document.querySelectorAll("#mxTable td.hit").forEach(function(td){ td.classList.remove("hit"); });
+    var msg = "";
+    if (ui && ux && UI_NAME[ui] && UX_NAME[ux]){
+      var cell = document.querySelector('#mxTable tr[data-ux="' + ux + '"] td[data-ui="' + ui + '"]');
+      if (cell){
+        cell.classList.add("hit");
+        var verdict = cell.textContent.trim();
+        if (verdict === "da evitare"){
+          msg = "<strong>Attenzione.</strong> «" + UX_NAME[ux] + "» su «" + UI_NAME[ui] + "» è l'unica combinazione che il documento sconsiglia: " +
+                (ux === "b" ? "senza un menu fisso si perde il senso di «dove sono», che è l'intera proposta B."
+                            : "i pannelli spezzano la continuità verticale della linea del tempo.") +
+                " Puoi comunque sceglierla, ma dimmelo a parole: cambia il piano di Fase 1D.";
+        } else {
+          msg = "La coppia «" + UI_NAME[ui] + "» + «" + UX_NAME[ux] + "» è valutata <strong>" + verdict + "</strong>.";
+        }
+      }
+    } else {
+      msg = "Scegli una proposta di aspetto e una di struttura per vedere il verdetto.";
+    }
+    show(document.getElementById("mxMsg"), msg);
+
+    // carattere: (a) Open Sans confligge con 1, 3 e 4
+    var f = val("dui2"), fw = "";
+    if (f === "a" && ui && ui !== "b"){
+      fw = "Hai scelto Open Sans ovunque, ma la proposta «" + UI_NAME[ui] + "» prevede un altro carattere. Si può fare: cambia la tipografia della proposta, non la sua struttura. Il risultato somiglierà di più al sito pubblico e un po' meno al mockup che hai visto.";
+    } else if (f === "b" && ui === "b"){
+      fw = "La proposta «Accoglienza» è l'unica costruita su Open Sans, con il corpo a 17 px. Scegliendo un carattere distinto va rivista la sua scala tipografica.";
+    }
+    show(document.getElementById("fontWarn"), fw);
+
+    // D-UX-2 ribalta la raccomandazione
+    var u2 = val("dux2"), w2 = "";
+    if (u2 === "b"){
+      w2 = "Con questa risposta la raccomandazione cambia: se poche persone fanno di tutto, le sei aree della proposta B diventano un attrito quotidiano e <strong>sale la proposta A</strong>. Se avevi già scelto B, vale la pena rileggerla con questa lente.";
+    } else if (u2 === "c"){
+      w2 = "Via di mezzo: la proposta B resta praticabile, ma va ridisegnata su meno aree di sei. Dimmi quali esistono davvero e quali si fondono.";
+    }
+    show(document.getElementById("ux2Warn"), w2);
+
+    var u3 = val("dux3"), w3 = "";
+    if (u3 === "b"){
+      w3 = "Con l'unione dei permessi il registro delle operazioni non potrà dire <em>in quale veste</em> un atto è stato compiuto. È accettabile, ma va messo per iscritto adesso: dopo, aggiungerlo significa rifare l'intestazione di ogni schermata.";
+    } else if (u3 === "c"){
+      w3 = "Il filtro visivo è comodo, ma non protegge: i permessi restano tutti attivi. Su dati di consulenza è una differenza che conta.";
+    }
+    show(document.getElementById("ux3Warn"), w3);
+  }
+
+  document.querySelectorAll('.pick input, .opt input').forEach(function(i){
+    i.addEventListener("change", render);
+  });
+
+  var ans = document.querySelector(".answer"), tog = document.getElementById("toggleAns");
+  tog.addEventListener("click", function(){
+    var open = ans.getAttribute("data-open") === "true";
+    ans.setAttribute("data-open", String(!open));
+    tog.setAttribute("aria-expanded", String(!open));
+    tog.textContent = open ? "Mostra la riga da copiare" : "Nascondi";
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function(){
+    var ta = document.getElementById("outText"), msg = document.getElementById("copyMsg");
+    ta.select();
+    var done = false;
+    try { done = document.execCommand("copy"); } catch (e) { done = false; }
+    if (!done && navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function(){ msg.textContent = "Copiata."; },
+        function(){ msg.textContent = "Selezionala e copiala a mano (Ctrl+C)."; });
+      return;
+    }
+    msg.textContent = done ? "Copiata." : "Selezionala e copiala a mano (Ctrl+C).";
+  });
+
+  render();
+})();
+</script>

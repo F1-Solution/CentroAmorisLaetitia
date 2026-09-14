@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Stato** | **proposta** — in attesa di approvazione dell'utente |
+| **Stato** | **approvata** il 2026-09-14 con DR-038 (approvazione in blocco) |
 | **Data** | 2026-09-14 |
 | **Wave** | `1B-W1` |
 | **Decide** | quale reverse proxy sta davanti alle applicazioni |

@@ -151,3 +151,56 @@ Chiuse in questo round: **D5**, **D7**, **MI-01**, **MI-02**, **MI-03**, **MI-10
 Restano aperte **D6** (hosting, provider e costi — termine Fase 1F) e **D8**
 (WhatsApp — dopo il gate), più le decisioni nuove aperte dalla Fase 1B, raccolte
 nel Round 4.
+
+---
+
+## 8. Round 4 — risposte del 2026-09-14, chiusura della Fase 1B
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-038 | 2026-09-14 | Approvazione delle dieci ADR (D15) | **Opzione A — approvate in blocco** | Approvazione una per una; approvazione parziale | «ADR approvate in blocco» | Proprietario | Tutta la Fase 1 e seguenti | secondo quanto dichiara ciascuna ADR al §6 | D15, DR-035, ADR-001…ADR-010 |
+| DR-039 | 2026-09-14 | Comportamento dei form con pagamento (D14) | **Opzione B — raccolta più rimando a PayPal**: il form resta identico, dopo l'invio compare il collegamento al pagamento con l'importo. Nessuna riconciliazione automatica | Raccolta senza pagamento; parità piena del pagamento | «Opzione B» | Proprietario | Fase 1D, 1E, ADR-010 | sì — il collegamento è configurabile per form | D14, DR-032, ADR-010 §2 |
+| DR-040 | 2026-09-14 | Difetti di qualità del sito attuale (D13) | **Opzione C — correggere i metadati non visibili e restituire il titolo principale alle 29 pagine che non ce l'hanno**, reso graficamente identico al testo che oggi lo sostituisce | Riprodurre i difetti; correggere i soli metadati | «Opzione C» | Proprietario | Fase 1D, 1E, criteri di parità | sì | D13 |
+| DR-041 | 2026-09-14 | Foglio di stile per la stampa (D16) | **Opzione A — fuori perimetro**: non si confronta e non si riproduce | Confronto su un campione di pagine | «Opzione A» | Proprietario | Fase 1E | sì — rientra con un giro di confronti dedicato | D16 |
+| DR-042 | 2026-09-14 | Sorte della pagina di diagnostica in produzione (HO-003) | **Protezione con password anziché cancellazione.** L'utente chiede i due file da caricare | Cancellazione del file; rinomina | «Vorrei farlo proteggendolo con password. Dammi i due file da caricare» | Proprietario | Sito in produzione, rischio R-17 | sì | HO-003, R-17 |
+| DR-043 | 2026-09-14 | Politica di push | **Al commit finale di ogni fase segue sempre la push**, senza chiedere conferma volta per volta | Conferma puntuale a ogni push | «da ora in poi al commit finale di ogni fase puoi sempre far seguire la push» | Proprietario | Git | sì — revocabile in qualunque momento | DR-027, `CLAUDE.md` §«Conferma obbligatoria» |
+
+### Note sulla portata del Round 4
+
+- **DR-038** sblocca la Fase 1C. Da questo momento le dieci ADR passano da
+  `proposta` ad **`approvata`**, con due precisazioni che restano vere perché sono
+  scritte nelle ADR stesse e non sono state revocate:
+  - **ADR-009** approva la **forma** del deployment (Docker Compose su host singolo).
+    La scelta del **fornitore** resta la decisione aperta **D6**, con termine
+    all'inizio della Fase 1F.
+  - **ADR-007** dichiara nel proprio §6 di essere la scelta a rischio più alto e di
+    imporre un **riesame obbligatorio** prima della fase gestionale. L'approvazione
+    in blocco non cancella quel riesame: lo conferma.
+- **DR-039** chiude il conflitto dichiarato in ADR-010 §6. L'importo e il
+  collegamento di pagamento diventano **dati del form**, non codice, coerentemente
+  con ADR-010 §4.1. Nessun trattamento della transazione entra in Fase 1: il Centro
+  incassa su PayPal come oggi e la verifica resta manuale.
+- **DR-040** amplia il perimetro di lavoro della Fase 1E di 29 pagine da
+  riverificare al pixel dopo l'introduzione del titolo principale. Il titolo si
+  aggiunge con la resa grafica del testo che oggi lo sostituisce: se il confronto
+  visivo rileva uno scostamento sopra soglia, prevale la parità e la pagina torna
+  in discussione.
+- **DR-041** non autorizza a dichiarare «verificata» la resa in stampa: la dichiara
+  **fuori perimetro**, che è un'affermazione diversa e va scritta come tale nel
+  rapporto di parità.
+- **DR-042** non chiude il rischio **R-17**: lo riduce. La protezione con password
+  toglie la pagina agli scanner automatici, ma il file resta sul server. Il rischio
+  si chiude con la rimozione, che resta la strada consigliata e che il passaggio in
+  produzione della Fase 1F renderà comunque naturale.
+- **DR-043** non estende l'autorizzazione oltre la push: restano a **conferma
+  obbligatoria** deploy, DNS, certificati, email, pagamenti, import reali,
+  migrazioni su database di produzione, cancellazioni e modifiche a dati reali.
+
+### Decisioni rimaste aperte dopo il Round 4
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni | prima della produzione. **Richiede un professionista** |
+| **HO-004** | Le cinque domande sul design dell'area amministrativa | **in attesa**: l'utente ha chiesto uno strumento di scelta visiva prima di rispondere. Prodotto in questa sessione, vedi `docs/design/chooser/` |

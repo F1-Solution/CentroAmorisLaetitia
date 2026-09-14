@@ -10,6 +10,18 @@
 
 ---
 
+---
+
+> **Aggiornamento del 2026-09-14.** Hai chiesto di poter scegliere guardando, non
+> leggendo. Le otto proposte sono ora rese a schermo in
+> [`../design/chooser/index.html`](../design/chooser/index.html): palette vere,
+> caratteri veri, densità vere, con interruttore chiaro/scuro e schermo/telefono,
+> la matrice di compatibilità che si accende sulla coppia scelta, e le cinque
+> domande in fondo con la riga da copiare. Apri il file con un doppio clic, oppure
+> usa la copia pubblicata come Artifact privato di cui ti ho dato il collegamento.
+> Questa pagina **non aggiunge scelte di design**: mostra quelle dei due documenti.
+
+
 ## 1. Che cosa ho prodotto
 
 Due documenti, scritti da due agenti di design distinti che hanno lavorato in

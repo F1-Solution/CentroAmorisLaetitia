@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Stato** | **proposta sulla forma. La scelta del fornitore resta aperta e si decide in Fase 1F (D6)** |
+| **Stato** | **approvata nella forma** il 2026-09-14 con DR-038. La scelta del fornitore resta la decisione aperta **D6**, con termine alla Fase 1F |
 | **Data** | 2026-09-14 |
 | **Wave** | `1B-W1` |
 | **Decide** | come è fatto il rilascio. **Non** decide dove, né con quali costi |

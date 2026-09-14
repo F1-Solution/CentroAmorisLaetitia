@@ -29,7 +29,7 @@ gate non è superato per intero. Le 15 condizioni sono elencate in
 | # | Milestone | Fasi | Stato |
 |---|---|---|---|
 | M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
-| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A e 1B approvate |
 | M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
 
 ---
@@ -55,7 +55,7 @@ in `source-private/wordpress/` è **superato** e vale solo come riscontro storic
 | `1A-W4` | Mappa plugin → funzionalità pubblica osservabile, con destinazione dichiarata | `docs/migration/plugin-and-feature-map.md` |
 | `1A-W5` | Rischi di migrazione e input mancanti | `docs/migration/migration-risks.md`, `docs/migration/missing-inputs.md` |
 
-### Fase 1B — Architettura della migrazione e piano eseguibile — **COMPLETATA, in attesa di approvazione**
+### Fase 1B — Architettura della migrazione e piano eseguibile — **APPROVATA** 2026-09-14
 
 Otto wave eseguite il 2026-09-14, audit superato (`.planning/phases/1B/AUDIT.md`).
 
@@ -70,14 +70,18 @@ Otto wave eseguite il 2026-09-14, audit superato (`.planning/phases/1B/AUDIT.md`
 | `1B-W6` | `docs/qa/visual-regression-plan.md`, `acceptance-criteria.md` |
 | `1B-W7` | `docs/design/ui-proposals.md`, `ux-proposals.md` — 4 + 4 proposte |
 
-Decisioni aperte dalla fase: **D13**, **D14**, **D15**, **D16** in
-`docs/discovery/open-questions-round-4.md`; le cinque domande di design in
-`docs/handoff/HO-004-scelta-ui-ux-area-amministrativa.md`.
+Round 4 chiuso il 2026-09-14: **D15** (ADR approvate in blocco, DR-038), **D14**
+(opzione B, DR-039), **D13** (opzione C, DR-040), **D16** (opzione A, DR-041).
+Le dieci ADR sono **approvate** e il vincolo di D5 è soddisfatto.
+
+Resta aperta solo **HO-004**, le cinque domande di design: l'utente ha chiesto di
+scegliere visivamente, e lo strumento è in `docs/design/chooser/index.html`.
+Termine: prima della Fase 1D.
 
 Il backend **non deve assomigliare a WordPress**: vincolo rispettato da tutte e otto
 le proposte di design.
 
-### Fase 1C — Fondazione locale — **bloccata dalla decisione D15**
+### Fase 1C — Fondazione locale — **sbloccata** da DR-038
 
 Monorepo pnpm + Turborepo, Docker Compose con PostgreSQL e MinIO, `.env.example`,
 migrazioni iniziali, health check, CI minima, fondazione dei test.

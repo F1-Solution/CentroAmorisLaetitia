@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Stato** | **proposta, con un conflitto da risolvere** — vedi §6 |
+| **Stato** | **approvata** il 2026-09-14 con DR-038. Il conflitto del §6 è chiuso da **DR-039**: strada 2, raccolta più rimando al pagamento |
 | **Data** | 2026-09-14 |
 | **Wave** | `1B-W1` |
 | **Decide** | come si comportano i form del sito pubblico nel primo rilascio |

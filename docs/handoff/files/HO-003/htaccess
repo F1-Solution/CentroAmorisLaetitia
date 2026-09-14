@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------
+# Centro per la Famiglia Amoris Laetitia
+# Protezione con password della pagina di diagnostica (HO-003, DR-042)
+#
+# Questo file va caricato DENTRO la cartella che contiene ver.php,
+# con il nome esatto:  .htaccess   (con il punto davanti, senza estensione)
+#
+# NON caricarlo nella cartella radice del sito: laggiu' c'e' gia' un
+# .htaccess di WordPress e sovrascriverlo romperebbe gli indirizzi
+# delle pagine. Vedi il documento di handoff, passo 1.
+# ---------------------------------------------------------------------
+
+# 1. Richiede nome utente e password per qualunque file di questa cartella.
+AuthType Basic
+AuthName "Area riservata"
+
+# 2. Percorso ASSOLUTO del file delle password sul server.
+#    DA SOSTITUIRE con il percorso reale: vedi il passo 3 del handoff.
+#    Esempio tipico:  /home/NOMEACCOUNT/www.esempio.it/diagnostica/.htpasswd
+AuthUserFile /PERCORSO/ASSOLUTO/DA/SOSTITUIRE/.htpasswd
+
+# 3. Chiunque sia elencato nel file delle password puo' entrare.
+#    Apache 2.4 e 2.2 accettano entrambi questa direttiva.
+Require valid-user
+
+# 4. Il file delle password non deve essere scaricabile dal web.
+#    I due blocchi sono equivalenti: il primo vale per Apache 2.4,
+#    il secondo per Apache 2.2. Lasciarli entrambi non fa danno.
+<Files ".htpasswd">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</Files>
+
+# 5. Nessun motore di ricerca deve indicizzare questa cartella.
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+</IfModule>
