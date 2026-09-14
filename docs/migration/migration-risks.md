@@ -193,6 +193,27 @@ anche la struttura dei titoli, accettando una difformità visiva minima.
 come **insieme separato** dal confronto visivo, così che la scelta non blocchi la
 parità.
 
+### R-19 — I form del sito incassano pagamenti *(nuovo, 1B-W1)*
+**Probabilità certa · Impatto alto**
+
+Misurato sulle 25 definizioni pubblicate: il campo `payment-single` compare **27
+volte**, con importi reali da 35 a 240 euro, e il provider PayPal Standard risulta
+**abilitato su tutti e 25 i form**. Non sono form di contatto: sono moduli di
+iscrizione con pagamento.
+
+La decisione DR-032 — «form minimale che recapita per email» — è stata presa quando
+questo dato non era noto. I pagamenti sono requisiti RG-01…RG-04, esplicitamente
+fuori perimetro fino al superamento del gate: un form minimale non può riprodurli.
+
+*Mitigazione:* la scelta è dell'utente, portata come decisione **D14** con tre
+strade in `docs/decisions/adr/ADR-010-form-fase-1.md` §2. Nel frattempo si progetta e
+si importa tutto ciò che è comune alle strade praticabili, e non si costruisce alcun
+trattamento del campo di pagamento.
+
+*Vincolo assoluto:* non si pubblica alcun form che appaia funzionante senza esserlo.
+Una persona che compila un'iscrizione credendo di essersi iscritta, e non lo è, è il
+danno peggiore che questa fase possa produrre.
+
 ### R-07 — Interruzioni e team di una persona
 **Probabilità alta · Impatto medio**
 
@@ -232,4 +253,5 @@ schema e i componenti non cambiano.
 | R-16 | Ambiente PHP/MySQL difforme | certa | basso | campione esteso in 1E |
 | R-17 | `phpinfo()` esposto in produzione | certa | medio | azione dell'utente, HO-003 |
 | R-18 | Difetti di qualità della sorgente | certa | medio | 1B, decisione D13 |
+| R-19 | I form incassano pagamenti | certa | alto | 1B, decisione D14 |
 | R-07 | Interruzioni | alta | medio | continuo |
