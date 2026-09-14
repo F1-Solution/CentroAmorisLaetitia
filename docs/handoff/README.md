@@ -11,6 +11,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-001 | [Istanza WordPress di riferimento](HO-001-istanza-riferimento-wordpress.md) | 1A → 1E | ✅ **chiuso** — opzione A approvata, istanza costruita e validata |
 | HO-002 | [Versione PHP del server di produzione](HO-002-versione-php-produzione.md) | 1B | ✅ **chiuso** — PHP 7.4.33, MySQL 5.6.51, registrato in DR-037 |
 | HO-003 | [Rimozione della pagina `phpinfo()` dalla produzione](HO-003-rimozione-phpinfo-produzione.md) | 1B | ⏳ in attesa — sicurezza, rischio R-17 |
+| HO-004 | [Scelta del design dell'area amministrativa](HO-004-scelta-ui-ux-area-amministrativa.md) | 1B | ⏳ in attesa — **cinque decisioni**, blocca la Fase 1D |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

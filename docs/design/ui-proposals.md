@@ -84,7 +84,7 @@ nulla.
 ### 2. Palette
 
 Blu istituzionale desaturato su grigi freddi. Diverge dal blu Divi `#2EA3F2` del
-sito pubblico, che su fondo bianco raggiunge solo 2.3:1 e non è utilizzabile per
+sito pubblico, che su fondo bianco raggiunge solo 2.75:1 e non è utilizzabile per
 testo o bordi: il blu qui proposto ne conserva la famiglia cromatica portandola a
 livelli conformi.
 
