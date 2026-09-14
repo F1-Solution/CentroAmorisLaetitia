@@ -1,0 +1,96 @@
+# Integrazione continua (DR-008).
+#
+# Principio: la CI esegue **gli stessi comandi** della macchina di sviluppo, con la
+# stessa versione di Node. Una CI che verifica cose diverse da quelle che si
+# verificano in locale produce due verità, e prima o poi si crede a quella sbagliata.
+name: Verifica
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Una esecuzione per riferimento: le corse vecchie si annullano da sole.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifica:
+    name: Lint, tipi, build, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: amoris
+          POSTGRES_PASSWORD: sviluppo-locale
+          POSTGRES_DB: amoris
+          # Stessa collazione dell'ambiente locale: la ricerca in italiano
+          # dipende da come il cluster è stato inizializzato.
+          POSTGRES_INITDB_ARGS: '--locale-provider=icu --icu-locale=it-IT --encoding=UTF8'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U amoris -d amoris"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://amoris:sviluppo-locale@localhost:5432/amoris
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Installazione
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Formattazione
+        run: pnpm format:check
+
+      - name: Tipi
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test unitari e di integrazione
+        run: pnpm test
+
+      # Il controllo che tiene insieme le due forme dello schema: se la
+      # definizione Drizzle e `docs/architecture/schema.sql` divergono, qui si
+      # rompe. Vedi packages/db/README.md.
+      - name: Lo schema corrisponde alla forma canonica
+        run: pnpm db:verify
+
+      - name: Browser per le prove end-to-end
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prove end-to-end
+        run: pnpm test:e2e
+
+      - name: Rapporto delle prove end-to-end
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
