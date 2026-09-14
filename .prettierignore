@@ -1,0 +1,16 @@
+# Prettier formatta il codice. La documentazione resta com'e' stata scritta e
+# approvata: riformattarla produrrebbe un diff enorme su documenti gia' validati.
+**/*.md
+docs/
+.planning/
+tools/
+source-private/
+.reference/
+
+pnpm-lock.yaml
+.turbo/
+dist/
+.next/
+coverage/
+playwright-report/
+test-results/

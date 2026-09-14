@@ -1,0 +1,13 @@
+# Fine riga normalizzati a LF nel repository: la macchina di sviluppo e'
+# Windows, la CI e i container sono Linux. Rischio RC-04.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary

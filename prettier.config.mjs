@@ -1,0 +1,10 @@
+/** Formattazione condivisa. Vedi packages/config per lint e TypeScript. */
+export default {
+  printWidth: 100,
+  singleQuote: true,
+  semi: true,
+  trailingComma: 'all',
+  arrowParens: 'always',
+  endOfLine: 'lf',
+  overrides: [{ files: '*.md', options: { proseWrap: 'preserve' } }],
+};
