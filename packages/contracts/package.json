@@ -1,0 +1,25 @@
+{
+  "name": "@amoris/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Schemi Zod condivisi fra API e applicazioni (ADR-001 §3)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@amoris/config": "workspace:*",
+    "@types/node": "^22.18.12",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.3"
+  }
+}

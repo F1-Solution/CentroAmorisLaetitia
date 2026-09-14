@@ -1,0 +1,31 @@
+{
+  "name": "@amoris/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Servizio API (ADR-001: Fastify)",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@amoris/contracts": "workspace:*",
+    "@amoris/db": "workspace:*",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/swagger": "^9.5.2",
+    "fastify": "^5.6.1",
+    "fastify-type-provider-zod": "^6.0.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@amoris/config": "workspace:*",
+    "@types/node": "^22.18.12",
+    "eslint": "^9.39.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

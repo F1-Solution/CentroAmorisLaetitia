@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema/index.js';
@@ -19,3 +20,12 @@ export function createDatabase({ url, maxConnections = 10 }: DatabaseOptions) {
 }
 
 export type Database = ReturnType<typeof createDatabase>['db'];
+
+/**
+ * Verifica che il database risponda. Sta qui e non nel servizio API perche'
+ * ADR-008 §3.3 tiene l'accesso al database dentro un pacchetto solo: chi lo usa
+ * non importa l'ORM.
+ */
+export async function ping(db: Database): Promise<void> {
+  await db.execute(sql`select 1`);
+}

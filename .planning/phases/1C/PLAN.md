@@ -52,7 +52,8 @@ dichiarano nell'audit.
 | `typescript`, `@types/node` | tutto | DR-004 |
 | `turbo` | radice | DR-003 |
 | `eslint`, `prettier` e i relativi plugin | tutto | `CLAUDE.md` §Stack |
-| `fastify`, `@fastify/cookie`, `@fastify/cors`, `@fastify/helmet`, `@fastify/rate-limit`, `@fastify/swagger` | `apps/api` | ADR-001 §5 |
+| `fastify`, `@fastify/cors`, `@fastify/swagger` | `apps/api` | ADR-001 §5 |
+| `@fastify/cookie`, `@fastify/rate-limit`, `@fastify/multipart` | `apps/api`, **non in 1C** | ADR-001 §5 — entrano in 1D con sessioni, form e media |
 | `fastify-type-provider-zod`, `zod` | `apps/api`, `packages/contracts` | ADR-001 §3 |
 | `drizzle-orm`, `drizzle-kit`, `postgres` | `packages/db` | ADR-002 §5 |
 | `next`, `react`, `react-dom` | `apps/web`, `apps/admin` | DR-001 |
