@@ -1,0 +1,27 @@
+{
+  "name": "@amoris/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Area amministrativa (ADR-008: applicazione distinta, non indicizzata)",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@amoris/ui": "workspace:*",
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@amoris/config": "workspace:*",
+    "@types/node": "^22.18.12",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.3"
+  }
+}

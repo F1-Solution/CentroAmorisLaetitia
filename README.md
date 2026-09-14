@@ -52,7 +52,7 @@ pnpm dev
 | Indirizzo | Che cosa |
 |---|---|
 | `http://localhost:3000` | sito pubblico |
-| `http://localhost:3001` | area amministrativa |
+| `http://localhost:3001/admin` | area amministrativa |
 | `http://localhost:3002/health/live` | API, stato del servizio |
 | `http://localhost:9001` | console di MinIO |
 
