@@ -139,6 +139,60 @@ terzi a spese del Centro.
 *Mitigazione:* limitarla per referrer e ruotarla prima del passaggio al nuovo
 dominio. È un'azione sull'account Google del Centro: spetta all'utente.
 
+### R-16 — Difformità di ambiente fra produzione e istanza di riferimento *(nuovo, 1B-W0)*
+**Probabilità certa · Impatto basso**
+
+La produzione gira su **PHP 7.4.33** e **MySQL 5.6.51**; l'istanza di riferimento su
+PHP 8.2 e MariaDB 10.11 (DR-037). I limiti di runtime coincidono, perché derivano
+dallo stesso `.user.ini`, e le pagine campione rendono in modo identico. Resta
+l'ipotesi che Divi o un plugin producano differenze di resa fra le due versioni di
+PHP su pagine non campionate.
+
+*Mitigazione:* il confronto a campione fra istanza di riferimento e sito online, già
+previsto dalla Fase 1E, si estende alle pagine che usano Divi. Se emergesse una
+differenza, fa fede **il sito online**, non l'istanza.
+
+*Rientro:* ricostruire l'istanza su PHP 7.4 sarebbe possibile ma costoso e con
+un'immagine non più manutenuta; si adotta solo se la differenza è reale e diffusa.
+
+### R-17 — `phpinfo()` pubblicamente esposto in produzione *(nuovo, 1B-W0)*
+**Probabilità certa · Impatto medio**
+
+Sul sito in produzione esiste un URL, senza autenticazione, che restituisce un
+`phpinfo()` completo: percorsi assoluti, opzioni di compilazione, elenco e versione
+di tutte le estensioni, configurazione di sessione, variabili di ambiente del
+processo web. È materiale di ricognizione per un attaccante e non ha ragione di
+restare pubblico.
+
+*Mitigazione:* rimozione del file. È un'operazione sull'hosting del Centro e spetta
+all'utente: handoff `HO-003`.
+
+*Nota:* il contenuto della pagina non è stato copiato nella documentazione oltre ai
+valori di ambiente necessari a chiudere MI-03.
+
+### R-18 — Difetti di qualità della sorgente che la parità imporrebbe di riprodurre *(nuovo, 1B-W0)*
+**Probabilità certa · Impatto medio**
+
+Misurato in `source-supplementary-findings.md`: **29 pagine su 80 non emettono alcun
+`<h1>`**, **45 pagine su 80 non hanno meta description**, **nessun URL ha
+`og:image`**, il suffisso di paginazione è in inglese, `og:site_name` termina con un
+separatore penzolante. Sono difetti della sorgente, concentrati sulle pagine
+costruite con Divi.
+
+La parità pixel-perfect riguarda la **resa visiva**; questi elementi non si vedono,
+ma un confronto meccanico che includesse i metadati segnalerebbe difformità su
+decine di URL, e riprodurli fedelmente significherebbe portare nel sito nuovo un
+difetto di accessibilità e di SEO.
+
+*Mitigazione:* la scelta è dell'utente e non dell'agente. Portata come decisione
+**D13** alla chiusura della Fase 1B, con tre strade: riprodurre fedelmente;
+correggere i soli metadati non visibili mantenendo identica la resa; correggere
+anche la struttura dei titoli, accettando una difformità visiva minima.
+
+*Fino alla decisione:* i criteri di accettazione della Fase 1E trattano i metadati
+come **insieme separato** dal confronto visivo, così che la scelta non blocchi la
+parità.
+
 ### R-07 — Interruzioni e team di una persona
 **Probabilità alta · Impatto medio**
 
@@ -175,4 +229,7 @@ schema e i componenti non cambiano.
 | R-13 | OptinMonster non verificato | bassa | medio | 1B |
 | R-14 | Chiave Google Maps esposta | certa | medio | azione dell'utente |
 | R-15 | Deriva della sorgente | media | medio | delta prima della 1F |
+| R-16 | Ambiente PHP/MySQL difforme | certa | basso | campione esteso in 1E |
+| R-17 | `phpinfo()` esposto in produzione | certa | medio | azione dell'utente, HO-003 |
+| R-18 | Difetti di qualità della sorgente | certa | medio | 1B, decisione D13 |
 | R-07 | Interruzioni | alta | medio | continuo |

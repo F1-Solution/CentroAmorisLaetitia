@@ -113,3 +113,41 @@ Aperte al 2026-09-13: **D5** (ADR su framework API, ORM, reverse proxy), **D6**
 (hosting, provider e costi), **D7** (lingua dei nomi di tabelle e colonne), **D8**
 (WhatsApp), più gli input mancanti **MI-01**, **MI-02**, **MI-03** e **MI-10** che
 diventeranno decisioni nel Round 3, all'apertura della Fase 1B.
+
+---
+
+## 7. Round 3 — risposte del 2026-09-14, apertura della Fase 1B
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-031 | 2026-09-14 | Approvazione della Fase 1A | **Approvata** | — | «Fase 1A: approvata» | Proprietario | Roadmap | no | — |
+| DR-032 | 2026-09-14 | Comportamento dei form in Fase 1 (MI-01) | **Form minimale che recapita per email.** In fase gestionale sarà sostituito da form generati dinamicamente dal backend | Form resi ma disabilitati; pagina che rimanda a un contatto | «form minimale via email (poi dovrà essere sostituita da form generati dinamicamente tramite backend)» | Proprietario | Fase 1B, 1D, 1E | sì — la sostituzione è già prevista | MI-01, R-11 |
+| DR-033 | 2026-09-14 | Destinazione dei 4 documenti riservati e ambito del primo deploy (MI-02) | **I 4 file devono essere presenti anche nella futura area riservata.** Il **primo deploy** deve avere il frontend pixel-perfect **e** un backend minimale che consenta di **aggiungere e modificare pagine** | Documenti inaccessibili fino alla fase gestionale; primo deploy di solo frontend | «I 4 file devono essere presenti anche nella futura area riservata … il primo deploy deve avere il frontend pixel-perfect uguale ma deve anche avere il backend minimale per poter aggiungere/modificare pagine» | Proprietario | Fase 1B, 1D, 1F, gate | no | MI-02 |
+| DR-034 | 2026-09-14 | Perimetro di parità delle pagine allegato (MI-10) | **Le 170 pagine allegato restano 301** e il comportamento va mantenuto. Non sono pagine visibili: rimandano all'allegato | Portarle nel perimetro visivo (293 URL invece di 123) | «Le pagine 301 vanno bene, non sono pagine visibili ma rimandano all'allegato e vorrei mantenere questo comportamento» | Proprietario | Fase 1B, 1D, 1E | sì | MI-10, R-09 |
+| DR-035 | 2026-09-14 | Metodo di scelta su framework API, ORM e reverse proxy (D5) | **Tre ADR argomentate portate in Fase 1B**, con scelta dell'utente sulle ADR | Scelta secca anticipata | «porta tre ADR argomentate in Fase 1B» | Proprietario | Fase 1B | — | D5 |
+| DR-036 | 2026-09-14 | Lingua dei nomi di tabelle e colonne (D7) | **Opzione B — tutto in inglese snake_case**, allineato ai nomi dei modelli | Italiano snake_case con mappatura nell'ORM | «Tutto in inglese snake_case, allineato ai nomi dei modelli» | Proprietario | Schema, ORM | no, senza ADR | D7 — **supera DR-H05 e RN-07** |
+| DR-037 | 2026-09-14 | Ambiente PHP e database di produzione (MI-03, HO-002) | **PHP 7.4.33** con supporto a interi a 64 bit, estensione **`mysqli`**, server database **MySQL 5.6.51-91.0-log**. L'utente autorizza la lettura di `https://www.centroamorislaetitia.it/ver.php` per i valori di ambiente | — | Risposta all'handoff HO-002 | Proprietario | Riproducibilità, Fase 1B, 1F | — | MI-03, HO-002 |
+
+### Note sulla portata del Round 3
+
+- **DR-033** cambia il contenuto del primo rilascio: il gate di Fase 1 non si supera
+  con il solo sito pubblico, ma con sito pubblico **più** CMS minimo capace di
+  creare e modificare pagine. Non è una fase gestionale: è il requisito RC-03, già
+  in perimetro.
+- **DR-033** non autorizza la costruzione dell'area riservata: dichiara che i 4
+  documenti **dovranno** comparirvi quando esisterà. In Fase 1 restano non pubblici
+  e vanno conservati, non esposti.
+- **DR-032** impone che il form recapiti davvero. Un endpoint che invia email
+  richiede un mittente configurato, e rientra fra le azioni che `CLAUDE.md`
+  sottopone a **conferma obbligatoria** prima dell'attivazione.
+- **DR-036** supera DR-H05 e rende non più applicabile il requisito **RN-07**.
+- **DR-037** registra una **difformità di ambiente**: la produzione gira su PHP
+  7.4.33 e MySQL 5.6, mentre l'istanza di riferimento usa PHP 8.2 e MariaDB 10.11.
+  Trattata come rischio **R-16** in `docs/migration/migration-risks.md`.
+
+### Stato delle decisioni aperte al 2026-09-14
+
+Chiuse in questo round: **D5**, **D7**, **MI-01**, **MI-02**, **MI-03**, **MI-10**.
+Restano aperte **D6** (hosting, provider e costi — termine Fase 1F) e **D8**
+(WhatsApp — dopo il gate), più le decisioni nuove aperte dalla Fase 1B, raccolte
+nel Round 4.

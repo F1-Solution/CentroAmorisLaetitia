@@ -9,7 +9,13 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | # | Documento | Fase | Stato |
 |---|---|---|---|
 | HO-001 | [Istanza WordPress di riferimento](HO-001-istanza-riferimento-wordpress.md) | 1A → 1E | ✅ **chiuso** — opzione A approvata, istanza costruita e validata |
-| HO-002 | [Versione PHP del server di produzione](HO-002-versione-php-produzione.md) | 1B | ⏳ in attesa — non bloccante |
+| HO-002 | [Versione PHP del server di produzione](HO-002-versione-php-produzione.md) | 1B | ✅ **chiuso** — PHP 7.4.33, MySQL 5.6.51, registrato in DR-037 |
+| HO-003 | [Rimozione della pagina `phpinfo()` dalla produzione](HO-003-rimozione-phpinfo-produzione.md) | 1B | ⏳ in attesa — sicurezza, rischio R-17 |
+
+## Chiuse nel Round 3 del 2026-09-14
+
+MI-01, MI-02, MI-03 e MI-10 sono state decise dall'utente e registrate come DR-032,
+DR-033, DR-037 e DR-034. Non diventano handoff.
 
 ## Azioni previste più avanti
 
@@ -18,9 +24,6 @@ L'elenco completo è in [`../migration/missing-inputs.md`](../migration/missing-
 
 | Input | Fase | Natura |
 |---|---|---|
-| MI-01 — comportamento dei form in Fase 1 | 1B | decisione, arriva nel Round 3 |
-| MI-02 — destinazione dei 4 documenti riservati | 1B | decisione |
-| MI-10 — perimetro di parità delle pagine allegato | 1B | decisione |
 | MI-04 — provider, dominio, costi | 1F | decisione con costi reali |
 | MI-05 — restrizione e rotazione della chiave Google Maps | 1F | azione sull'account Google |
 | MI-06 — verifica privacy e legale | 1F | validazione professionale |
