@@ -418,7 +418,10 @@ CREATE INDEX redirects_active_idx ON redirects (source_path) WHERE is_active;
 -- Contenuto atteso dopo l'import (Fase 1D):
 --   169 righe 'exact'  — pagine allegato  -> file          (DR-034)
 --     4 righe 'exact'  — wpdmpro          -> /download/... (1A §8)
+--     6 righe 'exact'  — slug storici     -> contenuto     (1B-W3 §3.3)
 --     1 riga  'prefix' — /wp-content/uploads/ -> /media/    (ADR-004 §3.4)
+--   ---------------------------------------------------------------
+--   180 righe in totale
 
 
 -- =====================================================================

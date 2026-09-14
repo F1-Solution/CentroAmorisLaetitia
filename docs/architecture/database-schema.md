@@ -67,7 +67,7 @@ rispetta.
 | `menus`, `menu_items` | **RC-01** | «Il menu del frontend sarà uguale». 64 voci, 41 pubbliche |
 | `seo_templates` | RC-04, RC-05, R-10 | Si migrano le **regole**, non i 282 record |
 | `content_seo`, `term_seo` | **RC-04** | Sovrascrittura per contenuto. Nasce quasi vuota, ed è corretto |
-| `redirects` | **RC-07**, DR-034 | 169 + 4 + 1 regole, come dati modificabili dal CMS |
+| `redirects` | **RC-07**, DR-034 | 180 regole, come dati modificabili dal CMS |
 | `forms`, `form_notifications` | ADR-010 | 25 definizioni, 39 notifiche |
 | `form_submissions` | DR-026 | 425 compilazioni. **Dati personali**, vedi §7 |
 | `documents` | parità, DR-033 | 4 moduli pubblici più 4 file riservati conservati |
@@ -127,7 +127,7 @@ incoerenza che, senza vincolo, si accumula in silenzio.
 ### 4.6 `redirects` come tabella e non come configurazione del proxy
 
 RC-07 chiede redirect gestibili; ADR-003 §3 tiene il proxy fuori dal dominio
-applicativo. Con 174 regole, tenerle in un file significherebbe un rilascio per ogni
+applicativo. Con 180 regole, tenerle in un file significherebbe un rilascio per ogni
 correzione. `kind = 'prefix'` consente **una sola** regola per gli oltre 1.500 file
 dei media, invece di 1.546.
 
@@ -167,7 +167,7 @@ un tema aperto** (MI-06), non una dimenticanza.
 | `media_variants` | circa 1.376 |
 | `terms` | 3 (2 categorie + 1 di documenti) |
 | `menu_items` | **64** |
-| `redirects` | **174** (169 + 4 + 1 con carattere jolly) |
+| `redirects` | **180** (169 allegati + 4 documenti + 6 slug storici + 1 con carattere jolly) |
 | `forms` | 25 |
 | `form_notifications` | 39 |
 | `form_submissions` | **425** |
