@@ -1,0 +1,48 @@
+# Instradamento di ADR-003 §3. In sviluppo si raggiunge su http://localhost:8080
+# avviando il profilo `proxy`; in produzione lo stesso file, con il dominio vero
+# al posto di :80, ottiene il certificato da solo.
+#
+# Regola che non si viola: **qui dentro non entra nessun redirect di contenuto**.
+# I 169 redirect delle pagine allegato e quelli dei percorsi storici dei media
+# sono dati in tabella e li serve l'applicazione (ADR-003 §3.5, requisito RC-07).
+
+{
+	admin off
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	# L'area amministrativa non va indicizzata (ADR-008 §3.3 regola 2).
+	@admin path /admin /admin/*
+	header @admin X-Robots-Tag "noindex, nofollow"
+
+	handle /api/* {
+		reverse_proxy {$API_UPSTREAM}
+	}
+
+	# I media li serve l'API, non lo storage (ADR-004 §3.6).
+	handle /media/* {
+		reverse_proxy {$API_UPSTREAM}
+	}
+
+	handle /admin* {
+		reverse_proxy {$ADMIN_UPSTREAM}
+	}
+
+	handle {
+		reverse_proxy {$WEB_UPSTREAM}
+	}
+
+	# HSTS e Content-Security-Policy si aggiungono in Fase 1F, quando il
+	# dominio e' vero e si sa quali domini esterni sopravvivono alla parita'
+	# (ADR-003 §3 punto 3). Metterli adesso sarebbe una dichiarazione
+	# non verificata.
+}
