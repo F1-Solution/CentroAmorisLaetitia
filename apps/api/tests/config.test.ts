@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { ConfigError, loadConfig } from '../src/config.js';
+
+/**
+ * ADR-009 §4.3 chiede che un servizio con configurazione incompleta **non parta** e
+ * dica quale variabile manca. Questi test verificano proprio quello, perché è il
+ * genere di comportamento che si rompe in silenzio e si scopre in produzione.
+ */
+
+const minima = { DATABASE_URL: 'postgres://finto:finto@localhost:5432/finto' };
+
+describe('configurazione', () => {
+  it('non parte senza l’indirizzo del database, e dice quale variabile manca', () => {
+    let errore: unknown;
+    try {
+      loadConfig({});
+    } catch (e) {
+      errore = e;
+    }
+    expect(errore).toBeInstanceOf(ConfigError);
+    expect((errore as ConfigError).problems.join(' ')).toContain('DATABASE_URL');
+  });
+
+  it('applica i valori predefiniti per tutto il resto', () => {
+    const config = loadConfig(minima);
+    expect(config.NODE_ENV).toBe('development');
+    expect(config.API_PORT).toBe(3002);
+    expect(config.API_HOST).toBe('127.0.0.1');
+    expect(config.CORS_ORIGINS).toEqual([]);
+  });
+
+  it('rifiuta una porta fuori intervallo invece di accomodarla', () => {
+    expect(() => loadConfig({ ...minima, API_PORT: '70000' })).toThrow(ConfigError);
+  });
+
+  it('legge le origini ammesse come elenco, ignorando spazi e voci vuote', () => {
+    const config = loadConfig({
+      ...minima,
+      CORS_ORIGINS: 'http://localhost:3000 , ,http://localhost:3001',
+    });
+    expect(config.CORS_ORIGINS).toEqual(['http://localhost:3000', 'http://localhost:3001']);
+  });
+});

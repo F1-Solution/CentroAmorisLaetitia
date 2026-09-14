@@ -17,12 +17,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
-    },
-    "test:e2e": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "outputs": ["playwright-report/**"]
+      "env": ["DATABASE_URL"],
+      "outputs": []
     },
     "dev": {
       "cache": false,

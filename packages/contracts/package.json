@@ -11,7 +11,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^4.1.12"
@@ -20,6 +21,7 @@
     "@amoris/config": "workspace:*",
     "@types/node": "^22.18.12",
     "eslint": "^9.39.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }

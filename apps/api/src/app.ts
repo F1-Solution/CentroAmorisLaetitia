@@ -38,7 +38,6 @@ export async function buildApp(config: Config) {
     },
     // Il proxy davanti è Caddy (ADR-003): l'indirizzo del client arriva da lui.
     trustProxy: true,
-    disableRequestLogging: config.NODE_ENV === 'test',
   }).withTypeProvider<ZodTypeProvider>();
 
   // Zod come unica fonte di verità: validazione, tipi e OpenAPI (ADR-001 §3).
