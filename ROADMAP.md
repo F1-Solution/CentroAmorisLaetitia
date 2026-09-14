@@ -29,7 +29,7 @@ gate non è superato per intero. Le 15 condizioni sono elencate in
 | # | Milestone | Fasi | Stato |
 |---|---|---|---|
 | M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
-| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A e 1B approvate |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A, 1B e 1C approvate |
 | M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
 
 ---
@@ -74,14 +74,13 @@ Round 4 chiuso il 2026-09-14: **D15** (ADR approvate in blocco, DR-038), **D14**
 (opzione B, DR-039), **D13** (opzione C, DR-040), **D16** (opzione A, DR-041).
 Le dieci ADR sono **approvate** e il vincolo di D5 è soddisfatto.
 
-Resta aperta solo **HO-004**, le cinque domande di design: l'utente ha chiesto di
-scegliere visivamente, e lo strumento è in `docs/design/chooser/index.html`.
-Termine: prima della Fase 1D.
+HO-004 chiusa il 2026-09-15 con le cinque decisioni DR-044…DR-048. La Fase 1B è
+pienamente chiusa.
 
 Il backend **non deve assomigliare a WordPress**: vincolo rispettato da tutte e otto
 le proposte di design.
 
-### Fase 1C — Fondazione locale — **COMPLETATA, in attesa di approvazione**
+### Fase 1C — Fondazione locale — **APPROVATA 2026-09-15**
 
 Otto wave eseguite il 2026-09-14, audit superato
 (`.planning/phases/1C/AUDIT.md`): 11 criteri di uscita su 11, 11 difetti trovati e
@@ -105,6 +104,22 @@ prodotto.
 
 Importer idempotente con dry-run, import media, ricostruzione di menu, routing,
 contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
+
+| Wave | Attività | Output |
+|---|---|---|
+| `1D-W0` | Pianificazione della fase, sistema di design, registrazione delle decisioni | `.planning/phases/1D/CONTEXT.md`, `PLAN.md`, `BLOCK-MODEL.md`, `IMPORTER-DESIGN.md`, `docs/design/design-system.md` |
+| `1D-W1` | Modello dei 14 blocchi di ADR-005: schemi Zod, sanificazione a elenco chiuso, serializzatore in HTML, componenti di resa | `packages/blocks` |
+| `1D-W2` | Impalcatura dell'importer: riga di comando, lettura della sorgente, gli 8 controlli preliminari, registro delle esecuzioni e delle anomalie, rapporto | `apps/importer` |
+| `1D-W3` | Convertitori da Gutenberg, da Divi e da HTML nudo a blocchi, con conteggio e soglia del blocco di riserva | convertitori e test unitari |
+| `1D-W4` | Fasi di import 1–10: impostazioni, utenti, media e caricamento nel bucket, termini, contenuti, relazioni, menu, SEO, documenti, carosello | — |
+| `1D-W5` | Fasi 11–16: form, compilazioni, tabelle storiche, redirect, riscrittura dei riferimenti ai media, verifica. Idempotenza e rientro | — |
+| `1D-W6` | Rotte dell'API per contenuti, media, menu, SEO, redirect, impostazioni e tassonomie; sessioni; OpenAPI | `apps/api` |
+| `1D-W7` | Attuazione del sistema di design: token e componenti dell'area amministrativa | `packages/ui` |
+| `1D-W8` | CMS: navigazione per aree, accesso, elenco e modifica dei contenuti, editor dell'albero dei blocchi, anteprima | `apps/admin` |
+| `1D-W9` | CMS: media, menu, SEO, redirect, impostazioni | `apps/admin` |
+| `1D-W10` | Test di andata e ritorno su tutti i contenuti, E2E sul CMS, copertura | — |
+| `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza | `docs/migration/import-report.md` |
+| `1D-W12` | Audit della fase | `.planning/phases/1D/AUDIT.md` |
 
 ### Fase 1E — Ricostruzione React e parità visiva
 

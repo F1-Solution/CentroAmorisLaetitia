@@ -204,3 +204,54 @@ nel Round 4.
 | **D8** | WhatsApp nelle comunicazioni | dopo il gate |
 | **MI-06** | Verifica privacy e legale sulle 425 compilazioni | prima della produzione. **Richiede un professionista** |
 | **HO-004** | Le cinque domande sul design dell'area amministrativa | **in attesa**: l'utente ha chiesto uno strumento di scelta visiva prima di rispondere. Prodotto in questa sessione, vedi `docs/design/chooser/` |
+
+---
+
+## 9. Round 5 — risposte del 2026-09-15, chiusura di HO-004 e HO-005
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-044 | 2026-09-15 | D-UI-1 — proposta di UI di base per l'area amministrativa | **(a) Scrivania** — banco di lavoro denso, due colonne di navigazione permanenti, blu istituzionale su grigi freddi | Accoglienza, Comando, Quaderno | risposta a HO-004, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | HO-004 §6 |
+| DR-045 | 2026-09-15 | D-UX-1 — proposta di UX di base | **(b) Le aree di responsabilità** | La scrivania dei compiti, Il registro degli oggetti, L'anno associativo | risposta a HO-004, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | HO-004 §6 |
+| DR-046 | 2026-09-15 | D-UX-2 — organizzazione del Centro | **(a) sì, le persone hanno ruoli abbastanza distinti** | (b) poche persone fanno di tutto, (c) via di mezzo | risposta a HO-004, senza motivazione dichiarata | Proprietario | Fase 1D | — | HO-004 §6 |
+| DR-047 | 2026-09-15 | D-UX-3 — funzionamento del cambio di ruolo | **(b) tutti i ruoli insieme, unione dei permessi, nessuna commutazione** | (a) un solo ruolo attivo per volta, (c) tutti attivi con filtro visivo | risposta a HO-004, senza motivazione dichiarata | Proprietario | Fase 1D, registro operazioni | — | HO-004 §6 |
+| DR-048 | 2026-09-15 | D-UI-2 — carattere dell'area amministrativa | **(b) un carattere d'interfaccia distinto** da quello del sito pubblico | (a) Open Sans ovunque | risposta a HO-004, senza motivazione dichiarata | Proprietario | Fase 1D, identità | — | HO-004 §6, DR-018 |
+| DR-049 | 2026-09-15 | HO-005 — protezione con password della pagina di diagnostica | **eseguita dall'utente**. Attua DR-042 | — | «HO-005: fatto» | Proprietario | Produzione, R-17 | — | HO-005, DR-042, R-17 |
+
+### Note sulla portata del Round 5
+
+- **DR-044 e DR-045 sbloccano la Fase 1D**: HO-004 era l'ultima decisione bloccante della
+  1B. La UI e la UX scelte diventano un documento unico di sistema di design prodotto in Fase
+  1D (HO-004 §10 punto 3).
+
+- **DR-046 conferma** la premessa su cui poggia la proposta B: la domanda D-UX-2 era quella che
+  poteva ribaltare la raccomandazione, e non la ribalta.
+
+- **DR-047 è una scelta contraria alla raccomandazione**, che era (a). Va scritto così, perché
+  il registro serve a ricordare che cosa è stato scelto e non che cosa era consigliato.
+  Conseguenze da dichiarare: l'interfaccia non ha un commutatore di ruolo; i permessi sono
+  l'unione di quelli dei ruoli della persona; il registro delle operazioni non potrà attribuire
+  un'azione al ruolo con cui è stata compiuta, perché non esiste un ruolo attivo. HO-004
+  dichiarava questa la scelta **più costosa da cambiare dopo**: resta vero.
+
+- **Tensione fra DR-045 e DR-047, aperta**: la proposta UX B nasce sull'idea di riconfigurare
+  l'ambiente in base alla veste scelta, mentre DR-047 esclude la commutazione. La lettura
+  proposta dall'agente è che le aree restino un fatto di **navigazione e raggruppamento**, non
+  di permesso. **Questa lettura non è approvata**: va confermata dall'utente e finché non lo è
+  resta un'assunzione. In Fase 1 esistono comunque solo le aree «Redazione» e «Impostazioni»,
+  quindi oggi la tensione ha effetti limitati.
+
+- **DR-048** non è una scelta tecnica ma di identità: l'area amministrativa deve essere
+  riconoscibilmente un'altra cosa dal sito pubblico, coerentemente con DR-018.
+
+- **DR-049 non chiude il rischio R-17**: lo riduce, come già scritto in DR-042. Il file
+  resta sul server e sparirà con il passaggio in produzione della Fase 1F.
+
+### Decisioni rimaste aperte dopo il Round 5
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni | prima della produzione. **Richiede un professionista** |
+| **Lettura delle aree come navigazione** | Confermare che DR-045 e DR-047 insieme significano: le aree sono navigazione e raggruppamento, **non** controllo di permesso | prima della wave 1D-W8 |

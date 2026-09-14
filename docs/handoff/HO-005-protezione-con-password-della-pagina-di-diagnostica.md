@@ -9,6 +9,8 @@
 | **Tempo stimato** | 15 minuti |
 | **File pronti** | [`files/HO-003/htaccess`](files/HO-003/htaccess) e [`files/HO-003/htpasswd`](files/HO-003/htpasswd) |
 
+> **Chiusa il 2026-09-15.** DR-049.
+
 ---
 
 ## 1. Prima di tutto: una cosa che devi sapere

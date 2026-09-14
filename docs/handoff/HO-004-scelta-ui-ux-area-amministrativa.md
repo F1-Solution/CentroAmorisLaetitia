@@ -8,6 +8,8 @@
 | **Tempo stimato** | 40–60 minuti di lettura, più il tempo per decidere |
 | **Blocca** | la progettazione dell'interfaccia del CMS in Fase 1D |
 
+> **Chiusa il 2026-09-15.** DR-044…DR-048.
+
 ---
 
 ---
