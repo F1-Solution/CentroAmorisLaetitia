@@ -156,7 +156,7 @@ un tema aperto** (MI-06), non una dimenticanza.
 | Pagine di archivio degli articoli | `page_for_posts = 0`: non esiste nella sorgente, non va inventata (`1B-W0` §8.2) |
 | Tabelle per `event_listing` e `cuar_log_event` | plugin disattivati, residui senza effetto pubblico (1A §5) |
 | Multilingua | il sito è solo `it_IT` |
-| Segreti e chiavi API | stanno in variabili d'ambiente (ADR-009 §3.3), mai a database |
+| Segreti e chiavi API | stanno in variabili d'ambiente (ADR-009 §4.3), mai a database |
 
 ## 6. Volumi attesi dopo l'import
 
@@ -208,7 +208,7 @@ Regole vincolanti, che valgono dal primo giorno:
 
 | # | Questione | Dove si chiude |
 |---|---|---|
-| 1 | Campo `payment-single` dei form: cosa se ne fa | decisione **D14**, ADR-010 §5 |
+| 1 | Campo `payment-single` dei form: cosa se ne fa | decisione **D14**, ADR-010 §6 |
 | 2 | Se riprodurre o correggere i difetti di metadati della sorgente | decisione **D13**, R-18 |
 | 3 | Se il ruolo attivo è uno per volta o è l'unione dei permessi | domanda delle proposte di UX; lo schema regge entrambe |
 | 4 | Conservazione e cancellazione delle 425 compilazioni | MI-06, **validazione legale** |

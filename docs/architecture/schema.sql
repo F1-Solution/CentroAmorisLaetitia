@@ -439,7 +439,7 @@ CREATE TABLE forms (
     is_active      boolean NOT NULL DEFAULT true,
     -- Vero se la definizione contiene un campo di pagamento. Serve a
     -- impedire la pubblicazione di un form che appare funzionante senza
-    -- esserlo, finche' D14 non e' decisa (ADR-010 §5).
+    -- esserlo, finche' D14 non e' decisa (ADR-010 §6).
     requires_payment boolean NOT NULL DEFAULT false,
     legacy_id      bigint,
     created_at     timestamptz NOT NULL DEFAULT now(),
@@ -562,7 +562,7 @@ CREATE TABLE settings (
 
 -- Nota: is_secret esiste per marcare valori da non mostrare in chiaro
 -- nell'interfaccia, non per conservare credenziali. Chiavi API, password
--- e token stanno in variabili d'ambiente (ADR-009 §3.3), mai a database.
+-- e token stanno in variabili d'ambiente (ADR-009 §4.3), mai a database.
 --
 -- Chiavi previste all'import:
 --   site.title, site.description, site.timezone, site.locale,

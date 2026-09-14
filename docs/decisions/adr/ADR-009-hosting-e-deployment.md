@@ -37,9 +37,41 @@ ambiente PHP condiviso, senza Docker e senza Node.js. L'opzione B di D6 —
 «mantenere l'hosting attuale» — **non è praticabile** per il sistema nuovo. Resta
 praticabile per il sito WordPress finché resta in piedi.
 
-## 3. Forma proposta
+## 3. Opzioni sulla forma
 
-### 3.1 Servizi
+La scelta del **fornitore** resta aperta (D6). La scelta della **forma** no, e ha
+tre candidate reali.
+
+### Opzione A — Docker Compose su un host singolo
+
+- **A favore:** è ciò che DR-006 già stabilisce; l'ambiente di sviluppo e quello di
+  produzione sono lo stesso file con parametri diversi; un manutentore solo riesce a
+  tenere tutto in testa; nessun costo oltre la macchina.
+- **Contro:** punto singolo di guasto; gli aggiornamenti del sistema operativo sono
+  a carico nostro; il rilascio comporta pochi secondi di indisponibilità.
+
+### Opzione B — Piattaforma gestita, con servizi separati
+
+Applicazioni su una piattaforma di rilascio gestita, database e storage come servizi
+a canone.
+
+- **A favore:** niente sistema operativo da mantenere; backup e alta disponibilità
+  spesso inclusi; rilascio senza indisponibilità.
+- **Contro:** **costo ricorrente maggiore e variabile**, su un'associazione del terzo
+  settore; collocazione dei dati da verificare fornitore per fornitore, e qui ci sono
+  dati di consulenze familiari; dipendenza da scelte di prodotto altrui; l'ambiente
+  di sviluppo smette di somigliare alla produzione.
+
+### Opzione C — Orchestratore di container
+
+- **A favore:** scalabilità e ripristino automatico.
+- **Contro:** sproporzionato. Meno di cento utenti simultanei e un manutentore solo
+  (RB-02, RB-03): l'orchestratore diventerebbe il sistema più complesso del
+  progetto, e quello che nessuno saprebbe riparare in fretta.
+
+## 4. Forma proposta
+
+### 4.1 Servizi
 
 | Servizio | Ruolo | Persistenza |
 |---|---|---|
@@ -55,7 +87,7 @@ Nessun servizio di cache separato: a questi volumi non serve, e sarebbe un pezzo
 più da sorvegliare. Se le misure della Fase 1F dicessero il contrario, si aggiunge
 allora, con il dato in mano.
 
-### 3.2 Storage a oggetti in produzione
+### 4.2 Storage a oggetti in produzione
 
 Due strade, entrambe compatibili con DR-005, da decidere in Fase 1F insieme a D6:
 
@@ -68,7 +100,7 @@ Due strade, entrambe compatibili con DR-005, da decidere in Fase 1F insieme a D6
 
 In sviluppo è **MinIO**, come DR-005 stabilisce, e non è in discussione.
 
-### 3.3 Configurazione
+### 4.3 Configurazione
 
 Tutta la configurazione viene da **variabili d'ambiente**, verificate all'avvio con
 Zod: se manca o è malformata una variabile obbligatoria, il servizio **non parte** e
@@ -78,7 +110,7 @@ tardi è molto più difficile da diagnosticare.
 `.env.example` sta nel repository con valori fittizi e commentati. `.env` con valori
 reali **non entra mai** in Git.
 
-### 3.4 Migrazioni
+### 4.4 Migrazioni
 
 Le migrazioni girano come **passo esplicito del rilascio**, non all'avvio
 dell'applicazione. Un'applicazione che migra all'avvio, se riavviata più volte,
@@ -87,7 +119,7 @@ esegue migrazioni in parallelo.
 Su database di produzione ogni migrazione è preceduta da backup e richiede
 **conferma puntuale** dell'utente, come `CLAUDE.md` impone.
 
-### 3.5 Backup — requisito RN-05
+### 4.5 Backup — requisito RN-05
 
 | Cosa | Come | Frequenza |
 |---|---|---|
@@ -102,14 +134,14 @@ backup.
 **Il ripristino va provato prima del rilascio**, non dopo il primo guasto. È un
 punto del gate di Fase 1F.
 
-### 3.6 Health check e osservabilità minima
+### 4.6 Health check e osservabilità minima
 
 Ogni servizio espone `/health` con verifica delle dipendenze. In Fase 1 bastano:
 log strutturati in JSON senza dati personali, e una sonda esterna che controlla che
 il sito risponda. RS-06 chiede telemetria applicativa, ma appartiene alla fase
 gestionale.
 
-### 3.7 Rilascio
+### 4.7 Rilascio
 
 Immagini costruite dalla CI di GitHub Actions (DR-008), con l'hash del commit come
 etichetta. Mai `latest` in produzione: senza un'etichetta precisa non si sa cosa sta
@@ -119,14 +151,25 @@ Il rientro è la sostituzione dell'etichetta con quella precedente e il riavvio.
 le migrazioni il rientro è il ripristino del backup: non tutte le migrazioni si
 annullano, ed è più onesto dirlo che promettere il contrario.
 
-### 3.8 Conferme obbligatorie
+### 4.8 Conferme obbligatorie
 
 Ogni rilascio in produzione, ogni migrazione su dati reali, ogni modifica di DNS o
 certificati, ogni configurazione di invio email richiede **conferma puntuale**
 dell'utente, con comando, file toccati, impatto, backup, rientro e verifica mostrati
 prima. Una conferma vale per quell'azione e non si eredita.
 
-## 4. Cosa resta da decidere in Fase 1F (D6, MI-04)
+## 5. Alternativa scartata e motivo
+
+**L'opzione B** è scartata **per ora**, non per principio: il suo costo ricorrente e
+la verifica sulla collocazione dei dati sono materia di D6, che si decide in Fase 1F
+con i prezzi reali. Se a quel punto un fornitore gestito risultasse conveniente e
+verificabile sul piano della collocazione, la forma dell'opzione A non lo impedisce:
+i container restano gli stessi.
+
+**L'opzione C** è scartata in modo definitivo: risolve problemi di scala che questo
+progetto non ha, e introduce complessità che un manutentore solo non può assorbire.
+
+## 6. Cosa resta da decidere in Fase 1F (D6, MI-04)
 
 1. Fornitore e taglia della macchina, con costi reali.
 2. Registrar del dominio e gestione DNS.
@@ -137,7 +180,7 @@ prima. Una conferma vale per quell'azione e non si eredita.
 6. Chi sostiene i costi ricorrenti.
 7. Destinazione dei backup fuori host.
 
-## 5. Conseguenze
+## 7. Conseguenze
 
 **Più facile:** l'ambiente di sviluppo somiglia alla produzione; il rilascio è
 riproducibile; la scelta del fornitore non condiziona il codice.
@@ -145,12 +188,12 @@ riproducibile; la scelta del fornitore non condiziona il codice.
 **Più difficile:** un host unico è un punto singolo di guasto. È coerente con RB-04
 e va detto all'utente in modo esplicito, non nascosto in una nota.
 
-## 6. Reversibilità
+## 8. Reversibilità
 
 **Alta.** Tutto è in container con configurazione esterna: cambiare fornitore
 significa spostare volumi e ripuntare il DNS.
 
-## 7. Verifica
+## 9. Verifica
 
 **Fase 1F:** lo stack si ricostruisce da zero su una macchina pulita seguendo la
 sola documentazione; un ripristino completo da backup è stato **provato** e

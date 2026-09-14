@@ -822,7 +822,7 @@ chiave/valore a destra, scorciatoie nella barra di stato.
 | di volontari, l associazione offre oggi                  |              lavoriamo          |
 | quattro servizi stabili.                                 | ------------------------------  |
 |                                                          | REGISTRO                        |
-| ![Sede del Centro](sede-esterno.jpg)                     | 14/09 09:12 a.bianchi  bozza    |
+| [ immagine: sede-esterno.jpg — Sede del Centro ]         | 14/09 09:12 a.bianchi  bozza    |
 |                                                          | 12/09 17:03 m.rossi    pubbl.   |
 |                                                          | 09/09 10:41 m.rossi    creata   |
 |                                                          |                                 |

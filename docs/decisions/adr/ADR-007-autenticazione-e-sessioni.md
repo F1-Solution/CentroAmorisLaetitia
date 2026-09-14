@@ -131,7 +131,22 @@ proporzione: introdurrebbe ora una dipendenza ampia e giovane per coprire due
 account e un ruolo. Resta l'opzione di riferimento del riesame del §3.3, ed è
 registrata come tale, non accantonata.
 
-## 5. Rischio dichiarato
+## 5. Conseguenze
+
+**Più facile:** revocare una sessione all'istante, perché è un record e non un token
+firmato; collegare ogni operazione a chi l'ha compiuta, che è ciò che RU-05 chiede;
+usare la stessa sessione dalle due applicazioni Next e dall'API, perché l'origine è
+una sola (ADR-008 §3.2); leggere e verificare tutto il percorso di autenticazione,
+che sta in poche decine di righe.
+
+**Più difficile:** ogni funzione nuova — recupero password, inviti, secondo fattore,
+accesso con provider esterni — va scritta invece che configurata. È accettabile
+finché il perimetro resta quello del §3.2; smette di esserlo quando arriva la fase
+gestionale, ed è la ragione del riesame del §3.3.
+
+**Nuove dipendenze:** una libreria per Argon2id. Nient'altro.
+
+## 6. Rischio dichiarato
 
 Questa è la sola ADR che sceglie di **scrivere codice di sicurezza** invece di
 adottarne. Il rischio esiste e non lo si minimizza: un errore qui non si vede finché
@@ -146,16 +161,16 @@ Tre contromisure, tutte vincolanti:
    autenticazione, la premessa della proporzione è caduta e si adotta Better Auth
    senza discutere.
 
-## 6. Reversibilità
+## 7. Reversibilità
 
 **Alta.** Password e sessioni sono due tabelle e un middleware. Passare a una
 libreria significa reimportare le persone e invalidare le sessioni: gli utenti
 rifanno l'accesso una volta. Con due account è un'operazione di minuti.
 
-## 7. Verifica
+## 8. Verifica
 
 **Fase 1C:** i 12 controlli sono attuati e ciascuno ha un test.
 
 **Fase 1F:** security review esplicita su questo modulo; nessun segreto nel
 repository; la limitazione dei tentativi funziona davvero, provata; le sessioni si
-revocano davvero; il conteggio delle righe del §5.3 è stato verificato.
+revocano davvero; il conteggio delle righe della contromisura 3 del §6 è stato verificato.

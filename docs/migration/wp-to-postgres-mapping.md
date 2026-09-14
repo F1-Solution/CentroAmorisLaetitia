@@ -67,7 +67,7 @@ Nessuna decisione da prendere: non contengono nulla.
 | `wp_actionscheduler_logs` | 840 | idem |
 | `wp_aioseo_cache` | 25 | cache. Si rigenera |
 | `wp_aioseo_notifications` | 73 | avvisi dell'interfaccia del plugin |
-| `wp_bwpup_backups` | 20 | storico dei backup di BackWPup. Il backup nuovo è responsabilità dell'infrastruttura (ADR-009 §3.5) |
+| `wp_bwpup_backups` | 20 | storico dei backup di BackWPup. Il backup nuovo è responsabilità dell'infrastruttura (ADR-009 §4.5) |
 | `wp_revslider_css` | 110 | CSS generato dalla libreria che **non si porta** (1A §2.2) |
 | `wp_revslider_css_bkp` | 48 | copia di sicurezza interna al plugin |
 | `wp_revslider_settings` | 1 | impostazioni della libreria che non si porta |
@@ -198,11 +198,19 @@ differenza fra i 1.546 file e i 170 allegati, al netto delle cartelle escluse.
 | `_menu_item_url` | 64 | `menu_items.url` |
 | `_menu_item_target` | 64 | `menu_items.link_target` |
 | `_menu_item_classes` | 64 | `menu_items.css_classes` |
+| `_menu_item_xfn` | 64 | — **esclusa**: attributo di relazione XFN, sempre vuoto nella sorgente e senza effetto visibile |
 | `_nav_menu_role` | 64 | `menu_items.visibility`, `visible_to_roles` |
 | `_nav_menu_role_display_mode` | 64 | `menu_items.visibility` |
 | `_aioseo_title` | 50 | `content_seo.title` — **2 righe non vuote** |
 | `_aioseo_keywords` | 50 | `content_seo` — 35 non vuote, valore informativo |
 | `_aioseo_og_article_tags` | 50 | `content_seo` — 35 non vuote |
+
+Le altre sei chiavi `_aioseo_*` presenti in `wp_postmeta` sono **tutte vuote su tutte
+e 50 le righe** e quindi **escluse**: `_aioseo_description`, `_aioseo_og_title`,
+`_aioseo_og_description`, `_aioseo_og_article_section`, `_aioseo_twitter_title`,
+`_aioseo_twitter_description`. Non c'è nulla da importare, e importare colonne vuote
+darebbe l'impressione che un dato esista.
+
 | `__wpdm_files` | 4 | `documents.media_id` |
 | `__wpdm_link_label` | 4 | `documents` |
 | `__wpdm_terms_title`, `__wpdm_terms_conditions`, `__wpdm_terms_check_label`, `__wpdm_terms_page` | 4 ciascuna | `documents.description` se producono testo visibile |
@@ -368,7 +376,7 @@ quasi tutti vuoti da entrambe le parti.
 | `wp_wpforms_entries.status`, `type`, `viewed`, `starred`, `post_id`, `user_id`, `user_uuid` | **escluse**: stato dell'interfaccia del plugin |
 
 Il campo `payment-single` della definizione si importa **come definizione**, ma non
-produce alcun comportamento finché **D14** non è decisa (ADR-010 §5, R-19).
+produce alcun comportamento finché **D14** non è decisa (ADR-010 §6, R-19).
 
 ---
 

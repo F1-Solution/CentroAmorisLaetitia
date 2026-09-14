@@ -264,7 +264,7 @@ temporali, eseguire di nuovo `apply`, confrontare. Devono coincidere.
 | Non importa le 837 revisioni | ADR-005 §3.7 |
 | Non importa le password | non riutilizzabili, e non si importano per principio |
 | Non crea contenuti che la sorgente non ha | nessuna pagina «blog», nessuna pagina inventata |
-| Non invia email | l'invio richiede conferma esplicita (ADR-010 §3.5) |
+| Non invia email | l'invio richiede conferma esplicita (ADR-010 §4.5) |
 | Non tocca `source-private/` | DR-011 |
 
 ## 13. Il delta prima della produzione

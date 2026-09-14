@@ -55,17 +55,29 @@ in `source-private/wordpress/` è **superato** e vale solo come riscontro storic
 | `1A-W4` | Mappa plugin → funzionalità pubblica osservabile, con destinazione dichiarata | `docs/migration/plugin-and-feature-map.md` |
 | `1A-W5` | Rischi di migrazione e input mancanti | `docs/migration/migration-risks.md`, `docs/migration/missing-inputs.md` |
 
-### Fase 1B — Architettura della migrazione e piano eseguibile
+### Fase 1B — Architettura della migrazione e piano eseguibile — **COMPLETATA, in attesa di approvazione**
 
-ADR (API framework, ORM, storage, admin, auth, editor, modello a blocchi, hosting),
-schema PostgreSQL, mapping campo per campo, specifica importer, strategia Divi e
-shortcode, piano di visual regression e criteri di accettazione.
+Otto wave eseguite il 2026-09-14, audit superato (`.planning/phases/1B/AUDIT.md`).
 
-**Include** le 4 proposte di UI e le 4 proposte di UX per l'area amministrativa
-(vedi `docs/design/` quando prodotto). Il backend **non deve assomigliare a
-WordPress**.
+| Wave | Output |
+|---|---|
+| `1B-W0` | `docs/migration/source-supplementary-findings.md`, `public-menu.csv`, `seo-rendered-baseline.csv` |
+| `1B-W1` | dieci ADR in `docs/decisions/adr/` — **tutte in stato di proposta** |
+| `1B-W2` | `docs/architecture/schema.sql`, `database-schema.md` — 29 tabelle, verificate su PostgreSQL 17 |
+| `1B-W3` | `docs/migration/wp-to-postgres-mapping.md` — 53 tabelle e 137 chiavi meta classificate |
+| `1B-W4` | `docs/migration/importer-spec.md` |
+| `1B-W5` | `docs/migration/divi-shortcode-strategy.md` |
+| `1B-W6` | `docs/qa/visual-regression-plan.md`, `acceptance-criteria.md` |
+| `1B-W7` | `docs/design/ui-proposals.md`, `ux-proposals.md` — 4 + 4 proposte |
 
-### Fase 1C — Fondazione locale
+Decisioni aperte dalla fase: **D13**, **D14**, **D15**, **D16** in
+`docs/discovery/open-questions-round-4.md`; le cinque domande di design in
+`docs/handoff/HO-004-scelta-ui-ux-area-amministrativa.md`.
+
+Il backend **non deve assomigliare a WordPress**: vincolo rispettato da tutte e otto
+le proposte di design.
+
+### Fase 1C — Fondazione locale — **bloccata dalla decisione D15**
 
 Monorepo pnpm + Turborepo, Docker Compose con PostgreSQL e MinIO, `.env.example`,
 migrazioni iniziali, health check, CI minima, fondazione dei test.
