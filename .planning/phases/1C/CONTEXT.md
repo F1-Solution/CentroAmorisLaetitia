@@ -62,7 +62,7 @@ pnpm **11.6.0**, Docker **29.7.2** con Compose **v5.5.0**, Git **2.55.0**, Windo
 | F-07 | La configurazione si valida all'avvio con Zod | ADR-009 §4.3 | Se manca una variabile obbligatoria il servizio non parte e dice quale |
 | F-08 | I redirect sono dati, non configurazione del proxy | ADR-003 §3.5 | Nel `Caddyfile` non entra nessuna regola di redirect di contenuto |
 | F-09 | Due bucket separati, `media-public` e `media-private` | ADR-004 §3.6 | Il bootstrap di MinIO li crea entrambi, con politiche diverse |
-| F-10 | Lo schema di 1B-W2 ha **29 tabelle** e si applica su PostgreSQL 17 | `1B-W2`, audit controllo 9 | La migrazione Drizzle deve produrre lo stesso risultato, e va dimostrato |
+| F-10 | Lo schema di 1B-W2 ha **32 tabelle** e si applica su PostgreSQL 17 | `1B-W2`, audit controllo 9; conteggio corretto in 1C-W3 | La migrazione Drizzle deve produrre lo stesso risultato, e va dimostrato |
 
 ## 4. Vincoli non negoziabili
 
@@ -99,7 +99,7 @@ Una fase non si dichiara conclusa per affermazione: ognuno di questi criteri vie
    e pnpm sono fissate nel repository.
 2. `docker compose up` avvia PostgreSQL e MinIO; entrambi diventano sani; i due
    bucket esistono.
-3. La migrazione iniziale applica su PostgreSQL 17 **le 29 tabelle** dello schema di
+3. La migrazione iniziale applica su PostgreSQL 17 **le 32 tabelle** dello schema di
    1B-W2, e il confronto automatico con `schema.sql` non trova differenze di
    tabelle, colonne o tipi.
 4. `GET /health/live` risponde sempre; `GET /health/ready` risponde `503` quando il

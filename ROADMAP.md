@@ -63,7 +63,7 @@ Otto wave eseguite il 2026-09-14, audit superato (`.planning/phases/1B/AUDIT.md`
 |---|---|
 | `1B-W0` | `docs/migration/source-supplementary-findings.md`, `public-menu.csv`, `seo-rendered-baseline.csv` |
 | `1B-W1` | dieci ADR in `docs/decisions/adr/` — **tutte in stato di proposta** |
-| `1B-W2` | `docs/architecture/schema.sql`, `database-schema.md` — 29 tabelle, verificate su PostgreSQL 17 |
+| `1B-W2` | `docs/architecture/schema.sql`, `database-schema.md` — 32 tabelle, verificate su PostgreSQL 17 |
 | `1B-W3` | `docs/migration/wp-to-postgres-mapping.md` — 53 tabelle e 137 chiavi meta classificate |
 | `1B-W4` | `docs/migration/importer-spec.md` |
 | `1B-W5` | `docs/migration/divi-shortcode-strategy.md` |

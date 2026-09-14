@@ -46,7 +46,7 @@ I dati usati nelle prove sono **sintetici** e il database è stato distrutto.
 | 11 | Migrazione | `import_runs`, `import_id_map`, `import_issues` | idempotenza dell'import |
 | 12 | Conservazione legacy | `legacy_email_log`, `legacy_download_stats` | DR-026 |
 
-**29 tabelle.** Nessuna riguarda appuntamenti, corsi, soci, contabilità o documenti
+**32 tabelle.** Nessuna riguarda appuntamenti, corsi, soci, contabilità o documenti
 riservati oltre alla conservazione: il gate vieta di costruirle e lo schema lo
 rispetta.
 
@@ -71,6 +71,7 @@ rispetta.
 | `forms`, `form_notifications` | ADR-010 | 25 definizioni, 39 notifiche |
 | `form_submissions` | DR-026 | 425 compilazioni. **Dati personali**, vedi §7 |
 | `documents` | parità, DR-033 | 4 moduli pubblici più 4 file riservati conservati |
+| `document_terms` | parità | Classificazione dei documenti scaricabili, con la stessa tassonomia dei contenuti |
 | `sliders`, `slider_slides` | parità | 1 carosello, 12 slide |
 | `settings` | RC-03, RC-05, RC-10, RC-11 | Impostazioni globali modificabili |
 | `import_runs`, `import_id_map`, `import_issues` | 1B-W4 | Rendono l'import **rieseguibile** e le anomalie **contate** |

@@ -1,0 +1,94 @@
+import { sql } from 'drizzle-orm';
+import {
+  bigint,
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
+import { users } from './auth.js';
+import { contentStatus, contentType } from './enums.js';
+import { media } from './media.js';
+import { tsvector } from './types.js';
+
+/** Contenuti. Requisiti RC-01, RC-03. ADR-005. */
+
+export const contents = pgTable(
+  'contents',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    type: contentType().notNull(),
+    status: contentStatus().notNull().default('draft'),
+    slug: text().notNull(),
+    /** Percorso completo, per esempio `/chi-siamo/`. */
+    path: text().notNull(),
+    parentId: uuid().references((): AnyPgColumn => contents.id, { onDelete: 'restrict' }),
+    /** Ex `menu_order`. */
+    position: integer().notNull().default(0),
+    title: text().notNull(),
+    /** Sostituisce `shk-hide-title` e il titolo soppresso dal page builder (1B-W0 §4). */
+    showTitle: boolean().notNull().default(true),
+    isSticky: boolean().notNull().default(false),
+    excerpt: text(),
+    /** Documento a blocchi (ADR-005 §3.1). */
+    blocks: jsonb().notNull().default({ schema: 1, blocks: [] }),
+    /** Cache di resa, rigenerata (ADR-005 §3.6). */
+    contentHtml: text().notNull().default(''),
+    /** Solo testo, per ricerca e description. */
+    contentText: text().notNull().default(''),
+    featuredMediaId: uuid().references(() => media.id, { onDelete: 'set null' }),
+    publishedAt: timestamp({ withTimezone: true }),
+    authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    legacyId: bigint({ mode: 'number' }),
+    legacyType: text(),
+    /** `gutenberg` | `divi` | `html` (1B-W0 §1). */
+    legacyFormat: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** Ricerca full-text in italiano. Colonna generata: non può divergere. */
+    searchVector: tsvector().generatedAlwaysAs(
+      sql`setweight(to_tsvector('italian', coalesce(title, '')), 'A') || setweight(to_tsvector('italian', coalesce(excerpt, '')), 'B') || setweight(to_tsvector('italian', coalesce(content_text, '')), 'C')`,
+    ),
+  },
+  (t) => [
+    unique('contents_path_unique').on(t.path),
+    unique('contents_legacy_id_unique').on(t.legacyId),
+    unique('contents_slug_parent_unique').on(t.parentId, t.slug),
+    check('contents_published_has_date', sql`status <> 'published' OR published_at IS NOT NULL`),
+    check('contents_posts_have_no_parent', sql`type <> 'post' OR parent_id IS NULL`),
+    check('contents_path_shape', sql`path ~ '^/([a-z0-9._~%!$&()*+,;=:@-]+/)*$'`),
+    check('contents_blocks_have_schema', sql`blocks ? 'schema' AND blocks ? 'blocks'`),
+    index('contents_type_status_idx').on(t.type, t.status, t.publishedAt.desc().nullsFirst()),
+    index('contents_parent_idx').on(t.parentId, t.position),
+    index('contents_blocks_gin').using('gin', sql`blocks jsonb_path_ops`),
+    index('contents_search_idx').using('gin', t.searchVector),
+  ],
+);
+
+/** Cronologia. Le revisioni di WordPress non si importano (ADR-005 §3.7). */
+export const contentRevisions = pgTable(
+  'content_revisions',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    contentId: uuid()
+      .notNull()
+      .references(() => contents.id, { onDelete: 'cascade' }),
+    revisionNo: integer().notNull(),
+    title: text().notNull(),
+    blocks: jsonb().notNull(),
+    note: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    createdBy: uuid().references(() => users.id, { onDelete: 'set null' }),
+  },
+  (t) => [
+    unique('content_revisions_unique').on(t.contentId, t.revisionNo),
+    index('content_revisions_content_idx').on(t.contentId, t.revisionNo.desc().nullsFirst()),
+  ],
+);

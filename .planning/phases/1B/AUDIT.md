@@ -23,7 +23,7 @@ modo automatico dove possibile, non per affermazione.
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
 | 1 | Ogni ADR ha contesto, opzioni, alternativa scartata, conseguenze, stato dichiarato | controllo automatico delle sezioni su tutti e 10 i file | ✅ 10 su 10 |
-| 2 | Ogni tabella dello schema è riconducibile a un requisito | tabella di tracciabilità in `database-schema.md` §3 | ✅ 29 su 29 |
+| 2 | Ogni tabella dello schema è riconducibile a un requisito | tabella di tracciabilità in `database-schema.md` §3 | ✅ — ma con **due errori nel conteggio**, vedi §7 |
 | 3 | Ogni colonna sorgente ha destinazione o motivo di esclusione | le **137 chiavi meta distinte** estratte dal database e confrontate con il mapping | ✅ 137 su 137 |
 | 4 | L'importer dichiara cosa accade rieseguendolo due volte | `importer-spec.md` §1 e §6 | ✅ |
 | 5 | Ogni shortcode Divi ha destinazione dichiarata | controllo automatico sui 10 shortcode misurati, più i 12 blocchi Gutenberg | ✅ 22 su 22 |
@@ -81,3 +81,32 @@ della sorgente, non il prodotto.
 
 La Fase 1B non fa avanzare il gate: **lo rende misurabile**, definendo i criteri con
 cui le condizioni da 3 a 15 saranno verificate.
+
+---
+
+## 7. Errata, aperta il 2026-09-14 durante la wave `1C-W3`
+
+Un audit che si corregge vale più di uno che resta com'era. La wave `1C-W3` ha
+costruito il database due volte — una dalle migrazioni Drizzle, una da
+`schema.sql` — e ha contato le tabelle interrogando il catalogo di PostgreSQL.
+Il conteggio non torna con quello dichiarato qui.
+
+| Voce | Dichiarato in 1B | Misurato in 1C-W3 |
+|---|---|---|
+| Tabelle dello schema | 29 | **32** |
+| Tabelle con una riga propria nella tracciabilità di `database-schema.md` §3 | 29 su 29 | 31 su 32 |
+
+Due errori distinti:
+
+1. **Il conteggio era sbagliato.** `schema.sql` contiene 32 istruzioni
+   `CREATE TABLE`, e 32 tabelle risultano nel database costruito. Il numero 29
+   compariva in `database-schema.md` §2, in `ROADMAP.md` e nel controllo 2 di
+   questo audit. Corretto in tutti e tre.
+2. **Una tabella non era tracciata**: `document_terms` compariva nell'elenco per
+   sezione ma non aveva una riga propria in §3. Aggiunta.
+
+Nessuna delle due incide sullo schema, che è corretto e si applica: incidono sul
+fatto che il controllo 2 diceva «29 su 29» mentre le tabelle erano 32. Il controllo
+era stato eseguito sull'elenco, non sul database; il confronto automatico introdotto
+in 1C-W3 (`pnpm db:verify`) esegue il conteggio sul database vero e da ora impedisce
+che la stessa cosa si ripeta.

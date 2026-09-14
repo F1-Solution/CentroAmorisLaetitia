@@ -14,7 +14,7 @@ Contesto e criteri di uscita: [`CONTEXT.md`](CONTEXT.md).
 | `1C-W0` | Questo piano e `CONTEXT.md` | I due file esistono e non sono vuoti |
 | `1C-W1` | Scaffold del monorepo: workspace pnpm, Turborepo, TypeScript strict condiviso, ESLint, Prettier, `.gitignore` riscritto, versioni fissate | `pnpm install` riesce; `git check-ignore` non esclude più `packages/`; `pnpm lint` e `pnpm typecheck` passano a vuoto |
 | `1C-W2` | Ambiente locale in container: PostgreSQL 17, MinIO con i due bucket, Caddy, `.env.example` | I servizi si avviano e diventano sani; i bucket esistono; nessun segreto nel repository |
-| `1C-W3` | `packages/db`: schema Drizzle delle 29 tabelle, migrazione iniziale, script di migrazione e di confronto | La migrazione si applica su PostgreSQL 17 e il confronto con `schema.sql` non trova differenze |
+| `1C-W3` | `packages/db`: schema Drizzle delle 32 tabelle, migrazione iniziale, script di migrazione e di confronto | La migrazione si applica su PostgreSQL 17 e il confronto con `schema.sql` non trova differenze |
 | `1C-W4` | `apps/api`: Fastify, configurazione validata con Zod, health check, OpenAPI, gestione errori, log | `/health/live` e `/health/ready` si comportano come previsto anche con il database spento; senza una variabile obbligatoria il servizio non parte |
 | `1C-W5` | `apps/web` e `apps/admin`: due applicazioni Next.js minime, con le regole di ADR-008 §3.3 | Le due applicazioni si costruiscono; `apps/admin` risponde `noindex`; la regola di lint fallisce se `apps/web` importa da `packages/ui` |
 | `1C-W6` | Fondazione dei test: Vitest, React Testing Library, integrazione su PostgreSQL vero, Playwright, copertura | `pnpm test` passa; esiste almeno un test per ciascuno dei tre tipi |

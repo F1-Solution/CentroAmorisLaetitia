@@ -1,3 +1,14 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+allowBuilds:
+  esbuild: set this to true or false
+
+# esbuild — annidato sotto tsx e drizzle-kit — porta uno script di
+# installazione che non serve eseguire: il binario arriva dal pacchetto della
+# piattaforma, gia' bloccato dal lockfile. Lo dichiariamo ignorato di proposito
+# e togliamo l'interruzione, che altrimenti fa fallire ogni comando.
+ignoredBuiltDependencies:
+  - esbuild
+strictDepBuilds: false
