@@ -17,8 +17,9 @@
 > [`../design/chooser/index.html`](../design/chooser/index.html): palette vere,
 > caratteri veri, densità vere, con interruttore chiaro/scuro e schermo/telefono,
 > la matrice di compatibilità che si accende sulla coppia scelta, e le cinque
-> domande in fondo con la riga da copiare. Apri il file con un doppio clic, oppure
-> usa la copia pubblicata come Artifact privato di cui ti ho dato il collegamento.
+> domande in fondo con la riga da copiare. **Aprilo con un doppio clic**: è una
+> pagina autonoma, non richiede installazioni e non manda nulla da nessuna parte
+> (carica solo i caratteri da Google Fonts, per mostrarli davvero).
 > Questa pagina **non aggiunge scelte di design**: mostra quelle dei due documenti.
 
 
