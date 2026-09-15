@@ -280,44 +280,44 @@ criterio di uscita: finché non è decisa, il divieto si enuncia come «nessuna
 
 **Default vietato.** Da chiedere all'utente entro l'inizio della Fase 1E.
 
-### 2. Che cosa sono le aree, dopo DR-047 — blocca `1D-W8`
+### 2. Che cosa sono le aree — **CHIUSA il 2026-09-15 da DR-050**
 
-DR-045 sceglie la UX «Le aree di responsabilità», il cui principio è: *si sceglie in
-quale veste si lavora e l'intera applicazione si riconfigura* (`ux-proposals.md`
-§4.1). DR-047 sceglie l'opposto sul ruolo: tutti i ruoli attivi insieme, unione dei
-permessi, nessuna commutazione.
+Questo punto è stato posto all'utente il 2026-09-15 e **non esiste più**. Il testo
+che segue sostituisce l'analisi originale, che proponeva di leggere le aree come
+sola navigazione.
 
-Presi alla lettera insieme, il §4.4 punto 2 di `ux-proposals.md` — «la sessione è
-vincolata all'area», e il sistema rifiuta dati di un'altra area *anche se il permesso
-ci sarebbe* — **non è attuabile**: senza un'area attiva scelta, non c'è nulla a cui
-vincolare la sessione.
+La tensione era fra DR-045 (la UX «Le aree di responsabilità», il cui principio è che
+si sceglie in che veste si lavora e l'applicazione si riconfigura) e DR-047 (tutti i
+ruoli attivi insieme, nessuna commutazione). Erano state proposte tre letture.
 
-La lettura che propongo, e che **non do per approvata**:
+**L'utente non ha scelto fra le tre: ha cambiato D-UX-3.** DR-050 supera DR-047 e
+adotta l'opzione (a): **un solo ruolo attivo per volta, scelto esplicitamente;
+l'interfaccia mostra solo ciò che quel ruolo può fare.**
 
-> Le aree sono un fatto di **navigazione e di raggruppamento**, non di permesso. Il
-> primo livello dell'area amministrativa resta l'elenco delle aree; entrare in
-> un'area cambia ciò che si vede, non ciò che si può fare. I permessi sono l'unione
-> di quelli di tutti i ruoli della persona, sempre attivi. Nessun commutatore di
-> ruolo, nessuna sessione vincolata all'area, nessuna soglia d'ingresso.
+La contraddizione quindi non si interpreta: sparisce. Conseguenze vincolanti per la
+`1D-W8`:
 
-Tre ragioni per cui è questa e non un'altra: DR-047 è esplicito e più recente, e su
-un conflitto fra il meccanismo dei permessi e una proposta di architettura
-dell'informazione vince il primo; il registro delle operazioni non può attribuire
-un'azione a un ruolo che non esiste come stato, e questo è già scritto nelle note di
-DR-047; in Fase 1 esistono due sole aree, Redazione e Impostazioni, entrambe
-accessibili all'unico account, quindi oggi la differenza fra le due letture non
-cambia una sola schermata.
+| | Conseguenza | Fonte |
+|---|---|---|
+| 1 | L'area amministrativa **ha** un commutatore di ruolo esplicito | DR-050 |
+| 2 | La sessione è **vincolata all'ambiente attivo**: il sistema rifiuta dati di un'altra area anche quando il permesso ci sarebbe | `ux-proposals.md` §4.4 punto 2, tornato valido |
+| 3 | L'intestazione di ogni schermata mostra l'**ambiente attivo** | `ux-proposals.md` §4.3 |
+| 4 | Il registro delle operazioni **può** attribuire un'azione al ruolo con cui è stata compiuta | DR-050 |
+| 5 | La riservatezza torna a essere una separazione di **ambiente**, non solo di permesso | `ux-proposals.md` §4.4 |
 
-Due conseguenze che l'utente deve conoscere prima di confermare: il §4.4 di
-`ux-proposals.md` — la separazione d'ambiente come protezione della riservatezza,
-descritta lì come «il meccanismo più forte delle quattro» — **decade**, e la
-riservatezza dell'area Consulenza andrà ottenuta con i permessi, quando quella fase
-sarà pianificabile; l'attribuzione di un'azione all'area in cui è stata compiuta
-(`ux-proposals.md` §4.3) non è più possibile, e l'audit log registrerà chi e cosa,
-non in quale veste.
+Il punto 5 era la ragione principale per cui la proposta B era stata raccomandata, e
+con DR-047 era decaduto. Si recupera.
 
-**Default vietato.** È già iscritta nel registro delle decisioni come aperta, con
-termine «prima della wave 1D-W8».
+Va detto che cosa è costato: HO-004 dichiarava D-UX-3 «la scelta più costosa da
+cambiare dopo», perché tocca permessi, registro delle operazioni e intestazione di
+ogni schermata. Cambiarla il 2026-09-15 è costato **nulla in codice**, perché la
+`1D-W8` non era iniziata e nessuna riga di interfaccia esisteva. Cambiarla di nuovo
+più avanti non costerebbe altrettanto poco.
+
+In Fase 1 esistono comunque due sole aree, Redazione e Impostazioni, e un solo
+account: il commutatore va **costruito**, ma avrà poco da commutare finché la fase
+soci e ruoli non esisterà. Questo non è un motivo per rimandarlo — è il momento in
+cui costa meno.
 
 ### 3. Il trascinamento dei blocchi nell'editor — non bloccante
 

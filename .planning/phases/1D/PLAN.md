@@ -161,9 +161,10 @@ Va detto adesso, per non doverlo dire dopo.
 
 | # | Quando | Che cosa | Se manca |
 |---|---|---|---|
-| 1 | **prima di `1D-W8`** | La lettura delle aree dopo DR-047: navigazione e raggruppamento, non permesso (`CONTEXT.md` §8 punto 2) | La wave non parte. È già registrata come decisione aperta |
+| 1 | ~~prima di `1D-W8`~~ | ~~La lettura delle aree dopo DR-047~~ — **chiusa il 2026-09-15 da DR-050**, che supera DR-047 e adotta «un solo ruolo attivo per volta». Le aree tornano a essere contesto di permesso e serve un commutatore di ruolo (`CONTEXT.md` §8 punto 2) | — |
 | 2 | prima di `1D-W8` | Comandi espliciti invece del trascinamento per spostare i blocchi (`CONTEXT.md` §8 punto 3) | Si realizzano i comandi espliciti e lo si dichiara nell'audit |
 | 3 | **prima di `1D-W11`** | L'esecuzione reale dell'import su dati reali. `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run». Va mostrato comando, file coinvolti, impatto, backup e rollback, verifica successiva | La wave non parte. `plan` resta eseguibile senza conferma, perché non scrive |
+| 3-bis | **prima di `1D-W7`** | I tre prestiti dalle altre proposte di UI. L'utente ha chiesto di vederli descritti prima di scegliere (DR-053) | La wave usa la proposta 1 pura e lo dichiara nell'audit |
 | 4 | entro l'inizio della 1E | Il trattamento degli spazi di Divi e il divieto di stile in linea (`CONTEXT.md` §8 punto 1) | Il modello conserva comunque il valore; si rimanda la resa |
 | 5 | se accade | Se il lettore del dump non regge la verifica dei conteggi, la strada alternativa introduce un client MySQL locale (`IMPORTER-DESIGN.md` §3.5): è una dipendenza che nessuna ADR autorizza | Ci si ferma e si chiede |
 | 6 | se accade | Se la soglia del blocco di riserva viene superata, la conversione va rivista **prima** della 1E (ADR-005 §3.4): è una decisione sull'ambizione della conversione, non un dettaglio | Ci si ferma e si chiede |

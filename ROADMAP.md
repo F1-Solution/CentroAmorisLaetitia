@@ -74,8 +74,9 @@ Round 4 chiuso il 2026-09-14: **D15** (ADR approvate in blocco, DR-038), **D14**
 (opzione B, DR-039), **D13** (opzione C, DR-040), **D16** (opzione A, DR-041).
 Le dieci ADR sono **approvate** e il vincolo di D5 è soddisfatto.
 
-HO-004 chiusa il 2026-09-15 con le cinque decisioni DR-044…DR-048. La Fase 1B è
-pienamente chiusa.
+HO-004 chiusa il 2026-09-15 con le cinque decisioni DR-044…DR-048.
+**D-UX-3 è stata revisionata il 2026-09-15 con DR-050**, che supera DR-047 con la scelta (a) un solo ruolo attivo per volta.
+La Fase 1B è pienamente chiusa.
 
 Il backend **non deve assomigliare a WordPress**: vincolo rispettato da tutte e otto
 le proposte di design.

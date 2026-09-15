@@ -685,3 +685,37 @@ del §10 si chiude così: nessuna migrazione, nessuna decisione da chiedere all'
 Resta vero il limite: finché il CMS non esiste, nessuno ha ancora scritto una riga di
 cronologia, quindi in `1D-W5` la protezione si prova su righe di cronologia
 **sintetiche**, inserite dal test.
+
+### 11.3 Due conteggi della sorgente che non coincidono con la Fase 1A
+
+Rilevati dalla `1D-W2` misurando il dump congelato con due metodi indipendenti — il
+tokenizzatore dell'importer e un'espressione regolare separata — e riportati qui
+perché nessuno li dia per allineati.
+
+| Tabella | Atteso da `wp-to-postgres-mapping.md` §1 | Misurato nel dump | Scarto |
+|---|---|---|---|
+| `wp_options` | 564 | **562** | −2 |
+| `wp_postmeta` | 6.420 | **6.070** | −350 |
+
+Tutti gli altri conteggi coincidono esattamente: 1.234 `wp_posts`, 78 `page`, 170
+`attachment`, 64 `nav_menu_item`, 837 `revision`, 31 `post`, 28 `wpforms`, 425
+`wp_wpforms_entries`, 187 `wp_wpmailsmtp_debug_events`, 1.546 e 1.470 file di
+`uploads/`.
+
+Che cosa **non** si conclude da questo: non si conclude che manchino dati. Il
+controllo 3 del preflight passa, cioè **tutte** le chiavi meta presenti nel dump sono
+classificate nel mapping, e il controllo 4 passa sui `post_type`. Lo scarto riguarda
+il **numero di righe**, non la loro natura, e le due tabelle in questione sono quelle
+che cambiano a ogni visita al sito: `wp_options` contiene transienti con scadenza e
+`wp_postmeta` contiene metadati che i plugin riscrivono.
+
+L'ipotesi più probabile è quindi che i numeri della Fase 1A siano stati misurati su
+un'istantanea diversa — il backup di marzo, superato da DR-015 — o prima di una
+pulizia dei transienti. **È un'ipotesi, non una verifica.**
+
+Conseguenza operativa: i conteggi attesi scritti nel codice dell'importer
+(`importer-spec.md` §8.2) per queste due tabelle sono **562** e **6.070**, cioè i
+valori misurati sulla sorgente autorevole, non quelli del documento di Fase 1A. Lo
+scostamento va riportato nell'`AUDIT.md` della fase, e `wp-to-postgres-mapping.md`
+va corretto nella wave di documentazione, non qui: quel documento è un prodotto
+approvato della Fase 1B e si corregge dichiarando la correzione.

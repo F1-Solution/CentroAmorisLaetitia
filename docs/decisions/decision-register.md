@@ -255,3 +255,40 @@ nel Round 4.
 | **D8** | WhatsApp nelle comunicazioni | dopo il gate |
 | **MI-06** | Verifica privacy e legale sulle 425 compilazioni | prima della produzione. **Richiede un professionista** |
 | **Lettura delle aree come navigazione** | Confermare che DR-045 e DR-047 insieme significano: le aree sono navigazione e raggruppamento, **non** controllo di permesso | prima della wave 1D-W8 |
+
+---
+
+## 10. Round 6 — risposte del 2026-09-15, revisione di D-UX-3 e chiusura di tre decisioni di design
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-050 | 2026-09-15 | D-UX-3 — funzionamento del cambio di ruolo, **seconda decisione** | **(a) un solo ruolo attivo per volta, scelto esplicitamente**: l'interfaccia mostra solo ciò che quel ruolo può fare | (b) tutti i ruoli insieme, (c) tutti attivi con filtro visivo | Cambia la decisione D-UX-3 con (a) Un solo ruolo attivo per volta, scelto esplicitamente | Proprietario | Fase 1D, registro operazioni, intestazione | — | **supera DR-047**; HO-004 §6; DR-045 |
+| DR-051 | 2026-09-15 | Tema scuro dell'area amministrativa nel primo rilascio | **token definiti ora, verifica dopo il primo rilascio**: i valori dei due temi entrano subito come variabili CSS, ma in Fase 1 si verifica e si collauda **solo il tema chiaro** | Realizzato e verificato subito; non previsto | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, design system | sì | HO-004 §7; `docs/design/design-system.md` cap. 11 decisione 1 |
+| DR-052 | 2026-09-15 | Carattere d'interfaccia dell'area amministrativa | **Inter variabile, ospitato sul server del progetto** | Altra famiglia libera; pila di caratteri di sistema | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, identità, dipendenze | — | DR-048; `docs/design/design-system.md` cap. 3 e cap. 11 decisione 3 |
+| DR-053 | 2026-09-15 | Prestiti dalle altre proposte di UI | **rinviata**: l'utente ha chiesto di vedere i tre prestiti descritti uno per uno prima di scegliere | — | Dimmi quali sono, poi scelgo | Proprietario | Fase 1D, proposte di UI | — | DR-044; HO-004 §5 |
+
+### Note sulla portata del Round 6
+
+- **DR-050 supera DR-047 e chiude la tensione aperta nel Round 5.** La contraddizione era fra DR-045 (la UX «Le aree di responsabilità», il cui principio è che si sceglie in che veste si lavora e l'applicazione si riconfigura) e DR-047 (nessuna commutazione di ruolo). L'utente non ha scelto fra le tre letture proposte nel Round 5: **ha cambiato D-UX-3**. La contraddizione quindi non si risolve con un'interpretazione, ma sparisce.
+
+- **Conseguenze di DR-050**, da elencare: l'area amministrativa **ha** un commutatore di ruolo esplicito; la sessione è vincolata all'ambiente attivo, e il sistema rifiuta dati di un'altra area **anche quando il permesso ci sarebbe** (`ux-proposals.md` §4.4 punto 2, che torna valido); l'intestazione di ogni schermata mostra l'ambiente attivo; il registro delle operazioni **può** attribuire un'azione al ruolo con cui è stata compiuta. Si recupera la separazione della riservatezza come separazione di **ambiente**, che era la ragione principale per cui la proposta B era stata raccomandata.
+
+- **Il costo va detto**: HO-004 dichiarava D-UX-3 «la scelta più costosa da cambiare dopo», perché tocca permessi, registro delle operazioni e intestazione di ogni schermata. Cambiarla adesso costa poco perché **nessuna riga di interfaccia era ancora stata scritta**: la wave `1D-W8` non era iniziata. Cambiarla di nuovo più avanti costerebbe molto di più.
+
+- **DR-051 non promette un tema scuro funzionante nel primo rilascio**: promette che i valori esistono. Dichiararlo «pronto» senza la verifica sarebbe falso.
+
+- **DR-052 non introduce alcuna dipendenza esterna a runtime**: il carattere è servito dal progetto, non da un servizio di terze parti.
+
+- **DR-053 non è una decisione presa.** Finché non lo è, il documento di sistema di design descrive la proposta 1 senza i prestiti, e i capitoli che li citano restano da correggere.
+
+### Decisioni rimaste aperte dopo il Round 6
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni. **Richiede un professionista** | prima della produzione |
+| **DR-053** | I tre prestiti dalle altre proposte di UI | prima della wave `1D-W7` |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+
+**La voce «Lettura delle aree come navigazione», aperta nel Round 5, è chiusa da DR-050**: la decisione di usare un solo ruolo attivo per volta elimina la tensione fra DR-045 e DR-047, perché non c'è più contraddizione su come funziona la commutazione.
