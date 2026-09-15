@@ -57,3 +57,14 @@ PHASE:1D WAVE:1D-W7b STATUS:complete TS:2026-09-15T14:37:46Z
 PHASE:1D WAVE:1D-W7c STATUS:complete TS:2026-09-15T15:10:50Z
 PHASE:1D WAVE:1D-W4c STATUS:complete TS:2026-09-15T15:24:00Z
 PHASE:1D WAVE:1D-W4d STATUS:complete TS:2026-09-15T18:21:11Z
+
+<!-- Seconda interruzione per limite di sessione, 2026-09-15 (ripristino alle 02:00).
+     Ultima wave completata: 1D-W4d. Tutte le dieci fasi di import sono fatte.
+     Interrotta a meta', NON completa e NON committata su main: 1D-W5a, che attua
+     le quattro correzioni approvate (DR-058, DR-059, DR-060, DR-061).
+       fatto:      DR-059 colonna `action` in import_id_map, migrazione 0001
+                   generata; DR-060 esclusione di download-manager-files tolta.
+       da fare:    i test del controllo 7 del preflight; DR-058 secondo lettore
+                   per i documenti riservati; DR-061 le due tassonomie nuove.
+     Il lavoro parziale e' nell'albero di lavoro e nel ramo `wip/1D-W5a-interrotta`.
+     Alla ripresa: completare 1D-W5a, non ricominciarla; poi W5b, W5c, W6, W8...W12. -->
