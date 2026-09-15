@@ -22,6 +22,8 @@ export interface RunStageDependencies {
   readonly mode: Mode;
   readonly issues: IssueSink;
   readonly options: StageOptions;
+  /** Solo per le fasi che ne hanno bisogno; le altre lo omettono. */
+  readonly ipHashSalt?: string | null;
 }
 
 export async function runStage(stage: Stage, deps: RunStageDependencies): Promise<StageResult> {
@@ -36,6 +38,7 @@ export async function runStage(stage: Stage, deps: RunStageDependencies): Promis
       ids,
       issues: deps.issues,
       options: deps.options,
+      ipHashSalt: deps.ipHashSalt ?? null,
     }),
   );
 }

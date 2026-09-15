@@ -58,6 +58,13 @@ export interface VerificationCheck {
   readonly value: number;
   readonly expected: number;
   readonly ok: boolean;
+  /**
+   * Falso quando la verifica non ha potuto misurare nulla — per esempio
+   * `files-vs-expected` e `checksum-mismatches` quando lo storage non è
+   * raggiungibile (`importer-spec.md` §16, ultimo paragrafo): `ok` resta
+   * `false` in quel caso, mai «passata» per assenza di prova.
+   */
+  readonly executed: boolean;
 }
 
 export type IssueCode =
@@ -70,7 +77,14 @@ export type IssueCode =
   | 'item-import-failed'
   | 'unclassified-capabilities'
   | 'settings-value-missing'
-  | 'document-file-unresolved';
+  | 'document-file-unresolved'
+  | 'redirect-self-loop'
+  | 'redirect-unresolved-target'
+  | 'redirect-protected-by-manual'
+  | 'uploads-reference-remaining'
+  | 'verification-check-failed'
+  | 'verification-check-not-executed'
+  | 'table-count-mismatch';
 
 export interface ReportIssue {
   readonly severity: 'info' | 'warning' | 'error';

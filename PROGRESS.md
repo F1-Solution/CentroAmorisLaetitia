@@ -69,3 +69,4 @@ PHASE:1D WAVE:1D-W4d STATUS:complete TS:2026-09-15T18:21:11Z
      Il lavoro parziale e' nell'albero di lavoro e nel ramo `wip/1D-W5a-interrotta`.
      Alla ripresa: completare 1D-W5a, non ricominciarla; poi W5b, W5c, W6, W8...W12. -->
 PHASE:1D WAVE:1D-W5a STATUS:complete TS:2026-09-16T00:20:00Z
+PHASE:1D WAVE:1D-W5b STATUS:complete TS:2026-09-16T00:55:00Z

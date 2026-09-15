@@ -94,9 +94,7 @@ export const STAGE_DEPENDS_ON: Readonly<Record<StageName, readonly StageName[]>>
   ],
 };
 
-export const ALL_STAGE_NAMES: readonly StageName[] = Object.keys(
-  STAGE_DEPENDS_ON,
-) as StageName[];
+export const ALL_STAGE_NAMES: readonly StageName[] = Object.keys(STAGE_DEPENDS_ON) as StageName[];
 
 /**
  * Il contratto vero di una fase, attuato a partire da `1D-W4a`
@@ -119,7 +117,8 @@ export type EntityKind =
   | 'menu_item'
   | 'document'
   | 'slider'
-  | 'slider_slide';
+  | 'slider_slide'
+  | 'form';
 
 /**
  * Identifica un elemento sorgente per l'isolamento dell'errore

@@ -25,6 +25,14 @@ export interface StageContext {
   readonly ids: IdMap;
   readonly issues: IssueSink;
   readonly options: StageOptions;
+  /**
+   * Sale per il digest degli indirizzi IP (`IMPORTER_IP_HASH_SALT`), usato
+   * dalle fasi `submissions` e `legacy`. Sta qui e non in `process.env`
+   * perche' una fase non deve dipendere da stato ambientale invisibile: tutto
+   * cio' che le serve arriva dal contesto (§4.1). E' `null` solo per le fasi
+   * che non ne hanno bisogno; chi lo usa fallisce apertamente se manca.
+   */
+  readonly ipHashSalt: string | null;
 }
 
 export interface Stage {

@@ -80,6 +80,7 @@ function buildRuntime(db: Database): Runtime {
     IMPORTER_DUMP_PATH: '/finto/dump.sql',
     IMPORTER_UPLOADS_PATH: '/finto/uploads',
     IMPORTER_PRIVATE_STORAGE_PATH: '/finto/customer-area/storage',
+    IMPORTER_IP_HASH_SALT: 'sale-di-prova',
   };
   return {
     config,

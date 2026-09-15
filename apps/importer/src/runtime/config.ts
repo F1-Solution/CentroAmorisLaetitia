@@ -42,6 +42,18 @@ const configSchema = z.object({
     .string()
     .min(1)
     .default('source-private/wordpress-2026-09-13/wp-content/customer-area/storage'),
+
+  /**
+   * Sale per il digest di `form_submissions.ip_hash` e del campo IP di
+   * `legacy_download_stats.payload` (fase `submissions`/`legacy`,
+   * `importer-spec.md` §4). **Obbligatorio, senza valore predefinito**: un
+   * sale prevedibile vanificherebbe l'anonimizzazione. Deve restare stabile
+   * fra le esecuzioni, altrimenti lo stesso indirizzo produce digest diversi
+   * a ogni riesecuzione.
+   */
+  IMPORTER_IP_HASH_SALT: z
+    .string({ error: 'manca, ed è obbligatoria: è il sale per il digest degli indirizzi IP' })
+    .min(1, 'è vuota: serve un sale non prevedibile'),
 });
 
 export type Config = z.infer<typeof configSchema>;
