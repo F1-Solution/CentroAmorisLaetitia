@@ -1,0 +1,26 @@
+.amoris-bulk-action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-3);
+  padding: var(--amoris-space-2) var(--amoris-space-4);
+  background: var(--amoris-surface-selected);
+  border: 1px solid var(--amoris-border-strong);
+  border-radius: var(--amoris-radius);
+  flex-wrap: wrap;
+}
+
+.amoris-bulk-action-bar__count {
+  font-size: var(--amoris-text-base-size);
+  font-weight: 600;
+  color: var(--amoris-text-primary);
+}
+
+.amoris-bulk-action-bar__actions {
+  display: flex;
+  gap: var(--amoris-space-2);
+  flex-wrap: wrap;
+}
+
+.amoris-bulk-action-bar__cancel {
+  margin-left: auto;
+}

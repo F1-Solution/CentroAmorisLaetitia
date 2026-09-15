@@ -33,6 +33,31 @@ export * from './primitives/Spinner.js';
 export * from './primitives/Tooltip.js';
 export * from './primitives/SkipLink.js';
 
+// Tabella e moduli — componenti 17, 18, 19, 26, 28, 29, 34 (1D-W7c, gruppo A)
+export * from './primitives/TableToolbar.js';
+export * from './primitives/BulkActionBar.js';
+export * from './primitives/Pagination.js';
+export * from './primitives/DateTimeField.js';
+export * from './primitives/FormLayout.js';
+export * from './primitives/SaveBar.js';
+export * from './primitives/ConfirmDestructive.js';
+export * from './primitives/Tabs.js';
+export * from './primitives/GuidedFlow.js';
+
+// Media, editor a blocchi e resto — componenti 38-48 (1D-W7c, gruppo B)
+export * from './media/MediaPicker.js';
+export * from './media/MediaUploader.js';
+export * from './editor/block-types.js';
+export * from './editor/PreviewPane.js';
+export * from './editor/BlockTreeEditor.js';
+export * from './editor/BlockInserter.js';
+export * from './editor/ColumnRatioControl.js';
+export * from './editor/RichTextToolbar.js';
+export * from './editor/HtmlFallbackEditor.js';
+export * from './editor/MenuTreeEditor.js';
+export * from './editor/SeoPanel.js';
+export * from './editor/AuditTrail.js';
+
 // Guscio a scorrimento e sovrapposizione — componenti 31-33
 export * from './layout/Dialog.js';
 export * from './layout/SidePanel.js';

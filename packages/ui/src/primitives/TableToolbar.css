@@ -1,0 +1,41 @@
+.amoris-table-toolbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-3);
+  padding: var(--amoris-space-3) 0;
+}
+
+.amoris-table-toolbar__search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.amoris-table-toolbar__field {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+.amoris-table-toolbar__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 var(--amoris-space-2);
+  border-radius: 999px;
+  background: var(--amoris-accent);
+  color: var(--amoris-on-accent);
+  font-size: var(--amoris-text-xs-size);
+  font-weight: var(--amoris-text-xs-weight);
+}
+
+.amoris-table-toolbar__reset {
+  align-self: center;
+}
+
+.amoris-table-toolbar__empty {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+  padding: var(--amoris-space-2) 0;
+}

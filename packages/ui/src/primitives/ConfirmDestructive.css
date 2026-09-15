@@ -1,0 +1,15 @@
+.amoris-confirm-destructive__description {
+  margin: 0 0 var(--amoris-space-4);
+  color: var(--amoris-text-primary);
+}
+
+.amoris-confirm-destructive__object {
+  font-weight: 600;
+}
+
+.amoris-confirm-destructive__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}

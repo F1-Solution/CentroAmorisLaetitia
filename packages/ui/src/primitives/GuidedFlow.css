@@ -1,0 +1,52 @@
+.amoris-guided-flow__steps {
+  display: flex;
+  gap: var(--amoris-space-2);
+  margin-bottom: var(--amoris-space-4);
+  list-style: none;
+  padding: 0;
+}
+
+.amoris-guided-flow__step {
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-2);
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-guided-flow__step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--amoris-border-strong);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.amoris-guided-flow__step--current .amoris-guided-flow__step-number {
+  background: var(--amoris-accent);
+  border-color: var(--amoris-accent);
+  color: var(--amoris-on-accent);
+}
+
+.amoris-guided-flow__step--current {
+  color: var(--amoris-text-primary);
+  font-weight: 600;
+}
+
+.amoris-guided-flow__title {
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+  font-weight: var(--amoris-text-lg-weight);
+  color: var(--amoris-text-primary);
+  margin: 0 0 var(--amoris-space-4);
+}
+
+.amoris-guided-flow__actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--amoris-space-6);
+}

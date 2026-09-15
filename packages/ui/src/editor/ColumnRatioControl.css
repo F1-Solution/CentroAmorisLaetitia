@@ -1,0 +1,33 @@
+.amoris-column-ratio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-column-ratio__option {
+  min-height: 44px;
+  padding: 0 var(--amoris-space-3);
+  border-radius: var(--amoris-radius);
+  border: 1px solid var(--amoris-border-strong);
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-sm-size);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.amoris-column-ratio__option:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-column-ratio__option[aria-checked='true'] {
+  background: var(--amoris-surface-selected);
+  border-color: var(--amoris-accent);
+  font-weight: 600;
+}
+
+.amoris-column-ratio__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

@@ -1,0 +1,41 @@
+.amoris-audit-trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-audit-trail__entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-1);
+  padding: var(--amoris-space-2) 0;
+  border-bottom: 1px solid var(--amoris-border);
+}
+
+.amoris-audit-trail__entry:last-child {
+  border-bottom: none;
+}
+
+.amoris-audit-trail__sentence {
+  margin: 0;
+  font-size: var(--amoris-text-base-size);
+  color: var(--amoris-text-primary);
+}
+
+.amoris-audit-trail--compact .amoris-audit-trail__sentence {
+  font-size: var(--amoris-text-sm-size);
+}
+
+.amoris-audit-trail__timestamp {
+  font-size: var(--amoris-text-xs-size);
+  color: var(--amoris-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.amoris-audit-trail__status {
+  padding: var(--amoris-space-3) 0;
+  color: var(--amoris-text-secondary);
+}

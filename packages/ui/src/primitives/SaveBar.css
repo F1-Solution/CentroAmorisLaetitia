@@ -1,0 +1,28 @@
+.amoris-save-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-4);
+  padding: var(--amoris-space-3) var(--amoris-space-4);
+  background: var(--amoris-bg-surface);
+  border-top: 1px solid var(--amoris-border);
+  flex-wrap: wrap;
+}
+
+.amoris-save-bar__status {
+  font-size: var(--amoris-text-base-size);
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-save-bar__status--error {
+  color: var(--amoris-danger);
+  font-weight: 600;
+}
+
+.amoris-save-bar__actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--amoris-space-2);
+  flex-wrap: wrap;
+}

@@ -1,0 +1,32 @@
+.amoris-tabs__list {
+  display: flex;
+  gap: var(--amoris-space-2);
+  border-bottom: 1px solid var(--amoris-border);
+}
+
+.amoris-tabs__tab {
+  min-height: 44px;
+  padding: 0 var(--amoris-space-3);
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--amoris-text-secondary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-base-size);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.amoris-tabs__tab:hover {
+  color: var(--amoris-text-primary);
+}
+
+.amoris-tabs__tab[aria-selected='true'] {
+  color: var(--amoris-text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--amoris-accent);
+}
+
+.amoris-tabs__panel {
+  padding-top: var(--amoris-space-4);
+}
