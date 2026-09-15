@@ -598,6 +598,7 @@ CREATE TABLE import_id_map (
     entity       text NOT NULL,                -- 'content', 'media', 'term', ...
     entity_id    uuid NOT NULL,
     run_id       uuid REFERENCES import_runs(id) ON DELETE SET NULL,
+    action       text NOT NULL DEFAULT 'created', -- 'created' | 'updated' (DR-059)
     created_at   timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (source_table, source_id, entity)
 );

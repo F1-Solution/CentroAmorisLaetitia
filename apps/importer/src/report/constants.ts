@@ -1,12 +1,17 @@
 import type { ReportRowName } from './types.js';
 
-/** Conteggi attesi, presi da `importer-spec.md` §8.1 e `database-schema.md` §6. */
+/**
+ * Conteggi attesi, presi da `importer-spec.md` §8.1 e `database-schema.md` §6.
+ * Sono conteggi **per fase**, non per tabella: la fase `media` ne crea 170, e
+ * le 8 righe `media` dei documenti le crea la fase `documents` (DR-058,
+ * DR-060), quindi la tabella arriva a 178 mentre questa riga resta 170.
+ */
 export const EXPECTED_COUNTS: Readonly<Record<ReportRowName, number | null>> = {
   settings: 18,
   users: 1,
   media: 170,
   media_variants: null, // "~1376": stima, non un intero fisso — IMPORTER-DESIGN.md §3.9
-  terms: 3,
+  terms: 4, // DR-061: 2 `category` + `wpdmcategory` + `cuar_private_file_category`
   contents: 108,
   menu_items: 64,
   forms: 25,

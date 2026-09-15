@@ -33,6 +33,7 @@ export async function createMediaSourceFixture(
   const source: SourceReader = {
     dumpPath: '/finto/dump.sql',
     uploadsPath,
+    privateStoragePath: '/finto/customer-area/storage',
     fingerprint: async () => ({ sha256: 'finto', sizeBytes: 0 }),
     dump: async () => ({
       tables: new Map(Object.keys(tables).map((t) => [t, Object.keys(tables[t]?.[0] ?? {})])),
@@ -42,6 +43,7 @@ export async function createMediaSourceFixture(
     tableNames: async () => Object.keys(tables),
     rows: async (table: string) => tables[table] ?? [],
     uploadedFiles: () => listUploadedFiles(uploadsPath),
+    privateFiles: async () => [],
   };
 
   return {

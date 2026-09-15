@@ -3,10 +3,16 @@
  * file, esclude le cartelle di servizio, calcola il checksum SHA-256 in
  * streaming.
  *
- * Le esclusioni sono le sei di ADR-004 §3.2 più le due rilevate in
- * `IMPORTER-DESIGN.md` §11.1: `wpdm-custom-tags` e `wpdm-file-type-icons` non
- * sono media del sito, sono risorse di un plugin. Lo scostamento dall'elenco
- * dell'ADR è dichiarato lì e ripreso qui nel codice.
+ * Le esclusioni sono le cinque cartelle di servizio restanti di ADR-004 §3.2
+ * (`backwpup*` per prefisso, `wpforms`, `aioseo`, `wpdm-cache`, `et_temp`) più
+ * le due rilevate in `IMPORTER-DESIGN.md` §11.1: `wpdm-custom-tags` e
+ * `wpdm-file-type-icons` non sono media del sito, sono risorse di un plugin.
+ *
+ * **DR-060**: `download-manager-files` è **uscita** dall'elenco. ADR-004 §3.2
+ * la classificava come cartella di servizio, ma contiene i quattro moduli per
+ * le consulenze in PDF che il sito offre in scaricamento (fase 9
+ * `documents`): è contenuto, non cache. Lo scostamento dall'elenco dell'ADR è
+ * dichiarato lì e ripreso qui nel codice.
  */
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -18,7 +24,6 @@ export const EXCLUDED_TOP_LEVEL_FOLDERS: readonly string[] = [
   'aioseo',
   'wpdm-cache',
   'et_temp',
-  'download-manager-files',
   // Rilievi di IMPORTER-DESIGN.md §11.1, non presenti nell'elenco di ADR-004 §3.2:
   'wpdm-custom-tags',
   'wpdm-file-type-icons',

@@ -386,4 +386,4 @@ nel Round 4.
 | **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
 | **Due contenuti con percorso in collisione** | Slug condiviso fra tipi diversi in un caso, bozza senza slug nell'altro. Assegnare d'ufficio un percorso diverso è una modifica di URL, materia di parità e indicizzazione | wave `1D-W11` |
 | **Un allegato non recuperabile** | Il database lo cerca con maiuscole diverse da quelle del file vero. Non si risolve rinominando, che ADR-004 §3.1 vieta per non far divergere il `srcset` | wave `1D-W11` |
-| **Correzione di ADR-004 e del mapping** | DR-060 e DR-061 correggono due documenti approvati della Fase 1B: la correzione va scritta, dichiarandola | prima della chiusura della Fase 1D |
+| ~~**Correzione di ADR-004 e del mapping**~~ | ~~DR-060 e DR-061 correggono due documenti approvati della Fase 1B: la correzione va scritta, dichiarandola~~ — **chiusa il 2026-09-16 nella wave `1D-W5a`**: ADR-004 §3.2 e `wp-to-postgres-mapping.md` sono stati corretti dichiarando la correzione, e `IMPORTER-DESIGN.md` §11.13 ne registra gli esiti misurati | — |

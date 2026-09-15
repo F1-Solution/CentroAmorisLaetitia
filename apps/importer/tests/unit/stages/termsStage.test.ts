@@ -14,7 +14,11 @@ import type { Database } from '@amoris/db';
 
 /** Vedi `settingsStage.test.ts`: `import_id_map.run_id` è vincolato a `import_runs`. */
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const TERMS_ROWS: readonly SqlRow[] = [
@@ -24,12 +28,22 @@ const TERMS_ROWS: readonly SqlRow[] = [
 ];
 
 const TAXONOMY_ROWS: readonly SqlRow[] = [
-  { term_taxonomy_id: 1, term_id: 10, taxonomy: 'category', description: 'Le notizie del Centro', parent: 0, count: 5 },
+  {
+    term_taxonomy_id: 1,
+    term_id: 10,
+    taxonomy: 'category',
+    description: 'Le notizie del Centro',
+    parent: 0,
+    count: 5,
+  },
   { term_taxonomy_id: 2, term_id: 11, taxonomy: 'category', description: '', parent: 10, count: 3 },
   { term_taxonomy_id: 3, term_id: 99, taxonomy: 'nav_menu', description: '', parent: 0, count: 0 },
 ];
 
-function buildTermsSource(extraTaxonomy: readonly SqlRow[] = [], extraTerms: readonly SqlRow[] = []) {
+function buildTermsSource(
+  extraTaxonomy: readonly SqlRow[] = [],
+  extraTerms: readonly SqlRow[] = [],
+) {
   return fakeSourceReader({
     wp_terms: [...TERMS_ROWS, ...extraTerms],
     wp_term_taxonomy: [...TAXONOMY_ROWS, ...extraTaxonomy],
@@ -49,7 +63,7 @@ afterAll(async () => {
 });
 
 describe('fase terms', () => {
-  it('importa solo la tassonomia category, con gerarchia e percorso', async () => {
+  it('importa la tassonomia category, con gerarchia e percorso, e ignora nav_menu', async () => {
     const runId = await newApplyRunId(testDb.db);
     const issues = createIssueSink(testDb.db, 'apply', runId);
     const result = await runStage(termsStage, {
@@ -78,7 +92,10 @@ describe('fase terms', () => {
   });
 
   it('non crea righe per una tassonomia diversa da category', async () => {
-    const terms = await testDb.db.select().from(schema.terms).where(eq(schema.terms.slug, 'non-categoria'));
+    const terms = await testDb.db
+      .select()
+      .from(schema.terms)
+      .where(eq(schema.terms.slug, 'non-categoria'));
     expect(terms).toHaveLength(0);
   });
 
@@ -103,14 +120,22 @@ describe('fase terms', () => {
     expect(after).toHaveLength(2);
     expect(new Set(after.map((t) => t.id))).toEqual(new Set(before.map((t) => t.id)));
 
-    const idMapRows = await testDb.db.select().from(schema.importIdMap).where(eq(schema.importIdMap.entity, 'term'));
+    const idMapRows = await testDb.db
+      .select()
+      .from(schema.importIdMap)
+      .where(eq(schema.importIdMap.entity, 'term'));
     expect(idMapRows).toHaveLength(2);
   });
 
   it('un elemento sintetico corrotto (slug non valido) produce un errore e non ferma la fase', async () => {
     const fresh = await createTestDatabase('amoris_importer_terms_isolation');
     try {
-      const brokenTerm: SqlRow = { term_id: 20, name: 'Rotto', slug: 'Slug Con Spazi!', term_group: 0 };
+      const brokenTerm: SqlRow = {
+        term_id: 20,
+        name: 'Rotto',
+        slug: 'Slug Con Spazi!',
+        term_group: 0,
+      };
       const brokenTaxonomy: SqlRow = {
         term_taxonomy_id: 4,
         term_id: 20,
@@ -169,6 +194,120 @@ describe('fase terms', () => {
       expect(terms).toHaveLength(0);
       const idMapRows = await fresh.db.select().from(schema.importIdMap);
       expect(idMapRows).toHaveLength(0);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('DR-061: importa anche wpdmcategory e cuar_private_file_category, ignorando le tassonomie non elencate', async () => {
+    const fresh = await createTestDatabase('amoris_importer_terms_dr061_taxonomies');
+    try {
+      const runId = await newApplyRunId(fresh.db);
+      const issues = createIssueSink(fresh.db, 'apply', runId);
+      const extraTerms: readonly SqlRow[] = [
+        { term_id: 45, name: 'Moduli download', slug: 'moduli-download', term_group: 0 },
+        { term_id: 41, name: 'Moduli riservati', slug: 'moduli-riservati', term_group: 0 },
+      ];
+      const extraTaxonomy: readonly SqlRow[] = [
+        {
+          term_taxonomy_id: 10,
+          term_id: 45,
+          taxonomy: 'wpdmcategory',
+          description: '',
+          parent: 0,
+          count: 1,
+        },
+        {
+          term_taxonomy_id: 11,
+          term_id: 41,
+          taxonomy: 'cuar_private_file_category',
+          description: '',
+          parent: 0,
+          count: 1,
+        },
+      ];
+
+      const result = await runStage(termsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildTermsSource(extraTaxonomy, extraTerms),
+        runId,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+
+      // notizie, eventi, moduli-download, moduli-riservati; non-categoria resta escluso (nav_menu)
+      expect(result.created).toBe(4);
+      expect(result.errors).toBe(0);
+
+      const terms = await fresh.db.select().from(schema.terms);
+      expect(terms).toHaveLength(4);
+      expect(terms.some((t) => t.taxonomy === 'wpdmcategory' && t.slug === 'moduli-download')).toBe(
+        true,
+      );
+      expect(
+        terms.some(
+          (t) => t.taxonomy === 'cuar_private_file_category' && t.slug === 'moduli-riservati',
+        ),
+      ).toBe(true);
+      expect(terms.some((t) => t.taxonomy === 'nav_menu')).toBe(false);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('DR-061: stesso slug in due tassonomie diverse produce due percorsi distinti e viene scritto entrambe le volte', async () => {
+    const fresh = await createTestDatabase('amoris_importer_terms_dr061_collision');
+    try {
+      const runId = await newApplyRunId(fresh.db);
+      const issues = createIssueSink(fresh.db, 'apply', runId);
+      const collidingTerms: readonly SqlRow[] = [
+        { term_id: 45, name: 'Moduli (download)', slug: 'moduli-consulenze', term_group: 0 },
+        { term_id: 41, name: 'Moduli (riservati)', slug: 'moduli-consulenze', term_group: 0 },
+      ];
+      const collidingTaxonomy: readonly SqlRow[] = [
+        {
+          term_taxonomy_id: 10,
+          term_id: 45,
+          taxonomy: 'wpdmcategory',
+          description: '',
+          parent: 0,
+          count: 1,
+        },
+        {
+          term_taxonomy_id: 11,
+          term_id: 41,
+          taxonomy: 'cuar_private_file_category',
+          description: '',
+          parent: 0,
+          count: 1,
+        },
+      ];
+
+      const result = await runStage(termsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildTermsSource(collidingTaxonomy, collidingTerms),
+        runId,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+
+      expect(result.errors).toBe(0);
+
+      const terms = await fresh.db
+        .select()
+        .from(schema.terms)
+        .where(eq(schema.terms.slug, 'moduli-consulenze'));
+      expect(terms).toHaveLength(2);
+
+      const wpdm = terms.find((t) => t.taxonomy === 'wpdmcategory');
+      const cuar = terms.find((t) => t.taxonomy === 'cuar_private_file_category');
+      expect(wpdm?.path).toBe('/wpdmcategory/moduli-consulenze/');
+      expect(cuar?.path).toBe('/cuar_private_file_category/moduli-consulenze/');
+      expect(wpdm?.path).not.toBe(cuar?.path);
     } finally {
       await fresh.teardown();
     }

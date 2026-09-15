@@ -4,9 +4,10 @@
  * `wp-to-postgres-mapping.md` §1.1 classifica `wp_terms` (48 righe) e
  * `wp_term_taxonomy` (48 righe) come sorgente di `terms`, ma «solo le
  * tassonomie utili» (`packages/db/src/schema/taxonomy.ts`): questa fase
- * importa **solo** `taxonomy = 'category'`. Le altre righe — `nav_menu`,
- * `link_category`, e ciò che resta — non producono termini: non c'è ancora
- * un uso per loro nel sistema nuovo, e importarle darebbe righe orfane.
+ * importa `taxonomy` in {@link IMPORTED_TAXONOMIES} (DR-061). Le altre righe —
+ * `nav_menu`, `link_category`, e ciò che resta — non producono termini: non
+ * c'è ancora un uso per loro nel sistema nuovo, e importarle darebbe righe
+ * orfane.
  *
  * Ogni termine ha un identificatore numerico di sorgente (`wp_terms.term_id`):
  * questa fase usa `import_id_map`, non una chiave naturale.
@@ -17,8 +18,22 @@ import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
 
-interface CategoryRow {
+/**
+ * DR-061: oltre a `category`, servono le tassonomie dei documenti
+ * (`wpdmcategory`, `cuar_private_file_category`) perché una voce di menu le
+ * referenzia; le altre tassonomie (`nav_menu`, `event_listing_*`,
+ * `layout_type`, …) non hanno ancora un uso nel sistema nuovo.
+ */
+export const IMPORTED_TAXONOMIES = [
+  'category',
+  'wpdmcategory',
+  'cuar_private_file_category',
+] as const;
+type ImportedTaxonomy = (typeof IMPORTED_TAXONOMIES)[number];
+
+interface TermRow {
   readonly termId: number;
+  readonly taxonomy: ImportedTaxonomy;
   readonly slug: string;
   readonly name: string;
   readonly description: string;
@@ -35,7 +50,11 @@ function asString(value: SqlRow[string] | undefined): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
-async function loadCategoryRows(ctx: StageContext): Promise<readonly CategoryRow[]> {
+function isImportedTaxonomy(value: string): value is ImportedTaxonomy {
+  return (IMPORTED_TAXONOMIES as readonly string[]).includes(value);
+}
+
+async function loadTermRows(ctx: StageContext): Promise<readonly TermRow[]> {
   const [termsRows, taxonomyRows] = await Promise.all([
     ctx.source.rows('wp_terms'),
     ctx.source.rows('wp_term_taxonomy'),
@@ -47,14 +66,16 @@ async function loadCategoryRows(ctx: StageContext): Promise<readonly CategoryRow
     termsById.set(termId, { slug: asString(row['slug']), name: asString(row['name']) });
   }
 
-  const rows: CategoryRow[] = [];
+  const rows: TermRow[] = [];
   for (const row of taxonomyRows as readonly SqlRow[]) {
-    if (asString(row['taxonomy']) !== 'category') continue;
+    const taxonomy = asString(row['taxonomy']);
+    if (!isImportedTaxonomy(taxonomy)) continue;
     const termId = asNumber(row['term_id']);
     const term = termsById.get(termId);
     if (!term) continue; // riga di tassonomia senza il termine corrispondente: non classificabile qui
     rows.push({
       termId,
+      taxonomy,
       slug: term.slug,
       name: term.name,
       description: asString(row['description']),
@@ -64,10 +85,10 @@ async function loadCategoryRows(ctx: StageContext): Promise<readonly CategoryRow
   return rows;
 }
 
-/** Ordina radici prima dei figli, cosi' il genitore e' sempre gia' stato creato. */
-function orderByDepth(rows: readonly CategoryRow[]): readonly CategoryRow[] {
+/** Ordina radici prima dei figli, cosi' il genitore e' sempre gia' stato creato (a prescindere dalla tassonomia). */
+function orderByDepth(rows: readonly TermRow[]): readonly TermRow[] {
   const byId = new Map(rows.map((r) => [r.termId, r]));
-  const depthOf = (row: CategoryRow, seen: ReadonlySet<number> = new Set()): number => {
+  const depthOf = (row: TermRow, seen: ReadonlySet<number> = new Set()): number => {
     if (row.parentTermId === 0 || seen.has(row.termId)) return 0;
     const parent = byId.get(row.parentTermId);
     if (!parent) return 0;
@@ -81,11 +102,11 @@ export const termsStage: Stage = {
   dependsOn: ['preflight'],
 
   async expected(ctx: StageContext) {
-    return (await loadCategoryRows(ctx)).length;
+    return (await loadTermRows(ctx)).length;
   },
 
   async run(ctx: StageContext): Promise<StageResult> {
-    const rows = orderByDepth(await loadCategoryRows(ctx));
+    const rows = orderByDepth(await loadTermRows(ctx));
     const pathByTermId = new Map<number, string>();
 
     return forEachItem(
@@ -98,7 +119,10 @@ export const termsStage: Stage = {
             ? null
             : await ctx.ids.find(tx, 'wp_terms', row.parentTermId, 'term');
         const parentPath = row.parentTermId === 0 ? '' : (pathByTermId.get(row.parentTermId) ?? '');
-        const path = `/category${parentPath}/${row.slug}/`;
+        // Il prefisso di tassonomia è obbligatorio: `moduli-consulenze` esiste
+        // sia in `wpdmcategory` sia in `cuar_private_file_category` (DR-061),
+        // e senza prefisso i due percorsi collidono su `terms_path_unique`.
+        const path = `/${row.taxonomy}${parentPath}/${row.slug}/`;
         pathByTermId.set(row.termId, `${parentPath}/${row.slug}`);
 
         const existingId = await ctx.ids.find(tx, 'wp_terms', row.termId, 'term');
@@ -107,7 +131,7 @@ export const termsStage: Stage = {
           .insert(schema.terms)
           .values({
             id: existingId ?? undefined,
-            taxonomy: 'category',
+            taxonomy: row.taxonomy,
             slug: row.slug,
             name: row.name,
             description: row.description || null,
@@ -119,7 +143,7 @@ export const termsStage: Stage = {
           .onConflictDoUpdate({
             target: schema.terms.id,
             set: {
-              taxonomy: 'category',
+              taxonomy: row.taxonomy,
               slug: row.slug,
               name: row.name,
               description: row.description || null,

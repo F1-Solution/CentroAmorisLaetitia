@@ -10,20 +10,23 @@ function files(count: number, year = '2026'): UploadedFile[] {
 }
 
 describe('preflight — controllo 7: conteggio di uploads/', () => {
-  it('passa quando il conteggio nelle cartelle anno coincide con l’atteso', () => {
-    const result = checkUploadsCount(files(1470), 1470);
+  it('passa quando il conteggio dopo le esclusioni coincide con l’atteso', () => {
+    const result = checkUploadsCount(files(1475), 1475);
     expect(result.ok).toBe(true);
   });
 
   it('fallisce su una sorgente sintetica con file mancanti', () => {
-    const result = checkUploadsCount(files(1000), 1470);
+    const result = checkUploadsCount(files(1000), 1475);
     expect(result.ok).toBe(false);
     expect(result.detail?.actualCount).toBe(1000);
   });
 
-  it('non conta i file nelle cartelle di servizio, anche se presenti nell’elenco', () => {
-    const mixed = [...files(5), { relativePath: 'wpforms/entry.json', sizeBytes: 10 }];
-    const result = checkUploadsCount(mixed, 5);
+  it('conta anche i file fuori dalle cartelle anno (DR-060: download-manager-files non è più esclusa)', () => {
+    const mixed = [
+      ...files(5),
+      { relativePath: 'download-manager-files/modulo.pdf', sizeBytes: 10 },
+    ];
+    const result = checkUploadsCount(mixed, 6);
     expect(result.ok).toBe(true);
   });
 });

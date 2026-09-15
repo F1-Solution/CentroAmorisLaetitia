@@ -744,6 +744,8 @@ documentazione, non di quella di codice, e va dichiarata invece che fatta di nas
 
 ### 11.5 `import_id_map` non distingue «creato» da «aggiornato»
 
+**Rilievo chiuso da DR-059**, vedi §11.13.
+
 La tabella approvata in Fase 1B non ha una colonna che dica se una riga è nata da una
 creazione o da un aggiornamento. `importer-spec.md` §9 chiede però che `rollback`
 «cancelli le entità create da quella esecuzione»: senza quella distinzione, un rollback
@@ -754,6 +756,8 @@ si aggiunge una colonna di iniziativa: la decisione è dell'utente e la si porta
 wave `1D-W5`, che attua `rollback`.
 
 ### 11.6 I quattro documenti riservati non stanno in `uploads/` — `1D-W4b`
+
+**Rilievo chiuso da DR-058**, vedi §11.13.
 
 Rilievo che cambia il lavoro della fase 9 e va portato all'utente.
 
@@ -857,6 +861,8 @@ bozza senza slug non ha mai avuto un URL — ma «probabilmente» non basta per 
 
 ### 11.11 Nessuno degli 8 documenti si risolve — `1D-W4d`
 
+**Rilievo chiuso da DR-058 e DR-060**, vedi §11.13.
+
 Il §11.6 aveva rilevato che i 4 documenti **riservati** stanno fuori da `uploads/`.
 Attuando la fase 9 si è misurato anche il resto, e il quadro è più ampio: **nessuno
 degli 8 documenti** ha oggi un file risolvibile, per **due motivi diversi**.
@@ -894,6 +900,8 @@ stesso gruppo e importarne quattro invece di otto.
 
 ### 11.12 Le tassonomie dei documenti non sono importate — `1D-W4d`
 
+**Rilievo chiuso da DR-061**, vedi §11.13.
+
 La fase 4 `terms` importa la sola tassonomia `category`. I documenti però usano
 `wpdmcategory` e `cuar_private_file_category`, che non sono importate: quindi
 `document_terms` resterebbe vuota anche se i file si risolvessero.
@@ -904,3 +912,78 @@ viene saltata** perché punta a un termine di `wpdmcategory`. Il conto torna com
 
 È lo stesso genere di problema del §11.11: una classificazione della Fase 1B più stretta
 di ciò che la sorgente contiene. Va deciso insieme a quello.
+
+### 11.13 Le quattro correzioni attuate — `1D-W5a`
+
+Le decisioni DR-058, DR-059, DR-060 e DR-061 chiudono i rilievi §11.5, §11.6, §11.11 e
+§11.12. Tutti i numeri di questa sezione sono **misurati** eseguendo le fasi sulla
+sorgente reale, non attesi.
+
+| Rilievo | Decisione | Stato |
+|---|---|---|
+| §11.5 `import_id_map` non distingue creato da aggiornato | DR-059 | chiuso |
+| §11.6 i 4 documenti riservati stanno fuori da `uploads/` | DR-058 | chiuso |
+| §11.11 nessuno degli 8 documenti si risolve | DR-058 e DR-060 | chiuso |
+| §11.12 le tassonomie dei documenti non sono importate | DR-061 | chiuso |
+
+#### Che cosa è cambiato, decisione per decisione
+
+**DR-059 — la colonna `action` di `import_id_map`.** Prima modifica a uno schema
+approvato in Fase 1B, fatta con una decisione registrata e non di iniziativa. La
+colonna vale `created` o `updated` e registra l'esito di *quella* riesecuzione per
+quella riga; `rollback`, che arriva in `1D-W5c`, la userà per non cancellare entità
+che l'esecuzione da annullare si era limitata ad aggiornare. Migrazione `0001`, senza
+dati personali: la colonna dice solo se una riga è nata o è stata toccata.
+
+**DR-058 — il secondo lettore di sorgente.** `wp-content/customer-area/storage/<hash>/<nomefile>`
+è ora letto da `source/files/privateStorage.ts`. La risoluzione avviene per **nome di
+file esatto**: l'identificatore a 32 esadecimali contenuto nel meta
+`cuar_private_file_file` **non** coincide con il nome della cartella su disco, ed è il
+punto in cui era facile costruire un percorso plausibile e sbagliato.
+
+**DR-060 — `download-manager-files` non è più esclusa.** I suoi 4 PDF diventano
+visibili al lettore di `uploads/`, e la fase 9 può risolverli. I due archivi restano
+separati per costruzione: il riservato si cerca solo in `customer-area/storage/`, il
+pubblico solo in `download-manager-files/`. I nomi quasi identici dei due gruppi —
+segnalati al §11.6 e al §11.11 — non possono quindi risolversi l'uno con l'altro.
+
+**DR-061 — tre tassonomie invece di una.** La fase 4 importa `category`,
+`wpdmcategory` e `cuar_private_file_category`. Ha richiesto un cambio di forma del
+percorso dei termini: da `/category/<slug>/`, con la tassonomia scritta a mano, a
+`/<tassonomia>/<slug>/`. Non è cosmesi — lo slug `moduli-consulenze` esiste in
+**entrambe** le tassonomie nuove, e senza il prefisso i due percorsi violerebbero il
+vincolo `terms_path_unique`. Per `category` la forma generalizzata produce esattamente
+il percorso di prima.
+
+#### Chiavi di storage adottate per gli 8 documenti
+
+| Gruppo | Chiave nel bucket | Bucket |
+|---|---|---|
+| 4 pubblici | `download-manager-files/<nomefile>` | `media-public` |
+| 4 riservati | `customer-area/<hash>/<nomefile>` | `media-private` |
+
+Lo schema conserva la disposizione della sorgente, che è ciò che rende prevedibile la
+fase 15 `rewrite` (`wp-content/uploads/X` → `/media/X`).
+
+#### Esiti misurati sulla sorgente reale
+
+| Misura | Prima | Dopo |
+|---|---|---|
+| file sotto `uploads/` dopo le esclusioni | 1.470 | **1.475** — i 5 di `download-manager-files/`, cioè 4 PDF e un `.htaccess` del plugin, che **non** viene importato come media |
+| fase `terms` | 3 create | **4 create** |
+| fase `menus` | 63 create, **1 saltata** su 64 | **64 create, 0 saltate** |
+| fase `documents` | 0 create, 8 saltate | **8 create, 0 saltate, 0 errori** |
+| `document_terms` | 0 righe | **8 righe** |
+| tabella `media` | 170 | **178** — 170 dalla fase `media`, 4 pubblici e 4 riservati dalla fase `documents` |
+
+La voce di menu recuperata è l'effetto che il §11.12 aveva predetto: puntava a un
+termine di `wpdmcategory` e veniva saltata perché quel termine non esisteva. È merito
+di DR-061, non di DR-060, che riguarda i file e non le tassonomie.
+
+#### Conseguenza sui documenti che dichiarano conteggi
+
+`database-schema.md` §6 conta le righe **per tabella** e passa a `terms` 4 e `media`
+178. `importer-spec.md` §8.1 conta **per fase**: la riga `terms` passa a 4, la riga
+`media` resta 170, perché le altre 8 righe le crea la fase `documents`. I due documenti
+non si contraddicono, ma il punto va letto una volta prima di verificare i conteggi
+nella `1D-W11`.

@@ -8,6 +8,13 @@
       "when": 1789403870783,
       "tag": "0000_schema_iniziale",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789505720219,
+      "tag": "0001_remarkable_imperial_guard",
+      "breakpoints": true
     }
   ]
 }

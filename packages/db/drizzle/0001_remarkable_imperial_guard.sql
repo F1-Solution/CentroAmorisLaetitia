@@ -1,0 +1,1 @@
+ALTER TABLE "import_id_map" ADD COLUMN "action" text DEFAULT 'created' NOT NULL;

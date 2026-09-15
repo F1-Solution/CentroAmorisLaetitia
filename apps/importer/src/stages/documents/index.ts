@@ -7,51 +7,53 @@
  * 8 righe (`wp-to-postgres-mapping.md`, righe su `wpdmpro`/`cuar_private_file`
  * e §4.1).
  *
- * ## Il collegamento al file — misurato, non presupposto
+ * ## Il collegamento al file — ora risolto
  *
- * `IMPORTER-DESIGN.md` §11.6 avvertiva che i 4 documenti **riservati** non
- * stanno in `uploads/`: vivono in
- * `wp-content/customer-area/storage/<uuid>/<file>`, un albero che nessun
- * lettore dell'importer visita oggi (`cuar_private_file_file` in
- * `wp_postmeta`, che contiene quel percorso, non un id di allegato).
+ * `IMPORTER-DESIGN.md` §11.6 e §11.11 avevano misurato che nessuno degli 8
+ * documenti aveva un file risolvibile: i 4 riservati vivono fuori da
+ * `uploads/`, in `wp-content/customer-area/storage/<hash>/<nomefile>`
+ * (`source/files/privateStorage.ts`); i 4 pubblici stanno in
+ * `wp-content/uploads/download-manager-files/`, una cartella che ADR-004 §3.2
+ * classificava come cartella di servizio da escludere.
  *
- * Misurato ora, per completare il quadro sui 4 **pubblici**: la chiave
- * `__wpdm_files` dà solo un **nome di file** (`"Modulo per consulenze.pdf"`,
- * niente id di allegato), e quel nome **non compare** fra i 170 allegati
- * importati dalla fase 3 (né come `_wp_attached_file`, né come figlio di
- * questi post). Il file fisico esiste — sotto
- * `wp-content/uploads/download-manager-files/` — ma quella cartella è
- * **esclusa** dal lettore di `uploads/` (`source/files/uploads.ts`,
- * `EXCLUDED_TOP_LEVEL_FOLDERS`, e ADR-004 §3.2 la elenca fra le cartelle di
- * servizio). Per questa ragione i suoi 4 PDF sono citati in
- * `IMPORTER-DESIGN.md` §11.1 e §11.6 come «una trappola»: hanno nomi quasi
- * identici ai 4 riservati (spazi invece di trattini), ma sono **file
- * diversi** — non si deve, e qui non si fa, risolvere l'uno con l'altro.
+ * **DR-058** aggiunge il secondo lettore di sorgente per l'albero riservato
+ * (`ctx.source.privateFiles()`), risolvendo per **nome di file esatto**: l'`id`
+ * a 32 esadecimali nel meta `cuar_private_file_file` non è il nome della
+ * cartella su disco (misurato, i due valori sono diversi), quindi la
+ * corrispondenza si fa sul campo `file` del meta contro il nome del file
+ * trovato sotto `storage/<hash>/`, mai contro un percorso costruito.
+ * **DR-060** toglie `download-manager-files` dall'esclusione del lettore di
+ * `uploads/` (`source/files/uploads.ts`), rendendo visibili i 4 file pubblici
+ * a `ctx.source.uploadedFiles()`.
  *
- * **Conclusione**: nessuno degli 8 documenti ha, oggi, un `media_id`
- * risolvibile senza un secondo lettore di sorgente — uno per
- * `download-manager-files/` (4 pubblici) e uno per
- * `wp-content/customer-area/storage/` (4 riservati). È più di quanto il
- * perimetro di questa sotto-wave anticipasse (solo i 4 riservati): si
- * dichiara qui, non si nasconde. Nessuno dei due lettori esiste, e costruirne
- * uno non è una decisione di questa fase (`IMPORTER-DESIGN.md` §11.6: «va
- * dichiarato come decisione, non risolto di iniziativa»).
+ * I due archivi non si mescolano mai: il riservato guarda solo
+ * `customer-area/storage/`, il pubblico solo `download-manager-files/`. I
+ * nomi dei due gruppi sono quasi identici (con o senza trattini) ma sono otto
+ * file distinti — la trappola già segnalata in `IMPORTER-DESIGN.md` §11.6 e
+ * §11.11.
  *
- * ## Che cosa fa questa fase, quindi
+ * ## Chiavi di storage
  *
- * Importa le **righe** — titolo, slug, descrizione, stato, conteggio
- * download, tassonomie — perché quelle stanno nel dump e sono nel perimetro.
- * Per ciascuno degli 8 documenti, se il file non è risolvibile (oggi: tutti
- * e 8), registra un `import_issues` di gravità `warning` con codice
- * riconoscibile (`document-file-unresolved`) e **non scrive la riga
- * `documents`**: `documents.media_id` è `NOT NULL` (`packages/db/src/schema/documents.ts`),
- * e scrivere un `media_id` inventato violerebbe sia quel vincolo nella sua
- * intenzione sia la regola di non indovinare un percorso.
+ * Pubblici: `download-manager-files/<nomefile>` (bucket `public`, come già
+ * restituito da `uploadedFiles()`). Riservati: `customer-area/<hash>/<nomefile>`
+ * (bucket `private`, senza lettura anonima). Lo schema conserva la
+ * disposizione della sorgente, ed è compatibile con la futura fase `rewrite`
+ * che converte `wp-content/uploads/X` in `/media/X`.
  *
- * `resolveDocumentMedia` è il punto d'innesto: il giorno in cui un secondo
- * lettore esiste, questa funzione — e solo questa — cambia. Il resto della
- * fase (lettura delle righe, tassonomie, ciclo per elemento) resta com'è.
+ * ## Che cosa fa questa fase
+ *
+ * Legge il nome del file di ciascun documento dal meta (`__wpdm_files` per i
+ * pubblici, `cuar_private_file_file` per i riservati, entrambi serializzati
+ * PHP), lo cerca nell'archivio giusto, carica il file nel bucket **prima**
+ * della riga `media` (`importer-spec.md` §7, come `stages/media/index.ts`), e
+ * in modo `plan` non scrive mai nel bucket. Un'estensione fuori dalla mappa
+ * MIME chiusa, un file assente, un meta mancante o malformato, o un nome
+ * ambiguo (stesso file in più cartelle riservate) producono ciascuno un
+ * `import_issues` di gravità `warning` con codice `document-file-unresolved`
+ * e un `detail` che distingue la causa; il documento non si scrive, perché
+ * `documents.media_id` è `NOT NULL`.
  */
+import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Stage, StageContext } from '../context.js';
@@ -59,6 +61,10 @@ import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { Tx } from '../../persistence/tx.js';
 import type { SqlRow } from '../../source/sql/types.js';
+import { checksumFile, type UploadedFile } from '../../source/files/uploads.js';
+import type { PrivateStorageFile } from '../../source/files/privateStorage.js';
+import { phpUnserialize, type PhpValue } from '../../source/php/unserialize.js';
+import type { Bucket } from '../../storage/objectStore.js';
 
 type LegacySource = 'wpdmpro' | 'cuar_private_file';
 
@@ -71,7 +77,29 @@ interface DocumentRow {
   readonly downloadCount: number;
   readonly categoryTaxonomy: string; // 'wpdmcategory' | 'cuar_private_file_category'
   readonly categoryTermLegacyIds: readonly number[];
+  /** `__wpdm_files` per i pubblici, `cuar_private_file_file` per i riservati, non ancora deserializzato. */
+  readonly fileMetaRaw: string | null;
 }
+
+interface ResolvedDocumentFile {
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly absolutePath: string;
+  readonly sizeBytes: number;
+  readonly storageKey: string;
+  readonly publicPath: string;
+  readonly isPrivate: boolean;
+  readonly bucket: Bucket;
+}
+
+/**
+ * Mappa chiusa estensione → MIME: si dichiara solo ciò che è misurato sugli 8
+ * documenti (tutti `.pdf`), non si indovina un tipo per un'estensione mai
+ * vista.
+ */
+const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  '.pdf': 'application/pdf',
+};
 
 function asString(value: SqlRow[string] | undefined): string {
   return value === null || value === undefined ? '' : String(value);
@@ -81,6 +109,36 @@ function asNumber(value: SqlRow[string] | undefined): number {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') return Number.parseInt(value, 10) || 0;
   return 0;
+}
+
+function fileMetaKeyFor(legacySource: LegacySource): string {
+  return legacySource === 'wpdmpro' ? '__wpdm_files' : 'cuar_private_file_file';
+}
+
+/**
+ * Estrae il nome del file dal meta serializzato PHP. Per i pubblici
+ * (`__wpdm_files`) il valore è direttamente una stringa; per i riservati
+ * (`cuar_private_file_file`) è annidato sotto la chiave `file` della mappa
+ * interna. Restituisce `null` — mai un'eccezione — quando la forma non è
+ * quella attesa: il chiamante lo traduce in un `import_issues`.
+ */
+function extractDocumentFileName(raw: string, legacySource: LegacySource): string | null {
+  let parsed: PhpValue;
+  try {
+    parsed = phpUnserialize(raw);
+  } catch {
+    return null;
+  }
+  if (!(parsed instanceof Map) || parsed.size === 0) return null;
+  const firstValue = parsed.values().next().value as PhpValue;
+
+  if (legacySource === 'wpdmpro') {
+    return typeof firstValue === 'string' ? firstValue : null;
+  }
+
+  if (!(firstValue instanceof Map)) return null;
+  const file = firstValue.get('file');
+  return typeof file === 'string' ? file : null;
 }
 
 async function loadDocumentRows(ctx: StageContext): Promise<readonly DocumentRow[]> {
@@ -141,34 +199,182 @@ async function loadDocumentRows(ctx: StageContext): Promise<readonly DocumentRow
       downloadCount: asNumber(meta.get('__wpdm_download_count')),
       categoryTaxonomy: category?.taxonomy ?? '',
       categoryTermLegacyIds: category?.ids ?? [],
+      fileMetaRaw: meta.get(fileMetaKeyFor(postType)) || null,
     });
   }
   return rows;
 }
 
 /**
- * Punto d'innesto per un secondo lettore di sorgente (vedi il commento di
- * testa). Controlla prima `import_id_map`, per il caso in cui un lettore
- * futuro — o un'altra fase — abbia già registrato un `media` per questo
- * `legacyId`: così l'innesto è aggiungere quel lettore altrove, non riscrivere
- * questa funzione. Oggi nessuno lo fa mai, per nessuno degli 8 documenti:
- * nessuno dei due archivi (`download-manager-files/`, `customer-area/storage/`)
- * è raggiungibile da `ctx.source`. Il `detail` distingue le due cause per il
- * rapporto.
+ * Cerca il file sorgente di un documento nell'archivio giusto per il suo tipo
+ * e ne calcola le chiavi di storage. Non tocca né il database né il bucket:
+ * solo lettura del filesystem e dei meta. `detail` è `null` solo quando
+ * `file` è risolto.
+ */
+async function resolveSourceFile(
+  ctx: StageContext,
+  row: DocumentRow,
+  downloadManagerFilesByName: ReadonlyMap<string, UploadedFile>,
+  privateFilesByName: ReadonlyMap<string, readonly PrivateStorageFile[]>,
+): Promise<{ readonly file: ResolvedDocumentFile | null; readonly detail: string | null }> {
+  if (!row.fileMetaRaw) {
+    return {
+      file: null,
+      detail:
+        row.legacySource === 'wpdmpro'
+          ? 'wpdm-files-meta-missing'
+          : 'cuar-private-file-meta-missing',
+    };
+  }
+
+  const fileName = extractDocumentFileName(row.fileMetaRaw, row.legacySource);
+  if (!fileName) {
+    return {
+      file: null,
+      detail:
+        row.legacySource === 'wpdmpro'
+          ? 'wpdm-files-meta-malformed'
+          : 'cuar-private-file-meta-malformed',
+    };
+  }
+
+  const extension = path.posix.extname(fileName).toLowerCase();
+  const mimeType = MIME_BY_EXTENSION[extension];
+  if (!mimeType) {
+    return { file: null, detail: 'document-mime-type-unsupported' };
+  }
+
+  if (row.legacySource === 'wpdmpro') {
+    const found = downloadManagerFilesByName.get(fileName);
+    if (!found) return { file: null, detail: 'download-manager-file-not-found' };
+    return {
+      file: {
+        fileName,
+        mimeType,
+        absolutePath: path.join(ctx.source.uploadsPath, found.relativePath),
+        sizeBytes: found.sizeBytes,
+        storageKey: found.relativePath,
+        publicPath: `/media/${found.relativePath}`,
+        isPrivate: false,
+        bucket: 'public',
+      },
+      detail: null,
+    };
+  }
+
+  const matches = privateFilesByName.get(fileName) ?? [];
+  if (matches.length === 0) return { file: null, detail: 'private-storage-file-not-found' };
+  // Ambiguità (nome duplicato in più cartelle dell'archivio riservato): non si
+  // sceglie, si dichiara — vedi il commento di testa del modulo.
+  if (matches.length > 1) return { file: null, detail: 'private-storage-file-ambiguous' };
+
+  const match = matches[0]!;
+  return {
+    file: {
+      fileName,
+      mimeType,
+      absolutePath: path.join(ctx.source.privateStoragePath, match.relativePath),
+      sizeBytes: match.sizeBytes,
+      storageKey: `customer-area/${match.relativePath}`,
+      publicPath: `/media/customer-area/${match.relativePath}`,
+      isPrivate: true,
+      bucket: 'private',
+    },
+    detail: null,
+  };
+}
+
+/**
+ * Punto d'innesto storico (`IMPORTER-DESIGN.md` §11.6): oggi risolve
+ * davvero, con lo stesso ordine di `stages/media/index.ts` — il file entra nel
+ * bucket **prima** della riga `media`, in `plan` non si scrive mai nel bucket,
+ * e il caricamento si salta quando il checksum non è cambiato. La riga viene
+ * registrata in `import_id_map` per `(wp_posts, legacyId, 'media')`, così una
+ * riesecuzione trova la stessa riga invece di duplicarla.
  */
 async function resolveDocumentMedia(
   ctx: StageContext,
   tx: Tx,
   row: DocumentRow,
+  downloadManagerFilesByName: ReadonlyMap<string, UploadedFile>,
+  privateFilesByName: ReadonlyMap<string, readonly PrivateStorageFile[]>,
 ): Promise<{ readonly mediaId: string | null; readonly detail: string }> {
-  const existing = await ctx.ids.find(tx, 'wp_posts', row.legacyId, 'media');
-  if (existing) return { mediaId: existing, detail: '' };
+  const { file, detail } = await resolveSourceFile(
+    ctx,
+    row,
+    downloadManagerFilesByName,
+    privateFilesByName,
+  );
+  if (!file) return { mediaId: null, detail: detail ?? 'document-file-unresolved' };
 
-  const detail =
-    row.legacySource === 'wpdmpro'
-      ? 'download-manager-files-excluded' // ADR-004 §3.2, source/files/uploads.ts
-      : 'private-customer-area-storage-unreached'; // IMPORTER-DESIGN.md §11.6
-  return { mediaId: null, detail };
+  const checksumHex = await checksumFile(file.absolutePath);
+  const checksum = Buffer.from(checksumHex, 'hex');
+
+  const existingId = await ctx.ids.find(tx, 'wp_posts', row.legacyId, 'media');
+  let existingChecksum: Buffer | null = null;
+  if (existingId) {
+    const [existing] = await tx
+      .select({ checksum: schema.media.checksum })
+      .from(schema.media)
+      .where(eq(schema.media.id, existingId));
+    existingChecksum = existing?.checksum ?? null;
+  }
+  const needsUpload = !existingChecksum || !existingChecksum.equals(checksum);
+
+  // Il file entra nel bucket **prima** della riga (`importer-spec.md` §7): in
+  // `plan` non si scrive mai nel bucket (§5.2).
+  if (ctx.mode === 'apply' && needsUpload) {
+    await ctx.storage.put(
+      file.bucket,
+      file.storageKey,
+      file.absolutePath,
+      file.mimeType,
+      file.sizeBytes,
+    );
+  }
+
+  const [written] = await tx
+    .insert(schema.media)
+    .values({
+      id: existingId ?? undefined,
+      storageKey: file.storageKey,
+      publicPath: file.publicPath,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      byteSize: file.sizeBytes,
+      checksum,
+      isPrivate: file.isPrivate,
+      uploadedAt: new Date(),
+      legacyId: row.legacyId,
+    })
+    .onConflictDoUpdate({
+      target: schema.media.id,
+      set: {
+        storageKey: file.storageKey,
+        publicPath: file.publicPath,
+        fileName: file.fileName,
+        mimeType: file.mimeType,
+        byteSize: file.sizeBytes,
+        checksum,
+        isPrivate: file.isPrivate,
+        legacyId: row.legacyId,
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ id: schema.media.id });
+  if (!written) throw new Error('inserimento di media non ha restituito una riga');
+
+  await ctx.ids.remember(
+    tx,
+    'wp_posts',
+    row.legacyId,
+    'media',
+    written.id,
+    ctx.mode === 'apply' ? ctx.runId : null,
+    existingId ? 'updated' : 'created',
+  );
+
+  return { mediaId: written.id, detail: '' };
 }
 
 export const documentsStage: Stage = {
@@ -182,12 +388,33 @@ export const documentsStage: Stage = {
   async run(ctx: StageContext): Promise<StageResult> {
     const rows = await loadDocumentRows(ctx);
 
+    const uploadedFiles = await ctx.source.uploadedFiles();
+    const downloadManagerFilesByName = new Map<string, UploadedFile>();
+    for (const file of uploadedFiles) {
+      if (!file.relativePath.startsWith('download-manager-files/')) continue;
+      downloadManagerFilesByName.set(path.posix.basename(file.relativePath), file);
+    }
+
+    const privateFiles = await ctx.source.privateFiles();
+    const privateFilesByName = new Map<string, PrivateStorageFile[]>();
+    for (const file of privateFiles) {
+      const matches = privateFilesByName.get(file.fileName) ?? [];
+      matches.push(file);
+      privateFilesByName.set(file.fileName, matches);
+    }
+
     return forEachItem(
       ctx.tx,
       rows,
       (row): ItemKey => ({ sourceTable: 'wp_posts', sourceId: row.legacyId }),
       async (row, tx) => {
-        const { mediaId, detail } = await resolveDocumentMedia(ctx, tx, row);
+        const { mediaId, detail } = await resolveDocumentMedia(
+          ctx,
+          tx,
+          row,
+          downloadManagerFilesByName,
+          privateFilesByName,
+        );
         if (!mediaId) {
           await ctx.issues.record({
             severity: 'warning',
@@ -200,8 +427,6 @@ export const documentsStage: Stage = {
           return 'skipped';
         }
 
-        // Codice raggiungibile solo quando `resolveDocumentMedia` risolve
-        // davvero un file — non ancora, oggi (vedi sopra).
         const existingId = await ctx.ids.find(tx, 'wp_posts', row.legacyId, 'document');
         const [written] = await tx
           .insert(schema.documents)
@@ -242,11 +467,14 @@ export const documentsStage: Stage = {
         );
 
         // `document_terms`: stessa cautela di `relations/index.ts` per i
-        // riferimenti a termine non risolvibili. Misurato: le tassonomie dei
-        // documenti (`wpdmcategory`, `cuar_private_file_category`) non sono
-        // fra quelle che `terms/index.ts` importa (solo `category`) — vedi
-        // anche `menus/index.ts`, stesso limite per una voce di menu.
-        await tx.delete(schema.documentTerms).where(eq(schema.documentTerms.documentId, written.id));
+        // riferimenti a termine non risolvibili. Le tassonomie dei documenti
+        // (`wpdmcategory`, `cuar_private_file_category`) non sono ancora fra
+        // quelle importate da `terms/index.ts`: i riferimenti restano
+        // irrisolti finché non lo saranno (vedi anche `menus/index.ts`, stesso
+        // limite per una voce di menu).
+        await tx
+          .delete(schema.documentTerms)
+          .where(eq(schema.documentTerms.documentId, written.id));
         for (const termLegacyId of row.categoryTermLegacyIds) {
           const termId = await ctx.ids.find(tx, 'wp_terms', termLegacyId, 'term');
           if (!termId) {

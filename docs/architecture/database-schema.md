@@ -164,9 +164,9 @@ un tema aperto** (MI-06), non una dimenticanza.
 | Tabella | Righe attese |
 |---|---|
 | `contents` | 108 (78 pagine + 29 articoli + 1 bozza) |
-| `media` | 170 |
+| `media` | **178** (170 dalla fase `media` + 8 create dalla fase `documents`: 4 pubblici da `uploads/download-manager-files/` per DR-060, 4 riservati da `wp-content/customer-area/storage/` per DR-058) |
 | `media_variants` | circa 1.376 |
-| `terms` | 3 (2 categorie + 1 di documenti) |
+| `terms` | **4** (2 `category` + 1 `wpdmcategory` + 1 `cuar_private_file_category` — DR-061) |
 | `menu_items` | **64** |
 | `redirects` | **180** (169 allegati + 4 documenti + 6 slug storici + 1 con carattere jolly) |
 | `forms` | 25 |

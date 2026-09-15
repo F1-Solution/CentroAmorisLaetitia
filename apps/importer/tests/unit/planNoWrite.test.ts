@@ -10,7 +10,11 @@ import { runPlan } from '../../src/cli/commands/plan.js';
 import { runApply } from '../../src/cli/commands/apply.js';
 import type { Runtime } from '../../src/cli/bootstrap.js';
 import type { SourceReader } from '../../src/source/index.js';
-import { EXPECTED_DUMP_FINGERPRINT, EXPECTED_TABLES, EXPECTED_UPLOADS_FILE_COUNT } from '../../src/preflight/constants.js';
+import {
+  EXPECTED_DUMP_FINGERPRINT,
+  EXPECTED_TABLES,
+  EXPECTED_UPLOADS_FILE_COUNT,
+} from '../../src/preflight/constants.js';
 import { createLogger } from '../../src/runtime/logger.js';
 import type { Config } from '../../src/runtime/config.js';
 
@@ -29,7 +33,8 @@ const migrationsFolder = path.join(
   'drizzle',
 );
 
-const baseUrl = process.env.DATABASE_URL ?? 'postgres://amoris:sviluppo-locale@localhost:5432/amoris';
+const baseUrl =
+  process.env.DATABASE_URL ?? 'postgres://amoris:sviluppo-locale@localhost:5432/amoris';
 
 function urlForDatabase(name: string): string {
   const parsed = new URL(baseUrl);
@@ -44,6 +49,7 @@ function fakeSourceReader(): SourceReader {
   return {
     dumpPath: '/finto/dump.sql',
     uploadsPath: '/finto/uploads',
+    privateStoragePath: '/finto/customer-area/storage',
     fingerprint: async () => EXPECTED_DUMP_FINGERPRINT,
     dump: async () => ({ tables: new Map(), rows: new Map(), issues: [] }),
     tableNames: async () => EXPECTED_TABLES,
@@ -53,6 +59,7 @@ function fakeSourceReader(): SourceReader {
         relativePath: `2026/09/file-${i}.jpg`,
         sizeBytes: 1,
       })),
+    privateFiles: async () => [],
   };
 }
 
@@ -72,6 +79,7 @@ function buildRuntime(db: Database): Runtime {
     S3_BUCKET_PRIVATE: 'media-private',
     IMPORTER_DUMP_PATH: '/finto/dump.sql',
     IMPORTER_UPLOADS_PATH: '/finto/uploads',
+    IMPORTER_PRIVATE_STORAGE_PATH: '/finto/customer-area/storage',
   };
   return {
     config,

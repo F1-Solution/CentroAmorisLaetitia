@@ -181,7 +181,7 @@ settings               18      18           0        0       0
 users                   1       1           0        0       0
 media                 170     170           0        0       0
 media_variants      ~1376    1376           0        0       0
-terms                   3       3           0        0       0
+terms                   4       4           0        0       0
 contents              108     108           0        0       0
 menu_items             64      64           0        0       0
 forms                  25      25           0        0       0
@@ -206,6 +206,13 @@ VERIFICHE
   chiavi meta non classificate                  0   atteso 0
 ESITO: success | partial | failed
 ```
+
+**Questa tabella conta per fase, non per tabella del database.** I due numeri
+divergono dove più fasi scrivono nella stessa tabella: la fase `media` crea le 170
+righe degli allegati, mentre le 8 righe `media` degli otto documenti — 4 pubblici per
+DR-060 e 4 riservati per DR-058 — le crea la fase `documents`, e per questo la riga
+`media` qui resta **170** mentre `database-schema.md` §6 dichiara **178**. Il
+confronto con i volumi di tabella spetta alla fase 16 `verify`, non a questa tabella.
 
 ### 8.2 I numeri attesi non sono decorativi
 

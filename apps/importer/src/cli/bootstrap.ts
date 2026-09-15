@@ -30,6 +30,7 @@ export function createRuntime(options: { verbose: boolean }): Runtime {
   const source = createSourceReader({
     dumpPath: resolveFromRoot(monorepoRoot, config.IMPORTER_DUMP_PATH),
     uploadsPath: resolveFromRoot(monorepoRoot, config.IMPORTER_UPLOADS_PATH),
+    privateStoragePath: resolveFromRoot(monorepoRoot, config.IMPORTER_PRIVATE_STORAGE_PATH),
   });
   const logger = createLogger({ verbose: options.verbose });
 

@@ -67,8 +67,14 @@ export const EXPECTED_DUMP_FINGERPRINT = {
   sizeBytes: 11_559_721,
 } as const;
 
-/** File attesi in `uploads/`, cartelle anno soltanto — misurato in `IMPORTER-DESIGN.md` §11.1. */
-export const EXPECTED_UPLOADS_FILE_COUNT = 1470;
+/**
+ * File attesi sotto `uploads/`, dopo le esclusioni di
+ * `source/files/uploads.ts` — misurato in `IMPORTER-DESIGN.md` §11.1 e
+ * corretto da DR-060: 1.470 nelle cartelle anno più i 5 file di
+ * `download-manager-files/` (i 4 documenti pubblici e un `.htaccess` del
+ * plugin, non più esclusa da questa fase 1D-W5a in poi).
+ */
+export const EXPECTED_UPLOADS_FILE_COUNT = 1475;
 
 /**
  * Chiavi di `wp_postmeta` classificate come **importate**

@@ -40,6 +40,14 @@ export const importIdMap = pgTable(
     entity: text().notNull(),
     entityId: uuid().notNull(),
     runId: uuid().references(() => importRuns.id, { onDelete: 'set null' }),
+    /**
+     * `created` | `updated`: l'esito di questa specifica riesecuzione per
+     * questa riga (DR-059). Senza questa colonna `rollback` non può distinguere
+     * un'entità nata dall'esecuzione da annullare da una già esistente che
+     * quell'esecuzione si è limitata ad aggiornare — annullarla cancellerebbe
+     * dati preesistenti (`IMPORTER-DESIGN.md` §11.5).
+     */
+    action: text().notNull().default('created'),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

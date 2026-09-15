@@ -20,7 +20,7 @@ Schema di destinazione: [`../architecture/schema.sql`](../architecture/schema.sq
 |---|---|---|
 | `wp_posts` | 1.234 | `contents`, `media`, `menu_items`, `documents`, `forms` — secondo `post_type` |
 | `wp_postmeta` | 6.420 | distribuita su più tabelle e colonne, §4 |
-| `wp_terms` | 48 | `terms` (solo le tassonomie utili) |
+| `wp_terms` | 48 | `terms` — **tutte e tre le tassonomie utili** (DR-061): `category`, `wpdmcategory`, `cuar_private_file_category` |
 | `wp_term_taxonomy` | 48 | `terms` |
 | `wp_term_relationships` | 125 | `content_terms`, `document_terms` |
 | `wp_termmeta` | 4 | §4.4 |
@@ -33,6 +33,21 @@ Schema di destinazione: [`../architecture/schema.sql`](../architecture/schema.sq
 | `wp_wpforms_entry_meta` | 206 | `form_submissions.payload` |
 | `wp_revslider_sliders` | 1 | `sliders` |
 | `wp_revslider_slides` | 12 | `slider_slides` |
+
+### 1.1a I file non vengono da una sola cartella — correzione della wave `1D-W5a`
+
+**Correzione (DR-058):** questo capitolo dava per scontato che tutti i file della
+sorgente stessero sotto `uploads/`. I 4 documenti riservati (`cuar_private_file`) non
+ci stanno: vivono in `wp-content/customer-area/storage/<hash>/`, e per importarli
+serve un secondo lettore di sorgente.
+
+| Sorgente dei file | Destinazione | Bucket |
+|---|---|---|
+| `uploads/`, meno le esclusioni di ADR-004 §3.2 | `media` con `is_private = false` | `media-public` |
+| `wp-content/customer-area/storage/` | `media` con `is_private = true` | `media-private` |
+
+Nessuno dei due bucket ha lettura anonima (ADR-004 §3.6): la differenza fra i due è
+chi l'applicazione lascia arrivare al file, non se il bucket sia esposto.
 
 ### 1.2 Tabelle conservate senza uso funzionale — 2
 

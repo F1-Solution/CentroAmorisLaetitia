@@ -28,11 +28,20 @@ const configSchema = z.object({
    * backup autorevole dichiarato in `IMPORTER-DESIGN.md`, sovrascrivibile per i
    * test che leggono una sorgente sintetica.
    */
-  IMPORTER_DUMP_PATH: z.string().min(1).default('source-private/BackupDB-2026-09-13/Sql1138799_1.sql'),
+  IMPORTER_DUMP_PATH: z
+    .string()
+    .min(1)
+    .default('source-private/BackupDB-2026-09-13/Sql1138799_1.sql'),
   IMPORTER_UPLOADS_PATH: z
     .string()
     .min(1)
     .default('source-private/wordpress-2026-09-13/wp-content/uploads'),
+
+  /** Albero riservato di Customer Area (DR-058): i 4 documenti riservati non stanno in `uploads/`. */
+  IMPORTER_PRIVATE_STORAGE_PATH: z
+    .string()
+    .min(1)
+    .default('source-private/wordpress-2026-09-13/wp-content/customer-area/storage'),
 });
 
 export type Config = z.infer<typeof configSchema>;

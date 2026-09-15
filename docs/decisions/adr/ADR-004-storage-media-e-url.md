@@ -87,7 +87,12 @@ diversi, e su una pagina con molte immagini la differenza si vede.
 
 Restano **escluse** le cartelle di servizio già identificate in 1A §4.3:
 `uploads/backwpup*`, `uploads/wpforms`, `uploads/aioseo`, `uploads/wpdm-cache`,
-`uploads/et_temp`, `uploads/download-manager-files`.
+`uploads/et_temp`.
+
+**Correzione (DR-060):** `uploads/download-manager-files` è stata rimossa dall'esclusione.
+La classificazione iniziale era basata sul nome della cartella; la verifica diretta ha
+mostrato che contiene 4 moduli PDF pubblici scaricabili dal sito, non cache di plugin.
+Le altre cinque cartelle restano escluse, come contenenti backup, cache o risorse interne.
 
 ### 3.3 Riscrittura dei riferimenti durante l'import
 

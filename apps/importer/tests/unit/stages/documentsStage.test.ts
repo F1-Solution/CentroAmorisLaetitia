@@ -1,5 +1,14 @@
+/**
+ * Fase `documents` con i due lettori veri (DR-058, DR-060): file sintetici su
+ * disco, sia nell'albero `download-manager-files/` (pubblici) sia in un
+ * albero riservato temporaneo che imita `customer-area/storage/` (riservati).
+ * Nessun nome reale dei moduli del Centro: nomi e contenuti sono di fantasia.
+ */
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Database } from '@amoris/db';
@@ -8,43 +17,109 @@ import { runStage } from '../../../src/stages/runStage.js';
 import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
 import { createTestDatabase, type TestDatabase } from '../_support/dbHarness.js';
-import { fakeSourceReader } from '../_support/fakeSource.js';
 import { fakeObjectStore } from '../_support/fakeStorage.js';
+import { listUploadedFiles } from '../../../src/source/files/uploads.js';
+import { listPrivateStorageFiles } from '../../../src/source/files/privateStorage.js';
+import type { SourceReader } from '../../../src/source/index.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
-
-async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
-}
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
 
-const DOC_IDS = { public1: 959, public2: 960, public3: 961, public4: 962, private1: 935, private2: 937, private3: 941, private4: 943 };
-
-function documentPost(id: number, postType: 'wpdmpro' | 'cuar_private_file', slug: string): SqlRow {
-  return { ID: id, post_type: postType, post_title: `Documento ${id}`, post_name: slug, post_status: 'publish' };
-}
-
-const WP_POSTS: readonly SqlRow[] = [
-  documentPost(DOC_IDS.public1, 'wpdmpro', 'modulo-1'),
-  documentPost(DOC_IDS.public2, 'wpdmpro', 'modulo-2'),
-  documentPost(DOC_IDS.public3, 'wpdmpro', 'modulo-3'),
-  documentPost(DOC_IDS.public4, 'wpdmpro', 'modulo-4'),
-  documentPost(DOC_IDS.private1, 'cuar_private_file', 'riservato-1'),
-  documentPost(DOC_IDS.private2, 'cuar_private_file', 'riservato-2'),
-  documentPost(DOC_IDS.private3, 'cuar_private_file', 'riservato-3'),
-  documentPost(DOC_IDS.private4, 'cuar_private_file', 'riservato-4'),
-];
-
-function buildSource(extraMeta: readonly SqlRow[] = [], extraPosts: readonly SqlRow[] = []) {
-  return fakeSourceReader({
-    wp_posts: [...WP_POSTS, ...extraPosts],
-    wp_postmeta: extraMeta,
-    wp_term_relationships: [],
-    wp_term_taxonomy: [],
+async function newApplyRunId(db: Database): Promise<string> {
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
   });
 }
 
+function documentPost(id: number, postType: 'wpdmpro' | 'cuar_private_file', slug: string): SqlRow {
+  return {
+    ID: id,
+    post_type: postType,
+    post_title: `Documento ${id}`,
+    post_name: slug,
+    post_status: 'publish',
+  };
+}
+
+function phpString(value: string): string {
+  return `s:${Buffer.byteLength(value, 'utf8')}:"${value}";`;
+}
+
+/** `__wpdm_files`: `a:1:{i:0;s:N:"nomefile";}` — solo il nome, misurato sulla sorgente. */
+function serializeWpdmFiles(fileName: string): string {
+  return `a:1:{i:0;${phpString(fileName)}}`;
+}
+
+/**
+ * `cuar_private_file_file`: `a:1:{s:32:"<id>";a:2:{s:2:"id";s:32:"<id>";s:4:"file";s:N:"nomefile";}}`.
+ * Semplificata a due sole chiavi interne (`id`, `file`): il parser legge solo
+ * `file`, e il conteggio dichiarato è quello reale di questa fixture.
+ */
+function serializeCuarPrivateFile(idHex: string, fileName: string): string {
+  const inner = `a:2:{${phpString('id')}${phpString(idHex)}${phpString('file')}${phpString(fileName)}}`;
+  return `a:1:{${phpString(idHex)}${inner}}`;
+}
+
+interface DocumentsFixture {
+  readonly source: SourceReader;
+  writePublicFile(fileName: string, content: string): Promise<void>;
+  writePrivateFile(hash: string, fileName: string, content: string): Promise<void>;
+  teardown(): Promise<void>;
+}
+
+async function createDocumentsFixture(
+  tables: Readonly<Record<string, readonly SqlRow[]>>,
+): Promise<DocumentsFixture> {
+  const uploadsPath = await mkdtemp(path.join(tmpdir(), 'amoris-importer-docs-uploads-'));
+  const privateStoragePath = await mkdtemp(path.join(tmpdir(), 'amoris-importer-docs-private-'));
+
+  const writePublicFile = async (fileName: string, content: string): Promise<void> => {
+    const dir = path.join(uploadsPath, 'download-manager-files');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, fileName), content, 'utf8');
+  };
+
+  const writePrivateFile = async (
+    hash: string,
+    fileName: string,
+    content: string,
+  ): Promise<void> => {
+    const dir = path.join(privateStoragePath, hash);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, fileName), content, 'utf8');
+  };
+
+  const source: SourceReader = {
+    dumpPath: '/finto/dump.sql',
+    uploadsPath,
+    privateStoragePath,
+    fingerprint: async () => ({ sha256: 'finto', sizeBytes: 0 }),
+    dump: async () => ({
+      tables: new Map(Object.keys(tables).map((t) => [t, Object.keys(tables[t]?.[0] ?? {})])),
+      rows: new Map(Object.entries(tables)),
+      issues: [],
+    }),
+    tableNames: async () => Object.keys(tables),
+    rows: async (table: string) => tables[table] ?? [],
+    uploadedFiles: () => listUploadedFiles(uploadsPath),
+    privateFiles: () => listPrivateStorageFiles(privateStoragePath),
+  };
+
+  return {
+    source,
+    writePublicFile,
+    writePrivateFile,
+    teardown: async () => {
+      await rm(uploadsPath, { recursive: true, force: true });
+      await rm(privateStoragePath, { recursive: true, force: true });
+    },
+  };
+}
+
 let testDb: TestDatabase;
+let fixture: DocumentsFixture | null = null;
 
 beforeAll(async () => {
   testDb = await createTestDatabase('amoris_importer_documents');
@@ -54,260 +129,313 @@ afterAll(async () => {
   await testDb.teardown();
 });
 
+afterEach(async () => {
+  await fixture?.teardown();
+  fixture = null;
+});
+
 describe('fase documents', () => {
-  it('i 4 documenti riservati (e, misurato, anche i 4 pubblici) producono l’avviso di collegamento non risolto, con codice riconoscibile, e non scrivono alcuna riga', async () => {
+  it('un documento riservato risolto scrive documents.isPrivate=true, media.isPrivate=true e carica nel bucket private', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(935, 'cuar_private_file', 'riservato-1')],
+      wp_postmeta: [
+        {
+          post_id: 935,
+          meta_key: 'cuar_private_file_file',
+          meta_value: serializeCuarPrivateFile('aa11', 'Fantasia-Riservato.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePrivateFile(
+      'a1b2c3',
+      'Fantasia-Riservato.pdf',
+      'contenuto sintetico riservato',
+    );
+
+    const runId = await newApplyRunId(testDb.db);
+    const storage = fakeObjectStore();
+    const result = await runStage(documentsStage, {
+      db: testDb.db,
+      storage,
+      source: fixture.source,
+      runId,
+      mode: 'apply',
+      issues: createIssueSink(testDb.db, 'apply', runId),
+      options: OPTIONS,
+    });
+
+    expect(result.created).toBe(1);
+
+    const [document] = await testDb.db
+      .select()
+      .from(schema.documents)
+      .where(eq(schema.documents.legacyId, 935));
+    expect(document?.isPrivate).toBe(true);
+
+    const [media] = await testDb.db
+      .select()
+      .from(schema.media)
+      .where(eq(schema.media.id, document!.mediaId));
+    expect(media?.isPrivate).toBe(true);
+    expect(media?.storageKey).toBe('customer-area/a1b2c3/Fantasia-Riservato.pdf');
+
+    expect(storage.puts).toHaveLength(1);
+    expect(storage.puts[0]?.bucket).toBe('private');
+    expect(storage.puts[0]?.key).toBe('customer-area/a1b2c3/Fantasia-Riservato.pdf');
+  });
+
+  it('un documento pubblico risolto scrive documents.isPrivate=false, media.isPrivate=false e carica nel bucket public', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(959, 'wpdmpro', 'pubblico-1')],
+      wp_postmeta: [
+        {
+          post_id: 959,
+          meta_key: '__wpdm_files',
+          meta_value: serializeWpdmFiles('Fantasia Pubblico.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePublicFile('Fantasia Pubblico.pdf', 'contenuto sintetico pubblico');
+
+    const runId = await newApplyRunId(testDb.db);
+    const storage = fakeObjectStore();
+    const result = await runStage(documentsStage, {
+      db: testDb.db,
+      storage,
+      source: fixture.source,
+      runId,
+      mode: 'apply',
+      issues: createIssueSink(testDb.db, 'apply', runId),
+      options: OPTIONS,
+    });
+
+    expect(result.created).toBe(1);
+
+    const [document] = await testDb.db
+      .select()
+      .from(schema.documents)
+      .where(eq(schema.documents.legacyId, 959));
+    expect(document?.isPrivate).toBe(false);
+
+    const [media] = await testDb.db
+      .select()
+      .from(schema.media)
+      .where(eq(schema.media.id, document!.mediaId));
+    expect(media?.isPrivate).toBe(false);
+    expect(media?.storageKey).toBe('download-manager-files/Fantasia Pubblico.pdf');
+
+    expect(storage.puts).toHaveLength(1);
+    expect(storage.puts[0]?.bucket).toBe('public');
+  });
+
+  it('in modo plan non scrive nulla nel bucket', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(960, 'wpdmpro', 'pubblico-plan')],
+      wp_postmeta: [
+        {
+          post_id: 960,
+          meta_key: '__wpdm_files',
+          meta_value: serializeWpdmFiles('Fantasia Piano.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePublicFile('Fantasia Piano.pdf', 'contenuto sintetico piano');
+
+    const fresh = await createTestDatabase('amoris_importer_documents_plan');
+    try {
+      const runId = randomUUID();
+      const storage = fakeObjectStore();
+      const result = await runStage(documentsStage, {
+        db: fresh.db,
+        storage,
+        source: fixture.source,
+        runId,
+        mode: 'plan',
+        issues: createIssueSink(fresh.db, 'plan', runId),
+        options: OPTIONS,
+      });
+
+      expect(result.created).toBe(1);
+      expect(storage.puts).toHaveLength(0);
+      const rows = await fresh.db.select().from(schema.documents);
+      expect(rows).toHaveLength(0);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('file mancante: warning document-file-unresolved e nessuna riga documents', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(937, 'cuar_private_file', 'riservato-mancante')],
+      wp_postmeta: [
+        {
+          post_id: 937,
+          meta_key: 'cuar_private_file_file',
+          meta_value: serializeCuarPrivateFile('bb22', 'Fantasia-Introvabile.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    // Nessun file scritto sotto l'albero riservato: il nome non si trova.
+
     const runId = await newApplyRunId(testDb.db);
     const issues = createIssueSink(testDb.db, 'apply', runId);
     const result = await runStage(documentsStage, {
       db: testDb.db,
       storage: fakeObjectStore(),
-      source: buildSource(),
+      source: fixture.source,
       runId,
       mode: 'apply',
       issues,
       options: OPTIONS,
     });
 
-    expect(result.created).toBe(0);
-    expect(result.skipped).toBe(8);
-    expect(result.errors).toBe(0);
-
-    const rows = await testDb.db.select().from(schema.documents);
+    expect(result.skipped).toBe(1);
+    const rows = await testDb.db
+      .select()
+      .from(schema.documents)
+      .where(eq(schema.documents.legacyId, 937));
     expect(rows).toHaveLength(0);
 
-    const unresolved = issues.collected.filter((i) => i.code === 'document-file-unresolved');
-    expect(unresolved).toHaveLength(8);
+    const issue = issues.collected.find((i) => i.sourceId === 937);
+    expect(issue?.code).toBe('document-file-unresolved');
+    expect(issue?.detail).toBe('private-storage-file-not-found');
+  });
 
-    const privateDetails = unresolved.filter((i) =>
-      [DOC_IDS.private1, DOC_IDS.private2, DOC_IDS.private3, DOC_IDS.private4].includes(i.sourceId),
+  it('stesso nome di file in due cartelle riservate: warning, nessuna scelta arbitraria', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(941, 'cuar_private_file', 'riservato-ambiguo')],
+      wp_postmeta: [
+        {
+          post_id: 941,
+          meta_key: 'cuar_private_file_file',
+          meta_value: serializeCuarPrivateFile('cc33', 'Fantasia-Duplicato.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePrivateFile('hash-uno', 'Fantasia-Duplicato.pdf', 'copia numero uno');
+    await fixture.writePrivateFile('hash-due', 'Fantasia-Duplicato.pdf', 'copia numero due');
+
+    const runId = await newApplyRunId(testDb.db);
+    const issues = createIssueSink(testDb.db, 'apply', runId);
+    const result = await runStage(documentsStage, {
+      db: testDb.db,
+      storage: fakeObjectStore(),
+      source: fixture.source,
+      runId,
+      mode: 'apply',
+      issues,
+      options: OPTIONS,
+    });
+
+    expect(result.skipped).toBe(1);
+    const rows = await testDb.db
+      .select()
+      .from(schema.documents)
+      .where(eq(schema.documents.legacyId, 941));
+    expect(rows).toHaveLength(0);
+
+    const issue = issues.collected.find((i) => i.sourceId === 941);
+    expect(issue?.code).toBe('document-file-unresolved');
+    expect(issue?.detail).toBe('private-storage-file-ambiguous');
+  });
+
+  it('estensione fuori dalla mappa MIME chiusa: warning, documento saltato', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(943, 'cuar_private_file', 'riservato-tipo-ignoto')],
+      wp_postmeta: [
+        {
+          post_id: 943,
+          meta_key: 'cuar_private_file_file',
+          meta_value: serializeCuarPrivateFile('dd44', 'Fantasia-Documento.docx'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePrivateFile(
+      'hash-docx',
+      'Fantasia-Documento.docx',
+      'contenuto sintetico docx',
     );
-    expect(privateDetails).toHaveLength(4);
-    expect(privateDetails.every((i) => i.detail === 'private-customer-area-storage-unreached')).toBe(true);
 
-    const publicDetails = unresolved.filter((i) =>
-      [DOC_IDS.public1, DOC_IDS.public2, DOC_IDS.public3, DOC_IDS.public4].includes(i.sourceId),
-    );
-    expect(publicDetails).toHaveLength(4);
-    expect(publicDetails.every((i) => i.detail === 'download-manager-files-excluded')).toBe(true);
+    const runId = await newApplyRunId(testDb.db);
+    const issues = createIssueSink(testDb.db, 'apply', runId);
+    const result = await runStage(documentsStage, {
+      db: testDb.db,
+      storage: fakeObjectStore(),
+      source: fixture.source,
+      runId,
+      mode: 'apply',
+      issues,
+      options: OPTIONS,
+    });
+
+    expect(result.skipped).toBe(1);
+    const issue = issues.collected.find((i) => i.sourceId === 943);
+    expect(issue?.code).toBe('document-file-unresolved');
+    expect(issue?.detail).toBe('document-mime-type-unsupported');
   });
 
-  it('quando il file è risolvibile (`import_id_map` già popolato: il punto d’innesto del secondo lettore) scrive la riga, con le tassonomie risolvibili', async () => {
-    const fresh = await createTestDatabase('amoris_importer_documents_resolved');
-    try {
-      const [media] = await fresh.db
-        .insert(schema.media)
-        .values({
-          storageKey: 'documenti/modulo-1.pdf',
-          publicPath: '/media/documenti/modulo-1.pdf',
-          fileName: 'modulo-1.pdf',
-          mimeType: 'application/pdf',
-          byteSize: 1,
-          checksum: Buffer.from('00', 'hex'),
-          isPrivate: false,
-          uploadedAt: new Date(),
-        })
-        .returning({ id: schema.media.id });
-      await fresh.db.insert(schema.importIdMap).values({
-        sourceTable: 'wp_posts',
-        sourceId: DOC_IDS.public1,
-        entity: 'media',
-        entityId: media!.id,
-      });
+  it('rieseguita aggiorna sul posto: non crea un secondo media', async () => {
+    fixture = await createDocumentsFixture({
+      wp_posts: [documentPost(962, 'wpdmpro', 'pubblico-rieseguito')],
+      wp_postmeta: [
+        {
+          post_id: 962,
+          meta_key: '__wpdm_files',
+          meta_value: serializeWpdmFiles('Fantasia Rieseguito.pdf'),
+        },
+      ],
+      wp_term_relationships: [],
+      wp_term_taxonomy: [],
+    });
+    await fixture.writePublicFile('Fantasia Rieseguito.pdf', 'contenuto sintetico rieseguito');
 
-      const [term] = await fresh.db
-        .insert(schema.terms)
-        .values({ taxonomy: 'category', slug: 'moduli', name: 'Moduli', path: '/category/moduli/', legacyId: 30 })
-        .returning({ id: schema.terms.id });
-      await fresh.db.insert(schema.importIdMap).values({
-        sourceTable: 'wp_terms',
-        sourceId: 30,
-        entity: 'term',
-        entityId: term!.id,
-      });
+    const runId1 = await newApplyRunId(testDb.db);
+    await runStage(documentsStage, {
+      db: testDb.db,
+      storage: fakeObjectStore(),
+      source: fixture.source,
+      runId: runId1,
+      mode: 'apply',
+      issues: createIssueSink(testDb.db, 'apply', runId1),
+      options: OPTIONS,
+    });
 
-      const runId = await newApplyRunId(fresh.db);
-      const issues = createIssueSink(fresh.db, 'apply', runId);
-      const result = await runStage(documentsStage, {
-        db: fresh.db,
-        storage: fakeObjectStore(),
-        source: fakeSourceReader({
-          wp_posts: [documentPost(DOC_IDS.public1, 'wpdmpro', 'modulo-1')],
-          wp_postmeta: [],
-          wp_term_relationships: [{ object_id: DOC_IDS.public1, term_taxonomy_id: 1, term_order: 0 }],
-          wp_term_taxonomy: [{ term_taxonomy_id: 1, term_id: 30, taxonomy: 'category', description: '', parent: 0, count: 1 }],
-        }),
-        runId,
-        mode: 'apply',
-        issues,
-        options: OPTIONS,
-      });
+    const runId2 = await newApplyRunId(testDb.db);
+    const result = await runStage(documentsStage, {
+      db: testDb.db,
+      storage: fakeObjectStore(),
+      source: fixture.source,
+      runId: runId2,
+      mode: 'apply',
+      issues: createIssueSink(testDb.db, 'apply', runId2),
+      options: OPTIONS,
+    });
 
-      expect(result.created).toBe(1);
-      expect(result.skipped).toBe(0);
+    expect(result.created).toBe(0);
+    expect(result.updated).toBe(1);
 
-      const rows = await fresh.db.select().from(schema.documents);
-      expect(rows).toHaveLength(1);
-      expect(rows[0]?.isPrivate).toBe(false);
-      expect(rows[0]?.mediaId).toBe(media!.id);
+    const documentRows = await testDb.db
+      .select()
+      .from(schema.documents)
+      .where(eq(schema.documents.legacyId, 962));
+    expect(documentRows).toHaveLength(1);
 
-      const docTerms = await fresh.db.select().from(schema.documentTerms);
-      expect(docTerms).toHaveLength(1);
-      expect(docTerms[0]?.termId).toBe(term!.id);
-    } finally {
-      await fresh.teardown();
-    }
-  });
-
-  it('un elemento sintetico corrotto (percorso già occupato da un altro documento con lo stesso slug) produce un errore e non ferma la fase', async () => {
-    const fresh = await createTestDatabase('amoris_importer_documents_isolation');
-    try {
-      const [media1] = await fresh.db
-        .insert(schema.media)
-        .values({
-          storageKey: 'documenti/a.pdf',
-          publicPath: '/media/documenti/a.pdf',
-          fileName: 'a.pdf',
-          mimeType: 'application/pdf',
-          byteSize: 1,
-          checksum: Buffer.from('00', 'hex'),
-          isPrivate: false,
-          uploadedAt: new Date(),
-        })
-        .returning({ id: schema.media.id });
-      const [media2] = await fresh.db
-        .insert(schema.media)
-        .values({
-          storageKey: 'documenti/b.pdf',
-          publicPath: '/media/documenti/b.pdf',
-          fileName: 'b.pdf',
-          mimeType: 'application/pdf',
-          byteSize: 1,
-          checksum: Buffer.from('01', 'hex'),
-          isPrivate: false,
-          uploadedAt: new Date(),
-        })
-        .returning({ id: schema.media.id });
-
-      const idA = 970;
-      const idB = 971;
-      await fresh.db.insert(schema.importIdMap).values([
-        { sourceTable: 'wp_posts', sourceId: idA, entity: 'media', entityId: media1!.id },
-        { sourceTable: 'wp_posts', sourceId: idB, entity: 'media', entityId: media2!.id },
-      ]);
-      // Stesso slug: `documents_slug_unique` fa fallire il secondo.
-      await fresh.db.insert(schema.documents).values({ slug: 'duplicato', title: 'Occupante', mediaId: media1!.id });
-
-      const runId = await newApplyRunId(fresh.db);
-      const issues = createIssueSink(fresh.db, 'apply', runId);
-      const result = await runStage(documentsStage, {
-        db: fresh.db,
-        storage: fakeObjectStore(),
-        source: fakeSourceReader({
-          wp_posts: [documentPost(idB, 'wpdmpro', 'duplicato')],
-          wp_postmeta: [],
-          wp_term_relationships: [],
-          wp_term_taxonomy: [],
-        }),
-        runId,
-        mode: 'apply',
-        issues,
-        options: OPTIONS,
-      });
-
-      expect(result.errors).toBe(1);
-      const failure = issues.collected.find((i) => i.code === 'item-import-failed');
-      expect(failure).toBeDefined();
-      expect(failure?.sourceId).toBe(idB);
-    } finally {
-      await fresh.teardown();
-    }
-  });
-
-  it('rieseguita aggiorna sul posto, non duplica', async () => {
-    const fresh = await createTestDatabase('amoris_importer_documents_idempotent');
-    try {
-      const [media] = await fresh.db
-        .insert(schema.media)
-        .values({
-          storageKey: 'documenti/c.pdf',
-          publicPath: '/media/documenti/c.pdf',
-          fileName: 'c.pdf',
-          mimeType: 'application/pdf',
-          byteSize: 1,
-          checksum: Buffer.from('02', 'hex'),
-          isPrivate: false,
-          uploadedAt: new Date(),
-        })
-        .returning({ id: schema.media.id });
-      const legacyId = 980;
-      await fresh.db.insert(schema.importIdMap).values({
-        sourceTable: 'wp_posts',
-        sourceId: legacyId,
-        entity: 'media',
-        entityId: media!.id,
-      });
-
-      const source = fakeSourceReader({
-        wp_posts: [documentPost(legacyId, 'wpdmpro', 'rieseguito')],
-        wp_postmeta: [],
-        wp_term_relationships: [],
-        wp_term_taxonomy: [],
-      });
-
-      const runId1 = await newApplyRunId(fresh.db);
-      await runStage(documentsStage, {
-        db: fresh.db,
-        storage: fakeObjectStore(),
-        source,
-        runId: runId1,
-        mode: 'apply',
-        issues: createIssueSink(fresh.db, 'apply', runId1),
-        options: OPTIONS,
-      });
-
-      const runId2 = await newApplyRunId(fresh.db);
-      const result = await runStage(documentsStage, {
-        db: fresh.db,
-        storage: fakeObjectStore(),
-        source,
-        runId: runId2,
-        mode: 'apply',
-        issues: createIssueSink(fresh.db, 'apply', runId2),
-        options: OPTIONS,
-      });
-
-      expect(result.created).toBe(0);
-      expect(result.updated).toBe(1);
-      const rows = await fresh.db.select().from(schema.documents);
-      expect(rows).toHaveLength(1);
-
-      const idMapRows = await fresh.db.select().from(schema.importIdMap).where(eq(schema.importIdMap.entity, 'document'));
-      expect(idMapRows).toHaveLength(1);
-    } finally {
-      await fresh.teardown();
-    }
-  });
-
-  it('in modo plan non scrive nulla: si annulla di proposito', async () => {
-    const fresh = await createTestDatabase('amoris_importer_documents_plan');
-    try {
-      const runId = randomUUID();
-      const issues = createIssueSink(fresh.db, 'plan', runId);
-      const result = await runStage(documentsStage, {
-        db: fresh.db,
-        storage: fakeObjectStore(),
-        source: buildSource(),
-        runId,
-        mode: 'plan',
-        issues,
-        options: OPTIONS,
-      });
-
-      expect(result.skipped).toBe(8);
-      const rows = await fresh.db.select().from(schema.documents);
-      expect(rows).toHaveLength(0);
-    } finally {
-      await fresh.teardown();
-    }
+    const mediaRows = await testDb.db
+      .select()
+      .from(schema.media)
+      .where(eq(schema.media.legacyId, 962));
+    expect(mediaRows).toHaveLength(1);
   });
 });
