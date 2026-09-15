@@ -6,7 +6,7 @@
 | **Data** | 2026-09-15 |
 | **Fase** | 1D, prodotto per la wave `1D-W7` |
 | **Ambito** | **solo** l'area amministrativa (`apps/admin`) e il pacchetto `packages/ui` |
-| **Origine** | DR-044, DR-045, DR-046, DR-047, DR-048 (Round 5 del registro delle decisioni), HO-004 §10 punto 3 |
+| **Origine** | DR-044, DR-045, DR-046, DR-048 (Round 5 del registro delle decisioni), HO-004 §10 punto 3, e le risposte del 2026-09-15 alle decisioni del capitolo 11 |
 | **Sorgenti** | `docs/design/ui-proposals.md` proposta 1 «Scrivania» · `docs/design/ux-proposals.md` proposta B «Le aree di responsabilità» · ADR-005, ADR-006, ADR-007, ADR-008 |
 
 > Questo documento è la fonte unica da cui la wave `1D-W7` costruisce
@@ -14,8 +14,20 @@
 > un valore è fissato qui per la prima volta, è marcato **[fissato in 1D-W7]** con
 > la motivazione. Non esistono valori senza una di queste due etichette.
 >
-> Il capitolo 11 elenca **sette decisioni non approvate**. Finché non sono
-> confermate dall'utente restano assunzioni e non autorizzano codice.
+> Il capitolo 11 distingue le decisioni **chiuse** da quelle ancora **aperte**.
+> Una decisione aperta è un'assunzione e non autorizza codice.
+
+## Revisioni
+
+| Data | Che cosa è cambiato |
+|---|---|
+| 2026-09-15 | Prima stesura, sulle cinque risposte a HO-004 (DR-044…DR-048). |
+| 2026-09-15 | **Revisione dopo le risposte alle decisioni del capitolo 11.** L'utente ha **revocato DR-047** e ha adottato l'opzione (a) di D-UX-3: **un solo ruolo attivo per volta, scelto esplicitamente**. Riscritti il capitolo 8 e i punti che dipendevano dalla lettura «aree = sola navigazione»; aggiunti cinque componenti al capitolo 6; chiuse le decisioni 1, 2 e 3. |
+
+> **Registrazione ancora da fare.** Le risposte del 2026-09-15 alle decisioni 1, 2
+> e 3 vanno registrate in `docs/decisions/decision-register.md` come **voci nuove**,
+> e quella su D-UX-3 come voce che **supera DR-047**: il registro è append-only e
+> DR-047 non si riscrive. Questo documento non modifica il registro.
 
 ---
 
@@ -29,7 +41,8 @@ Il 2026-09-15 l'utente ha risposto a HO-004. Cinque decisioni, registrate in
 | **DR-044** | UI 1 «Scrivania» | palette, tipografia, griglia, densità e trattamento dei componenti vengono da `ui-proposals.md` proposta 1 |
 | **DR-045** | UX B «Le aree di responsabilità» | l'architettura dell'informazione viene da `ux-proposals.md` §4 |
 | **DR-046** | il Centro ha ruoli abbastanza distinti | la premessa della proposta B regge: le aree restano il primo livello di navigazione |
-| **DR-047** | tutti i ruoli attivi insieme, unione dei permessi, **nessuna commutazione** | sparisce il selettore di ruolo previsto da `ui-proposals.md` §5 e la barra «Stai lavorando come…» di `ux-proposals.md` §4.3 |
+| ~~**DR-047**~~ | ~~tutti i ruoli attivi insieme, unione dei permessi, nessuna commutazione~~ | **revocata il 2026-09-15**, vedi la riga successiva |
+| **D-UX-3 = (a)** (2026-09-15, supera DR-047) | **un solo ruolo attivo per volta, scelto esplicitamente**: l'interfaccia mostra solo ciò che quel ruolo può fare | la proposta B torna attuabile com'era scritta: esiste il commutatore di ruolo, l'ambiente attivo è dichiarato in ogni schermata, la sessione è vincolata all'area (`ux-proposals.md` §4.4 punto 2). Capitolo 8 |
 | **DR-048** | carattere d'interfaccia distinto da quello del sito pubblico | Inter ospitato in proprio, capitolo 3 |
 
 «Scrivania» è stata scelta su una raccomandazione che pesava il costo marginale di
@@ -40,10 +53,13 @@ separazione di ambiente (`ux-proposals.md` §9). La matrice di compatibilità di
 **B + navigazione laterale persistente** come l'accoppiamento più solido delle sedici
 possibili (`ux-proposals.md` §8).
 
-**DR-047 è stata scelta contro la raccomandazione.** Il registro lo dice
-esplicitamente, e questo documento non la rimette in discussione: la recepisce e ne
-trae le conseguenze al capitolo 8, dove sta anche la tensione aperta fra DR-045 e
-DR-047.
+**DR-047 era stata scelta contro la raccomandazione, ed è stata revocata.** La prima
+stesura di questo documento aveva dovuto piegare la proposta B a una scelta che ne
+contraddiceva il presupposto, e aveva dichiarato la tensione come decisione aperta.
+Il 2026-09-15 l'utente ha risolto la contraddizione alla radice: ha cambiato la
+risposta a D-UX-3 in **(a) un solo ruolo attivo per volta**, che era la
+raccomandazione originale di HO-004. La tensione non esiste più. Il capitolo 8 ne
+descrive le conseguenze e il costo.
 
 Il vincolo che precede tutti: **l'area amministrativa non deve assomigliare a
 WordPress** (DR-018). Nessuna barra nera superiore, nessuna colonna grigio scuro con
@@ -134,16 +150,23 @@ Fondo dell'applicazione `bg-app`; superficie di riferimento per il testo `bg-sur
 5. Nessun valore esadecimale compare nei componenti: solo nomi di token. È una
    regola verificabile da lint e va verificata.
 
-### 2.4 Stato del tema scuro — **decisione richiesta, non presa qui**
+### 2.4 Stato del tema scuro — **deciso il 2026-09-15**
 
-HO-004 §7 elenca «tema scuro nel primo rilascio o solo predisposto» fra le domande
-**rimandate a prima della Fase 1D**. La Fase 1D è adesso, quindi la domanda è
-adesso. Non la decido io: è la **decisione 1** del capitolo 11.
+HO-004 §7 elencava «tema scuro nel primo rilascio o solo predisposto» fra le domande
+rimandate a prima della Fase 1D. La domanda è stata posta come decisione 1 del
+capitolo 11 e l'utente ha risposto **(b)**.
 
-Che cosa questo documento fa comunque, perché non costa nulla: definisce i token per
-entrambi i temi. Che cosa **non** fa e non può fare senza la risposta: dichiarare il
-tema scuro «supportato». Supportato significa verificato schermata per schermata, e
-nessuna schermata esiste ancora.
+Che cosa significa, in concreto:
+
+1. **I 36 valori delle due tabelle entrano subito in `packages/ui`** come variabili
+   CSS. Tutti, tema scuro compreso.
+2. **I cinque token scuri fissati in questa wave sono approvati**: `surface-hover`,
+   `surface-selected`, `accent-hover`, `restricted-surface`, `restricted-ink`.
+3. **In Fase 1 si verifica il solo tema chiaro.** La verifica del tema scuro —
+   schermata per schermata — avviene dopo il primo rilascio.
+4. **Fino ad allora non si dichiara che l'area amministrativa «supporta il tema
+   scuro».** I token esistono; il supporto è un'altra affermazione e si fa solo dopo
+   la verifica.
 
 ---
 
@@ -157,6 +180,9 @@ latino), con ripiego `system-ui, "Segoe UI", Roboto, sans-serif`.
 Fonte: `ui-proposals.md`, proposta 1 §3 «Tipografia». La proposta 1 fissava già il
 carattere, quindi DR-048 — che chiede «un carattere d'interfaccia distinto» senza
 nominarlo — si attua senza inventare nulla.
+
+**Deciso il 2026-09-15**: l'utente ha risposto **(a)** alla decisione 3 del
+capitolo 11. Inter è confermato.
 
 **Verifica di distribuibilità, eseguita in questa wave.** Inter è pubblicato da
 Rasmus Andersson con licenza **SIL Open Font License 1.1**, che consente
@@ -310,52 +336,57 @@ La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti 
 | 3 | `SectionNav` | seconda colonna, 240 px: le sezioni dell'area attiva, raggruppate sotto etichette in maiuscoletto; richiudibile con memoria della scelta | R, H, F, A, S, V | `1D-W8` |
 | 4 | `TopBar` | barra superiore **chiara**, mai scura (DR-018): briciole di pane, ricerca, menu della persona | R, L | `1D-W8` |
 | 5 | `Breadcrumbs` | percorso «Area / Sezione / Oggetto», ultimo elemento non cliccabile | R, H, F | `1D-W8` |
-| 6 | `UserMenu` | menu della persona in alto a destra: nome, dati dell'account, disconnessione. **Non** contiene un commutatore di ruolo (DR-047, vedi capitolo 8) | R, H, F, A | `1D-W8` |
-| 7 | `CommandSearch` | ricerca e comandi con `Ctrl+K`, come **acceleratore** e mai come unica via di navigazione (prestito dalla proposta 3 «Comando») | R, F, L, V, E | `1D-W9` |
-| 8 | `PageHeader` | intestazione di schermata: titolo, riga di riepilogo, azione principale a destra | R, L | `1D-W8` |
-| 9 | `Button` | bottone principale (pieno `accent`), secondario (bordo `border-strong`), terziario (solo testo), distruttivo (secondario con testo `danger`) | R, H, F, A, D, L | `1D-W8` |
-| 10 | `IconButton` | bottone di sola icona con etichetta accessibile obbligatoria e suggerimento al passaggio | R, H, F, A, D | `1D-W8` |
-| 11 | `DataTable` | tabella densa: intestazione fissa allo scorrimento, ordinamento sulle intestazioni, selezione multipla, cifre tabellari, nessuna zebratura, colonne che si nascondono per priorità sotto `bp-lg`; sotto `bp-sm` diventa schede impilate | R, H, F, S, L, V, E | `1D-W8` |
-| 12 | `TableToolbar` | riga di filtri sopra la tabella: ricerca, stato, autore, ordinamento; conteggio dei filtri attivi | R, F, D, V | `1D-W8` |
-| 13 | `BulkActionBar` | sostituisce `TableToolbar` quando c'è una selezione: conteggio, azioni di gruppo, annulla selezione | R, H, F, D, L | `1D-W9` |
-| 14 | `Pagination` | impaginazione numerata con scelta degli elementi per pagina | R, H, F, D | `1D-W8` |
-| 15 | `EmptyState` | titolo, una frase che spiega che cosa contiene la sezione, azione di creazione, collegamento alla guida. **Mai solo un disegno** | R | `1D-W8` |
-| 16 | `TextField` | campo di testo a riga singola con etichetta **sopra** il campo (mai dentro) e testo di aiuto **permanente** sotto | R, H, F, D, E, L | `1D-W8` |
-| 17 | `TextArea` | campo di testo a più righe, altezza crescente con il contenuto | R, H, F, D, E | `1D-W8` |
-| 18 | `SelectField` | scelta da elenco chiuso, con ricerca sopra le dieci voci | R, H, F, A, D, E, L, V | `1D-W8` |
-| 19 | `CheckboxField` | casella singola e casella di riga di tabella, con stato indeterminato | R, H, F, A, D, E, S | `1D-W8` |
-| 20 | `RadioGroup` | scelta esclusiva; usata dal pannello di visibilità del contenuto | R, H, F, A, D, E, S | `1D-W8` |
-| 21 | `DateTimeField` | data e ora della pubblicazione, cifre tabellari, immissione da tastiera sempre possibile | R, H, F, D, E | `1D-W8` |
-| 22 | `FieldGroup` | gruppo di campi con titolo in maiuscoletto e descrizione; è il mattone dei pannelli «PUBBLICAZIONE», «VISIBILITÀ», «SEO» | R, D | `1D-W8` |
-| 23 | `FormLayout` | due colonne sopra `bp-md` (contenuto a sinistra, attributi a destra), una colonna sotto | R | `1D-W8` |
-| 24 | `SaveBar` | barra fissa in fondo che dichiara **sempre** lo stato: «Salvato 2 minuti fa», «Modifiche non salvate»; contiene salva, anteprima, pubblica | R, D, L, E | `1D-W8` |
-| 25 | `Alert` | riquadro di avviso in linea con bordo sinistro 2 px, icona, titolo, spiegazione in italiano corrente e azione di recupero; varianti informazione, attenzione, errore, successo | R, E | `1D-W8` |
-| 26 | `Toast` | striscia sotto la barra superiore per l'esito delle azioni: persistente per gli errori, 6 secondi per le conferme. **Mai l'unico posto in cui compare un errore** | R, H, F | `1D-W8` |
-| 27 | `Dialog` | finestra di dialogo modale, riservata alle conferme brevi e alle scelte che bloccano: fuoco intrappolato, chiusura con Esc, ritorno del fuoco all'elemento che l'ha aperta | R, F, L | `1D-W8` |
-| 28 | `SidePanel` | pannello da destra, 480 px, per tutto ciò che non è una conferma breve; non nasconde la tabella | R, F, L, E | `1D-W8` |
-| 29 | `ConfirmDestructive` | conferma di eliminazione definitiva **con digitazione** del nome dell'oggetto | R, F, D, L, E | `1D-W9` |
-| 30 | `PublishStatusBadge` | pastiglia di stato di pubblicazione: bordo 1 px, `text-xs` in maiuscoletto, puntino pieno a sinistra. Il **testo** dice lo stato («Pubblicata», «Bozza», «Programmata», «Ritirata»), il colore lo accompagna | R | `1D-W8` |
-| 31 | `RestrictedMarker` | marcatore di contenuto riservato: barra piena `restricted` **spessa 4 px su tutto il lato sinistro** della riga o della scheda, etichetta testuale `RISERVATO` e icona di lucchetto. Il lato intero è il prestito dalla proposta 4 «Quaderno» | R | `1D-W8` |
-| 32 | `VisibilityPanel` | pannello di visibilità di un contenuto: fondo `restricted-surface` e testo `restricted-ink` quando la scelta è «riservato»; riga fissa che ricorda chi può vedere il record | R, F, D, E, S | `1D-W8` |
-| 33 | `MediaPicker` | selettore di media: griglia con ricerca e filtri, anteprima, testo alternativo obbligatorio alla scelta; apre in `SidePanel`, non in `Dialog` | R, H, F, A, S, L, V, E | `1D-W8` |
-| 34 | `MediaUploader` | caricamento con trascinamento e da pulsante, avanzamento per file, errori per file | R, H, F, D, L, E | `1D-W9` |
-| 35 | `PreviewPane` | riquadro di anteprima: contenitore, commutatore schermo/telefono, aggiornamento. Ciò che disegna dentro viene da `packages/blocks` (ADR-006 §3.3): l'anteprima **è** il sito, non una sua riproduzione | R, L, E | `1D-W8` |
-| 36 | `BlockTreeEditor` | editor dell'albero dei blocchi di ADR-005: aggiunge, sposta, elimina e annida blocchi dentro una colonna; ambito limitato da ADR-006 §3.2 | R, H, F, A, D, S, L, V, E | `1D-W8` |
-| 37 | `BlockInserter` | «Aggiungi blocco»: elenco dei 14 tipi di ADR-005 §3.2 con ricerca; l'insieme è **chiuso** e non si allarga in Fase 1 | R, H, F, V | `1D-W8` |
-| 38 | `ColumnRatioControl` | cambia la ripartizione delle colonne di una riga; è l'unica modifica di impaginazione ammessa in Fase 1 (ADR-006 §3.2) | R, H, F, A, D | `1D-W8` |
-| 39 | `RichTextToolbar` | barra degli strumenti del testo ricco sopra un blocco `rich_text`: solo i comandi che corrispondono agli elementi ammessi da ADR-005 §3.5. `h1` assente, stile in linea assente. L'incollaggio non ammesso è **rifiutato con avviso visibile**, mai riscritto in silenzio (ADR-006 §3.1) | R, H, F, A, D, S | `1D-W8` |
-| 40 | `HtmlFallbackEditor` | editor del blocco di riserva `html`: area di testo con evidenziazione della sintassi, **non** testo ricco, con avviso permanente «questo blocco non è stato convertito, modificarlo può alterare la resa» (ADR-006 §3.4) | R, F, D, E | `1D-W8` |
-| 41 | `MenuTreeEditor` | albero del menu di navigazione del sito: sposta, annida, collega a un contenuto o a un indirizzo | R, H, F, A, D, S, V, E | `1D-W9` |
-| 42 | `SeoPanel` | titolo, descrizione, immagine di condivisione, con conteggio dei caratteri e anteprima del risultato di ricerca | R, F, D, E | `1D-W9` |
-| 43 | `AuditTrail` | storia breve in fondo alla scheda dell'oggetto e registro esteso di area, scritto in frasi compiute e non in righe tecniche (innesto dalla proposta D, `ux-proposals.md` §9) | R, L, V | `1D-W9` |
-| 44 | `DensityToggle` | passa fra densità comoda e compatta e ricorda la scelta | R, H, F, A, S | `1D-W9` |
-| 45 | `Tabs` | schede dentro una sezione, quando le sottosezioni sono poche e paritetiche | R, H, F, A, S | `1D-W9` |
-| 46 | `Tooltip` | suggerimento al passaggio **e alla messa a fuoco**; mai l'unico veicolo di un'informazione necessaria | R, F | `1D-W8` |
-| 47 | `Spinner` | indicatore di attesa con testo accompagnatorio; per le tabelle si preferisce la sagoma di caricamento | R | `1D-W8` |
-| 48 | `SkipLink` | «Vai al contenuto», primo elemento focalizzabile di ogni schermata | R, F | `1D-W8` |
-| 49 | `GuidedFlow` | percorso a passi numerati, riservato alle **operazioni rare e delicate**, mai a quelle quotidiane (prestito dalla proposta 2 «Accoglienza»). In Fase 1 non ha ancora un caso d'uso obbligato | R, F, D, L, E | `1D-W9` |
+| 6 | `UserMenu` | menu della persona in alto a destra: nome, dati dell'account, disconnessione. Sta **accanto** al commutatore di ruolo, non al suo posto | R, H, F, A | `1D-W8` |
+| 7 | `RoleSwitcher` | commutatore di ruolo e di ambiente, in alto a destra: pastiglia con il ruolo attivo e freccia; il menu elenca **solo i ruoli posseduti**, ognuno con una riga che dice che cosa cambia. Nei ruoli con poteri estesi la pastiglia ha bordo 2 px (`ui-proposals.md`, proposta 1 §5; `ux-proposals.md` §4.3) | R, H, F, A, D, L | `1D-W8` |
+| 8 | `ActiveContextBadge` | indicatore **permanente** dell'ambiente attivo, in cima a ogni schermata e in parole compiute: «Stai lavorando come Redazione». Non un'icona, non un colore soltanto (`ux-proposals.md` §4.3) | R | `1D-W8` |
+| 9 | `ContextChangeNotice` | striscia che per 4 secondi dichiara il nuovo ruolo subito dopo la commutazione, mentre la colonna delle sezioni si ricompone (`ui-proposals.md`, proposta 1 §5) | R, F | `1D-W8` |
+| 10 | `AreaChoiceScreen` | schermata di scelta all'accesso: un riquadro per ogni area posseduta, con il conteggio delle cose aperte. Chi possiede una sola area **non la vede** ed entra diretto (`ux-proposals.md` §4.2, §4.3) | R, H, F, L, V, E | `1D-W8` |
+| 11 | `CrossAreaHandoff` | rimando esplicito quando un dato vive in un'altra area: «Questo dato sta in Segreteria. Vuoi passare?». Passare è un cambio di area **tracciato**, mai un salto silenzioso (`ux-proposals.md` §4.3) | R, H, F, L | `1D-W9` |
+| 12 | `CommandSearch` | ricerca e comandi con `Ctrl+K`, come **acceleratore** e mai come unica via di navigazione (prestito dalla proposta 3 «Comando») | R, F, L, V, E | `1D-W9` |
+| 13 | `PageHeader` | intestazione di schermata: titolo, riga di riepilogo, azione principale a destra | R, L | `1D-W8` |
+| 14 | `Button` | bottone principale (pieno `accent`), secondario (bordo `border-strong`), terziario (solo testo), distruttivo (secondario con testo `danger`) | R, H, F, A, D, L | `1D-W8` |
+| 15 | `IconButton` | bottone di sola icona con etichetta accessibile obbligatoria e suggerimento al passaggio | R, H, F, A, D | `1D-W8` |
+| 16 | `DataTable` | tabella densa: intestazione fissa allo scorrimento, ordinamento sulle intestazioni, selezione multipla, cifre tabellari, nessuna zebratura, colonne che si nascondono per priorità sotto `bp-lg`; sotto `bp-sm` diventa schede impilate | R, H, F, S, L, V, E | `1D-W8` |
+| 17 | `TableToolbar` | riga di filtri sopra la tabella: ricerca, stato, autore, ordinamento; conteggio dei filtri attivi | R, F, D, V | `1D-W8` |
+| 18 | `BulkActionBar` | sostituisce `TableToolbar` quando c'è una selezione: conteggio, azioni di gruppo, annulla selezione | R, H, F, D, L | `1D-W9` |
+| 19 | `Pagination` | impaginazione numerata con scelta degli elementi per pagina | R, H, F, D | `1D-W8` |
+| 20 | `EmptyState` | titolo, una frase che spiega che cosa contiene la sezione, azione di creazione, collegamento alla guida. **Mai solo un disegno** | R | `1D-W8` |
+| 21 | `TextField` | campo di testo a riga singola con etichetta **sopra** il campo (mai dentro) e testo di aiuto **permanente** sotto | R, H, F, D, E, L | `1D-W8` |
+| 22 | `TextArea` | campo di testo a più righe, altezza crescente con il contenuto | R, H, F, D, E | `1D-W8` |
+| 23 | `SelectField` | scelta da elenco chiuso, con ricerca sopra le dieci voci | R, H, F, A, D, E, L, V | `1D-W8` |
+| 24 | `CheckboxField` | casella singola e casella di riga di tabella, con stato indeterminato | R, H, F, A, D, E, S | `1D-W8` |
+| 25 | `RadioGroup` | scelta esclusiva; usata dal pannello di visibilità del contenuto | R, H, F, A, D, E, S | `1D-W8` |
+| 26 | `DateTimeField` | data e ora della pubblicazione, cifre tabellari, immissione da tastiera sempre possibile | R, H, F, D, E | `1D-W8` |
+| 27 | `FieldGroup` | gruppo di campi con titolo in maiuscoletto e descrizione; è il mattone dei pannelli «PUBBLICAZIONE», «VISIBILITÀ», «SEO» | R, D | `1D-W8` |
+| 28 | `FormLayout` | due colonne sopra `bp-md` (contenuto a sinistra, attributi a destra), una colonna sotto | R | `1D-W8` |
+| 29 | `SaveBar` | barra fissa in fondo che dichiara **sempre** lo stato: «Salvato 2 minuti fa», «Modifiche non salvate»; contiene salva, anteprima, pubblica | R, D, L, E | `1D-W8` |
+| 30 | `Alert` | riquadro di avviso in linea con bordo sinistro 2 px, icona, titolo, spiegazione in italiano corrente e azione di recupero; varianti informazione, attenzione, errore, successo | R, E | `1D-W8` |
+| 31 | `Toast` | striscia sotto la barra superiore per l'esito delle azioni: persistente per gli errori, 6 secondi per le conferme. **Mai l'unico posto in cui compare un errore** | R, H, F | `1D-W8` |
+| 32 | `Dialog` | finestra di dialogo modale, riservata alle conferme brevi e alle scelte che bloccano: fuoco intrappolato, chiusura con Esc, ritorno del fuoco all'elemento che l'ha aperta | R, F, L | `1D-W8` |
+| 33 | `SidePanel` | pannello da destra, 480 px, per tutto ciò che non è una conferma breve; non nasconde la tabella | R, F, L, E | `1D-W8` |
+| 34 | `ConfirmDestructive` | conferma di eliminazione definitiva **con digitazione** del nome dell'oggetto | R, F, D, L, E | `1D-W9` |
+| 35 | `PublishStatusBadge` | pastiglia di stato di pubblicazione: bordo 1 px, `text-xs` in maiuscoletto, puntino pieno a sinistra. Il **testo** dice lo stato («Pubblicata», «Bozza», «Programmata», «Ritirata»), il colore lo accompagna | R | `1D-W8` |
+| 36 | `RestrictedMarker` | marcatore di contenuto riservato: barra piena `restricted` **spessa 4 px su tutto il lato sinistro** della riga o della scheda, etichetta testuale `RISERVATO` e icona di lucchetto. Il lato intero è il prestito dalla proposta 4 «Quaderno» | R | `1D-W8` |
+| 37 | `VisibilityPanel` | pannello di visibilità di un contenuto: fondo `restricted-surface` e testo `restricted-ink` quando la scelta è «riservato»; riga fissa che ricorda chi può vedere il record | R, F, D, E, S | `1D-W8` |
+| 38 | `MediaPicker` | selettore di media: griglia con ricerca e filtri, anteprima, testo alternativo obbligatorio alla scelta; apre in `SidePanel`, non in `Dialog` | R, H, F, A, S, L, V, E | `1D-W8` |
+| 39 | `MediaUploader` | caricamento con trascinamento e da pulsante, avanzamento per file, errori per file | R, H, F, D, L, E | `1D-W9` |
+| 40 | `PreviewPane` | riquadro di anteprima: contenitore, commutatore schermo/telefono, aggiornamento. Ciò che disegna dentro viene da `packages/blocks` (ADR-006 §3.3): l'anteprima **è** il sito, non una sua riproduzione | R, L, E | `1D-W8` |
+| 41 | `BlockTreeEditor` | editor dell'albero dei blocchi di ADR-005: aggiunge, sposta, elimina e annida blocchi dentro una colonna; ambito limitato da ADR-006 §3.2 | R, H, F, A, D, S, L, V, E | `1D-W8` |
+| 42 | `BlockInserter` | «Aggiungi blocco»: elenco dei 14 tipi di ADR-005 §3.2 con ricerca; l'insieme è **chiuso** e non si allarga in Fase 1 | R, H, F, V | `1D-W8` |
+| 43 | `ColumnRatioControl` | cambia la ripartizione delle colonne di una riga; è l'unica modifica di impaginazione ammessa in Fase 1 (ADR-006 §3.2) | R, H, F, A, D | `1D-W8` |
+| 44 | `RichTextToolbar` | barra degli strumenti del testo ricco sopra un blocco `rich_text`: solo i comandi che corrispondono agli elementi ammessi da ADR-005 §3.5. `h1` assente, stile in linea assente. L'incollaggio non ammesso è **rifiutato con avviso visibile**, mai riscritto in silenzio (ADR-006 §3.1) | R, H, F, A, D, S | `1D-W8` |
+| 45 | `HtmlFallbackEditor` | editor del blocco di riserva `html`: area di testo con evidenziazione della sintassi, **non** testo ricco, con avviso permanente «questo blocco non è stato convertito, modificarlo può alterare la resa» (ADR-006 §3.4) | R, F, D, E | `1D-W8` |
+| 46 | `MenuTreeEditor` | albero del menu di navigazione del sito: sposta, annida, collega a un contenuto o a un indirizzo | R, H, F, A, D, S, V, E | `1D-W9` |
+| 47 | `SeoPanel` | titolo, descrizione, immagine di condivisione, con conteggio dei caratteri e anteprima del risultato di ricerca | R, F, D, E | `1D-W9` |
+| 48 | `AuditTrail` | storia breve in fondo alla scheda dell'oggetto e registro esteso di area, scritto in frasi compiute e non in righe tecniche (innesto dalla proposta D, `ux-proposals.md` §9). Ogni riga porta **il ruolo con cui l'azione è stata compiuta**, possibile perché esiste un ruolo attivo | R, L, V | `1D-W9` |
+| 49 | `DensityToggle` | passa fra densità comoda e compatta e ricorda la scelta | R, H, F, A, S | `1D-W9` |
+| 50 | `Tabs` | schede dentro una sezione, quando le sottosezioni sono poche e paritetiche | R, H, F, A, S | `1D-W9` |
+| 51 | `Tooltip` | suggerimento al passaggio **e alla messa a fuoco**; mai l'unico veicolo di un'informazione necessaria | R, F | `1D-W8` |
+| 52 | `Spinner` | indicatore di attesa con testo accompagnatorio; per le tabelle si preferisce la sagoma di caricamento | R | `1D-W8` |
+| 53 | `SkipLink` | «Vai al contenuto», primo elemento focalizzabile di ogni schermata | R, F | `1D-W8` |
+| 54 | `GuidedFlow` | percorso a passi numerati, riservato alle **operazioni rare e delicate**, mai a quelle quotidiane (prestito dalla proposta 2 «Accoglienza»). In Fase 1 non ha ancora un caso d'uso obbligato | R, F, D, L, E | `1D-W9` |
 
-**49 componenti: 37 servono in `1D-W8`, 12 in `1D-W9`.**
+**54 componenti: 43 servono in `1D-W8`, 11 in `1D-W9`.**
 
 ### 6.1 Librerie ammesse
 
@@ -392,11 +423,20 @@ era la domanda che poteva ribaltare la raccomandazione, e non la ribalta.
 | **Redazione** | Situazione dell'area · Pagine · Notizie · Media · Menu · SEO e indirizzi | `ux-proposals.md` §4.2 versione 1; ADR-006 §3.2 per il perimetro |
 | **Impostazioni** | Persone e permessi · Registro delle operazioni · Impostazioni del sito | `ux-proposals.md` §4.2 chiamava quest'area «Direzione» |
 
-**Il nome «Impostazioni» invece di «Direzione» è [fissato in 1D-W7].** Motivo: con
-DR-047 non esiste più una veste che si indossa, e «Direzione» nominava una veste. Ciò
-che resta in Fase 1 è un insieme di impostazioni di sistema — chi può fare cosa, che
-cosa è successo, come è configurato il sito — e chiamarlo per quello che è evita di
-promettere un'area di direzione che non esiste. È la **decisione 4** del capitolo 11.
+**Il nome «Impostazioni» invece di «Direzione» è [fissato in 1D-W7], e la revoca di
+DR-047 ne indebolisce la motivazione.** Va detto per intero, perché il documento non
+deve conservare un argomento che non vale più.
+
+- **Argomento caduto.** La prima stesura sosteneva che con DR-047 non esistesse più
+  una veste da indossare, e che quindi «Direzione» nominasse qualcosa di inesistente.
+  Con D-UX-3 = (a) le vesti esistono di nuovo, e questo argomento cade.
+- **Argomento che resta.** In Fase 1 quell'area contiene solo impostazioni di
+  sistema: chi può fare cosa, che cosa è successo, come è configurato il sito.
+  Chiamarla «Direzione» promette un'area di direzione che non è costruita.
+- **Conseguenza.** La **decisione 4** del capitolo 11 resta aperta e la
+  raccomandazione è oggi più debole di prima. Se l'utente sceglie «Direzione», il
+  documento è coerente lo stesso: cambia una parola in `AreaNav` e nelle briciole di
+  pane.
 
 ### 7.3 Le altre quattro aree non si mostrano affatto
 
@@ -421,20 +461,25 @@ corretto così nel suo documento. In Fase 1 quel gruppo non esiste.
 
 ### 7.4 Come si naviga
 
-1. **Ingresso.** Chi possiede una sola area entra direttamente nella sua «Situazione
-   dell'area». Chi ne possiede più d'una vede la schermata di scelta, con un conteggio
-   in chiaro per riquadro (`ux-proposals.md` §4.2). In Fase 1 la schermata di scelta
-   compare a pochissime persone, e va costruita comunque perché è il primo livello
-   dell'architettura.
-2. **Prima colonna:** le aree possedute. **Seconda colonna:** le sezioni dell'area
-   attiva. La seconda colonna cambia interamente al cambio di area: è la struttura
-   resa visibile, ed è la ragione per cui la matrice di `ux-proposals.md` §8 dichiara
-   questo accoppiamento «ottimo».
-3. **Briciole di pane** sempre presenti: «Redazione / Pagine / Chi siamo».
-4. **`Ctrl+K`** raggiunge qualunque sezione e qualunque oggetto. È un acceleratore: i
-   due menu restano, sempre.
+1. **Ingresso.** Chi possiede **un solo ruolo** entra direttamente nella «Situazione
+   dell'area» corrispondente e non incontra mai la domanda. Chi ne possiede più d'uno
+   vede `AreaChoiceScreen` e **sceglie esplicitamente** con quale lavorare, con un
+   conteggio in chiaro per riquadro (`ux-proposals.md` §4.2, §4.3). La scelta apre
+   l'ambiente: da quel momento l'interfaccia mostra solo ciò che quel ruolo può fare.
+   In Fase 1 la schermata compare a pochissime persone, e va costruita comunque perché
+   è il primo livello dell'architettura.
+2. **Prima colonna:** le aree del **ruolo attivo**. **Seconda colonna:** le sezioni
+   dell'area attiva. La seconda colonna cambia interamente al cambio di area: è la
+   struttura resa visibile, ed è la ragione per cui la matrice di `ux-proposals.md`
+   §8 dichiara questo accoppiamento «ottimo».
+3. **Briciole di pane** sempre presenti: «Redazione / Pagine / Chi siamo». Sopra di
+   esse, `ActiveContextBadge` dichiara l'ambiente attivo in parole compiute.
+4. **`Ctrl+K`** raggiunge qualunque sezione e qualunque oggetto **dell'ambiente
+   attivo**. È un acceleratore: i due menu restano, sempre. Non è una scorciatoia per
+   uscire dall'ambiente.
 5. **Rimando fra aree esplicito.** Se da un'area serve un dato che vive in un'altra,
    compare un rimando dichiarato, mai un salto silenzioso (`ux-proposals.md` §4.3).
+   Accettarlo è un **cambio di ambiente tracciato**, non una lettura da fuori.
 6. **Sotto `bp-sm`:** una sola area per volta a schermo intero, con il cambio d'area
    in un menu esplicito (`ux-proposals.md` §4.7).
 7. **Innesto dalla proposta D:** la «Situazione dell'area» porta in cima la riga «In
@@ -446,84 +491,111 @@ corretto così nel suo documento. In Fase 1 quel gruppo non esiste.
 
 ## 8. Ruoli e permessi in interfaccia
 
-### 8.1 Che cosa impone DR-047
+### 8.1 Che cosa è stato deciso
 
-Tutti i ruoli di una persona sono attivi insieme. I permessi sono l'**unione** di
-quelli dei suoi ruoli. **Non esiste commutazione di ruolo.**
+Il 2026-09-15 l'utente ha **revocato DR-047** e ha adottato l'opzione **(a)** di
+D-UX-3, che era la raccomandazione originale di HO-004 §6:
 
-Conseguenze dirette sull'interfaccia, tutte da attuare in `packages/ui`:
+> **Un solo ruolo attivo per volta, scelto esplicitamente: l'interfaccia mostra solo
+> ciò che quel ruolo può fare.**
 
-1. **Non esiste il selettore di ruolo.** La pastiglia «Ruolo: REDAZIONE» descritta in
-   `ui-proposals.md`, proposta 1 §5, **non si costruisce**. Al suo posto, nella stessa
-   posizione in alto a destra, c'è `UserMenu`: nome della persona, account,
-   disconnessione.
-2. **Non esiste la barra «Stai lavorando come…»** di `ux-proposals.md` §4.3. Nessuna
-   schermata dichiara una veste attiva, perché non ce n'è una.
-3. **L'intestazione di schermata dichiara il luogo, non la veste.** `PageHeader` e
-   `Breadcrumbs` dicono «Redazione / Pagine»: è una posizione nella navigazione, non
-   un ruolo indossato. È una differenza di sostanza, non di parole.
-4. **Nessuna striscia di cambio ruolo.** La conferma di 4 secondi dopo la
-   commutazione, prevista dalla proposta 1 §5, non ha più oggetto.
-5. **Il registro delle operazioni non può attribuire un'azione al ruolo con cui è
-   stata compiuta**, perché non esiste un ruolo attivo. Registra **chi**, **che
-   cosa**, **quando** e **in quale area della navigazione** si trovava. Il registro
-   delle decisioni lo dichiara già come conseguenza di DR-047 (§9, note sul Round 5).
-6. **Che cosa vede una persona con più ruoli:** tutte le aree per cui possiede almeno
-   un permesso, tutte insieme, nella prima colonna; dentro ogni area, tutte le sezioni
-   per cui possiede almeno un permesso. Nessuna scelta da compiere all'ingresso se le
-   aree sono più d'una — solo la schermata con i conteggi, che resta un punto di
-   partenza e non un interruttore.
-7. **I permessi, non i nomi dei ruoli, decidono che cosa si vede.** È già quanto
-   ADR-007 §3.2 prescrive: le autorizzazioni si esprimono come permessi
-   (`content.read`, `content.write`, `content.publish`, `media.write`,
-   `settings.write`), mai come confronti sul nome del ruolo.
-8. **Un'azione non permessa non si mostra disabilitata: non si mostra.** Un bottone
-   spento comunica l'esistenza di una funzione a chi non deve averla.
-   **[fissato in 1D-W7]** — né le proposte né le ADR lo dicono; senza una regola, metà
-   dei componenti nasconderebbe e metà disabiliterebbe. È la **decisione 7**.
+Questa scelta **supera** DR-047 e va registrata come voce nuova in
+`docs/decisions/decision-register.md`, che è append-only.
 
-### 8.2 La tensione fra DR-045 e DR-047 — **dichiarata, non risolta**
+La conseguenza principale è che la proposta B torna attuabile **come era stata
+scritta**. Non serve più adattarla: il presupposto su cui era costruita — si sceglie
+una veste e l'ambiente si riconfigura — è di nuovo vero.
 
-**Il problema.** La proposta B nasce sull'idea che scegliere una veste **riconfiguri
-l'ambiente**, e arriva a legare la sessione all'area: «finché si sta in Tesoreria il
-sistema rifiuta di restituire dati di Consulenza *anche se l'account di quella persona
-avrebbe il permesso*» (`ux-proposals.md` §4.4 punto 2). DR-047 esclude la
-commutazione. Se non c'è commutazione, non c'è un'area in cui «stare», e quel
-meccanismo non ha su che cosa appoggiarsi.
+### 8.2 Le aree tornano a essere contesto di permesso
 
-**La lettura proposta.** Le aree restano **navigazione e raggruppamento**, non
-**permesso**:
+È il punto che cambia di più rispetto alla prima stesura di questo documento.
 
-- l'area dice **dove si trova** un oggetto e **dove si trova** la persona che naviga;
-- il permesso dice **che cosa** quella persona può fare su quell'oggetto, e viene
-  dall'unione dei suoi ruoli;
-- le due cose non si sovrappongono e non si sostituiscono: si può essere in un'area e
-  non poter fare tutto ciò che vi si trova.
+1. **Il ruolo non è un attributo invisibile: è il luogo in cui ci si trova**
+   (`ux-proposals.md` §4.3).
+2. **La sessione è vincolata all'area.** Finché si lavora in un'area, le richieste al
+   sistema portano il contesto di quell'area, e il sistema **rifiuta** di restituire i
+   dati di un'altra area *anche se l'account di quella persona ne avrebbe il permesso*
+   (`ux-proposals.md` §4.4 punto 2). Il permesso non basta: serve essere nell'area
+   giusta. È questo che rende la separazione non aggirabile per distrazione.
+3. **La riservatezza torna a essere una separazione di ambiente**, non un filtro
+   applicato a dati che convivono. Era la ragione numero 1 per cui la proposta B era
+   stata raccomandata (`ux-proposals.md` §9), e la prima stesura di questo documento
+   la dava per persa. **È recuperata.**
+4. **Ogni azione è firmata dall'area in cui è stata compiuta.** Se la stessa persona
+   possiede due ruoli, l'atto resta attribuito all'ambiente in cui l'ha compiuto
+   (`ux-proposals.md` §4.3).
+5. **Le aree non comunicano di nascosto.** Il dato che vive altrove si raggiunge con
+   un rimando esplicito e un cambio di ambiente tracciato (`CrossAreaHandoff`).
 
-**Perché è coerente con entrambe le risposte.** Con DR-045, perché conserva ciò che la
-proposta B fa meglio delle altre tre: un primo livello che cresce di quattro voci
-invece che di nove, un vocabolario che chiunque capisce, aree indipendenti che si
-costruiscono una per volta senza toccare le precedenti (`ux-proposals.md` §9, ragioni
-2, 3 e 4). Con DR-047, perché non introduce alcuno stato di sessione che dipenda da
-una scelta dell'utente, e quindi nessuna commutazione.
+### 8.3 Conseguenze sull'interfaccia, da attuare in `packages/ui`
 
-**Che cosa si perde, detto apertamente.** Si perde la ragione numero 1 per cui la
-proposta B era raccomandata: la riservatezza come separazione di ambiente
-(`ux-proposals.md` §9). Con la lettura proposta, la riservatezza torna a essere una
-regola di permesso applicata a dati che convivono — che è il modello delle proposte A,
-C e D. Per un consultorio familiare questo è un arretramento, e va saputo **adesso**,
-non quando l'area Consulenza verrà costruita dopo il gate.
+1. **Esiste il commutatore di ruolo** (`RoleSwitcher`), in alto a destra, con lo
+   stesso nome e la stessa posizione in tutte le schermate
+   (`ui-proposals.md`, proposta 1 §5). Il menu elenca **solo** i ruoli posseduti,
+   ognuno con una riga che descrive che cosa cambia. Nei ruoli con poteri estesi la
+   pastiglia ha bordo 2 px. `UserMenu` gli sta accanto e resta separato: cambiare
+   ruolo e disconnettersi sono due gesti diversi.
+2. **L'ambiente attivo è dichiarato in ogni schermata** (`ActiveContextBadge`), in
+   parole compiute: «Stai lavorando come Redazione». Non un'icona, non un colore
+   soltanto (`ux-proposals.md` §4.3).
+3. **Al cambio di ruolo l'ambiente si ricompone**: la colonna delle sezioni cambia
+   interamente e una striscia (`ContextChangeNotice`) dichiara per 4 secondi il nuovo
+   ruolo (`ui-proposals.md`, proposta 1 §5).
+4. **All'accesso, chi ha più ruoli sceglie** (`AreaChoiceScreen`). Chi ne ha uno solo
+   non incontra la domanda: per quelle persone il sistema è semplicemente più piccolo
+   (`ux-proposals.md` §4.3).
+5. **Il registro delle operazioni attribuisce l'azione al ruolo con cui è stata
+   compiuta.** Registra chi, che cosa, quando **e in quale veste**. È esattamente ciò
+   che HO-004 §6 indicava come vantaggio dell'opzione (a): rende leggibile il registro
+   e riduce il rischio di operare per errore con poteri estesi su dati riservati.
+   `AuditTrail` lo mostra.
+6. **I permessi in vigore sono quelli del ruolo attivo**, non l'unione dei ruoli
+   posseduti. Restano espressi come permessi e non come confronti sul nome del ruolo,
+   come ADR-007 §3.2 prescrive (`content.read`, `content.write`, `content.publish`,
+   `media.write`, `settings.write`).
+7. **Un'azione non permessa nel ruolo attivo non si mostra disabilitata: non si
+   mostra.** **[fissato in 1D-W7]** — è la **decisione 7** del capitolo 11, ancora
+   aperta. Con un solo ruolo attivo la regola conta di più, non di meno: è il
+   meccanismo con cui l'interfaccia «mostra solo ciò che quel ruolo può fare».
 
-**Che cosa resta possibile.** La separazione di ambiente si può recuperare più tardi
-senza reintrodurre la commutazione di ruolo: per esempio con una **soglia di ingresso**
-all'area riservata — una conferma esplicita, registrata sempre, che apre un contesto a
-tempo — che è un gesto diverso dallo scegliere una veste. Non è deciso, non è
-progettato e non si progetta qui: la fase gestionale è bloccata dal gate.
+### 8.4 Che cosa **non** cambia
 
-**Stato: non approvata.** È la **decisione 2** del capitolo 11 ed è già aperta nel
-registro («Lettura delle aree come navigazione», termine: prima della wave `1D-W8`).
-In Fase 1 esistono solo Redazione e Impostazioni, quindi oggi la tensione ha effetti
-limitati — ma la lettura scelta oggi è quella su cui si costruisce `packages/ui`.
+- **ADR-007 regge senza modifiche.** §3.2 dichiarava che la scelta fra «un ruolo
+  attivo per volta» e «unione dei permessi» **non si decideva lì**, e che lo schema
+  sarebbe rimasto compatibile con entrambe. Lo è: la relazione molti-a-molti fra
+  persona e ruolo è già prevista. Cambia quale ruolo la sessione porta con sé, non lo
+  schema.
+- **In Fase 1 l'effetto pratico è piccolo.** Esistono un solo ruolo applicativo
+  (`editor`, ADR-007 §3.2) e due aree. Il commutatore esiste, ma quasi nessuno lo
+  vedrà. Va costruito comunque: è il meccanismo su cui poggia tutto il resto.
+- **DR-045 e DR-046 non sono toccate.** La proposta B resta la base, e la premessa
+  sulle sei aree resta confermata.
+
+### 8.5 Il costo, dichiarato senza abbellirlo
+
+HO-004 §6 avvertiva che D-UX-3 è **la scelta più costosa da cambiare dopo**, perché
+tocca il modello dei permessi, il registro delle operazioni e l'intestazione di ogni
+schermata. L'avvertimento era giusto, e la storia di questa decisione lo dimostra: è
+stata scelta in un modo, e cambiata pochi giorni dopo.
+
+**Ora è fissata.** Che cosa significa, in concreto:
+
+| Che cosa si paga | Perché |
+|---|---|
+| **Cinque componenti in più** in `packages/ui`, tutti nel guscio applicativo | il commutatore, l'indicatore, la striscia di conferma, la schermata di scelta e il rimando fra aree non esistevano nella prima stesura |
+| **Ogni richiesta porta il contesto dell'ambiente** | è il §4.4 punto 2 della proposta B, ed è il punto in cui la separazione diventa reale invece che dichiarata |
+| **Il registro delle operazioni ha una colonna in più**, il ruolo | va prevista adesso: aggiungerla dopo significa righe vecchie senza quel dato |
+| **Cambiarla di nuovo costa quanto è costata** | ogni ulteriore cambio tocca gli stessi tre punti, su una base più grande |
+
+**Che cosa si guadagna, altrettanto esplicito:** la riservatezza come separazione di
+ambiente, che in un consultorio familiare è il criterio che pesa più di tutti
+(`ux-proposals.md` §9). E un registro che dice non solo chi ha fatto che cosa, ma in
+quale veste.
+
+**Che cosa resta fuori Fase 1.** La soglia di ingresso all'area riservata — conferma
+esplicita, eventuale seconda verifica d'identità, registrazione sempre
+(`ux-proposals.md` §4.4 punto 3) — riguarda l'area Consulenza, che è bloccata dal
+gate. Non si progetta qui.
 
 ---
 
@@ -588,6 +660,7 @@ Nessun contenuto che lampeggia, scorre da solo o si muove in continuo.
 |---|---|---|---|
 | Stato di pubblicazione | parola intera: «Pubblicata», «Bozza», «Programmata», «Ritirata» | puntino pieno e bordo della pastiglia | terzo segnale |
 | Contenuto riservato | etichetta `RISERVATO` | barra 4 px su tutto il lato sinistro, icona di lucchetto | terzo segnale |
+| Ambiente attivo | frase compiuta: «Stai lavorando come Redazione» | pastiglia del commutatore con il nome del ruolo; bordo 2 px sui ruoli con poteri estesi | terzo segnale |
 | Voce di navigazione attiva | peso 600 | barra piena 3 px a sinistra | terzo segnale |
 | Riga selezionata | casella spuntata | conteggio nella `BulkActionBar` | terzo segnale |
 | Campo in errore | messaggio testuale sotto il campo | icona nel campo, bordo `danger` più spesso | terzo segnale |
@@ -625,100 +698,90 @@ Dichiarato perché nessuno lo dia per fatto:
 | **Le quattro aree gestionali** (Segreteria, Tesoreria, Formazione, Consulenza) | bloccate dal gate: non si pianificano, non si progettano, non si mostrano | dopo il gate |
 | **La PWA e il comportamento fuori linea** | DR-030 la limita all'area amministrativa e il gate la colloca dopo. Questo documento fissa il comportamento sotto `bp-sm`, che è un'altra cosa | dopo il gate |
 | **Il secondo fattore, gli inviti, il recupero password** | fuori perimetro in Fase 1 per ADR-007 §3.1 punto 11 e §3.2 | riesame di ADR-007 §3.3 |
-| **La separazione di ambiente per i dati riservati** | dipende dalla decisione 2 e riguarda aree che non esistono in Fase 1 | dopo il gate |
+| **La soglia di ingresso all'area riservata** | il meccanismo di separazione di ambiente è adottato (capitolo 8.2), ma la soglia esplicita di `ux-proposals.md` §4.4 punto 3 riguarda l'area Consulenza, che non esiste in Fase 1 | dopo il gate |
 | **Le email transazionali e la loro impaginazione** | conferma obbligatoria prima di qualunque configurazione o invio | Fase 1F |
 
 ---
 
-## 11. Assunzioni vietate e decisioni richieste
+## 11. Decisioni: chiuse e ancora aperte
 
-Nessuna di queste ha un valore predefinito. **Nessuna si considera presa per
-silenzio.** Ognuna va registrata in `docs/decisions/decision-register.md` prima che la
-wave `1D-W8` la dia per acquisita.
+Le sette decisioni poste dalla prima stesura di questo documento. Il 2026-09-15
+l'utente ne ha chiuse tre. Le altre quattro restano aperte: **nessuna si considera
+presa per silenzio**, e nessuna autorizza codice finché non è registrata in
+`docs/decisions/decision-register.md`.
 
----
-
-### Decisione 1 — Il tema scuro nel primo rilascio
-
-Rimandata da HO-004 §7 «a prima della Fase 1D». È adesso.
-
-| Opzioni | |
-|---|---|
-| **(a)** realizzato e verificato fin dal primo rilascio | |
-| **(b)** token definiti ora, verifica visiva e realizzazione dopo il primo rilascio | |
-| **(c)** non previsto: si definisce solo il tema chiaro | |
-
-**Raccomandazione: (b).** Il costo dei token è già stato sostenuto — le due tabelle
-del capitolo 2 sono complete e i 36 valori sono calcolati. Il costo che resta è la
-**verifica**, che è schermata per schermata e non si può anticipare a schermate che non
-esistono. Aggiungere i token dopo, invece, costa caro: significa rileggere ogni
-componente.
-
-**Impatto.** Con (a): circa 2–3 giornate di verifica e correzione sul primo modulo,
-sottratte alla parità del sito, che è ciò che il gate misura (`ui-proposals.md`, «Cosa
-serve dall'utente per decidere», domanda 4). Con (b): l'area amministrativa esce solo
-in tema chiaro e non si dichiara «supporta il tema scuro». Con (c): i 18 valori scuri
-si cancellano e rientrano più tardi a costo pieno.
-
-**Compresa in questa decisione:** l'approvazione dei cinque token scuri **[fissati in
-1D-W7]** — `surface-hover`, `surface-selected`, `accent-hover`, `restricted-surface`,
-`restricted-ink` — che nella proposta 1 mancavano.
-
-*Default vietato: non si dichiara il tema scuro supportato senza averlo verificato
-schermata per schermata.*
+| # | Argomento | Stato |
+|---|---|---|
+| 1 | Tema scuro nel primo rilascio | **chiusa** il 2026-09-15 — opzione (b) |
+| 2 | La lettura delle aree | **superata** il 2026-09-15 — la domanda decade, vedi sotto |
+| 3 | Il carattere d'interfaccia | **chiusa** il 2026-09-15 — opzione (a), Inter |
+| 4 | Nome della seconda area e aree non costruite | **aperta** |
+| 5 | I tre prestiti dalle altre proposte | **aperta** — l'utente vuole vederli descritti prima di scegliere |
+| 6 | L'utente prioritario dell'area amministrativa | **aperta** |
+| 7 | Azioni non permesse: nascoste o disabilitate | **aperta** |
 
 ---
 
-### Decisione 2 — La lettura delle aree
+## 11.A Decisioni chiuse
 
-La tensione del capitolo 8.2. Già aperta nel registro delle decisioni (§9, «Decisioni
-rimaste aperte dopo il Round 5»), con termine «prima della wave `1D-W8`».
+### Decisione 1 — Il tema scuro nel primo rilascio · **CHIUSA**
 
-| Opzioni | |
-|---|---|
-| **(a)** le aree sono **navigazione e raggruppamento**; i permessi sono l'unione dei ruoli e valgono ovunque | |
-| **(b)** le aree sono anche **contesto di permesso**: entrare in un'area restringe ciò che la sessione può leggere, anche se il permesso ci sarebbe | |
-| **(c)** ibrido: (a) per le aree ordinarie, (b) per la sola area riservata, quando esisterà | |
+Rimandata da HO-004 §7 «a prima della Fase 1D».
 
-**Raccomandazione: (a) per la Fase 1, con (c) da riesaminare prima della fase
-gestionale.** (a) è l'unica lettura che non reintroduce una commutazione, e DR-047 la
-esclude. (b) è ciò che la proposta B descrive, ma richiede uno stato di sessione scelto
-dall'utente: è commutazione con un altro nome. (c) conserva la ragione principale per
-cui B è stata raccomandata, ma riguarda l'area Consulenza, che è bloccata dal gate e
-**non si progetta ora**.
+**Risposta dell'utente, 2026-09-15: opzione (b)** — token definiti ora, verifica
+visiva e realizzazione dopo il primo rilascio. Era la raccomandazione.
 
-**Impatto.** Determina se `packages/ui` deve prevedere un contesto di area nelle
-richieste, e se il registro delle operazioni registra l'area come fatto di navigazione
-o come fatto di autorizzazione. Con (a) si perde la riservatezza come separazione di
-ambiente, che era la ragione numero 1 della raccomandazione di B.
+**Che cosa autorizza.** I 36 valori delle due tabelle del capitolo 2 entrano subito in
+`packages/ui` come variabili CSS, tema scuro compreso. Sono **approvati anche i cinque
+token scuri** che questa wave aveva dovuto fissare: `surface-hover`,
+`surface-selected`, `accent-hover`, `restricted-surface`, `restricted-ink`.
 
-*Default vietato: la lettura del capitolo 8.2 è un'assunzione finché non è confermata.
-Non si scrive codice che la dia per vera.*
+**Che cosa non autorizza.** In Fase 1 si verifica il solo tema chiaro, e non si
+dichiara che l'area amministrativa «supporta il tema scuro». Vedi §2.4.
 
 ---
 
-### Decisione 3 — Il carattere d'interfaccia
+### Decisione 2 — La lettura delle aree · **SUPERATA**
 
-DR-048 dice «un carattere distinto», non quale.
+La domanda chiedeva come leggere le aree, date DR-045 e DR-047 insieme: navigazione,
+contesto di permesso, o ibrido.
 
-| Opzioni | |
-|---|---|
-| **(a)** Inter, variabile, ospitato in proprio | |
-| **(b)** un'altra famiglia con licenza libera e ospitabile in proprio | |
-| **(c)** la pila di caratteri di sistema, nessun file scaricato | |
+**Risposta dell'utente, 2026-09-15: nessuna delle tre opzioni.** Ha risposto
+«Cambia la decisione D-UX-3 con (a) Un solo ruolo attivo per volta, scelto
+esplicitamente», cioè ha **revocato DR-047** invece di scegliere come conviverci.
 
-**Raccomandazione: (a).** È il carattere che la proposta 1 fissava (§3), quindi DR-044
-lo porta già con sé; la licenza OFL 1.1 è stata verificata in questa wave e consente
-l'ospitalità in proprio; è disegnato per funzionare a 12–14 px, che è dove vive questa
-interfaccia. (c) costa zero ma rende l'area amministrativa diversa su ogni sistema
-operativo, il che rende inutilizzabili i confronti visivi.
+**Perché la domanda decade.** Era generata da una contraddizione fra DR-045 (la
+proposta B riconfigura l'ambiente sulla veste scelta) e DR-047 (nessuna commutazione).
+Rimossa DR-047, la contraddizione non esiste: **le aree sono contesto di permesso**,
+come la proposta B le aveva scritte, e la sessione è vincolata all'area
+(`ux-proposals.md` §4.4 punto 2). Non è una delle tre opzioni scelta fra le altre: è
+la premessa che è cambiata.
 
-**Impatto.** Circa 100–200 kB di `woff2` con sottoinsieme latino, serviti da
-`apps/admin`. Nessuna chiamata a servizi esterni, in nessuna delle tre opzioni: è un
-vincolo, non un'opzione.
+**Effetti.** Capitolo 8, riscritto per intero; cinque componenti nuovi al capitolo 6;
+capitolo 7.4; riga sull'ambiente attivo al capitolo 9.6; riga sulla soglia di ingresso
+al capitolo 10. Il costo è dichiarato al capitolo 8.5.
 
-*Default vietato: non si aggiunge una dipendenza da un servizio esterno di caratteri
-senza una decisione esplicita.*
+**Da registrare** come voce che **supera DR-047**, non riscrivendola: il registro è
+append-only.
+
+---
+
+### Decisione 3 — Il carattere d'interfaccia · **CHIUSA**
+
+DR-048 diceva «un carattere distinto», non quale.
+
+**Risposta dell'utente, 2026-09-15: opzione (a)** — Inter, variabile, ospitato in
+proprio. Era la raccomandazione, ed è il carattere che la proposta 1 §3 fissava già.
+
+**Vincolo che resta, e non era in discussione:** nessuna dipendenza da un servizio
+esterno di caratteri. I `woff2` e il file `OFL.txt` stanno nel repository e sono
+serviti da `apps/admin`. Vedi §3.1.
+
+---
+
+## 11.B Decisioni ancora aperte
+
+Ognuna con opzioni, raccomandazione e impatto. **Nessun valore predefinito.**
 
 ---
 
@@ -730,10 +793,13 @@ senza una decisione esplicita.*
 | **(b)** «Direzione», come in `ux-proposals.md` §4.2, e le altre quattro non compaiono | |
 | **(c)** le altre quattro compaiono spente o marcate «in arrivo» | |
 
-**Raccomandazione: (a).** «Direzione» nominava una veste, e con DR-047 le vesti non si
-indossano più; ciò che resta in Fase 1 è configurazione di sistema. (c) è sconsigliata
-con forza: mostrare aree non costruite è pianificazione della fase gestionale fatta
-dentro l'interfaccia, e il gate di `CLAUDE.md` la vieta.
+**Raccomandazione: (a), ma più debole di prima.** L'argomento originale — «Direzione»
+nomina una veste che con DR-047 non si indossa più — **è caduto** con la revoca di
+DR-047: le vesti esistono di nuovo. Resta l'argomento che in Fase 1 quell'area
+contiene solo impostazioni di sistema, e che chiamarla «Direzione» promette un'area
+che non è costruita. Con (b) il documento resta coerente: cambia una parola. (c) è
+invece sconsigliata con forza: mostrare aree non costruite è pianificazione della fase
+gestionale fatta dentro l'interfaccia, e il gate di `CLAUDE.md` la vieta.
 
 **Impatto.** Solo sul nome visibile e sulla prima colonna. Cambiarlo dopo costa poco
 finché le aree sono due; costa molto quando saranno sei e il vocabolario sarà entrato
@@ -748,6 +814,10 @@ roadmap.*
 
 DR-044 registra «(a) Scrivania». La raccomandazione di `ui-proposals.md` era «la 1
 **con tre prestiti**». I prestiti non sono stati registrati, quindi non sono approvati.
+
+> **Stato al 2026-09-15.** L'utente ha chiesto di **vedere i tre prestiti descritti
+> uno per uno prima di scegliere**. La descrizione gli è stata consegnata a parte.
+> La decisione resta aperta e nessuna delle tre opzioni è stata scelta.
 
 | Opzioni | |
 |---|---|
@@ -794,8 +864,10 @@ conferma.*
 
 ### Decisione 7 — Le azioni non permesse: nascoste o disabilitate
 
-Regola **[fissata in 1D-W7]** al capitolo 8.1 punto 8, perché senza una regola ciascun
-componente sceglierebbe da sé.
+Regola **[fissata in 1D-W7]** al capitolo 8.3 punto 7, perché senza una regola
+ciascun componente sceglierebbe da sé. Con un solo ruolo attivo per volta la regola
+pesa di più: è il meccanismo con cui l'interfaccia «mostra solo ciò che quel ruolo può
+fare».
 
 | Opzioni | |
 |---|---|
@@ -807,8 +879,8 @@ funzione esiste, e in un consultorio questo è un'informazione di troppo. (b) è
 gentile quando il permesso si può chiedere a qualcuno — ma in Fase 1 i permessi si
 assegnano a mano su due o tre account, e non c'è nessuno a cui chiederli.
 
-**Impatto.** Tocca `Button`, `IconButton`, `BulkActionBar`, `SectionNav` e `AreaNav`:
-è una regola trasversale, e cambiarla dopo significa rileggerli tutti.
+**Impatto.** Tocca `Button`, `IconButton`, `BulkActionBar`, `SectionNav`, `AreaNav` e
+`RoleSwitcher`: è una regola trasversale, e cambiarla dopo significa rileggerli tutti.
 
 *Default vietato: non si sceglie fra nascondere e disabilitare componente per
 componente.*
@@ -824,6 +896,11 @@ copiati. I 26 ereditati dalla proposta 1 coincidono con quelli dichiarati in
 **[fissato in 1D-W7]**.
 
 La licenza di Inter è stata verificata sulla fonte del progetto, non ricordata.
+
+La revisione del 2026-09-15 ha **rimosso**, non nascosto, gli argomenti caduti con la
+revoca di DR-047: dove un ragionamento non vale più è dichiarato caduto (capitoli 1,
+7.2 e decisione 4). Un documento che conserva argomenti superati fa ripetere la
+discussione.
 
 Nessun nome, data, importo, indirizzo o contenuto reale del Centro compare in questo
 documento. Gli esempi di stato, di percorso e di registro sono inventati.
