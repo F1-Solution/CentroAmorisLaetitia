@@ -1,0 +1,76 @@
+.amoris-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-1);
+}
+
+.amoris-field__label {
+  font-size: var(--amoris-text-sm-size);
+  font-weight: 600;
+  color: var(--amoris-text-primary);
+}
+
+.amoris-field-input {
+  height: var(--amoris-control-height);
+  min-height: 44px;
+  padding: 0 var(--amoris-space-3);
+  border-radius: var(--amoris-radius);
+  border: 1px solid var(--amoris-border-strong);
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-base-size);
+}
+
+textarea.amoris-field-input {
+  height: auto;
+  min-height: 44px;
+  padding-top: var(--amoris-space-2);
+  padding-bottom: var(--amoris-space-2);
+}
+
+.amoris-field-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* §9.6: l'errore non è mai solo colore — bordo più spesso e icona, oltre al testo. */
+.amoris-field-input--error {
+  border-width: 2px;
+  border-color: var(--amoris-danger);
+}
+
+.amoris-field__help {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+  margin: 0;
+}
+
+.amoris-field__error {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-danger);
+  font-weight: 600;
+  margin: 0;
+}
+
+.amoris-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-field-gap-y);
+}
+
+.amoris-field-group__title {
+  font-size: var(--amoris-text-xs-size);
+  line-height: var(--amoris-text-xs-line);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+  color: var(--amoris-text-secondary);
+  margin: 0;
+}
+
+.amoris-field-group__description {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+  margin: 0;
+}

@@ -1,0 +1,29 @@
+.amoris-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--amoris-space-2);
+  color: var(--amoris-text-secondary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-sm-size);
+}
+
+.amoris-spinner__circle {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid var(--amoris-border-strong);
+  border-top-color: var(--amoris-accent);
+  animation: amoris-spinner-rotate 700ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amoris-spinner__circle {
+    animation-duration: 0ms;
+  }
+}
+
+@keyframes amoris-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

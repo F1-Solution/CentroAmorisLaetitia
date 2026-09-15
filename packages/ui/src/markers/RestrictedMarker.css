@@ -1,0 +1,21 @@
+.amoris-restricted-marker {
+  border-left: 4px solid var(--amoris-restricted);
+  padding-left: var(--amoris-space-3);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-restricted-marker__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--amoris-space-1);
+  font-size: var(--amoris-text-xs-size);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+  color: var(--amoris-restricted);
+  margin-bottom: var(--amoris-space-1);
+}
+
+.amoris-restricted-marker__content {
+  color: var(--amoris-text-primary);
+}

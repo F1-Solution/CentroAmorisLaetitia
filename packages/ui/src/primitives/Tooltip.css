@@ -1,0 +1,19 @@
+.amoris-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.amoris-tooltip {
+  position: absolute;
+  bottom: calc(100% + var(--amoris-space-1));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--amoris-text-primary);
+  color: var(--amoris-bg-surface);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-sm-size);
+  padding: var(--amoris-space-1) var(--amoris-space-2);
+  border-radius: var(--amoris-radius);
+  white-space: nowrap;
+  z-index: 1100;
+}

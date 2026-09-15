@@ -1,0 +1,23 @@
+.amoris-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--amoris-control-height);
+  height: var(--amoris-control-height);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--amoris-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--amoris-text-primary);
+  cursor: pointer;
+}
+
+.amoris-icon-button:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

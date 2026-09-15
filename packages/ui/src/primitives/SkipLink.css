@@ -1,0 +1,17 @@
+.amoris-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-accent);
+  padding: var(--amoris-space-2) var(--amoris-space-4);
+  border-radius: var(--amoris-radius);
+  font-family: var(--amoris-font-family);
+  font-weight: 600;
+}
+
+.amoris-skip-link:focus {
+  left: var(--amoris-space-2);
+  top: var(--amoris-space-2);
+}

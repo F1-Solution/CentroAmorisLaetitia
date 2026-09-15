@@ -1,0 +1,44 @@
+.amoris-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--amoris-space-1);
+  height: 1.5rem;
+  padding: 0 var(--amoris-space-2);
+  border-radius: var(--amoris-radius);
+  border: 1px solid var(--amoris-border-strong);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-xs-size);
+  line-height: var(--amoris-text-xs-line);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+  color: var(--amoris-text-primary);
+  background: var(--amoris-bg-surface);
+}
+
+.amoris-status-badge__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.amoris-status-badge--published {
+  color: var(--amoris-success);
+  border-color: var(--amoris-success);
+}
+
+.amoris-status-badge--draft {
+  color: var(--amoris-warning);
+  border-color: var(--amoris-warning);
+}
+
+.amoris-status-badge--scheduled {
+  color: var(--amoris-accent);
+  border-color: var(--amoris-accent);
+}
+
+.amoris-status-badge--retired {
+  color: var(--amoris-text-secondary);
+  border-color: var(--amoris-border-strong);
+}

@@ -1,0 +1,35 @@
+.amoris-alert {
+  border-left: 2px solid transparent;
+  border-radius: var(--amoris-radius);
+  padding: var(--amoris-space-3) var(--amoris-space-4);
+  background: var(--amoris-bg-surface);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-alert__title {
+  font-weight: 600;
+  margin: 0 0 var(--amoris-space-1);
+  font-size: var(--amoris-text-base-size);
+}
+
+.amoris-alert__body {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-alert__action {
+  margin-top: var(--amoris-space-2);
+}
+
+.amoris-alert--info {
+  border-left-color: var(--amoris-accent);
+}
+.amoris-alert--warning {
+  border-left-color: var(--amoris-warning);
+}
+.amoris-alert--error {
+  border-left-color: var(--amoris-danger);
+}
+.amoris-alert--success {
+  border-left-color: var(--amoris-success);
+}

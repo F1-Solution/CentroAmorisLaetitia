@@ -1,2 +1,3 @@
-import base from '@amoris/config/eslint/base';
-export default base;
+import react from '@amoris/config/eslint/react';
+
+export default react;

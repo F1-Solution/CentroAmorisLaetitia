@@ -1,0 +1,69 @@
+.amoris-datatable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-base-size);
+  color: var(--amoris-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.amoris-datatable__caption {
+  text-align: left;
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+  padding-bottom: var(--amoris-space-2);
+}
+
+.amoris-datatable th,
+.amoris-datatable td {
+  height: var(--amoris-row-height);
+  padding: 0 var(--amoris-cell-gap-x);
+  text-align: left;
+  border-bottom: 1px solid var(--amoris-border);
+}
+
+.amoris-datatable__col--numeric {
+  text-align: right;
+}
+
+.amoris-datatable th {
+  font-size: var(--amoris-text-xs-size);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-datatable__sort {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.amoris-datatable tbody tr:hover {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-datatable__row--selected {
+  background: var(--amoris-surface-selected);
+}
+
+.amoris-datatable__select-col {
+  width: 2.75rem;
+}
+
+.amoris-datatable__status {
+  padding: var(--amoris-space-6);
+  color: var(--amoris-text-secondary);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-datatable__status--error {
+  color: var(--amoris-danger);
+  font-weight: 600;
+}

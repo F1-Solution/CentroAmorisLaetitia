@@ -1,0 +1,30 @@
+.amoris-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--amoris-space-2);
+  padding: var(--amoris-space-8);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-empty-state__title {
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+  font-weight: var(--amoris-text-lg-weight);
+  color: var(--amoris-text-primary);
+  margin: 0;
+}
+
+.amoris-empty-state__description {
+  font-size: var(--amoris-text-base-size);
+  color: var(--amoris-text-secondary);
+  margin: 0;
+}
+
+.amoris-empty-state__action {
+  margin-top: var(--amoris-space-2);
+}
+
+.amoris-empty-state__help {
+  font-size: var(--amoris-text-sm-size);
+}

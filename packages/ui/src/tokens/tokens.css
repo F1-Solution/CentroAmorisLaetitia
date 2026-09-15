@@ -1,0 +1,146 @@
+/**
+ * Token dell'area amministrativa — `docs/design/design-system.md` capitoli 2-5.
+ *
+ * Variabili CSS native, nessuna libreria di temi (§2.3 punto 2). Il tema si
+ * sceglie con l'attributo `data-theme="dark"` sulla radice, senza JavaScript per
+ * il caso predefinito (chiaro). Il tema scuro è definito ma non ancora verificato
+ * (DR-051, §2.4): non applicarlo automaticamente da `prefers-color-scheme` finché
+ * non lo è, altrimenti lo si dichiarerebbe pronto senza prova.
+ *
+ * I valori esadecimali qui dentro devono restare identici a `tokens.ts`
+ * (`tests/tokens-css-sync.test.ts` lo verifica) e sono l'unico posto dove un
+ * valore esadecimale può comparire nel pacchetto (§2.3 punto 5).
+ */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/inter/InterVariable.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Colore — tema chiaro, §2.1 */
+  --amoris-bg-app: #F4F6F9;
+  --amoris-bg-surface: #FFFFFF;
+  --amoris-surface-hover: #EEF2F7;
+  --amoris-surface-selected: #E3EDF7;
+  --amoris-text-primary: #17212E;
+  --amoris-text-secondary: #4E5A6B;
+  --amoris-border: #D7DDE5;
+  --amoris-border-strong: #7E8A99;
+  --amoris-accent: #14538F;
+  --amoris-on-accent: #FFFFFF;
+  --amoris-accent-hover: #0F3F6D;
+  --amoris-focus-ring: #0A6FD1;
+  --amoris-success: #15693F;
+  --amoris-warning: #8A5200;
+  --amoris-danger: #A3201A;
+  --amoris-restricted: #6D28A8;
+  --amoris-restricted-surface: #F2E9FB;
+  --amoris-restricted-ink: #4B1C75;
+
+  /* Tipografia — §3, un solo carattere (§3.1) */
+  --amoris-font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --amoris-text-xs-size: 0.75rem;
+  --amoris-text-xs-line: 1.3;
+  --amoris-text-xs-weight: 600;
+  --amoris-text-xs-caps-tracking: 0.04em; /* [fissato in 1D-W7], §3.2 */
+  --amoris-text-sm-size: 0.8125rem;
+  --amoris-text-sm-line: 1.45;
+  --amoris-text-sm-weight: 400;
+  --amoris-text-base-size: 0.875rem;
+  --amoris-text-base-line: 1.5;
+  --amoris-text-base-weight: 400;
+  --amoris-text-md-size: 1rem;
+  --amoris-text-md-line: 1.6;
+  --amoris-text-md-weight: 400;
+  --amoris-text-lg-size: 1.125rem;
+  --amoris-text-lg-line: 1.35;
+  --amoris-text-lg-weight: 600;
+  --amoris-text-xl-size: 1.375rem;
+  --amoris-text-xl-line: 1.3;
+  --amoris-text-xl-weight: 600;
+  --amoris-text-2xl-size: 1.75rem;
+  --amoris-text-2xl-line: 1.25;
+  --amoris-text-2xl-weight: 700;
+
+  /* Griglia e spaziatura — §4.1 */
+  --amoris-space-1: 0.25rem;
+  --amoris-space-2: 0.5rem;
+  --amoris-space-3: 0.75rem;
+  --amoris-space-4: 1rem;
+  --amoris-space-6: 1.5rem;
+  --amoris-space-8: 2rem;
+  --amoris-space-12: 3rem;
+  --amoris-space-16: 4rem;
+  --amoris-radius: 0.25rem; /* [fissato in 1D-W7], §4.1 */
+
+  /* Densità — §5.1, comoda predefinita (DR-054) */
+  --amoris-row-height: 2.75rem; /* 44px */
+  --amoris-control-height: 2.5rem; /* 40px */
+  --amoris-field-gap-y: var(--amoris-space-4);
+  --amoris-cell-gap-x: var(--amoris-space-4);
+
+  /* Movimento — §9.4 */
+  --amoris-motion-duration: 150ms;
+  --amoris-motion-easing: ease-out;
+
+  color-scheme: light;
+}
+
+/* Tema scuro — §2.2. Definito, non ancora verificato (§2.4, §9.7 punto 5). */
+:root[data-theme='dark'] {
+  --amoris-bg-app: #0F151C;
+  --amoris-bg-surface: #19212B;
+  --amoris-surface-hover: #202A36;
+  --amoris-surface-selected: #23303F;
+  --amoris-text-primary: #E7ECF2;
+  --amoris-text-secondary: #A2AFBF;
+  --amoris-border: #2E3945;
+  --amoris-border-strong: #6C7A8A;
+  --amoris-accent: #7FB6F0;
+  --amoris-on-accent: #0F151C;
+  --amoris-accent-hover: #A6CCF5;
+  --amoris-focus-ring: #7FB6F0;
+  --amoris-success: #5FD39A;
+  --amoris-warning: #E2A33A;
+  --amoris-danger: #F08076;
+  --amoris-restricted: #C39BF0;
+  --amoris-restricted-surface: #2B1F3D;
+  --amoris-restricted-ink: #D9C2F7;
+
+  color-scheme: dark;
+}
+
+/* Densità piena («compatta» nelle proposte) — §5.1, §5.2. Interruttore in DensityToggle. */
+:root[data-density='compact'] {
+  --amoris-row-height: 2.25rem; /* 36px */
+  --amoris-control-height: 2.25rem; /* 36px */
+  --amoris-field-gap-y: var(--amoris-space-3);
+  --amoris-cell-gap-x: var(--amoris-space-3);
+}
+
+/* §9.4: con prefers-reduced-motion le transizioni sono azzerate. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --amoris-motion-duration: 0ms;
+  }
+}
+
+body {
+  background: var(--amoris-bg-app);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-base-size);
+  line-height: var(--amoris-text-base-line);
+  font-weight: var(--amoris-text-base-weight);
+  font-variant-numeric: tabular-nums; /* §3.1, colonne numeriche e date */
+}
+
+/* §9.3: l'anello di fuoco non si toglie mai, in nessun tema. */
+.amoris-focusable:focus-visible {
+  outline: 2px solid var(--amoris-focus-ring);
+  outline-offset: 2px;
+}

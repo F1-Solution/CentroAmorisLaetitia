@@ -1,0 +1,38 @@
+.amoris-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--amoris-space-4);
+  z-index: 1000;
+}
+
+.amoris-dialog {
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  border-radius: var(--amoris-radius);
+  padding: var(--amoris-space-6);
+  max-width: 32rem;
+  width: 100%;
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-dialog:focus-visible,
+.amoris-dialog:focus {
+  outline: 2px solid var(--amoris-focus-ring);
+  outline-offset: 2px;
+}
+
+.amoris-dialog__title {
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+  font-weight: var(--amoris-text-lg-weight);
+  margin: 0 0 var(--amoris-space-4);
+}
+
+.amoris-dialog__body {
+  font-size: var(--amoris-text-base-size);
+  line-height: var(--amoris-text-base-line);
+}

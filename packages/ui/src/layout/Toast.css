@@ -1,0 +1,35 @@
+.amoris-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-3);
+  padding: var(--amoris-space-3) var(--amoris-space-4);
+  border-radius: var(--amoris-radius);
+  border-left: 2px solid transparent;
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-sm-size);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+
+.amoris-toast--success {
+  border-left-color: var(--amoris-success);
+}
+.amoris-toast--error {
+  border-left-color: var(--amoris-danger);
+}
+.amoris-toast--info {
+  border-left-color: var(--amoris-accent);
+}
+
+.amoris-toast__dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--amoris-text-lg-size);
+  line-height: 1;
+  color: var(--amoris-text-secondary);
+  min-width: 44px;
+  min-height: 44px;
+}

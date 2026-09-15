@@ -1,0 +1,43 @@
+.amoris-sidepanel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 35%);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1000;
+}
+
+.amoris-sidepanel {
+  width: 30rem; /* 480px, §4.2 */
+  max-width: 100%;
+  height: 100%;
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  padding: var(--amoris-space-6);
+  overflow-y: auto;
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-sidepanel:focus-visible,
+.amoris-sidepanel:focus {
+  outline: 2px solid var(--amoris-focus-ring);
+  outline-offset: -2px;
+}
+
+.amoris-sidepanel__title {
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+  font-weight: var(--amoris-text-lg-weight);
+  margin: 0 0 var(--amoris-space-4);
+}
+
+.amoris-sidepanel__error {
+  color: var(--amoris-danger);
+  font-weight: 600;
+  font-size: var(--amoris-text-sm-size);
+}
+
+.amoris-sidepanel__body {
+  font-size: var(--amoris-text-base-size);
+  line-height: var(--amoris-text-base-line);
+}

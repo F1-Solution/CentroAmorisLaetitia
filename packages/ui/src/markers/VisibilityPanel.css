@@ -1,0 +1,17 @@
+.amoris-visibility-panel {
+  border-radius: var(--amoris-radius);
+  padding: var(--amoris-space-4);
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-visibility-panel--restricted {
+  background: var(--amoris-restricted-surface);
+  color: var(--amoris-restricted-ink);
+}
+
+.amoris-visibility-panel__note {
+  font-size: var(--amoris-text-sm-size);
+  margin-top: var(--amoris-space-2);
+}

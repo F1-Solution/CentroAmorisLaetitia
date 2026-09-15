@@ -1,0 +1,83 @@
+.amoris-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--amoris-space-2);
+  height: var(--amoris-control-height);
+  min-height: 44px;
+  padding: 0 var(--amoris-space-4);
+  border-radius: var(--amoris-radius);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-base-size);
+  font-weight: 600;
+  line-height: var(--amoris-text-base-line);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--amoris-motion-duration) var(--amoris-motion-easing);
+}
+
+.amoris-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.amoris-button--primary {
+  background: var(--amoris-accent);
+  color: var(--amoris-on-accent);
+}
+.amoris-button--primary:hover:not(:disabled) {
+  background: var(--amoris-accent-hover);
+}
+/* §9.3: sopra i bottoni pieni l'anello di fuoco è doppio, per restare visibile. */
+.amoris-button--primary.amoris-focusable:focus-visible {
+  outline: 2px solid var(--amoris-on-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--amoris-focus-ring);
+}
+
+.amoris-button--secondary {
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-text-primary);
+  border-color: var(--amoris-border-strong);
+}
+.amoris-button--secondary:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-button--tertiary {
+  background: transparent;
+  color: var(--amoris-accent);
+}
+.amoris-button--tertiary:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-button--destructive {
+  background: var(--amoris-bg-surface);
+  color: var(--amoris-danger);
+  border-color: var(--amoris-border-strong);
+}
+.amoris-button--destructive:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-button__spinner {
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: amoris-spin 700ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amoris-button__spinner {
+    animation-duration: 0ms;
+  }
+}
+
+@keyframes amoris-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
