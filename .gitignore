@@ -46,6 +46,9 @@ blob-report/
 /infra/compose/caddy-data/
 /infra/compose/caddy-config/
 
+# --- Test su dati reali dell'importer: mai in Git, mai in CI (DR-010) ---
+/apps/importer/tests/real/
+
 # --- Log ---
 *.log
 npm-debug.log*
