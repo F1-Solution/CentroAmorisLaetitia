@@ -292,3 +292,37 @@ nel Round 4.
 | **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
 
 **La voce «Lettura delle aree come navigazione», aperta nel Round 5, è chiusa da DR-050**: la decisione di usare un solo ruolo attivo per volta elimina la tensione fra DR-045 e DR-047, perché non c'è più contraddizione su come funziona la commutazione.
+
+---
+
+## 11. Round 7 — risposte del 2026-09-15, adozione dei tre prestiti e chiusura di quattro decisioni di design
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-054 | 2026-09-15 | I tre prestiti dalle altre proposte di UI | **tutti e tre adottati**, con una condizione posta dall'utente: **resta l'interruttore per la densità piena**, e la scelta viene ricordata. I tre: (1) da «Accoglienza», densità comoda come predefinita, stati scritti per esteso, percorsi a passi numerati per le operazioni rare; (2) da «Comando», ricerca rapida da tastiera come acceleratore, che raggiunge solo l'ambiente attivo e non sostituisce mai i menu; (3) da «Quaderno», marcatore di riservatezza a tutta altezza sul lato | solo alcuni dei tre; nessuno | «Sì, l'importante è che rimanga l'interruttore per la densità piena» | Proprietario | Fase 1D | sì | **supera DR-053**; completa DR-044; HO-004 §5; `docs/design/design-system.md` cap. 5 e 6 |
+| DR-055 | 2026-09-15 | Nome della seconda area e trattamento delle aree non costruite | **«Impostazioni»; le quattro aree non ancora costruite non compaiono affatto** | «Direzione»; aree future mostrate spente o «in arrivo» | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì | DR-045, `ux-proposals.md` §4.2, `design-system.md` cap. 7.2 |
+| DR-056 | 2026-09-15 | Utente prioritario dell'area amministrativa | **chi entra ogni giorno**, con le mitigazioni per chi entra di rado | chi entra poche volte l'anno; entrambi con pari peso | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì | `ui-proposals.md` domanda 2, `design-system.md` cap. 11 |
+| DR-057 | 2026-09-15 | Azioni non permesse in interfaccia | **non si mostrano** | si mostrano disabilitate con la spiegazione del perché | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì | DR-050, `design-system.md` cap. 8.3 |
+
+### Note sulla portata del Round 7
+
+- **DR-054 supera DR-053**, che aveva registrato il rinvio. Il rinvio era esso stesso una risposta, e resta a registro: DR-053 non si cancella.
+- **La condizione di DR-054 è parte della decisione, non un dettaglio di attuazione.** L'interruttore per la densità piena deve esistere sempre; la scelta va ricordata **fra le sessioni** e conservata con l'account, non con il browser. Un'attuazione che dimentica la scelta a ogni accesso non soddisfa DR-054.
+- **DR-054 cambia i valori predefiniti dell'interfaccia**: le righe delle tabelle nascono a 44 px invece che a 36, e sullo schermo entra circa un quinto di righe in meno. È il prezzo dichiarato, e l'interruttore è ciò che lo rende reversibile dall'utente e non dal codice.
+- **Il prestito 2 è vincolato da DR-050**: la ricerca rapida raggiunge solo l'ambiente attivo. Se permettesse di saltare in un'altra area romperebbe la regola che la sessione è vincolata all'area, che è ciò su cui poggia la riservatezza.
+- **DR-055 è stata presa sapendo che uno dei due argomenti a sostegno era caduto** con la revoca di DR-047. Va scritto, perché è il genere di cosa che si dimentica.
+- **DR-056 non è una promessa generica**: le mitigazioni per chi entra di rado sono esattamente il prestito 1 di DR-054, e null'altro.
+- **DR-057 è una regola trasversale**, non una scelta estetica: si applica a bottoni, bottoni con icona, barra delle azioni multiple, navigazione di sezione, navigazione di area e commutatore di ruolo.
+- **Dopo questo round, `docs/design/design-system.md` non ha più decisioni aperte**: tutte e sette quelle del suo capitolo 11 sono chiuse.
+
+### Decisioni rimaste aperte dopo il Round 7
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+
+**DR-054 chiude DR-053**: il rinvio sul quale l'utente aveva chiesto di vedere i tre prestiti descritti uno per uno è ora sciolto. DR-053 rimane a registro come decisione rinviata e successivamente superata.
