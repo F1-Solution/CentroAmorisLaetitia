@@ -44,3 +44,10 @@ PHASE:1D WAVE:1D-W1 STATUS:complete TS:2026-09-15T04:42:02Z
 PHASE:1D WAVE:1D-W2 STATUS:complete TS:2026-09-15T04:42:15Z
 PHASE:1D WAVE:1D-W3 STATUS:complete TS:2026-09-15T07:26:23Z
 PHASE:1D WAVE:1D-W4a STATUS:complete TS:2026-09-15T08:44:15Z
+
+<!-- Interruzione per limite di sessione, 2026-09-15.
+     Ultima wave completata: 1D-W4a.
+     Interrotte a metà, NON complete e NON committate su main: 1D-W4b (media) e
+     1D-W7 (packages/ui). Il lavoro parziale è nell'albero di lavoro e, per
+     sicurezza, anche nel ramo `wip/1D-W4b-W7-interrotte`.
+     Alla ripresa: riprendere da 1D-W4b e 1D-W7, non rieseguire W0…W4a. -->
