@@ -1,0 +1,37 @@
+{
+  "name": "@amoris/blocks",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Modello dei 14 tipi di blocco (ADR-005 §3.2), sanificazione, serializzazione e componenti di resa. Usato da apps/web e apps/admin (ADR-008 §3.1).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "parse5": "^8.0.1",
+    "zod": "^4.1.12"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@amoris/config": "workspace:*",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.18.12",
+    "@types/react": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^9.39.0",
+    "jsdom": "^27.0.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
