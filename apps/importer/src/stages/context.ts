@@ -7,6 +7,7 @@
 import type { SourceReader } from '../source/index.js';
 import type { IdMap } from '../persistence/idMap.js';
 import type { Tx } from '../persistence/tx.js';
+import type { ObjectStore } from '../storage/objectStore.js';
 import type { IssueSink, Mode, StageName, StageResult } from './types.js';
 
 export interface StageOptions {
@@ -20,6 +21,7 @@ export interface StageContext {
   readonly mode: Mode;
   readonly source: SourceReader;
   readonly tx: Tx;
+  readonly storage: ObjectStore;
   readonly ids: IdMap;
   readonly issues: IssueSink;
   readonly options: StageOptions;

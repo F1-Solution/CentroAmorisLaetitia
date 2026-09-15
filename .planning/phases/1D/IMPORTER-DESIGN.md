@@ -752,3 +752,61 @@ della **seconda** esecuzione non sa che cosa cancellare e che cosa riportare ind
 È lo stesso divario già dichiarato al §10 punto 2, visto ora dal lato dello schema. Non
 si aggiunge una colonna di iniziativa: la decisione è dell'utente e la si porta nella
 wave `1D-W5`, che attua `rollback`.
+
+### 11.6 I quattro documenti riservati non stanno in `uploads/` — `1D-W4b`
+
+Rilievo che cambia il lavoro della fase 9 e va portato all'utente.
+
+ADR-004 §3.6 dice che i 4 documenti di `cuar_private_file` vanno nel bucket
+`media-private`, e il §11.1 di questo documento chiedeva di verificare che non
+provenissero da `download-manager-files`, che l'ADR esclude. La verifica è stata fatta
+guardando la sorgente, e la risposta è più netta della domanda:
+
+> I 4 documenti **non stanno affatto dentro `uploads/`**. Vivono in
+> `wp-content/customer-area/storage/<identificatore>/`, un albero separato che nessun
+> lettore dell'importer visita oggi.
+
+Due conseguenze:
+
+1. **L'esclusione di `download-manager-files` non li mette a rischio**, perché non
+   vengono da lì. La domanda del §11.1 è chiusa, con esito tranquillizzante. Quella
+   cartella contiene 4 PDF **diversi**, con nomi simili: è una coincidenza che invitava
+   all'errore, ed è la ragione per cui la verifica andava fatta guardando e non
+   ragionando.
+2. **Non sono allegati di WordPress**: nessuna riga di `wp_posts` con
+   `post_type = 'attachment'` li referenzia. Quindi non compaiono fra le 170 righe della
+   fase 3, e **nessuna riga `media` prodotta dalla fase 3 è privata**.
+
+Per importarli serve un **secondo lettore di sorgente**, che legga
+`wp-content/customer-area/storage/`. Non è previsto da alcun documento di Fase 1B.
+È lavoro della fase 9 `documents`, e va dichiarato come **decisione**, non risolto di
+iniziativa: tocca dati riservati, che DR-033 vuole conservati e non esposti.
+
+### 11.7 Un allegato della sorgente non è recuperabile — `1D-W4b`
+
+Su 170 allegati, **169 si importano e 1 no**. Il caso è `sourceId 341`: la chiave
+`_wp_attached_file` registra un nome di file scritto con maiuscole e minuscole diverse
+da quelle del file realmente presente in `uploads/`. Il file **esiste**; il nome con cui
+il database lo cerca non corrisponde.
+
+Non è un difetto dell'importer ed è il comportamento voluto: l'errore è isolato sul
+singolo elemento, produce una riga `import_issues`, e gli altri 169 proseguono
+(`importer-spec.md` §7).
+
+Va però detto che **non si risolve normalizzando il nome**: ADR-004 §3.1 vieta di
+normalizzare nomi e suffissi, perché farebbe divergere il `srcset`. Su un archivio
+sensibile alle maiuscole — e il bucket lo è — quell'allegato non è raggiungibile
+nemmeno oggi, sul sito vivo. È un difetto **della sorgente**, e la decisione su che
+farne è dell'utente, alla wave `1D-W11`.
+
+### 11.8 La riga di comando non è ancora collegata alle fasi vere
+
+`importer plan` esegue tuttora l'abbozzo della `1D-W2`: stampa i conteggi attesi con
+`implemented: false` per ogni riga, comprese le fasi che nel frattempo **esistono e
+funzionano**. Le fasi si eseguono oggi solo attraverso `runStage`, dai test.
+
+Non è un difetto di nessuna delle sotto-wave: è infrastruttura condivisa, che nessuna
+di esse aveva in perimetro. Va collegata **una volta sola, quando le fasi ci sono
+tutte**, cioè al termine della `1D-W5`. Finché non è fatto, `plan` e `apply` non
+dimostrano nulla di ciò che le fasi fanno, e i criteri di uscita che li citano non sono
+verificabili.

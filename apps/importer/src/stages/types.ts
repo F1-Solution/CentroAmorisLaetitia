@@ -112,7 +112,8 @@ export type EntityKind =
   | 'role'
   | 'permission'
   | 'user'
-  | 'term';
+  | 'term'
+  | 'media';
 
 /**
  * Identifica un elemento sorgente per l'isolamento dell'errore

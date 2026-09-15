@@ -11,5 +11,13 @@ import { defineConfig } from 'vitest/config';
  * raggiungibile e si salta, dichiarandolo, se non lo è.
  */
 export default defineConfig({
-  test: { environment: 'node', include: ['tests/real/**/*.real.test.ts'] },
+  test: {
+    environment: 'node',
+    include: ['tests/real/**/*.real.test.ts'],
+    // Come la suite unitaria: si legge la sorgente vera e si costruiscono
+    // database veri, quindi niente parallelismo fra file e limiti generosi.
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
+    fileParallelism: false,
+  },
 });

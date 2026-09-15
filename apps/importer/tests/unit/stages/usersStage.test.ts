@@ -8,6 +8,7 @@ import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
 import { createTestDatabase, type TestDatabase } from '../_support/dbHarness.js';
 import { fakeSourceReader } from '../_support/fakeSource.js';
+import { fakeObjectStore } from '../_support/fakeStorage.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 import type { Database } from '@amoris/db';
 
@@ -69,6 +70,7 @@ describe('fase users', () => {
     const issues = createIssueSink(testDb.db, 'apply', runId);
     const result = await runStage(usersStage, {
       db: testDb.db,
+      storage: fakeObjectStore(),
       source: buildUsersSource(),
       runId,
       mode: 'apply',
@@ -114,6 +116,7 @@ describe('fase users', () => {
     const issues = createIssueSink(testDb.db, 'apply', runId);
     const result = await runStage(usersStage, {
       db: testDb.db,
+      storage: fakeObjectStore(),
       source: buildUsersSource(),
       runId,
       mode: 'apply',
@@ -140,6 +143,7 @@ describe('fase users', () => {
       const issues = createIssueSink(fresh.db, 'apply', runId);
       const result = await runStage(usersStage, {
         db: fresh.db,
+        storage: fakeObjectStore(),
         source: buildUsersSource({ withSecondBrokenUser: true }),
         runId,
         mode: 'apply',
@@ -173,6 +177,7 @@ describe('fase users', () => {
       const issues = createIssueSink(fresh.db, 'plan', runId);
       const result = await runStage(usersStage, {
         db: fresh.db,
+        storage: fakeObjectStore(),
         source: buildUsersSource(),
         runId,
         mode: 'plan',

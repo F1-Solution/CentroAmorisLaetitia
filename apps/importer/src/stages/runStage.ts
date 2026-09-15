@@ -9,6 +9,7 @@ import type { Database } from '@amoris/db';
 import type { SourceReader } from '../source/index.js';
 import { createIdMap } from '../persistence/idMap.js';
 import { runStageTransaction } from '../persistence/stageTransaction.js';
+import type { ObjectStore } from '../storage/objectStore.js';
 import type { IssueSink } from './types.js';
 import type { Mode, StageName, StageResult } from './types.js';
 import type { Stage, StageOptions } from './context.js';
@@ -16,6 +17,7 @@ import type { Stage, StageOptions } from './context.js';
 export interface RunStageDependencies {
   readonly db: Database;
   readonly source: SourceReader;
+  readonly storage: ObjectStore;
   readonly runId: string;
   readonly mode: Mode;
   readonly issues: IssueSink;
@@ -30,6 +32,7 @@ export async function runStage(stage: Stage, deps: RunStageDependencies): Promis
       mode: deps.mode,
       source: deps.source,
       tx,
+      storage: deps.storage,
       ids,
       issues: deps.issues,
       options: deps.options,
