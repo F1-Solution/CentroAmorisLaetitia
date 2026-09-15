@@ -326,3 +326,42 @@ nel Round 4.
 | **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
 
 **DR-054 chiude DR-053**: il rinvio sul quale l'utente aveva chiesto di vedere i tre prestiti descritti uno per uno è ora sciolto. DR-053 rimane a registro come decisione rinviata e successivamente superata.
+
+---
+
+## 12. Round 8 — risposte del 2026-09-15, chiusura di due decisioni su importazione e schema
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-058 | 2026-09-15 | Come si importano i 4 documenti riservati (`cuar_private_file`) | **Si aggiunge subito un secondo lettore di sorgente**, nella wave `1D-W5`, che legge `wp-content/customer-area/storage/` e porta i 4 file nel bucket `media-private` | Importare solo le schede e rimandare i file; lasciare i documenti riservati interamente fuori dalla Fase 1 | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | `IMPORTER-DESIGN.md` §11.6, ADR-004 §3.6, DR-033 |
+| DR-059 | 2026-09-15 | Che cosa promette `rollback` dell'importer | **Si aggiunge una colonna alla tabella delle corrispondenze dell'import** (`import_id_map`), che registra se la riga è nata da una creazione o da un aggiornamento. `rollback` diventa corretto per qualunque esecuzione, non solo per la prima | `rollback` limitato al primo import, con elenco senza ripristino per le successive; togliere `rollback` dal perimetro e affidarsi al solo ripristino del backup | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | `IMPORTER-DESIGN.md` §10 punto 2 e §11.5, `importer-spec.md` §9 e §14 punto 8 |
+
+### Note sulla portata del Round 8
+
+- **DR-058 nasce da un fatto misurato che smentisce un presupposto**: ADR-004 §3.6 dava per scontato che i documenti riservati fossero allegati come gli altri. Non lo sono: non stanno in `uploads/` e nessuna riga di `wp_posts` li referenzia. La decisione non corregge l'ADR — **registra che il presupposto era incompleto**, e il lettore aggiuntivo è la conseguenza.
+
+- **DR-058 rende vera una condizione di DR-033**: i 4 documenti «devono esistere per la futura area riservata». Senza i file esisterebbero solo le schede, che è una cosa diversa e andrebbe detta.
+
+- **DR-058 non espone nulla**: i 4 file vanno in `media-private`, che ADR-004 §3.6 vuole senza alcun accesso pubblico, nemmeno indovinando il nome. In Fase 1 restano conservati e non raggiungibili.
+
+- **Attenzione a una trappola documentata**: la cartella `download-manager-files`, esclusa da ADR-004 §3.2, contiene **4 PDF diversi con nomi simili** a quelli riservati. Chi avesse ragionato invece di guardare avrebbe importato i file sbagliati credendoli quelli giusti. Va scritto, perché è il genere di errore che si ripete.
+
+- **DR-059 autorizza una modifica a uno schema approvato in Fase 1B.** È la prima. Va detto esplicitamente che lo schema delle 32 tabelle non è intoccabile ma si modifica **con una decisione registrata**, non di iniziativa.
+
+- **La colonna non contiene dati personali**: registra soltanto se una riga è stata creata o aggiornata.
+
+- **Perché serve**: senza quella distinzione, annullare la **seconda** esecuzione cancellerebbe righe che esistevano già, cioè distruggerebbe dati invece di ripristinarli. Il primo import si annulla correttamente anche senza; il secondo no.
+
+- **DR-059 non rende `rollback` una rete di sicurezza generale.** `importer-spec.md` §9 dice già che `rollback` **rifiuta di procedere** se c'è stato lavoro redazionale dopo l'import, e che il ripristino del backup resta la strada più rapida e sicura per riportare a zero un database. Questo non cambia.
+
+### Decisioni rimaste aperte dopo il Round 8
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+| **Due contenuti con percorso in collisione** | Slug condiviso fra tipi diversi in un caso, bozza senza slug nell'altro. Assegnare d'ufficio un percorso diverso è una modifica di URL, materia di parità e indicizzazione | wave `1D-W11` |
+| **Un allegato non recuperabile** | Il database lo cerca con maiuscole diverse da quelle del file vero. Non si risolve rinominando, che ADR-004 §3.1 vieta per non far divergere il `srcset` | wave `1D-W11` |
