@@ -792,3 +792,69 @@ contenuto, ed è la conferma numero 6 del §7 di [`PLAN.md`](PLAN.md).
 
 Nessun'altra scelta di questo documento richiede l'intervento dell'utente: tutto il
 resto discende da ADR-005, ADR-006, ADR-004 e dalle misure di `1B-W0`.
+
+---
+
+## 10. Fatti misurati nella wave `1D-W3`, 2026-09-15
+
+I punti 2 e 3 del §9 erano «fatti da rilevare, non decisioni». Sono stati rilevati
+eseguendo i convertitori sulla sorgente reale, in sola lettura. Si scrivono qui
+perché il §9 non resti un promemoria aperto.
+
+### 10.1 I valori di `column.width` — §9 punto 2
+
+Otto valori distinti, tutti conformi alla forma `\d+_\d+` che il §3.3 usava come
+ripiego:
+
+```
+1_2   1_3   1_4   2_3   2_5   3_4   3_5   4_4
+```
+
+Nessuna anomalia. L'enumerazione chiusa **sostituisce** l'espressione regolare del
+§3.3. Un valore fuori da questi otto è da oggi un errore, non un caso da accettare:
+significherebbe che la sorgente è cambiata.
+
+### 10.2 I parametri di `[catposts]` — §9 punto 3
+
+L'unica occorrenza porta `name="News"` e `thumb="true"`. **L'ipotesi del §3.11 era
+sbagliata**: assumeva `category` e `limit`, che non compaiono. Il convertitore
+registra oggi `name` come parametro sconosciuto, che è il comportamento difensivo
+giusto ma va corretto: l'elenco dei parametri noti diventa `name` e `thumb`.
+
+Va detto che si tratta di **una sola occorrenza**: l'elenco è chiuso su un campione
+di uno, e se un redattore userà il blocco con altri parametri il convertitore li
+segnalerà invece di ingoiarli. È il comportamento voluto.
+
+### 10.3 Uno scostamento nella ripartizione delle famiglie
+
+| Famiglia | ADR-005 §1 | Misurato in `1D-W3` | Scarto |
+|---|---|---|---|
+| Gutenberg | 57 | **64** | +7 |
+| Divi | 47 | **40** | −7 |
+| HTML nudo | 4 | **4** | 0 |
+| **Totale** | **108** | **108** | **0** |
+
+Il totale coincide e nessun contenuto si perde: sette contenuti che la Fase 1B aveva
+classificato come Divi sono classificati come Gutenberg dal convertitore. La causa
+più probabile è il marcatore `wp:divi/placeholder`, che ADR-005 §1 conta fra i Divi
+pur essendo un commento di blocco Gutenberg: dipende da quale dei due segnali si
+guarda per primo.
+
+**Non è un difetto finché la conversione di quei sette produce blocchi corretti**, e
+va verificato guardandoli, non contandoli. È un controllo esplicito della `1D-W4`.
+
+### 10.4 La soglia del blocco di riserva non è ancora misurabile
+
+Eseguita in questa wave, senza i risolutori verso `forms` e `media` che nascono nella
+`1D-W4`, la soglia del §3.4 risulta **superata**: 31 blocchi di riserva su 305 non
+contenitori, cioè 10,16% contro il 10% ammesso, e 27 contenuti su 108 contro i 15
+ammessi.
+
+Il numero però non misura la conversione: **24 dei 31** sono moduli form privi di un
+identificatore risolvibile, che è un artefatto dell'eseguire il convertitore da solo.
+Con un risolutore fittizio il conto scende a **2,30%** e **4 contenuti su 108**, e i
+sette residui sono legittimi: sei `wp:html` nativi e un `<h1>` dentro un testo Divi,
+correttamente escluso perché il titolo appartiene al template (ADR-005 §3.5).
+
+**La misura che conta è quella della `1D-W4`**, con i risolutori veri. Finché non è
+fatta, la soglia non si dichiara né rispettata né superata.
