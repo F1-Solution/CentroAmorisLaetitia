@@ -1,0 +1,30 @@
+/* §6, #4: barra superiore chiara, mai scura (DR-018). Nessun token di tema scuro qui. */
+.amoris-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--amoris-space-4);
+  height: 56px;
+  padding: 0 var(--amoris-space-4);
+  background: var(--amoris-top-bar-bg-fixed-light);
+  border-bottom: 1px solid var(--amoris-border);
+  flex-wrap: wrap;
+}
+
+.amoris-top-bar__breadcrumbs {
+  min-width: 0;
+}
+
+.amoris-top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .amoris-top-bar {
+    height: auto;
+    padding: var(--amoris-space-2);
+  }
+}

@@ -1,0 +1,23 @@
+.amoris-cross-area-handoff {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--amoris-space-4);
+  padding: var(--amoris-space-3) var(--amoris-space-4);
+  border: 1px solid var(--amoris-border-strong);
+  border-radius: var(--amoris-radius);
+  background: var(--amoris-surface-selected);
+  flex-wrap: wrap;
+}
+
+.amoris-cross-area-handoff__text {
+  margin: 0;
+  color: var(--amoris-text-primary);
+  font-size: var(--amoris-text-base-size);
+}
+
+.amoris-cross-area-handoff__actions {
+  display: flex;
+  gap: var(--amoris-space-2);
+  flex-shrink: 0;
+}

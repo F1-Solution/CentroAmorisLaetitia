@@ -1,0 +1,9 @@
+.amoris-context-change-notice {
+  padding: var(--amoris-space-2) var(--amoris-space-4);
+  background: var(--amoris-surface-selected);
+  color: var(--amoris-text-primary);
+  font-size: var(--amoris-text-sm-size);
+  font-weight: 600;
+  text-align: center;
+  transition: opacity var(--amoris-motion-duration) var(--amoris-motion-easing);
+}

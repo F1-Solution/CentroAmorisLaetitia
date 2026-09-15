@@ -1,0 +1,91 @@
+.amoris-role-switcher {
+  position: relative;
+}
+
+.amoris-role-switcher__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--amoris-space-1);
+  height: var(--amoris-control-height);
+  min-height: 44px;
+  padding: 0 var(--amoris-space-3);
+  border-radius: 999px;
+  border: 1px solid var(--amoris-border);
+  background: var(--amoris-bg-surface);
+  font-family: var(--amoris-font-family);
+  font-size: var(--amoris-text-sm-size);
+  font-weight: 600;
+  color: var(--amoris-text-primary);
+}
+
+/* §6, #7: nei ruoli con poteri estesi la pastiglia ha bordo 2 px. */
+.amoris-role-switcher__pill--elevated {
+  border-width: 2px;
+  border-color: var(--amoris-accent);
+}
+
+.amoris-role-switcher__trigger {
+  cursor: pointer;
+}
+.amoris-role-switcher__trigger:hover:not(:disabled) {
+  background: var(--amoris-surface-hover);
+}
+.amoris-role-switcher__trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.amoris-role-switcher__arrow {
+  font-size: 0.7em;
+}
+
+.amoris-role-switcher--single .amoris-role-switcher__pill {
+  cursor: default;
+}
+
+.amoris-role-switcher__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--amoris-space-2));
+  min-width: 280px;
+  margin: 0;
+  padding: var(--amoris-space-2);
+  list-style: none;
+  background: var(--amoris-bg-surface);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+}
+
+.amoris-role-switcher__option {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  gap: var(--amoris-space-1);
+  padding: var(--amoris-space-2);
+  min-height: 44px;
+  border: none;
+  border-radius: var(--amoris-radius);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--amoris-font-family);
+}
+.amoris-role-switcher__option:hover {
+  background: var(--amoris-surface-hover);
+}
+.amoris-role-switcher__option[aria-checked='true'] {
+  background: var(--amoris-surface-selected);
+}
+
+.amoris-role-switcher__option-label {
+  font-size: var(--amoris-text-base-size);
+  font-weight: 600;
+  color: var(--amoris-text-primary);
+}
+
+.amoris-role-switcher__option-description {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+}

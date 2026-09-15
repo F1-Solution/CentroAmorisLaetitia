@@ -41,6 +41,11 @@
   --amoris-restricted-surface: #F2E9FB;
   --amoris-restricted-ink: #4B1C75;
 
+  /* Fisso, non toccato dal tema scuro: `TopBar` è sempre chiara (DR-018, §6
+     componente 4). Stesso valore di --amoris-bg-surface in tema chiaro, ma
+     dichiarato qui perché non deve seguire :root[data-theme='dark']. */
+  --amoris-top-bar-bg-fixed-light: #FFFFFF;
+
   /* Tipografia — §3, un solo carattere (§3.1) */
   --amoris-font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   --amoris-text-xs-size: 0.75rem;
@@ -143,4 +148,19 @@ body {
 .amoris-focusable:focus-visible {
   outline: 2px solid var(--amoris-focus-ring);
   outline-offset: 2px;
+}
+
+/* La barra superiore è l'unica regione che esce dal tema (§6 componente 4:
+   «chiara, mai scura»). Fissarne solo il fondo non basta: in tema scuro i suoi
+   figli erediterebbero gli inchiostri chiari del tema e finirebbero chiari su
+   bianco — `text-secondary` scuro (#A2AFBF) su bianco dà circa 2:1, sotto
+   qualunque soglia leggibile. Qui l'intero sottoalbero torna ai valori del tema
+   chiaro, così che «chiara» valga per la barra e per ciò che contiene. I valori
+   sono gli stessi di :root e restano dichiarati solo in questo file (§2.3
+   punto 5). */
+.amoris-top-bar {
+  --amoris-bg-surface: #FFFFFF;
+  --amoris-text-primary: #17212E;
+  --amoris-text-secondary: #4E5A6B;
+  --amoris-border: #D7DDE5;
 }

@@ -1,0 +1,83 @@
+.amoris-area-nav {
+  width: 56px;
+  flex-shrink: 0;
+  background: var(--amoris-bg-surface);
+  border-right: 1px solid var(--amoris-border);
+}
+
+.amoris-area-nav__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--amoris-space-2);
+  list-style: none;
+  margin: 0;
+  padding: var(--amoris-space-2) 0;
+}
+
+.amoris-area-nav__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--amoris-space-1);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--amoris-radius);
+  text-decoration: none;
+  color: var(--amoris-text-secondary);
+}
+.amoris-area-nav__item:hover {
+  background: var(--amoris-surface-hover);
+}
+
+/* §6, #2: la voce attiva ha barra piena 3 px a sinistra e peso 600. Il colore
+   non è l'unico veicolo (§9.6): la barra e il peso lo affiancano. */
+.amoris-area-nav__item--active {
+  color: var(--amoris-text-primary);
+  font-weight: 600;
+}
+.amoris-area-nav__item--active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--amoris-accent);
+}
+
+.amoris-area-nav__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.amoris-area-nav__label {
+  font-size: 0.6rem;
+  line-height: 1;
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+  white-space: nowrap;
+  left: 100%;
+  margin-left: var(--amoris-space-2);
+  background: var(--amoris-text-primary);
+  color: var(--amoris-bg-surface);
+  padding: var(--amoris-space-1) var(--amoris-space-2);
+  border-radius: var(--amoris-radius);
+  transition: opacity var(--amoris-motion-duration) var(--amoris-motion-easing);
+}
+
+/* Etichetta al passaggio e alla messa a fuoco (§6, #2), mai solo al passaggio. */
+.amoris-area-nav__item:hover .amoris-area-nav__label,
+.amoris-area-nav__item:focus-visible .amoris-area-nav__label {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .amoris-area-nav {
+    display: none;
+  }
+}

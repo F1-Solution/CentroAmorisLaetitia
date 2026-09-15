@@ -1,0 +1,16 @@
+.amoris-active-context-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--amoris-space-2);
+  margin: 0;
+  font-size: var(--amoris-text-sm-size);
+  font-weight: 600;
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-active-context-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amoris-accent);
+}

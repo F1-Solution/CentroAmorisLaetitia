@@ -1,0 +1,49 @@
+.amoris-app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--amoris-bg-app);
+}
+
+.amoris-app-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.amoris-app-shell__content {
+  flex: 1;
+  min-width: 0;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--amoris-space-6);
+  outline: none;
+}
+
+.amoris-app-shell__content:focus-visible {
+  outline: 2px solid var(--amoris-focus-ring);
+  outline-offset: -2px;
+}
+
+.amoris-app-shell__register-bar {
+  flex-shrink: 0;
+}
+
+/* §4.3, bp-xl: l'area di lavoro resta a 1440 px e si centra sopra 1600 px — il
+   centraggio è già garantito da margin: 0 auto sopra, qui si dichiara solo la
+   soglia perché resti leggibile a chi rilegge il foglio. */
+@media (min-width: 1600px) {
+  .amoris-app-shell__content {
+    width: 1440px;
+  }
+}
+
+@media (max-width: 600px) {
+  .amoris-app-shell__body {
+    flex-direction: column;
+  }
+
+  .amoris-app-shell__content {
+    padding: var(--amoris-space-3);
+  }
+}

@@ -1,0 +1,91 @@
+.amoris-section-nav {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--amoris-bg-surface);
+  border-right: 1px solid var(--amoris-border);
+  padding: var(--amoris-space-3);
+  overflow-y: auto;
+  transition: width var(--amoris-motion-duration) var(--amoris-motion-easing);
+}
+
+.amoris-section-nav--collapsed {
+  width: 0;
+  padding: var(--amoris-space-3) 0;
+  overflow: visible;
+}
+
+.amoris-section-nav__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+  background: var(--amoris-bg-surface);
+  cursor: pointer;
+}
+
+.amoris-section-nav__group {
+  margin-bottom: var(--amoris-space-4);
+}
+
+.amoris-section-nav__group-label {
+  margin: 0 0 var(--amoris-space-2) var(--amoris-space-2);
+  font-size: var(--amoris-text-xs-size);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-section-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-1);
+}
+
+.amoris-section-nav__item {
+  position: relative;
+  display: block;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: var(--amoris-space-2) var(--amoris-space-3);
+  border-radius: var(--amoris-radius);
+  color: var(--amoris-text-primary);
+  text-decoration: none;
+  font-size: var(--amoris-text-base-size);
+}
+.amoris-section-nav__item:hover {
+  background: var(--amoris-surface-hover);
+}
+
+.amoris-section-nav__item--active {
+  background: var(--amoris-surface-selected);
+  font-weight: 600;
+}
+
+.amoris-section-nav__empty {
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  padding: var(--amoris-space-2);
+}
+
+.amoris-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .amoris-section-nav {
+    display: none;
+  }
+}

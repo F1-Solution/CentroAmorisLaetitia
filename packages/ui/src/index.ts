@@ -41,3 +41,19 @@ export * from './layout/Toast.js';
 // Marcatori di riservatezza — componenti 36-37, prestito 3
 export * from './markers/RestrictedMarker.js';
 export * from './markers/VisibilityPanel.js';
+
+// Guscio e navigazione — componenti 1-13 (1D-W7b)
+export * from './shell/types.js';
+export * from './shell/AppShell.js';
+export * from './shell/AreaNav.js';
+export * from './shell/SectionNav.js';
+export * from './shell/TopBar.js';
+export * from './shell/Breadcrumbs.js';
+export * from './shell/UserMenu.js';
+export * from './shell/RoleSwitcher.js';
+export * from './shell/ActiveContextBadge.js';
+export * from './shell/ContextChangeNotice.js';
+export * from './shell/AreaChoiceScreen.js';
+export * from './shell/CrossAreaHandoff.js';
+export * from './shell/CommandSearch.js';
+export * from './shell/PageHeader.js';
