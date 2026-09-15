@@ -354,7 +354,28 @@ nel Round 4.
 
 - **DR-059 non rende `rollback` una rete di sicurezza generale.** `importer-spec.md` §9 dice già che `rollback` **rifiuta di procedere** se c'è stato lavoro redazionale dopo l'import, e che il ripristino del backup resta la strada più rapida e sicura per riportare a zero un database. Questo non cambia.
 
-### Decisioni rimaste aperte dopo il Round 8
+---
+
+## 13. Round 9 — risposte del 2026-09-15, correzione di due documenti della Fase 1B
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-060 | 2026-09-15 | La cartella `uploads/download-manager-files`, che ADR-004 §3.2 esclude come «cartella di servizio» | **Si corregge l'esclusione**: la cartella esce dall'elenco e i suoi file entrano nell'archivio dei media. Contiene quattro moduli per le consulenze in PDF, cioè contenuto che il sito offre in scaricamento, non scarti di un plugin. **Le altre cinque cartelle escluse restano escluse** | Tenere la cartella esclusa e far prelevare alla sola fase dei documenti i quattro file mirati; lasciare i documenti senza file | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | `IMPORTER-DESIGN.md` §11.11, ADR-004 §3.2, DR-038 |
+| DR-061 | 2026-09-15 | Quali tassonomie importa la fase `terms` | **Si importano anche `wpdmcategory` e `cuar_private_file_category`**, oltre a `category` | Importare la sola `wpdmcategory`; non importarne nessuna delle due | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì, con ADR | `IMPORTER-DESIGN.md` §11.12, `wp-to-postgres-mapping.md` §1 |
+
+### Note sulla portata del Round 9
+
+- **DR-060 corregge una classificazione sbagliata in ADR-004 approvata.** L'esclusione era stata decisa dal **nome della cartella**, non dal suo contenuto. La verifica diretta ha mostrato che dentro ci sono quattro moduli PDF che il sito offre davvero in scaricamento — non sono scarti di un plugin, sono contenuto. Mantenerla significherebbe perdere quattro documenti pubblici senza produrre errori: la perdita non si manifesterebbe come un guasto, ma come otto righe mancanti in una tabella che nessuno conta.
+
+- **DR-060 non allarga l'importazione oltre questo**: `uploads/backwpup*`, `uploads/wpforms`, `uploads/aioseo`, `uploads/wpdm-cache`, `uploads/et_temp`, `wpdm-custom-tags` e `wpdm-file-type-icons` restano escluse. Quelle sono davvero cache, backup e risorse di plugin.
+
+- **Attenzione ai nomi, che invitano all'errore**: i 4 file pubblici di questa cartella e i 4 documenti riservati di DR-058 hanno nomi quasi identici — gli stessi moduli, con o senza trattini. Sono **otto documenti distinti**, non quattro visti due volte. Va scritto perché è il genere di errore che si ripete.
+
+- **DR-061 amplia ciò che il mapping della Fase 1B aveva classificato.** Senza, la tabella che lega documenti e tassonomie resterebbe vuota. Ha già un effetto visibile: **una voce di menu su 64** viene oggi saltata perché punta a un termine di `wpdmcategory`. Con DR-061 si recupera.
+
+- **Entrambe le decisioni riguardano la Fase 1B, non solo la 1D**: ADR-004 e `wp-to-postgres-mapping.md` sono prodotti approvati, e vanno **corretti dichiarando la correzione**, non riscritti in silenzio. La correzione dei due documenti è lavoro di una wave di documentazione.
+
+### Decisioni rimaste aperte dopo il Round 9
 
 | id | Contenuto | Termine |
 |---|---|---|
@@ -365,3 +386,4 @@ nel Round 4.
 | **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
 | **Due contenuti con percorso in collisione** | Slug condiviso fra tipi diversi in un caso, bozza senza slug nell'altro. Assegnare d'ufficio un percorso diverso è una modifica di URL, materia di parità e indicizzazione | wave `1D-W11` |
 | **Un allegato non recuperabile** | Il database lo cerca con maiuscole diverse da quelle del file vero. Non si risolve rinominando, che ADR-004 §3.1 vieta per non far divergere il `srcset` | wave `1D-W11` |
+| **Correzione di ADR-004 e del mapping** | DR-060 e DR-061 correggono due documenti approvati della Fase 1B: la correzione va scritta, dichiarandola | prima della chiusura della Fase 1D |
