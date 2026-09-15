@@ -23,6 +23,7 @@
 |---|---|
 | 2026-09-15 | Prima stesura, sulle cinque risposte a HO-004 (DR-044…DR-048). |
 | 2026-09-15 | **Revisione dopo le risposte alle decisioni del capitolo 11.** L'utente ha **revocato DR-047** e ha adottato l'opzione (a) di D-UX-3: **un solo ruolo attivo per volta, scelto esplicitamente**. Riscritti il capitolo 8 e i punti che dipendevano dalla lettura «aree = sola navigazione»; aggiunti cinque componenti al capitolo 6; chiuse le decisioni 1, 2 e 3. |
+| 2026-09-15 | **Chiusura delle ultime decisioni aperte.** I **tre prestiti sono adottati**, con l'interruttore di densità come requisito dichiarato dall'utente; decisione 4 (a), decisione 6 (a), decisione 7 (a). I prestiti entrano nel corpo del documento — capitoli 4, 5 e 6 — invece di restare ipotesi. **Il capitolo 11 non ha più decisioni aperte che riguardino questo documento.** |
 
 > **Registrazione ancora da fare.** Le risposte del 2026-09-15 alle decisioni 1, 2
 > e 3 vanno registrate in `docs/decisions/decision-register.md` come **voci nuove**,
@@ -77,10 +78,11 @@ Tutti i valori esadecimali e tutti i rapporti di contrasto delle due tabelle che
 seguono provengono da `ui-proposals.md`, proposta 1, §2 «Palette», **tranne** le
 righe marcate **[fissato in 1D-W7]**.
 
-I rapporti sono stati **ricalcolati in questa wave** con la formula della luminanza
-relativa di WCAG 2.2 su ogni coppia: i 26 valori ereditati dalla proposta 1
-coincidono con quelli dichiarati, entro l'arrotondamento a due cifre. Non sono stati
-arrotondati al rialzo né riscritti.
+**Trentasei valori in tutto: 29 ereditati dalla proposta 1, 7 fissati in questa
+wave.** I rapporti sono stati **ricalcolati** con la formula della luminanza relativa
+di WCAG 2.2 su ogni coppia: quelli ereditati coincidono con i valori dichiarati nella
+proposta 1, entro l'arrotondamento a due cifre. Non sono stati arrotondati al rialzo
+né riscritti.
 
 **Nessun colore è preso in prestito da altre proposte.** I tre prestiti raccomandati
 in `ui-proposals.md` («Raccomandazione») riguardano comportamenti, non colori, e sono
@@ -249,6 +251,9 @@ tranne dove indicato.
 - **Raggio degli angoli:** 4 px su bottoni, campi, pastiglie e schede. Un solo
   valore. **[fissato in 1D-W7]** — la proposta 1 dichiara 4 px per i bottoni e tace
   sul resto; un secondo raggio comparirebbe per caso.
+- **I valori predefiniti di questo capitolo sono quelli della densità comoda.** La
+  scala di spaziatura non cambia con la densità: cambia quale gradino si usa. Le due
+  colonne di valori stanno al capitolo 5, deciso il 2026-09-15.
 
 ### 4.2 Larghezze
 
@@ -281,19 +286,48 @@ sezioni si richiude e la scelta è ricordata.
 La proposta 1 è densa per scelta: è un banco di lavoro per chi entra tutti i giorni
 (`ui-proposals.md`, proposta 1 §1).
 
-| Grandezza | Densità compatta | Densità comoda | Fonte |
+**Deciso il 2026-09-15.** L'utente ha adottato il primo dei tre prestiti dalla
+proposta 2 «Accoglienza»: **la densità comoda è il valore predefinito**. Ha posto una
+condizione con parole sue — «l'importante è che rimanga l'interruttore per la densità
+piena» — e la condizione è parte della decisione, non un dettaglio realizzativo.
+Vedi §5.2.
+
+### 5.1 Le due densità
+
+| Grandezza | Comoda — **predefinita** | Piena (compatta) | Fonte |
 |---|---|---|---|
-| Altezza di riga di tabella | 36 px | 44 px | proposta 1 §4 |
-| Altezza di bottone e di campo | 36 px | 40 px | proposta 1 §5 |
-| Spaziatura verticale fra campi | `space-3` (12) | `space-4` (16) | **[fissato in 1D-W7]** |
-| Spaziatura orizzontale nelle celle | `space-3` (12) | `space-4` (16) | **[fissato in 1D-W7]** |
+| Altezza di riga di tabella | 44 px | 36 px | proposta 1 §4 |
+| Altezza di bottone e di campo | 40 px | 36 px | proposta 1 §5 |
+| Spaziatura verticale fra campi | `space-4` (16) | `space-3` (12) | **[fissato in 1D-W7]** |
+| Spaziatura orizzontale nelle celle | `space-4` (16) | `space-3` (12) | **[fissato in 1D-W7]** |
 
-**Il valore predefinito è «comoda»** (proposta 1 §4). È il primo dei tre prestiti
-dalla proposta 2 «Accoglienza» raccomandati in `ui-proposals.md`, ed è la mitigazione
-del rischio principale di «Scrivania»: la densità che intimidisce chi entra due volte
-l'anno. L'utente può passare a «compatta» e la scelta è ricordata.
+**Due nomi per la stessa cosa.** L'utente chiama «piena» la densità che le proposte
+chiamano «compatta». Nel documento e nei nomi dei token si usa `compact`; nel testo
+dell'interfaccia si usa la parola dell'utente, perché è quella che descrive che cosa
+si ottiene.
 
-### 5.1 Densità e accessibilità: come convivono
+**Perché comoda come predefinita.** È la mitigazione del rischio principale dichiarato
+da «Scrivania»: la densità intimidisce chi entra due volte l'anno
+(`ui-proposals.md`, proposta 1 §9). Regge anche la decisione 6, chiusa lo stesso
+giorno: l'utente prioritario è chi entra ogni giorno, **con le mitigazioni per chi
+entra di rado** — e questa è la principale.
+
+### 5.2 L'interruttore di densità — requisito, non opzione
+
+1. **Esiste sempre.** `DensityToggle` è raggiungibile da ogni schermata, dal menu
+   della persona. Non è nascosto in una schermata di impostazioni profonda.
+2. **La scelta è ricordata fra le sessioni.** Chi la mette su «piena» la ritrova
+   piena al rientro, anche dopo una disconnessione.
+3. **È una preferenza della persona, conservata con il suo account** e non con il
+   browser. **[fissato in 1D-W7]** — né le proposte né le ADR lo dicono. Motivo: un
+   volontario che usa il computer della segreteria e poi il proprio perderebbe la
+   scelta a ogni cambio, e la rifarebbe ogni volta finché smette di usarla.
+4. **Il cambio è immediato e non ricarica la pagina**, non perde il lavoro in corso e
+   non cambia quali dati si vedono.
+5. **Non esiste una terza densità** e non si introduce per modulo: due valori, gli
+   stessi ovunque.
+
+### 5.3 Densità e accessibilità: come convivono
 
 La riga può scendere a 36 px; **il bersaglio di clic non scende mai sotto 44×44 px**.
 I due numeri non sono in conflitto perché l'area attiva si estende oltre il riquadro
@@ -303,12 +337,14 @@ Regole vincolanti, valide in **entrambe** le densità:
 
 1. Bersaglio minimo 44×44 px per ogni elemento attivabile con il dito.
 2. Spaziatura minima 8 px fra due bersagli adiacenti.
-3. L'anello di fuoco è spesso 2 px con scostamento 2 px: la densità compatta non lo
+3. L'anello di fuoco è spesso 2 px con scostamento 2 px: la densità piena non lo
    comprime e non lo taglia. Le righe devono lasciare spazio all'anello.
-4. La densità **non** cambia la dimensione del testo: cambia la spaziatura. Ridurre
-   il corpo sotto 14 px per guadagnare righe è vietato.
+4. La densità **non** cambia la dimensione del testo: cambia la spaziatura. La scala
+   tipografica del capitolo 3 è la stessa nelle due densità, `text-base` a 14 px
+   compreso. Ridurre il corpo sotto 14 px per guadagnare righe è vietato.
 5. La scelta della densità è una preferenza della persona, non dell'organizzazione,
    e non modifica quali dati si vedono.
+6. La densità piena **non** è un permesso: non mostra né nasconde nulla in più.
 
 ---
 
@@ -342,7 +378,7 @@ La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti 
 | 9 | `ContextChangeNotice` | striscia che per 4 secondi dichiara il nuovo ruolo subito dopo la commutazione, mentre la colonna delle sezioni si ricompone (`ui-proposals.md`, proposta 1 §5) | R, F | `1D-W8` |
 | 10 | `AreaChoiceScreen` | schermata di scelta all'accesso: un riquadro per ogni area posseduta, con il conteggio delle cose aperte. Chi possiede una sola area **non la vede** ed entra diretto (`ux-proposals.md` §4.2, §4.3) | R, H, F, L, V, E | `1D-W8` |
 | 11 | `CrossAreaHandoff` | rimando esplicito quando un dato vive in un'altra area: «Questo dato sta in Segreteria. Vuoi passare?». Passare è un cambio di area **tracciato**, mai un salto silenzioso (`ux-proposals.md` §4.3) | R, H, F, L | `1D-W9` |
-| 12 | `CommandSearch` | ricerca e comandi con `Ctrl+K`, come **acceleratore** e mai come unica via di navigazione (prestito dalla proposta 3 «Comando») | R, F, L, V, E | `1D-W9` |
+| 12 | `CommandSearch` | ricerca e comandi con `Ctrl+K`, come **acceleratore** e mai come unica via di navigazione: le due colonne restano sempre, e non raggiunge nulla fuori dall'ambiente attivo (§7.4 punto 4). **Prestito 2 dalla proposta 3 «Comando», adottato il 2026-09-15** | R, F, L, V, E | `1D-W9` |
 | 13 | `PageHeader` | intestazione di schermata: titolo, riga di riepilogo, azione principale a destra | R, L | `1D-W8` |
 | 14 | `Button` | bottone principale (pieno `accent`), secondario (bordo `border-strong`), terziario (solo testo), distruttivo (secondario con testo `danger`) | R, H, F, A, D, L | `1D-W8` |
 | 15 | `IconButton` | bottone di sola icona con etichetta accessibile obbligatoria e suggerimento al passaggio | R, H, F, A, D | `1D-W8` |
@@ -366,7 +402,7 @@ La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti 
 | 33 | `SidePanel` | pannello da destra, 480 px, per tutto ciò che non è una conferma breve; non nasconde la tabella | R, F, L, E | `1D-W8` |
 | 34 | `ConfirmDestructive` | conferma di eliminazione definitiva **con digitazione** del nome dell'oggetto | R, F, D, L, E | `1D-W9` |
 | 35 | `PublishStatusBadge` | pastiglia di stato di pubblicazione: bordo 1 px, `text-xs` in maiuscoletto, puntino pieno a sinistra. Il **testo** dice lo stato («Pubblicata», «Bozza», «Programmata», «Ritirata»), il colore lo accompagna | R | `1D-W8` |
-| 36 | `RestrictedMarker` | marcatore di contenuto riservato: barra piena `restricted` **spessa 4 px su tutto il lato sinistro** della riga o della scheda, etichetta testuale `RISERVATO` e icona di lucchetto. Il lato intero è il prestito dalla proposta 4 «Quaderno» | R | `1D-W8` |
+| 36 | `RestrictedMarker` | marcatore di contenuto riservato: barra piena `restricted` **spessa 4 px su tutto il lato sinistro** della riga o della scheda, etichetta testuale `RISERVATO` e icona di lucchetto. Il lato intero è il **prestito 3 dalla proposta 4 «Quaderno», adottato il 2026-09-15** | R | `1D-W8` |
 | 37 | `VisibilityPanel` | pannello di visibilità di un contenuto: fondo `restricted-surface` e testo `restricted-ink` quando la scelta è «riservato»; riga fissa che ricorda chi può vedere il record | R, F, D, E, S | `1D-W8` |
 | 38 | `MediaPicker` | selettore di media: griglia con ricerca e filtri, anteprima, testo alternativo obbligatorio alla scelta; apre in `SidePanel`, non in `Dialog` | R, H, F, A, S, L, V, E | `1D-W8` |
 | 39 | `MediaUploader` | caricamento con trascinamento e da pulsante, avanzamento per file, errori per file | R, H, F, D, L, E | `1D-W9` |
@@ -379,14 +415,22 @@ La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti 
 | 46 | `MenuTreeEditor` | albero del menu di navigazione del sito: sposta, annida, collega a un contenuto o a un indirizzo | R, H, F, A, D, S, V, E | `1D-W9` |
 | 47 | `SeoPanel` | titolo, descrizione, immagine di condivisione, con conteggio dei caratteri e anteprima del risultato di ricerca | R, F, D, E | `1D-W9` |
 | 48 | `AuditTrail` | storia breve in fondo alla scheda dell'oggetto e registro esteso di area, scritto in frasi compiute e non in righe tecniche (innesto dalla proposta D, `ux-proposals.md` §9). Ogni riga porta **il ruolo con cui l'azione è stata compiuta**, possibile perché esiste un ruolo attivo | R, L, V | `1D-W9` |
-| 49 | `DensityToggle` | passa fra densità comoda e compatta e ricorda la scelta | R, H, F, A, S | `1D-W9` |
+| 49 | `DensityToggle` | passa fra densità comoda e densità piena. **Requisito posto dall'utente il 2026-09-15** insieme al prestito 1: raggiungibile da ogni schermata, scelta ricordata fra le sessioni e conservata con l'account, cambio immediato senza ricaricare (§5.2) | R, H, F, A, S | `1D-W8` |
 | 50 | `Tabs` | schede dentro una sezione, quando le sottosezioni sono poche e paritetiche | R, H, F, A, S | `1D-W9` |
 | 51 | `Tooltip` | suggerimento al passaggio **e alla messa a fuoco**; mai l'unico veicolo di un'informazione necessaria | R, F | `1D-W8` |
 | 52 | `Spinner` | indicatore di attesa con testo accompagnatorio; per le tabelle si preferisce la sagoma di caricamento | R | `1D-W8` |
 | 53 | `SkipLink` | «Vai al contenuto», primo elemento focalizzabile di ogni schermata | R, F | `1D-W8` |
-| 54 | `GuidedFlow` | percorso a passi numerati, riservato alle **operazioni rare e delicate**, mai a quelle quotidiane (prestito dalla proposta 2 «Accoglienza»). In Fase 1 non ha ancora un caso d'uso obbligato | R, F, D, L, E | `1D-W9` |
+| 54 | `GuidedFlow` | percorso a passi numerati, riservato alle **operazioni rare e delicate**, mai a quelle quotidiane. Parte del **prestito 1 dalla proposta 2 «Accoglienza», adottato il 2026-09-15**. In Fase 1 non ha ancora un caso d'uso obbligato: si costruisce in `1D-W7` e si usa quando un'operazione rara lo richiede | R, F, D, L, E | `1D-W9` |
 
-**54 componenti: 43 servono in `1D-W8`, 11 in `1D-W9`.**
+**54 componenti: 44 servono in `1D-W8`, 10 in `1D-W9`.** Tutti sono costruiti in
+`1D-W7`.
+
+**I tre prestiti, adottati il 2026-09-15, stanno qui dentro e non altrove:** il
+prestito 1 in `DensityToggle` (49) e `GuidedFlow` (54), più la densità comoda
+predefinita del capitolo 5 e i testi di stato in parole intere di `SaveBar` (29) e
+`PublishStatusBadge` (35); il prestito 2 in `CommandSearch` (12); il prestito 3 in
+`RestrictedMarker` (36) e `VisibilityPanel` (37). Nessun altro componente serve ad
+attuarli.
 
 ### 6.1 Librerie ammesse
 
@@ -423,20 +467,15 @@ era la domanda che poteva ribaltare la raccomandazione, e non la ribalta.
 | **Redazione** | Situazione dell'area · Pagine · Notizie · Media · Menu · SEO e indirizzi | `ux-proposals.md` §4.2 versione 1; ADR-006 §3.2 per il perimetro |
 | **Impostazioni** | Persone e permessi · Registro delle operazioni · Impostazioni del sito | `ux-proposals.md` §4.2 chiamava quest'area «Direzione» |
 
-**Il nome «Impostazioni» invece di «Direzione» è [fissato in 1D-W7], e la revoca di
-DR-047 ne indebolisce la motivazione.** Va detto per intero, perché il documento non
-deve conservare un argomento che non vale più.
+**Il nome è «Impostazioni», deciso il 2026-09-15** (decisione 4, opzione (a)). Motivo
+che regge: in Fase 1 quell'area contiene solo impostazioni di sistema — chi può fare
+cosa, che cosa è successo, come è configurato il sito — e chiamarla «Direzione»
+prometterebbe un'area di direzione che non è costruita.
 
-- **Argomento caduto.** La prima stesura sosteneva che con DR-047 non esistesse più
-  una veste da indossare, e che quindi «Direzione» nominasse qualcosa di inesistente.
-  Con D-UX-3 = (a) le vesti esistono di nuovo, e questo argomento cade.
-- **Argomento che resta.** In Fase 1 quell'area contiene solo impostazioni di
-  sistema: chi può fare cosa, che cosa è successo, come è configurato il sito.
-  Chiamarla «Direzione» promette un'area di direzione che non è costruita.
-- **Conseguenza.** La **decisione 4** del capitolo 11 resta aperta e la
-  raccomandazione è oggi più debole di prima. Se l'utente sceglie «Direzione», il
-  documento è coerente lo stesso: cambia una parola in `AreaNav` e nelle briciole di
-  pane.
+*Argomento caduto, conservato perché chi rilegge non lo riproponga:* la prima stesura
+sosteneva anche che con DR-047 non esistesse più una veste da indossare. Con
+D-UX-3 = (a) le vesti esistono di nuovo, quindi quell'argomento non vale più. L'utente
+ha scelto (a) sapendo che la motivazione si era ridotta a una sola ragione.
 
 ### 7.3 Le altre quattro aree non si mostrano affatto
 
@@ -554,9 +593,10 @@ una veste e l'ambiente si riconfigura — è di nuovo vero.
    come ADR-007 §3.2 prescrive (`content.read`, `content.write`, `content.publish`,
    `media.write`, `settings.write`).
 7. **Un'azione non permessa nel ruolo attivo non si mostra disabilitata: non si
-   mostra.** **[fissato in 1D-W7]** — è la **decisione 7** del capitolo 11, ancora
-   aperta. Con un solo ruolo attivo la regola conta di più, non di meno: è il
-   meccanismo con cui l'interfaccia «mostra solo ciò che quel ruolo può fare».
+   mostra.** Decisione 7, opzione (a), **chiusa il 2026-09-15**. Con un solo ruolo
+   attivo la regola conta di più, non di meno: è il meccanismo con cui l'interfaccia
+   «mostra solo ciò che quel ruolo può fare». Vale per `Button`, `IconButton`,
+   `BulkActionBar`, `SectionNav`, `AreaNav` e `RoleSwitcher`.
 
 ### 8.4 Che cosa **non** cambia
 
@@ -703,26 +743,29 @@ Dichiarato perché nessuno lo dia per fatto:
 
 ---
 
-## 11. Decisioni: chiuse e ancora aperte
+## 11. Decisioni
 
-Le sette decisioni poste dalla prima stesura di questo documento. Il 2026-09-15
-l'utente ne ha chiuse tre. Le altre quattro restano aperte: **nessuna si considera
-presa per silenzio**, e nessuna autorizza codice finché non è registrata in
-`docs/decisions/decision-register.md`.
+Le sette decisioni poste dalla prima stesura di questo documento. **Il 2026-09-15 sono
+state chiuse tutte.** Restano scritte per intero, con la risposta dell'utente accanto
+alla domanda: servono a chi fra un anno chiederà perché il sistema di design è fatto
+così.
 
 | # | Argomento | Stato |
 |---|---|---|
-| 1 | Tema scuro nel primo rilascio | **chiusa** il 2026-09-15 — opzione (b) |
-| 2 | La lettura delle aree | **superata** il 2026-09-15 — la domanda decade, vedi sotto |
-| 3 | Il carattere d'interfaccia | **chiusa** il 2026-09-15 — opzione (a), Inter |
-| 4 | Nome della seconda area e aree non costruite | **aperta** |
-| 5 | I tre prestiti dalle altre proposte | **aperta** — l'utente vuole vederli descritti prima di scegliere |
-| 6 | L'utente prioritario dell'area amministrativa | **aperta** |
-| 7 | Azioni non permesse: nascoste o disabilitate | **aperta** |
+| 1 | Tema scuro nel primo rilascio | **chiusa** — opzione (b), token ora e verifica dopo |
+| 2 | La lettura delle aree | **superata** — l'utente ha revocato DR-047 invece di scegliere |
+| 3 | Il carattere d'interfaccia | **chiusa** — opzione (a), Inter |
+| 4 | Nome della seconda area e aree non costruite | **chiusa** — opzione (a), «Impostazioni» |
+| 5 | I tre prestiti dalle altre proposte | **chiusa** — tutti e tre adottati, con l'interruttore di densità come condizione |
+| 6 | L'utente prioritario dell'area amministrativa | **chiusa** — opzione (a), chi entra ogni giorno |
+| 7 | Azioni non permesse: nascoste o disabilitate | **chiusa** — opzione (a), non si mostrano |
+
+Tutte le risposte sono del **2026-09-15** e **vanno ancora iscritte** in
+`docs/decisions/decision-register.md`: finché non lo sono, la traccia sta solo qui.
 
 ---
 
-## 11.A Decisioni chiuse
+## 11.A Le sette decisioni, una per una
 
 ### Decisione 1 — Il tema scuro nel primo rilascio · **CHIUSA**
 
@@ -779,111 +822,95 @@ serviti da `apps/admin`. Vedi §3.1.
 
 ---
 
-## 11.B Decisioni ancora aperte
+### Decisione 4 — Il nome della seconda area e le aree non costruite · **CHIUSA**
 
-Ognuna con opzioni, raccomandazione e impatto. **Nessun valore predefinito.**
+**Risposta dell'utente, 2026-09-15: opzione (a).** La seconda area si chiama
+**«Impostazioni»**, e le quattro aree non ancora costruite — Segreteria, Tesoreria,
+Formazione, Consulenza — **non compaiono affatto** nella navigazione: né attive, né
+disabilitate, né marcate «in arrivo».
 
----
+**Nota onesta.** L'utente ha scelto la raccomandazione **sapendo che si era
+indebolita**: uno dei due argomenti che la sostenevano era caduto con la revoca di
+DR-047. Resta l'argomento che in Fase 1 quell'area contiene solo impostazioni di
+sistema. Vedi §7.2.
 
-### Decisione 4 — Il nome della seconda area e le aree non costruite
-
-| Opzioni | |
-|---|---|
-| **(a)** «Impostazioni», e le altre quattro aree **non compaiono** | |
-| **(b)** «Direzione», come in `ux-proposals.md` §4.2, e le altre quattro non compaiono | |
-| **(c)** le altre quattro compaiono spente o marcate «in arrivo» | |
-
-**Raccomandazione: (a), ma più debole di prima.** L'argomento originale — «Direzione»
-nomina una veste che con DR-047 non si indossa più — **è caduto** con la revoca di
-DR-047: le vesti esistono di nuovo. Resta l'argomento che in Fase 1 quell'area
-contiene solo impostazioni di sistema, e che chiamarla «Direzione» promette un'area
-che non è costruita. Con (b) il documento resta coerente: cambia una parola. (c) è
-invece sconsigliata con forza: mostrare aree non costruite è pianificazione della fase
-gestionale fatta dentro l'interfaccia, e il gate di `CLAUDE.md` la vieta.
-
-**Impatto.** Solo sul nome visibile e sulla prima colonna. Cambiarlo dopo costa poco
-finché le aree sono due; costa molto quando saranno sei e il vocabolario sarà entrato
-nell'uso e nel registro delle operazioni.
-
-*Default vietato: non si introduce un'area nella navigazione perché è prevista dalla
-roadmap.*
+**Che cosa questo chiude.** Mostrare aree non costruite sarebbe stata pianificazione
+della fase gestionale fatta dentro l'interfaccia, e il gate di `CLAUDE.md` la vieta.
+La scelta lo esclude esplicitamente. Vedi §7.3.
 
 ---
 
-### Decisione 5 — I tre prestiti dalle altre proposte
+### Decisione 5 — I tre prestiti dalle altre proposte · **CHIUSA**
 
-DR-044 registra «(a) Scrivania». La raccomandazione di `ui-proposals.md` era «la 1
-**con tre prestiti**». I prestiti non sono stati registrati, quindi non sono approvati.
+DR-044 registrava «(a) Scrivania»; la raccomandazione di `ui-proposals.md` era «la 1
+**con tre prestiti**», che non erano stati registrati. L'utente ha chiesto di vederli
+descritti uno per uno prima di scegliere, e dopo la descrizione ha risposto.
 
-> **Stato al 2026-09-15.** L'utente ha chiesto di **vedere i tre prestiti descritti
-> uno per uno prima di scegliere**. La descrizione gli è stata consegnata a parte.
-> La decisione resta aperta e nessuna delle tre opzioni è stata scelta.
+**Risposta dell'utente, 2026-09-15: opzione (a) — tutti e tre adottati.**
 
-| Opzioni | |
-|---|---|
-| **(a)** tutti e tre: densità comoda predefinita e testi in parole intere dalla proposta 2; `Ctrl+K` come acceleratore dalla 3; marcatore di riservatezza su tutto il lato dalla 4 | |
-| **(b)** solo alcuni, da indicare | |
-| **(c)** nessuno: «Scrivania» così com'è | |
+| Prestito | Da | Che cosa entra nel documento |
+|---|---|---|
+| **1** | proposta 2 «Accoglienza» | densità comoda predefinita, testi di stato in parole intere, percorso guidato per le operazioni rare. Capitolo 5; componenti `DensityToggle` (49), `GuidedFlow` (54), `SaveBar` (29), `PublishStatusBadge` (35) |
+| **2** | proposta 3 «Comando» | barra `Ctrl+K` come acceleratore, mai come unica via di navigazione e mai come via d'uscita dall'ambiente attivo. §7.4 punto 4; componente `CommandSearch` (12) |
+| **3** | proposta 4 «Quaderno» | marcatore di riservatezza a barra piena su tutto il lato sinistro. Componenti `RestrictedMarker` (36) e `VisibilityPanel` (37) |
 
-**Raccomandazione: (a).** Il primo è la mitigazione dichiarata del rischio principale
-di «Scrivania», cioè la densità che intimidisce chi entra di rado. Il secondo è un
-acceleratore che non toglie nulla a chi non lo conosce. Il terzo è il marcatore più
-leggibile delle quattro proposte, su una materia che non ammette equivoci.
-
-**Impatto.** Questo documento li ha già recepiti: densità al capitolo 5,
-`CommandSearch` al componente 7, `RestrictedMarker` al componente 31. Se la risposta è
-(b) o (c), i capitoli 5 e 6 vanno corretti **prima** di `1D-W7`.
-
-*Default vietato: un prestito non registrato non è una scelta, è un'abitudine presa
-leggendo la raccomandazione.*
+**Condizione posta dall'utente sul prestito 1**, con parole sue: «l'importante è che
+rimanga l'interruttore per la densità piena». **È parte della decisione, non un
+dettaglio realizzativo**: l'interruttore è raggiungibile da ogni schermata, la scelta
+è ricordata fra le sessioni ed è conservata con l'account. Il requisito è scritto per
+intero al §5.2.
 
 ---
 
-### Decisione 6 — L'utente prioritario dell'area amministrativa
+### Decisione 6 — L'utente prioritario dell'area amministrativa · **CHIUSA**
 
-Era la domanda 2 di `ui-proposals.md` («Cosa serve dall'utente per decidere») e **non è
-entrata** nelle cinque di HO-004. Resta aperta, e tocca decisioni concrete.
+Era la domanda 2 di `ui-proposals.md` e non era mai entrata nelle cinque di HO-004.
 
-| Opzioni | |
-|---|---|
-| **(a)** chi entra ogni giorno (segreteria) | |
-| **(b)** chi entra poche volte l'anno | |
-| **(c)** entrambi con pari peso, accettando il costo di due modalità | |
+**Risposta dell'utente, 2026-09-15: opzione (a)** — chi entra ogni giorno, **con le
+mitigazioni per chi entra di rado**.
 
-**Raccomandazione: (a) come priorità, con le mitigazioni per (b)** — che è esattamente
-ciò che la densità comoda predefinita e i testi di aiuto permanenti sono.
+**Che cosa sono, in concreto, quelle mitigazioni.** Sono il prestito 1, chiuso lo
+stesso giorno: densità comoda predefinita, testi di stato in parole intere, testi di
+aiuto permanenti sotto i campi, stati vuoti che spiegano, percorso guidato per le
+operazioni rare. Non è una promessa generica: sono voci del capitolo 5 e del
+capitolo 6.
 
-**Impatto.** Decide la densità predefinita, quanto testo di aiuto resta visibile in
-permanenza e se `GuidedFlow` (componente 49) serve già in Fase 1 o solo dopo il gate.
-Con (c), ogni schermata di creazione va progettata due volte.
-
-*Default vietato: non si assume che l'utente prioritario sia la segreteria senza
-conferma.*
+**Che cosa questo chiude.** La densità predefinita, la quantità di testo di aiuto
+permanente e il fatto che `GuidedFlow` resti confinato alle operazioni rare invece di
+estendersi a quelle quotidiane.
 
 ---
 
-### Decisione 7 — Le azioni non permesse: nascoste o disabilitate
+### Decisione 7 — Le azioni non permesse: nascoste o disabilitate · **CHIUSA**
 
-Regola **[fissata in 1D-W7]** al capitolo 8.3 punto 7, perché senza una regola
-ciascun componente sceglierebbe da sé. Con un solo ruolo attivo per volta la regola
-pesa di più: è il meccanismo con cui l'interfaccia «mostra solo ciò che quel ruolo può
-fare».
+**Risposta dell'utente, 2026-09-15: opzione (a)** — un'azione non permessa **non si
+mostra**.
 
-| Opzioni | |
-|---|---|
-| **(a)** un'azione non permessa **non si mostra** | |
-| **(b)** si mostra disabilitata, con una spiegazione al passaggio | |
+**Perché conta più di prima.** Con un solo ruolo attivo per volta, questa regola è il
+meccanismo con cui l'interfaccia «mostra solo ciò che quel ruolo può fare»: senza di
+essa la scelta su D-UX-3 resterebbe una dichiarazione. Un bottone spento comunica a
+chi non deve averla che una funzione esiste.
 
-**Raccomandazione: (a).** Un bottone spento dichiara a chi non deve averla che una
-funzione esiste, e in un consultorio questo è un'informazione di troppo. (b) è più
-gentile quando il permesso si può chiedere a qualcuno — ma in Fase 1 i permessi si
-assegnano a mano su due o tre account, e non c'è nessuno a cui chiederli.
+**Dove si applica:** `Button`, `IconButton`, `BulkActionBar`, `SectionNav`, `AreaNav`
+e `RoleSwitcher`. Regola trasversale, scritta al §8.3 punto 7.
 
-**Impatto.** Tocca `Button`, `IconButton`, `BulkActionBar`, `SectionNav`, `AreaNav` e
-`RoleSwitcher`: è una regola trasversale, e cambiarla dopo significa rileggerli tutti.
+---
 
-*Default vietato: non si sceglie fra nascondere e disabilitare componente per
-componente.*
+## 11.B Che cosa resta aperto
+
+**Per questo documento, nulla.** Tutte e sette le decisioni poste dalla prima stesura
+sono chiuse o superate. `packages/ui` si può costruire in `1D-W7` senza assunzioni non
+approvate.
+
+Restano aperte, **fuori da questo documento** e già tracciate altrove, le decisioni di
+`docs/decisions/decision-register.md`: D6 (fornitore, dominio, costi, collocazione dei
+dati), D8 (WhatsApp nelle comunicazioni) e MI-06 (verifica privacy e legale, che
+richiede un professionista). Nessuna riguarda il sistema di design.
+
+**Registrazione ancora da fare.** Le risposte del 2026-09-15 — quelle sulle decisioni
+1, 2, 3, 4, 5, 6 e 7 — vanno iscritte in `docs/decisions/decision-register.md`, e
+quella su D-UX-3 come voce che **supera DR-047**. Questo documento non modifica il
+registro.
 
 ---
 
@@ -891,8 +918,8 @@ componente.*
 
 I 36 valori di contrasto del capitolo 2 sono stati calcolati in questa wave con la
 formula della luminanza relativa di WCAG 2.2, coppia per coppia, e non stimati né
-copiati. I 26 ereditati dalla proposta 1 coincidono con quelli dichiarati in
-`ui-proposals.md` entro l'arrotondamento a due cifre; i 10 introdotti qui sono marcati
+copiati. I 29 ereditati dalla proposta 1 coincidono con quelli dichiarati in
+`ui-proposals.md` entro l'arrotondamento a due cifre; i 7 introdotti qui sono marcati
 **[fissato in 1D-W7]**.
 
 La licenza di Inter è stata verificata sulla fonte del progetto, non ricordata.
@@ -907,3 +934,13 @@ documento. Gli esempi di stato, di percorso e di registro sono inventati.
 
 Questo documento **non** crea codice, scaffold o dipendenze: li descrive, perché la
 wave `1D-W7` possa costruirli senza inventare nulla.
+
+**Stato al 2026-09-15: nessuna decisione aperta.** I valori marcati
+**[fissato in 1D-W7]** restano fissati da chi scrive, non chiesti all'utente: sono
+dettagli che nessuna proposta copriva e che, lasciati liberi, sarebbero stati decisi
+componente per componente. Sono **tredici**: sette valori di colore (§2.1 e §2.2) e
+sei fuori dal colore — la spaziatura del maiuscoletto, il raggio degli angoli, la
+misura di riga dell'editor, le due spaziature della densità piena e la conservazione
+della scelta di densità con l'account. Di questi tredici, **cinque sono stati
+approvati** dalla decisione 1 — i token scuri; gli altri otto restano fissati da chi
+scrive e dichiarati come tali dove compaiono.
