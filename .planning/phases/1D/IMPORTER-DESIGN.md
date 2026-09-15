@@ -810,3 +810,47 @@ di esse aveva in perimetro. Va collegata **una volta sola, quando le fasi ci son
 tutte**, cioè al termine della `1D-W5`. Finché non è fatto, `plan` e `apply` non
 dimostrano nulla di ciò che le fasi fanno, e i criteri di uscita che li citano non sono
 verificabili.
+
+### 11.9 La soglia del blocco di riserva, misurata — `1D-W4c`
+
+Il §10.4 di `BLOCK-MODEL.md` diceva che la misura valida andava fatta qui, con i
+risolutori veri. È stata fatta. Il risultato sono **due numeri, non uno**, e vanno
+tenuti distinti finché la fase 11 `forms` non esiste.
+
+| Misura | Blocchi di riserva | Percentuale | Contenuti | Soglia ADR-005 §3.4 |
+|---|---|---|---|---|
+| Complessiva, con `media` risolto e `forms` no | 31 / 305 | **10,16 %** | **27** / 108 | **superata** |
+| Al netto dei moduli form non risolvibili | 7 / 305 | **2,30 %** | **4** / 108 | **rispettata** |
+
+Dei 31 blocchi di riserva, **24 sono moduli form** privi di identificatore risolvibile,
+perché il risolutore verso `forms` nasce nella fase 11, che è del blocco successivo.
+Non sono un difetto di conversione: sono l'effetto di misurare a catena incompleta.
+
+Il numero al netto coincide **esattamente** con la stima a risolutore fittizio del
+§10.4 di `BLOCK-MODEL.md`: 2,30 % e 4 contenuti. Due misure indipendenti che danno lo
+stesso risultato sono una verifica, non una coincidenza.
+
+**La soglia non si dichiara né rispettata né superata** finché la fase 11 non esiste.
+La misura che vale è quella della `1D-W5`, e va rifatta lì.
+
+### 11.10 Due contenuti con percorso in collisione — `1D-W4c`
+
+La fase 6 `relations` aggiorna 106 contenuti su 108 e isola **2 errori**. Non è un
+difetto del codice: sono due anomalie reali della sorgente.
+
+| Caso | Contenuto | Anomalia |
+|---|---|---|
+| 1 | `wp_posts.ID` 332 | slug condiviso con un altro contenuto **di tipo diverso** |
+| 2 | `wp_posts.ID` 1781 | bozza mai salvata, **slug vuoto** |
+
+In WordPress non collidono perché il tipo fa parte dell'instradamento; in
+`contents.path`, che è un percorso unico (`contents_path_unique`), collidono.
+
+La fase 5 li importa comunque tutti e 108 senza errori, perché il percorso provvisorio
+include `legacy_id` ed è unico per costruzione. La collisione emerge solo al percorso
+vero, ed è lì che va decisa.
+
+**Non si risolve di iniziativa**: assegnare d'ufficio un percorso diverso a una pagina
+del sito è una modifica di URL, e gli URL sono materia di parità e di indicizzazione.
+La decisione è dell'utente, alla wave `1D-W11`. Il caso 2 è probabilmente innocuo — una
+bozza senza slug non ha mai avuto un URL — ma «probabilmente» non basta per deciderlo.
