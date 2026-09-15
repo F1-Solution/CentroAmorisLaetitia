@@ -10,6 +10,10 @@ import { termsStage } from './terms/index.js';
 import { mediaStage } from './media/index.js';
 import { contentsStage } from './contents/index.js';
 import { relationsStage } from './relations/index.js';
+import { menusStage } from './menus/index.js';
+import { seoStage } from './seo/index.js';
+import { documentsStage } from './documents/index.js';
+import { slidersStage } from './sliders/index.js';
 
 export const IMPLEMENTED_STAGES: ReadonlyMap<StageName, Stage> = new Map([
   [settingsStage.name, settingsStage],
@@ -18,4 +22,8 @@ export const IMPLEMENTED_STAGES: ReadonlyMap<StageName, Stage> = new Map([
   [mediaStage.name, mediaStage],
   [contentsStage.name, contentsStage],
   [relationsStage.name, relationsStage],
+  [menusStage.name, menusStage],
+  [seoStage.name, seoStage],
+  [documentsStage.name, documentsStage],
+  [slidersStage.name, slidersStage],
 ]);

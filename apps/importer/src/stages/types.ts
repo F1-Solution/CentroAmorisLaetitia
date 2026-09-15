@@ -114,7 +114,12 @@ export type EntityKind =
   | 'user'
   | 'term'
   | 'media'
-  | 'content';
+  | 'content'
+  | 'menu'
+  | 'menu_item'
+  | 'document'
+  | 'slider'
+  | 'slider_slide';
 
 /**
  * Identifica un elemento sorgente per l'isolamento dell'errore

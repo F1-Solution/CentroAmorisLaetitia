@@ -854,3 +854,53 @@ vero, ed è lì che va decisa.
 del sito è una modifica di URL, e gli URL sono materia di parità e di indicizzazione.
 La decisione è dell'utente, alla wave `1D-W11`. Il caso 2 è probabilmente innocuo — una
 bozza senza slug non ha mai avuto un URL — ma «probabilmente» non basta per deciderlo.
+
+### 11.11 Nessuno degli 8 documenti si risolve — `1D-W4d`
+
+Il §11.6 aveva rilevato che i 4 documenti **riservati** stanno fuori da `uploads/`.
+Attuando la fase 9 si è misurato anche il resto, e il quadro è più ampio: **nessuno
+degli 8 documenti** ha oggi un file risolvibile, per **due motivi diversi**.
+
+| Gruppo | Dove sta il file | Perché non si risolve |
+|---|---|---|
+| 4 riservati (`cuar_private_file`) | `wp-content/customer-area/storage/` | fuori da `uploads/`: nessun lettore lo visita (§11.6). **Risolto da DR-058**: si aggiunge un secondo lettore |
+| 4 pubblici (`wpdmpro`) | `wp-content/uploads/download-manager-files/` | la cartella è **esclusa** da ADR-004 §3.2 |
+
+Poiché `documents.media_id` è `NOT NULL`, oggi **nessuna riga `documents` viene
+scritta**: 8 attese, 0 create, 8 saltate, ognuna con una riga `import_issues` di
+gravità `warning` che distingue i due motivi.
+
+#### Il secondo caso è un difetto di ADR-004, non dell'importer
+
+ADR-004 §3.2 elenca `uploads/download-manager-files` fra le **cartelle di servizio**
+da escludere, insieme a cache e file temporanei. La verifica diretta dice altro: quella
+cartella contiene **quattro moduli per le consulenze in formato PDF**, cioè documenti
+che il sito offre davvero in scaricamento. Non sono scarti di un plugin: sono contenuto.
+
+L'esclusione era una **classificazione sbagliata**, presa dal nome della cartella
+invece che dal suo contenuto. Mantenerla significherebbe perdere quattro documenti
+pubblici del sito senza che nessuno se ne accorga, perché la perdita non produrrebbe
+un errore: produrrebbe otto righe mancanti in una tabella che nessuno conta.
+
+**Non si corregge di iniziativa**: ADR-004 è approvata (DR-038) e l'elenco delle
+esclusioni ne è parte. Va portata all'utente come decisione.
+
+#### Nota sui nomi, che invita all'errore
+
+I 4 file pubblici e i 4 riservati hanno **nomi quasi identici** — gli stessi moduli, con
+o senza trattini. È la stessa trappola già segnalata al §11.6, vista dall'altro lato:
+qui il rischio non è importare i file sbagliati, ma credere che i due gruppi siano lo
+stesso gruppo e importarne quattro invece di otto.
+
+### 11.12 Le tassonomie dei documenti non sono importate — `1D-W4d`
+
+La fase 4 `terms` importa la sola tassonomia `category`. I documenti però usano
+`wpdmcategory` e `cuar_private_file_category`, che non sono importate: quindi
+`document_terms` resterebbe vuota anche se i file si risolvessero.
+
+Lo stesso limite ha già prodotto un effetto visibile altrove: **una voce di menu su 64
+viene saltata** perché punta a un termine di `wpdmcategory`. Il conto torna comunque a
+64 — 63 create più 1 saltata — ma la voce manca.
+
+È lo stesso genere di problema del §11.11: una classificazione della Fase 1B più stretta
+di ciò che la sorgente contiene. Va deciso insieme a quello.

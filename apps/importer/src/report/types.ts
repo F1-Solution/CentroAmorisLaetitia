@@ -69,7 +69,8 @@ export type IssueCode =
   | 'stage-not-implemented'
   | 'item-import-failed'
   | 'unclassified-capabilities'
-  | 'settings-value-missing';
+  | 'settings-value-missing'
+  | 'document-file-unresolved';
 
 export interface ReportIssue {
   readonly severity: 'info' | 'warning' | 'error';
