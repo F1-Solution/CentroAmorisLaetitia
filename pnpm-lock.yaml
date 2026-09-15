@@ -109,6 +109,9 @@ importers:
 
   apps/importer:
     dependencies:
+      '@amoris/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@amoris/db':
         specifier: workspace:*
         version: link:../../packages/db
