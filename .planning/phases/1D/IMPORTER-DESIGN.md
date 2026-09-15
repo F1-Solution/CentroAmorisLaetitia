@@ -719,3 +719,36 @@ valori misurati sulla sorgente autorevole, non quelli del documento di Fase 1A. 
 scostamento va riportato nell'`AUDIT.md` della fase, e `wp-to-postgres-mapping.md`
 va corretto nella wave di documentazione, non qui: quel documento è un prodotto
 approvato della Fase 1B e si corregge dichiarando la correzione.
+
+### 11.4 Altri due conteggi attesi che non reggono alla misura — `1D-W4a`
+
+Stesso genere di rilievo del §11.3, trovato attuando le prime tre fasi.
+
+| Voce | Atteso dal codice e da `importer-spec.md` §8.1 | Misurato | Fonte del valore misurato |
+|---|---|---|---|
+| `settings` | 18 | **15** | `docs/architecture/schema.sql` §10 elenca esattamente 15 chiavi «previste all'import» |
+| `terms` | 3 | **2** | la sorgente ha 2 categorie e 0 tag, coerente con il commento di `packages/db/src/schema/taxonomy.ts` |
+
+Le tre chiavi di impostazione che mancherebbero per arrivare a 18 **non sono indicate in
+alcun documento**. Non si inventano: si importano le 15 documentate e si dichiara lo
+scarto. Se le tre esistono, il documento che le elenca va trovato o scritto; se non
+esistono, il numero 18 era sbagliato.
+
+Va notato che `settings.site.home_content_id` **non** è scritto dalla fase 1: richiede
+l'identificatore di un contenuto, che nasce nella fase 5. Non è una delle tre mancanti —
+è una chiave che si popola più tardi.
+
+I valori attesi nel codice vanno allineati a **15** e **2**. Come per il §11.3, la
+correzione dei documenti di Fase 1B e della specifica è lavoro della wave di
+documentazione, non di quella di codice, e va dichiarata invece che fatta di nascosto.
+
+### 11.5 `import_id_map` non distingue «creato» da «aggiornato»
+
+La tabella approvata in Fase 1B non ha una colonna che dica se una riga è nata da una
+creazione o da un aggiornamento. `importer-spec.md` §9 chiede però che `rollback`
+«cancelli le entità create da quella esecuzione»: senza quella distinzione, un rollback
+della **seconda** esecuzione non sa che cosa cancellare e che cosa riportare indietro.
+
+È lo stesso divario già dichiarato al §10 punto 2, visto ora dal lato dello schema. Non
+si aggiunge una colonna di iniziativa: la decisione è dell'utente e la si porta nella
+wave `1D-W5`, che attua `rollback`.

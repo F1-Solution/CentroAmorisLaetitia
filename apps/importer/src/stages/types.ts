@@ -1,3 +1,5 @@
+import type { ReportIssue } from '../report/types.js';
+
 /**
  * Il contratto di una fase (`IMPORTER-DESIGN.md` §4.1). In questa wave (`1D-W2`)
  * nessuna fase di dominio è attuata: solo `preflight` fa qualcosa di vero. Le
@@ -95,3 +97,71 @@ export const STAGE_DEPENDS_ON: Readonly<Record<StageName, readonly StageName[]>>
 export const ALL_STAGE_NAMES: readonly StageName[] = Object.keys(
   STAGE_DEPENDS_ON,
 ) as StageName[];
+
+/**
+ * Il contratto vero di una fase, attuato a partire da `1D-W4a`
+ * (`IMPORTER-DESIGN.md` §4.1). `expected` e `run` restano separati: il primo
+ * serve al rapporto anche in fasi non ancora eseguite, il secondo scrive.
+ *
+ * Le entità elencate qui sono quelle prodotte dai blocchi `1D-W4a`…`1D-W4d`.
+ * Ogni blocco aggiunge le proprie senza toccare le altre.
+ */
+export type EntityKind =
+  | 'setting'
+  | 'seo_template'
+  | 'role'
+  | 'permission'
+  | 'user'
+  | 'term';
+
+/**
+ * Identifica un elemento sorgente per l'isolamento dell'errore
+ * (`IMPORTER-DESIGN.md` §4.2): solo identificatori, mai un frammento di
+ * contenuto.
+ */
+export interface ItemKey {
+  readonly sourceTable: string;
+  readonly sourceId: number;
+}
+
+/**
+ * Riceve le anomalie di una fase. In `apply` le scrive anche su
+ * `import_issues` (connessione di registro, §5.3); in `plan` resta solo in
+ * memoria (§5.2 punto 2). `collected` alimenta il rapporto in entrambi i casi.
+ *
+ * Riusa `ReportIssue` di `report/types.ts` invece di un tipo proprio: sono lo
+ * stesso oggetto, e un secondo tipo divergerebbe alla prima modifica.
+ */
+export interface IssueSink {
+  record(issue: ReportIssue): Promise<void>;
+  readonly collected: readonly ReportIssue[];
+}
+
+/** Alimenta il rapporto (`importer-spec.md` §8): una entry per fase eseguita. */
+export interface CounterSink {
+  record(stage: StageName, result: StageResult): void;
+  readonly collected: ReadonlyMap<StageName, StageResult>;
+}
+
+export function createCounterSink(): CounterSink {
+  const collected = new Map<StageName, StageResult>();
+  return {
+    record(stage, result) {
+      collected.set(stage, result);
+    },
+    collected,
+  };
+}
+
+export function emptyStageResult(): StageResult {
+  return { created: 0, updated: 0, skipped: 0, errors: 0 };
+}
+
+export function addStageResults(a: StageResult, b: StageResult): StageResult {
+  return {
+    created: a.created + b.created,
+    updated: a.updated + b.updated,
+    skipped: a.skipped + b.skipped,
+    errors: a.errors + b.errors,
+  };
+}

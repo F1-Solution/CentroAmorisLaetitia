@@ -66,7 +66,10 @@ export type IssueCode =
   | 'unknown-shortcode'
   | 'unknown-attribute'
   | 'editorial-work-protected'
-  | 'stage-not-implemented';
+  | 'stage-not-implemented'
+  | 'item-import-failed'
+  | 'unclassified-capabilities'
+  | 'settings-value-missing';
 
 export interface ReportIssue {
   readonly severity: 'info' | 'warning' | 'error';
