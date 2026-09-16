@@ -14,6 +14,8 @@ const config = loadConfig({
   DATABASE_URL: 'postgres://nessuno:nessuno@127.0.0.1:59999/inesistente',
   NODE_ENV: 'test',
   LOG_LEVEL: 'fatal',
+  IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
+  CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
 });
 
 let app: Awaited<ReturnType<typeof buildApp>>;

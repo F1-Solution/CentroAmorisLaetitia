@@ -388,3 +388,49 @@ nel Round 4.
 | **Un allegato non recuperabile** | Il database lo cerca con maiuscole diverse da quelle del file vero. Non si risolve rinominando, che ADR-004 §3.1 vieta per non far divergere il `srcset` | wave `1D-W11` |
 | **Ordine delle fasi e soglia del blocco di riserva** | `contents` è la fase 5 e `forms` la 11, quindi il convertitore non può risolvere i moduli form: 24 dei 31 blocchi di riserva sono quelli, e la soglia di ADR-005 §3.4 resta superata (10,16 % su 10 %, 27 contenuti su 15). Nessuna delle fasi 9, 10, 11 dipende da `contents`. Spostarle prima è una modifica all'ordine obbligato di `importer-spec.md` §4, documento approvato in Fase 1B. Misurato in `IMPORTER-DESIGN.md` §11.19 | **prima della wave `1D-W10`** |
 | ~~**Correzione di ADR-004 e del mapping**~~ | ~~DR-060 e DR-061 correggono due documenti approvati della Fase 1B: la correzione va scritta, dichiarandola~~ — **chiusa il 2026-09-16 nella wave `1D-W5a`**: ADR-004 §3.2 e `wp-to-postgres-mapping.md` sono stati corretti dichiarando la correzione, e `IMPORTER-DESIGN.md` §11.13 ne registra gli esiti misurati | — |
+
+---
+
+## 14. Round 10 — risposte del 2026-09-16, ordine delle fasi e le tre anomalie della sorgente
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-062 | 2026-09-16 | Ordine delle fasi di import e soglia del blocco di riserva | **Si riordinano le fasi**: `documents`, `sliders` e `forms` si eseguono **prima** di `contents`, così che i tre risolutori esistano quando il convertitore incontra i blocchi corrispondenti | Lasciare l'ordine e chiedere deroga alla soglia di ADR-005 §3.4; far girare `contents` due volte, la seconda con i risolutori disponibili | «confermo A, il riordino delle fasi 9, 10, 11 prima di contents» | Proprietario | Fase 1D, `importer-spec.md` §4 | sì, con ADR | `IMPORTER-DESIGN.md` §11.9 e §11.19, ADR-005 §3.4, `BLOCK-MODEL.md` §10.4 |
+| DR-063 | 2026-09-16 | Percorso del contenuto `wp_posts` 332, articolo che condivide lo slug con la pagina 328 | **Si importa come bozza**, con percorso provvisorio che include `legacy_id` e non è pubblico. La pagina 328 conserva l'indirizzo | Non importarlo affatto; pubblicarlo a un indirizzo nuovo con suffisso | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, parità degli URL | sì | `IMPORTER-DESIGN.md` §11.10, `database-schema.md` vincolo `contents_path_unique` |
+| DR-064 | 2026-09-16 | Percorso del contenuto `wp_posts` 1781, bozza senza titolo e senza slug | **Si importa come bozza**, con percorso provvisorio derivato da `legacy_id`, mai pubblicata | Non importarla e dichiarare l'esclusione nell'audit | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D | sì | `IMPORTER-DESIGN.md` §11.10 |
+| DR-065 | 2026-09-16 | L'allegato 341, il cui nome su disco non corrisponde a quello del database | **Si cerca il file senza distinguere maiuscole e minuscole** e lo si archivia con la chiave che database e contenuti già usano. La stessa regola vale per tutte e dieci le misure, così il `srcset` resta coerente | Lasciarlo fuori e riprodurre il difetto della sorgente; verificare prima sul sito pubblico se l'immagine si veda davvero | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, archivio dei media | sì, con ADR | `IMPORTER-DESIGN.md` §11.7, ADR-004 §3.1 |
+
+### Note sulla portata del Round 10
+
+- **DR-062 modifica un ordine che `importer-spec.md` §4 dichiara non essere «una preferenza».** È la seconda volta che una decisione registrata corregge un documento approvato in Fase 1B, dopo DR-059. L'ordine nuovo non viola alcuna dipendenza dichiarata: la fase `documents` dipende da `media` e `terms`, `sliders` da `media`, `forms` dal solo `preflight` — nessuna delle tre da `contents`.
+
+- **DR-062 è la sola delle tre opzioni che agisce sulla causa.** I 24 blocchi di riserva su 31 sono moduli form privi di risolutore, non conversioni fallite: con `resolveForm` disponibile la misura attesa scende a 7 blocchi su 305, cioè 2,30 %, su 4 contenuti, dentro entrambe le soglie di ADR-005 §3.4. Il numero coincide con la stima indipendente del §10.4 di `BLOCK-MODEL.md`.
+
+- **La soglia resta da riverificare dopo il riordino, non da dichiarare.** Finché la misura non è rifatta con l'ordine nuovo, la soglia non si dichiara rispettata.
+
+- **DR-063 e DR-064 non inventano indirizzi.** Entrambi i contenuti entrano come bozze: nessuna delle due assegna un URL pubblico che sulla sorgente non esisteva, che è ciò che rendeva la decisione non delegabile. Il conteggio dei contenuti resta 108.
+
+- **DR-063 riguarda un contenuto già oggi irraggiungibile.** Il sito usa i permalink `/%postname%/`, dove pagine e articoli condividono lo stesso spazio dei nomi: dei due contenuti con lo stesso slug, uno solo è servito. La decisione non toglie al pubblico nulla che il pubblico oggi veda.
+
+- **DR-065 non rinomina nulla, e per questo non viola ADR-004 §3.1.** Il divieto esiste perché rinominare farebbe divergere il `srcset`; qui la chiave di archiviazione resta **esattamente** quella che database e contenuti già citano, e a cambiare è solo il modo in cui il file viene ritrovato sul disco di origine. Il `srcset` non diverge perché tutte e dieci le misure seguono la stessa regola.
+
+- **DR-065 può produrre una differenza dalla sorgente, e va dichiarata.** Sia il database sia il markup dei contenuti citano quell'immagine in una forma che sul disco non esiste: è verosimile che l'immagine sia **rotta anche sul sito attuale**. Se la verifica di parità lo conferma, il sito nuovo mostrerà un'immagine dove il vecchio ne mostra una rotta. La differenza va scritta in `docs/qa/visual-parity-report.md` con il motivo, non nascosta.
+
+- **Nessuna delle quattro decisioni è attuata da questo round.** DR-062 si attua prima della wave `1D-W10`; DR-063, DR-064 e DR-065 prima della `1D-W11`. Restano aperte nella tabella qui sotto finché non sono in codice.
+
+### Decisioni rimaste aperte dopo il Round 10
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi in `importer-spec.md` §4 e nell'orchestratore, più la misura della soglia rifatta con l'ordine nuovo | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori dei due contenuti in bozza e ricerca insensibile alle maiuscole per l'allegato 341 | prima della wave `1D-W11` |
+| **Soglia delle 300 righe di ADR-007 §6, superata** | Misurata nella wave `1D-W6` con la regola scritta in `apps/api/tools/countAuthLines.ts` e dichiarata in `apps/api/tests/auth-line-count.json`: **342 righe** il nucleo (crittografia, password, sessioni, permessi, limitazione dei tentativi, anti-CSRF, riconoscimento della sessione), **684** contando anche rotte e schemi del modulo `auth`. La soglia è 300. La contromisura 3 del §6 di ADR-007 dice che in questo caso «si adotta Better Auth senza discutere»: è un cambio di architettura e non si prende di iniziativa | **prima della chiusura della Fase 1D**, e comunque prima della security review della Fase 1F |
+| **Permessi: unione dei ruoli o ruolo attivo** | Il criterio di uscita 24 cita DR-047 e chiede l'**unione** dei permessi; DR-050 lo supera e adotta «un solo ruolo attivo per volta». In Fase 1 la differenza non è osservabile, perché ADR-007 §3.2 prevede un solo ruolo, e il servizio calcola oggi l'unione. Va deciso quale delle due il servizio deve attuare quando il commutatore nascerà | prima della wave `1D-W8` |
+| ~~**Due contenuti con percorso in collisione**~~ | ~~Slug condiviso fra tipi diversi in un caso, bozza senza slug nell'altro~~ — **chiusa il 2026-09-16 da DR-063 e DR-064** | — |
+| ~~**Un allegato non recuperabile**~~ | ~~Il database lo cerca con maiuscole diverse da quelle del file vero~~ — **chiusa il 2026-09-16 da DR-065** | — |
+| ~~**Ordine delle fasi e soglia del blocco di riserva**~~ | ~~`contents` è la fase 5 e `forms` la 11, quindi il convertitore non può risolvere i moduli form~~ — **chiusa il 2026-09-16 da DR-062** | — |

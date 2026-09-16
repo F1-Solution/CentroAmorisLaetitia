@@ -7,7 +7,15 @@ import { ConfigError, loadConfig } from '../src/config.js';
  * genere di comportamento che si rompe in silenzio e si scopre in produzione.
  */
 
-const minima = { DATABASE_URL: 'postgres://finto:finto@localhost:5432/finto' };
+/**
+ * Minima per partire: indirizzo del database più i due segreti che ADR-007 §3.1
+ * controllo 12 impone di leggere dall'ambiente, senza valore predefinito.
+ */
+const minima = {
+  DATABASE_URL: 'postgres://finto:finto@localhost:5432/finto',
+  IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
+  CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+};
 
 describe('configurazione', () => {
   it('non parte senza l’indirizzo del database, e dice quale variabile manca', () => {

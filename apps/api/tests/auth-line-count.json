@@ -1,0 +1,22 @@
+{
+  "misuratoIl": "2026-09-16",
+  "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
+  "soglia": 300,
+  "nucleo": 342,
+  "totale": 684,
+  "esitoRispettoAllaSoglia": "superata",
+  "conseguenza": "ADR-007 §6 contromisura 3: la premessa della proporzione e caduta. Decisione di architettura aperta nel registro.",
+  "perFile": {
+    "lib/crypto.ts": 18,
+    "lib/password.ts": 19,
+    "auth/audit.ts": 30,
+    "auth/loginAttempts.ts": 42,
+    "auth/permissions.ts": 14,
+    "auth/sessions.ts": 134,
+    "plugins/auth.ts": 55,
+    "plugins/csrf.ts": 30,
+    "modules/auth/routes.ts": 259,
+    "modules/auth/schemas.ts": 28,
+    "modules/auth/service.ts": 55
+  }
+}
