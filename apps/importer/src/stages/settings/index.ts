@@ -173,6 +173,8 @@ export const settingsStage: Stage = {
   async run(ctx: StageContext): Promise<StageResult> {
     const settingsResult = await runSettings(ctx);
     const seoResult = await runSeoTemplates(ctx);
-    return addStageResults(settingsResult, seoResult);
+    // La riga `settings` del rapporto conta le impostazioni, non i template
+    // SEO, che non hanno una riga propria in `importer-spec.md` §8.1.
+    return { ...addStageResults(settingsResult, seoResult), rowResult: settingsResult };
   },
 };

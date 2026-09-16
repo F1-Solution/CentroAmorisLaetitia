@@ -115,7 +115,19 @@ export const mediaStage: Stage = {
     const uploaded = await ctx.source.uploadedFiles();
     const uploadedByPath = new Map<string, UploadedFile>(uploaded.map((f) => [f.relativePath, f]));
 
-    return forEachItem(
+    // `media_variants` è una riga a sé del rapporto (`importer-spec.md`
+    // §8.1) pur essendo prodotta da questa fase: si conta qui, perché dopo
+    // la transazione non sarebbe piu' contabile in `plan`. Il conteggio di
+    // un allegato si somma solo quando l'allegato è andato a buon fine: se
+    // il suo savepoint viene annullato, le sue varianti non esistono.
+    const variants: { created: number; updated: number; skipped: number; errors: number } = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+    };
+
+    const result = await forEachItem(
       ctx.tx,
       attachments,
       (row): ItemKey => ({ sourceTable: 'wp_posts', sourceId: row.id }),
@@ -225,9 +237,15 @@ export const mediaStage: Stage = {
           existingId ? 'updated' : 'created',
         );
 
+        const tally = { created: 0, updated: 0, skipped: 0, errors: 0 };
         for (const variant of metadata.variants) {
-          await importVariant(ctx, tx, row, variant, bucket, written.id, uploadedByPath);
+          const outcome = await importVariant(ctx, tx, row, variant, bucket, written.id, uploadedByPath);
+          tally[outcome] += 1;
         }
+        variants.created += tally.created;
+        variants.updated += tally.updated;
+        variants.skipped += tally.skipped;
+        variants.errors += tally.errors;
 
         return existingId ? 'updated' : 'created';
       },
@@ -242,6 +260,8 @@ export const mediaStage: Stage = {
         });
       },
     );
+
+    return { ...result, extraRows: { media_variants: variants } };
   },
 };
 
@@ -260,8 +280,8 @@ async function importVariant(
   bucket: 'public' | 'private',
   mediaId: string,
   uploadedByPath: ReadonlyMap<string, UploadedFile>,
-): Promise<void> {
-  if (!row.attachedFile) return;
+): Promise<'created' | 'updated' | 'skipped'> {
+  if (!row.attachedFile) return 'skipped';
   const relativePath = siblingRelativePath(row.attachedFile, variant.file);
   const uploadedVariant = uploadedByPath.get(relativePath);
   if (!uploadedVariant) {
@@ -273,7 +293,7 @@ async function importVariant(
       sourceId: row.id,
       detail: 'unknown-error',
     });
-    return;
+    return 'skipped';
   }
 
   const publicPath = `/media/${relativePath}`;
@@ -318,4 +338,6 @@ async function importVariant(
         checksum,
       },
     });
+
+  return existingVariant ? 'updated' : 'created';
 }

@@ -987,3 +987,177 @@ di DR-061, non di DR-060, che riguarda i file e non le tassonomie.
 `media` resta 170, perché le altre 8 righe le crea la fase `documents`. I due documenti
 non si contraddicono, ma il punto va letto una volta prima di verificare i conteggi
 nella `1D-W11`.
+
+### 11.14 Le notifiche dei form non erano idempotenti — `1D-W5c`
+
+Il confronto fra due `apply` di fila sulla sorgente reale — il criterio di accettazione
+della fase, misurato qui per la prima volta con la fotografia strutturale del §6.5 — ha
+trovato una sola tabella divergente: `form_notifications`, **39 righe in entrambe le
+esecuzioni, contenuto diverso**.
+
+La causa: la fase 11 cancellava tutte le notifiche di un form e le reinseriva, come fa
+`documents` con `document_terms`. Ma `document_terms` ha una chiave composta e nessun
+identificatore proprio, mentre `form_notifications` ha un `uuid`: cancellare e
+reinserire ne rigenerava 39 a ogni esecuzione. È esattamente ciò che `importer-spec.md`
+§6.1 vieta — «gli identificatori non si riassegnano mai» — e nessun test lo avrebbe
+visto senza il confronto fra due esecuzioni intere, perché i conteggi tornavano.
+
+Corretto usando `position` come chiave naturale dentro il form: è progressiva e
+deterministica, assegnata dal lettore della sorgente. Le notifiche si aggiornano sul
+posto per posizione, e si cancellano solo le posizioni che la sorgente non ha più.
+
+Dopo la correzione, le due fotografie coincidono su **tutte** le tabelle di dominio.
+
+### 11.15 `rollback` non può annullare un'esecuzione superata — `1D-W5c`
+
+`import_id_map` ha una chiave unica su `(source_table, source_id, entity)` e ogni
+esecuzione la sovrascrive con il proprio `run_id` e la propria `action` (§6.1, DR-059).
+La conseguenza non era stata scritta: **dopo un secondo `apply`, della prima esecuzione
+non resta traccia nella mappa**. Misurato provando ad annullare la prima esecuzione
+dopo la seconda: `rollback` non cancellava nulla e usciva con esito positivo.
+
+È il modo peggiore di fallire, e non si corregge con una tabella in più senza una
+decisione (§10 punto 2). `rollback` ora **rifiuta** di annullare un'esecuzione superata
+da una successiva, dice quale l'ha superata, e indica il ripristino del backup come
+`importer-spec.md` §9 già fa. Il §7.1 va letto con questa riga in più: `rollback`
+annulla **l'ultima** esecuzione, non una qualsiasi.
+
+### 11.16 Quattro scostamenti dichiarati dell'orchestratore — `1D-W5c`
+
+Collegare `plan` e `apply` alle fasi vere (§11.8) ha richiesto quattro scelte che
+scostano da come i documenti si leggono a prima vista. Si dichiarano qui perché nessuna
+è deducibile dal codice senza il motivo.
+
+| # | Scostamento | Da | Perché |
+|---|---|---|---|
+| 1 | **Una sola `IdMap` per esecuzione**, non una per fase | `runStage` la creava a ogni chiamata | §6.1 lo dice già; con una per fase, in `plan` la fase `relations` non troverebbe i contenuti appena creati e conterebbe zero |
+| 2 | **In `plan`, una transazione per l'intera esecuzione**, con un savepoint per fase | §5.1, «una transazione per fase» | Il motivo di §5.1 — un errore alla fase 16 non deve cancellare il lavoro delle 15 precedenti — riguarda `apply`, dove il lavoro resta. In `plan` viene annullato tutto per definizione, e transazioni separate impedirebbero a ogni fase di vedere le righe della precedente. Il savepoint per fase conserva l'isolamento |
+| 3 | **`rollback` richiede `--confirm`** | `importer-spec.md` §3, che lo chiede solo per `apply` | `CLAUDE.md` mette le cancellazioni fra le azioni a conferma obbligatoria. Senza `--confirm` il comando mostra che cosa cancellerebbe e non tocca nulla |
+| 4 | **`verify` legge la sorgente** | `importer-spec.md` §3, «senza leggere la sorgente» | Due degli otto controlli di §8.1 la leggono per forza: il confronto dei checksum e le chiavi meta non classificate. Escluderli renderebbe `verify` più debole del rapporto che affianca |
+
+Corretto nella stessa wave anche il vocabolario dei motivi del blocco di riserva nel
+rapporto: `report/types.ts` ne elencava tre inventati nella `1D-W2`, quando i
+convertitori non esistevano. I motivi veri sono i cinque di `HTML_BLOCK_REASONS`
+(`BLOCK-MODEL.md` §8.2), e il rapporto ora riporta quelli.
+
+### 11.17 Che cosa `rollback` lascia, misurato — `1D-W5c`
+
+Annullando l'unica esecuzione di un import completo sulla sorgente reale, il database
+torna vuoto **tranne** cinque tabelle, che restano per costruzione:
+
+| Tabella | Righe | Perché resta |
+|---|---|---|
+| `settings` | 15 | Chiave naturale, non passa da `import_id_map`: è configurazione, non contenuto importato |
+| `seo_templates` | 6 | Come sopra |
+| `roles` | 1 | Come sopra |
+| `permissions` | 5 | Come sopra |
+| `role_permissions` | 5 | Legame fra le due precedenti |
+
+Cancellate invece, in ordine inverso alle fasi: 25 form con le loro 425 compilazioni,
+12 slide e 1 carosello, 8 documenti, 64 voci di menu e 1 menu, 108 contenuti, 4
+termini, 177 media con le loro varianti, 1 utente, 180 redirect di migrazione e le due
+tabelle `legacy_*`.
+
+Le tabelle non tracciate — redirect `migration`, `legacy_*` — si svuotano **solo se
+l'annullamento ha davvero cancellato delle entità**. Anche questo è un difetto
+misurato: annullare il secondo `apply`, che non aveva creato nulla, le svuotava lo
+stesso, cioè distruggeva le righe della prima esecuzione, che resta valida.
+
+### 11.18 Il rapporto sommava entità diverse nella stessa riga — `1D-W5c`
+
+Collegare il rapporto alle fasi vere ha reso visibile che tre righe della tabella di
+`importer-spec.md` §8.1 non contavano ciò che dichiarano. Le fasi restituiscono quattro
+conteggi ciascuna, ma tre di esse creano **due** generi di entità:
+
+| Fase | Creava, sommate | La riga del rapporto conta |
+|---|---|---|
+| `media` | 170 media **+ 1.278 varianti** | `media` 170, e `media_variants` come riga a sé |
+| `settings` | 15 impostazioni **+ 6 template SEO** | `settings` 15; i template SEO non hanno una riga |
+| `sliders` | 12 slide **+ 1 carosello** | `slider_slides` 12; il carosello non ha una riga |
+
+Un conteggio che somma due cose diverse è peggio di un conteggio assente, perché sembra
+giusto: la riga `slider_slides` diceva 13 dove le slide sono 12. Corretto con due campi
+facoltativi del risultato di fase — `extraRows` per la riga in più di `media`,
+`rowResult` per la parte che appartiene alla riga nelle altre due. I conteggi della
+fase intera non si perdono: gli errori entrano nell'esito comunque.
+
+#### Il numero atteso della riga `settings` non aveva una fonte
+
+Valeva 18, preso dalla tabella di esempio di `importer-spec.md` §8.1. Quella tabella è
+un'illustrazione, e `settings` è **l'unica riga del rapporto che non compare nei volumi
+attesi di `database-schema.md` §6**, cioè l'unica senza una fonte autorevole. Il numero
+vero è la dimensione del catalogo delle impostazioni, misurata a **15**. Portato a 15 e
+dichiarato qui, come si è fatto per `terms` con DR-061.
+
+#### Il confronto dei conteggi non si fa nel rapporto
+
+`importer-spec.md` §8.1 lo dice in chiaro — «il confronto con i volumi di tabella spetta
+alla fase 16 `verify`, non a questa tabella» — e la prima stesura dell'orchestratore lo
+faceva comunque, sulla colonna `ATTESI`. Erano due verdetti sullo stesso fatto con due
+formule diverse, e la seconda era sbagliata: `SALTATI` significa cose opposte a seconda
+della fase, perché un contenuto protetto dalla §6.3 **esiste** come riga mentre un
+redirect scartato no. Ora l'esito si decide su errori, verifiche e soglie; i volumi li
+misura `verify`, che registra un `table-count-mismatch` per ogni scostamento.
+
+#### Conteggi misurati sulla sorgente reale, prima esecuzione
+
+| Riga | Attesi | Creati | Nota |
+|---|---|---|---|
+| `settings` | 15 | 15 | dopo la correzione qui sopra |
+| `users` | 1 | 1 | |
+| `media` | 170 | 169 | 1 errore: l'allegato non recuperabile del §11.7 |
+| `media_variants` | ~1.376 | 1.278 | stima, non un intero fisso (§3.9) |
+| `terms` | 4 | 4 | |
+| `contents` | 108 | 108 | |
+| `menu_items` | 64 | 64 | |
+| `forms` | 25 | 25 | |
+| `form_submissions` | 425 | 425 | |
+| `documents` | 8 | 8 | |
+| `slider_slides` | 12 | 12 | dopo la correzione qui sopra |
+| `redirects` | 180 | 180 | più 2 scartati: un anello e una destinazione non risolta (§11.10) |
+
+L'esito è `partial`, per l'unico errore della riga `media`. Chiudere quello scostamento
+e portare l'esito a `success` è il lavoro della `1D-W11`, non di questa wave.
+
+### 11.19 La soglia del blocco di riserva resta superata, e il motivo è l'ordine delle fasi — `1D-W5c`
+
+Il §11.9 aveva rimandato a questa wave la misura che vale: «la soglia non si dichiara
+né rispettata né superata finché la fase 11 non esiste. La misura che vale è quella
+della `1D-W5`, e va rifatta lì». La fase 11 ora esiste. La misura è stata rifatta, con
+l'intera catena eseguita dalla riga di comando, e **non è cambiata di un blocco**:
+
+| Misura | Blocchi di riserva | Percentuale | Contenuti | Soglia ADR-005 §3.4 |
+|---|---|---|---|---|
+| `1D-W4c`, senza la fase `forms` | 31 / 305 | 10,16 % | 27 / 108 | superata |
+| `1D-W5c`, **con** la fase `forms` | 31 / 305 | **10,16 %** | **27** / 108 | **superata** |
+
+Il motivo è l'**ordine obbligato** di `importer-spec.md` §4: `contents` è la fase 5,
+`forms` la 11. Quando il convertitore incontra un modulo form, la fase che crea i form
+non è ancora stata eseguita, quindi `resolveForm` non esiste e il modulo diventa un
+blocco `html` di riserva. Far esistere la fase 11 non cambia nulla, perché arriva sei
+fasi troppo tardi.
+
+Vale per tutti e tre i risolutori mancanti: `resolveForm`, `resolveDocument` e
+`resolveSlider`. Le fasi che li potrebbero alimentare sono la 11, la 9 e la 10, tutte
+dopo la 5.
+
+#### Il fatto che rende la cosa risolvibile
+
+Nessuna delle tre dipende da `contents`. L'ordine obbligato lo dichiara esso stesso:
+
+| Fase | Dipende da, secondo §4 |
+|---|---|
+| 9 `documents` | 3 `media`, 4 `terms` |
+| 10 `sliders` | 3 `media` |
+| 11 `forms` | 0 `preflight` |
+
+Spostarle prima di `contents` non violerebbe alcuna dipendenza dichiarata. Con
+`resolveForm` disponibile, la misura del §11.9 al netto dei moduli form è **7 / 305,
+cioè 2,30 %, su 4 contenuti**: dentro entrambe le soglie, e coincidente con la stima
+indipendente del §10.4 di `BLOCK-MODEL.md`.
+
+#### Perché non è stato fatto in questa wave
+
+Cambiare l'ordine obbligato è una modifica a `importer-spec.md` §4, un documento
+approvato in Fase 1B, e l'ordine è la cosa che quel paragrafo dichiara non essere «una
+preferenza». **Non si decide di iniziativa.** La decisione è dell'utente.

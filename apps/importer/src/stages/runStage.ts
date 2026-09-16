@@ -7,7 +7,7 @@
  */
 import type { Database } from '@amoris/db';
 import type { SourceReader } from '../source/index.js';
-import { createIdMap } from '../persistence/idMap.js';
+import { createIdMap, type IdMap } from '../persistence/idMap.js';
 import { runStageTransaction } from '../persistence/stageTransaction.js';
 import type { ObjectStore } from '../storage/objectStore.js';
 import type { IssueSink } from './types.js';
@@ -24,10 +24,18 @@ export interface RunStageDependencies {
   readonly options: StageOptions;
   /** Solo per le fasi che ne hanno bisogno; le altre lo omettono. */
   readonly ipHashSalt?: string | null;
+  /**
+   * La mappa delle corrispondenze. Omessa, se ne crea una nuova per questa
+   * sola fase: va bene per un test che esegue una fase per volta, **non** per
+   * un'esecuzione intera, dove la sovrapposizione in memoria deve durare
+   * quanto l'esecuzione (`IMPORTER-DESIGN.md` §6.1). Chi esegue tutte le fasi
+   * usa `run/orchestrator.ts`, che ne tiene una sola.
+   */
+  readonly ids?: IdMap;
 }
 
 export async function runStage(stage: Stage, deps: RunStageDependencies): Promise<StageResult> {
-  const ids = createIdMap();
+  const ids = deps.ids ?? createIdMap();
   return runStageTransaction(deps.db, deps.mode, (tx) =>
     stage.run({
       runId: deps.runId,

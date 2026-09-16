@@ -23,7 +23,12 @@
  * conversione, e va riportato separatamente (`BLOCK-MODEL.md` §10.4).
  */
 import { schema } from '@amoris/db';
-import { extractContentText, serializeBlockDocument } from '@amoris/blocks/model';
+import {
+  countReserveBlocks,
+  extractContentText,
+  serializeBlockDocument,
+  type BlockDocument,
+} from '@amoris/blocks/model';
 import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
@@ -137,7 +142,14 @@ export const contentsStage: Stage = {
     // questa esecuzione (`editorialProtection.ts`).
     const lastSuccessAt = await lastSuccessfulRunFinishedAt(ctx.tx);
 
-    return forEachItem(
+    // Le due sezioni del rapporto che solo questa fase puo' misurare
+    // (`importer-spec.md` §8.1, §6.3 punto 3). Si raccolgono qui perche'
+    // dopo la transazione i documenti convertiti non esistono piu' in `plan`.
+    const byFamily = { gutenberg: 0, divi: 0, html: 0 };
+    const documents: BlockDocument[] = [];
+    const skippedForEditorialWork: string[] = [];
+
+    const result = await forEachItem(
       ctx.tx,
       rows,
       (row): ItemKey => ({ sourceTable: 'wp_posts', sourceId: row.id }),
@@ -154,6 +166,9 @@ export const contentsStage: Stage = {
             sourceId: row.id,
             detail: existingId,
           });
+          // `existingId` non è mai nullo qui: `hasEditorialWorkSince`
+          // restituisce falso quando lo è.
+          if (existingId) skippedForEditorialWork.push(existingId);
           return 'skipped';
         }
 
@@ -164,6 +179,8 @@ export const contentsStage: Stage = {
         });
         const contentHtml = serializeBlockDocument(document);
         const contentText = extractContentText(contentHtml);
+        byFamily[family] += 1;
+        documents.push(document);
 
         const meta = postMetaIndex.get(row.id) ?? new Map<string, string>();
         const showTitle = deriveShowTitle(meta);
@@ -246,5 +263,38 @@ export const contentsStage: Stage = {
         });
       },
     );
+
+    // La soglia si calcola con la funzione di `@amoris/blocks`
+    // (`BLOCK-MODEL.md` §8), non con un secondo conteggio scritto qui: due
+    // conteggi della stessa cosa divergono.
+    const reserve = countReserveBlocks(documents);
+    const blocksTotal = documents.reduce((sum, doc) => sum + countAllBlocks(doc.blocks), 0);
+
+    return {
+      ...result,
+      skippedForEditorialWork,
+      conversion: {
+        gutenberg: byFamily.gutenberg,
+        divi: byFamily.divi,
+        html: byFamily.html,
+        blocksTotal,
+        blocksNonContainer: reserve.nonContainerBlocks,
+        fallbackBlocks: reserve.htmlBlocks,
+        fallbackPercent: reserve.percentage,
+        fallbackByReason: reserve.byReason,
+        contentsWithFallback: reserve.touchedContents,
+        thresholdPercentOk: !reserve.exceedsPercentageThreshold,
+        thresholdContentsOk: !reserve.exceedsContentThreshold,
+      },
+    };
   },
 };
+
+/** Tutti i blocchi, contenitori compresi: è la riga «blocchi prodotti» di `importer-spec.md` §8.1. */
+function countAllBlocks(nodes: BlockDocument['blocks']): number {
+  let total = 0;
+  for (const node of nodes) {
+    total += 1 + countAllBlocks(node.children);
+  }
+  return total;
+}

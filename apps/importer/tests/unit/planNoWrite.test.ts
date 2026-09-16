@@ -117,7 +117,15 @@ async function countRuns(): Promise<number> {
 describe('plan non scrive, apply sì', () => {
   it('plan lascia import_runs invariato', async () => {
     const before = await countRuns();
-    const code = await runPlan(buildRuntime(database.db));
+    const code = await runPlan(buildRuntime(database.db), {
+      command: 'plan',
+      confirm: false,
+      stage: null,
+      only: null,
+      verbose: false,
+      run: null,
+      forceContent: [],
+    });
     expect(code).toBe(0);
     const after = await countRuns();
     expect(after).toBe(before);

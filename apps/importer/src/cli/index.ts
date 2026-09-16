@@ -17,7 +17,19 @@ async function main(): Promise<number> {
     if (error instanceof ArgsError) {
       console.error(`Errore: ${error.message}`);
       console.error(
-        '\nUso: importer <plan|apply|verify|report|rollback> [--stage <nome>] [--only <page|post>] [--verbose] [--confirm] [--run <id>]',
+        [
+          '',
+          'Uso: importer <comando> [opzioni]',
+          '',
+          '  plan                             esegue tutto senza scrivere, e produce il rapporto',
+          '  apply --confirm                  esegue e scrive',
+          '  verify                           solo i controlli della fase 16',
+          '  report --run <id>                ristampa il rapporto di un\'esecuzione',
+          '  rollback --run <id> [--confirm]  annulla un\'esecuzione; senza --confirm mostra solo il piano',
+          '',
+          'Opzioni: --stage <nome>  una fase sola   --only <page|post>   --verbose',
+          '         --force-content <id>  sovrascrive un contenuto protetto, uno per volta',
+        ].join('\n'),
       );
       return 1;
     }
@@ -38,7 +50,7 @@ async function main(): Promise<number> {
   try {
     switch (args.command) {
       case 'plan':
-        return await runPlan(runtime);
+        return await runPlan(runtime, args);
       case 'apply':
         return await runApply(runtime, args);
       case 'verify':

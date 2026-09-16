@@ -91,6 +91,9 @@ export const verifyStage: Stage = {
       });
     }
 
-    return { created: 0, updated: 0, skipped, errors };
+    // `checks` risale al rapporto: le otto righe VERIFICHE di
+    // `importer-spec.md` §8.1 sono misurate qui e da nessun'altra parte, e
+    // dopo questa transazione non sarebbero piu' misurabili in `plan`.
+    return { created: 0, updated: 0, skipped, errors, checks };
   },
 };

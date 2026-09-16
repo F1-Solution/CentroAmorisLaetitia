@@ -311,14 +311,27 @@ export const formsStage: Stage = {
           existingId ? 'updated' : 'created',
         );
 
-        // Notifiche: cancellate e reinserite ad ogni esecuzione, come
-        // `document_terms` in `stages/documents/index.ts` — non hanno una
-        // propria voce in `import_id_map`.
-        await tx
-          .delete(schema.formNotifications)
+        // Notifiche. Non hanno una voce propria in `import_id_map`, ma hanno
+        // un identificatore proprio, e **`position` è la loro chiave naturale
+        // dentro il form**: è progressiva e deterministica, assegnata dal
+        // lettore della sorgente.
+        //
+        // Si aggiornano quindi sul posto per posizione, invece di cancellarle
+        // e reinserirle. Cancellarle e reinserirle — come si fa con
+        // `document_terms`, che ha una chiave composta e nessun identificatore
+        // proprio — qui rigenererebbe 39 UUID a ogni esecuzione: la seconda
+        // esecuzione produrrebbe uno stato diverso dalla prima a parità di
+        // contenuto, che è esattamente ciò che `importer-spec.md` §6.1 vieta
+        // («gli identificatori non si riassegnano mai»). Misurato in `1D-W5c`
+        // dal confronto fra due `apply` (`IMPORTER-DESIGN.md` §11.14).
+        const esistenti = await tx
+          .select({ id: schema.formNotifications.id, position: schema.formNotifications.position })
+          .from(schema.formNotifications)
           .where(eq(schema.formNotifications.formId, written.id));
+        const perPosizione = new Map(esistenti.map((n) => [n.position, n.id]));
+
         for (const notification of parsed.notifications) {
-          await tx.insert(schema.formNotifications).values({
+          const valori = {
             formId: written.id,
             name: notification.name,
             recipients: notification.recipients,
@@ -328,7 +341,22 @@ export const formsStage: Stage = {
             body: notification.body,
             isActive: notification.isActive,
             position: notification.position,
-          });
+          };
+          const esistente = perPosizione.get(notification.position);
+          if (esistente) {
+            await tx
+              .update(schema.formNotifications)
+              .set(valori)
+              .where(eq(schema.formNotifications.id, esistente));
+            perPosizione.delete(notification.position);
+          } else {
+            await tx.insert(schema.formNotifications).values(valori);
+          }
+        }
+
+        // Le posizioni che la sorgente non ha più: la notifica è stata tolta.
+        for (const id of perPosizione.values()) {
+          await tx.delete(schema.formNotifications).where(eq(schema.formNotifications.id, id));
         }
 
         return existingId ? 'updated' : 'created';

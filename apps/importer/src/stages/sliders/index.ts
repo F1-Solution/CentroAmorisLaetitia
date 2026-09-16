@@ -218,8 +218,11 @@ export const slidersStage: Stage = {
     }
 
     const sliderDbIdByLegacyId = new Map<number, string>();
+    // La riga `slider_slides` del rapporto conta le slide, non il carosello
+    // che le contiene: `importer-spec.md` §8.1 non ha una riga `sliders`.
+    const slides = { created: 0, updated: 0, skipped: 0, errors: 0 };
 
-    return forEachItem(
+    const result = await forEachItem(
       ctx.tx,
       allItems,
       (item): ItemKey =>
@@ -318,9 +321,14 @@ export const slidersStage: Stage = {
           existingId ? 'updated' : 'created',
         );
 
-        return existingId ? 'updated' : 'created';
+        const esito = existingId ? 'updated' : 'created';
+        slides[esito] += 1;
+        return esito;
       },
       async (key, error) => {
+        // Un errore su una slide è un errore della riga del rapporto; uno sul
+        // carosello no, perché quella riga non esiste.
+        if (key.sourceTable === 'wp_revslider_slides') slides.errors += 1;
         await ctx.issues.record({
           severity: 'error',
           stage: 'sliders',
@@ -331,5 +339,7 @@ export const slidersStage: Stage = {
         });
       },
     );
+
+    return { ...result, rowResult: slides };
   },
 };

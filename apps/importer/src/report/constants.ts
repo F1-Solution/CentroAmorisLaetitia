@@ -7,7 +7,16 @@ import type { ReportRowName } from './types.js';
  * DR-060), quindi la tabella arriva a 178 mentre questa riga resta 170.
  */
 export const EXPECTED_COUNTS: Readonly<Record<ReportRowName, number | null>> = {
-  settings: 18,
+  /**
+   * **Correzione della wave `1D-W5c`**: era 18, preso dalla tabella di
+   * esempio di `importer-spec.md` §8.1. Quella tabella è un'illustrazione, e
+   * `settings` è l'unica riga del rapporto che **non** compare nei volumi
+   * attesi di `database-schema.md` §6 — cioè non ha una fonte autorevole.
+   * Il numero vero è la dimensione del catalogo delle impostazioni
+   * (`stages/settings/definitions.ts`), misurata a 15. I 6 template SEO non
+   * stanno qui: sono una tabella diversa, senza una riga nel rapporto.
+   */
+  settings: 15,
   users: 1,
   media: 170,
   media_variants: null, // "~1376": stima, non un intero fisso — IMPORTER-DESIGN.md §3.9

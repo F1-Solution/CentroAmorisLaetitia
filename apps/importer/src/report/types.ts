@@ -1,3 +1,4 @@
+import type { HtmlBlockReason } from '@amoris/blocks/model';
 import type { Mode } from '../stages/types.js';
 
 /** Le righe del rapporto di `importer-spec.md` §8.1 — per output, non per fase. */
@@ -27,7 +28,16 @@ export interface ReportRow {
   readonly implemented: boolean;
 }
 
-export type FallbackReason = 'unknown-shortcode' | 'unknown-attribute' | 'unclassified-html';
+/**
+ * **Correzione della wave `1D-W5c`.** Fino a qui questo tipo elencava tre
+ * motivi inventati in `1D-W2`, quando i convertitori non esistevano ancora.
+ * I motivi veri sono i cinque di `HTML_BLOCK_REASONS` (`@amoris/blocks`,
+ * `BLOCK-MODEL.md` §8.2), ed è quello che il rapporto deve riportare: un
+ * vocabolario parallelo avrebbe costretto a una traduzione fra i due, e una
+ * traduzione fra due elenchi che cambiano è il punto in cui si perde un
+ * motivo senza accorgersene.
+ */
+export type FallbackReason = HtmlBlockReason;
 
 export interface ConversionSummary {
   readonly gutenberg: number;
