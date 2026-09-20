@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { DensityName } from '../tokens/tokens.js';
+import type { DensityName } from '../tokens/tokens';
 
 export interface DensityContextValue {
   density: DensityName;

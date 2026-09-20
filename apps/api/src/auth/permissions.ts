@@ -30,16 +30,19 @@ export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 export const ALL_PERMISSIONS: readonly Permission[] = Object.values(PERMISSIONS);
 
 /**
- * I permessi di una persona sono l'**unione** di quelli dei suoi ruoli.
+ * Raccoglie in un insieme le chiavi di permesso di un elenco di righe.
  *
- * DR-050 ha poi adottato «un solo ruolo attivo per volta», ma riguarda ciò che
- * l'**interfaccia** mostra: restringere lato servizio richiede che la sessione
- * sappia quale ruolo è attivo, e il commutatore nasce nella `1D-W8`. In Fase 1
- * la differenza non è osservabile, perché ADR-007 §3.2 prevede un solo ruolo.
- * La discrepanza fra il criterio di uscita 24, che cita DR-047, e DR-050 che lo
- * supera è segnalata e non risolta qui.
+ * **Chi lo chiama decide che cosa significa.** `permissionsOfRole` gli passa i
+ * permessi del **solo ruolo attivo**, ed è quello che vale come autorizzazione
+ * (DR-050, attuata da DR-067). `reachableAreasOf` gli passa i permessi di
+ * **tutti** i ruoli posseduti, che non autorizzano nulla: servono solo a sapere
+ * in quali aree la persona può entrare, cioè che cosa il commutatore le offre.
+ *
+ * Fino al 2026-09-20 questa funzione calcolava l'unione dei ruoli **come**
+ * autorizzazione, perché il criterio di uscita 24 citava DR-047. DR-067 ha
+ * chiuso quella discrepanza in favore del ruolo attivo.
  */
-export function unionOfPermissions(
+export function collectPermissions(
   rows: readonly { readonly permissionKey: string }[],
 ): ReadonlySet<string> {
   return new Set(rows.map((row) => row.permissionKey));

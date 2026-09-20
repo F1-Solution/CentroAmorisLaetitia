@@ -1,5 +1,5 @@
-import { Button } from './Button.js';
-import type { ButtonVariant } from './Button.js';
+import { Button } from './Button';
+import type { ButtonVariant } from './Button';
 import './BulkActionBar.css';
 
 export interface BulkAction {

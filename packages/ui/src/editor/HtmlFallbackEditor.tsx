@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Alert } from '../primitives/Alert.js';
+import { Alert } from '../primitives/Alert';
 import '../primitives/fields.css';
 import './HtmlFallbackEditor.css';
 

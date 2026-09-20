@@ -2,7 +2,9 @@ import { schema, type Database } from '@amoris/db';
 import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import type { Config } from '../config.js';
 import { generateSessionToken, hashAddress, tokenDigest } from '../lib/crypto.js';
-import { unionOfPermissions } from './permissions.js';
+import type { AdminArea } from './areas.js';
+import { AREA_OF_PERMISSION } from './areaMap.js';
+import { collectPermissions } from './permissions.js';
 
 /**
  * Sessioni opache (ADR-007 §3, opzione C). Una sessione è un record: revocarla
@@ -16,10 +18,26 @@ export interface SessionOwner {
   readonly mustChangePassword: boolean;
 }
 
+/** Una veste: il ruolo con cui si lavora e l'area in cui lo si fa. */
+export interface RoleHeld {
+  readonly roleId: string;
+  readonly key: string;
+  readonly label: string;
+  readonly areas: readonly AdminArea[];
+}
+
 export interface ResolvedSession {
   readonly sessionId: string;
   readonly user: SessionOwner;
+  /**
+   * I permessi **del ruolo attivo**, non l'unione dei ruoli posseduti
+   * (DR-050, attuata da DR-067). Vuoto finché la veste non è stata scelta.
+   */
   readonly permissions: ReadonlySet<string>;
+  readonly activeRoleId: string | null;
+  readonly activeArea: AdminArea | null;
+  /** Che cosa il commutatore può offrire: i ruoli posseduti e le loro aree. */
+  readonly rolesHeld: readonly RoleHeld[];
 }
 
 export interface IssuedSession {
@@ -90,6 +108,8 @@ export async function resolveSession(
       fullName: schema.users.fullName,
       isActive: schema.users.isActive,
       mustChangePassword: schema.users.mustChangePassword,
+      activeRoleId: schema.sessions.activeRoleId,
+      activeArea: schema.sessions.activeArea,
     })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
@@ -118,21 +138,83 @@ export async function resolveSession(
       fullName: row.fullName,
       mustChangePassword: row.mustChangePassword,
     },
-    permissions: await permissionsOf(db, row.userId),
+    // Senza veste scelta non si autorizza nulla: la schermata di scelta è
+    // l'unica cosa che si raggiunge, e non chiede permessi.
+    permissions: row.activeRoleId ? await permissionsOfRole(db, row.activeRoleId) : new Set(),
+    activeRoleId: row.activeRoleId,
+    activeArea: row.activeArea,
+    rolesHeld: await rolesHeldBy(db, row.userId),
   };
 }
 
-/**
- * I permessi di una persona sono l'**unione** di quelli dei suoi ruoli
- * (`permissions.ts` spiega il rapporto con DR-050).
- */
-export async function permissionsOf(db: Database, userId: string): Promise<ReadonlySet<string>> {
+/** I permessi del ruolo attivo: sono questi, e solo questi, ad autorizzare. */
+export async function permissionsOfRole(
+  db: Database,
+  roleId: string,
+): Promise<ReadonlySet<string>> {
   const granted = await db
     .select({ permissionKey: schema.rolePermissions.permissionKey })
+    .from(schema.rolePermissions)
+    .where(eq(schema.rolePermissions.roleId, roleId));
+  return collectPermissions(granted);
+}
+
+/**
+ * I ruoli posseduti, ciascuno con le aree in cui fa entrare. Non autorizzano:
+ * dicono soltanto che cosa il commutatore può offrire, e da quante voci è fatta
+ * la schermata di scelta.
+ *
+ * L'area si raggiunge se il ruolo ha **almeno un** permesso fra quelli che le
+ * rotte di quell'area richiedono. Un ruolo che non ne ha nessuno non la vede
+ * nemmeno: `design-system.md` §7.3, «le aree non possedute non compaiono».
+ */
+export async function rolesHeldBy(db: Database, userId: string): Promise<readonly RoleHeld[]> {
+  const rows = await db
+    .select({
+      roleId: schema.roles.id,
+      key: schema.roles.key,
+      label: schema.roles.label,
+      permissionKey: schema.rolePermissions.permissionKey,
+    })
     .from(schema.userRoles)
-    .innerJoin(schema.rolePermissions, eq(schema.rolePermissions.roleId, schema.userRoles.roleId))
+    .innerJoin(schema.roles, eq(schema.roles.id, schema.userRoles.roleId))
+    .leftJoin(schema.rolePermissions, eq(schema.rolePermissions.roleId, schema.userRoles.roleId))
     .where(eq(schema.userRoles.userId, userId));
-  return unionOfPermissions(granted);
+
+  const byRole = new Map<string, { key: string; label: string; areas: Set<AdminArea> }>();
+  for (const row of rows) {
+    const entry = byRole.get(row.roleId) ?? { key: row.key, label: row.label, areas: new Set() };
+    for (const area of AREA_OF_PERMISSION[row.permissionKey ?? ''] ?? []) entry.areas.add(area);
+    byRole.set(row.roleId, entry);
+  }
+
+  return [...byRole.entries()]
+    .map(([roleId, entry]) => ({
+      roleId,
+      key: entry.key,
+      label: entry.label,
+      areas: [...entry.areas].sort(),
+    }))
+    // Ordine stabile: la schermata di scelta non deve cambiare disposizione a
+    // ogni accesso, altrimenti si sbaglia veste per abitudine.
+    .sort((a, b) => a.key.localeCompare(b.key));
+}
+
+/**
+ * Sceglie la veste della sessione. È un UPDATE sul record, non un nuovo token:
+ * cambiare area non è un nuovo accesso, ed è per questo che il registro delle
+ * operazioni può attribuire ogni azione all'area in cui è stata compiuta.
+ */
+export async function setActiveContext(
+  db: Database,
+  sessionId: string,
+  roleId: string,
+  area: AdminArea,
+): Promise<void> {
+  await db
+    .update(schema.sessions)
+    .set({ activeRoleId: roleId, activeArea: area })
+    .where(eq(schema.sessions.id, sessionId));
 }
 
 /** ADR-007 §3.1 controllo 6: revoca immediata di una sessione. */

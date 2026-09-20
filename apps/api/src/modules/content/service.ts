@@ -1,7 +1,7 @@
 import { schema, type Database } from '@amoris/db';
 import { and, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
-import type { createBody, listQuery, updateBody } from './schemas.js';
+import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
 
 /**
  * Servizio del dominio `content`. Nessuna rotta tocca il database: ADR-001 §3
@@ -174,4 +174,94 @@ export function termsOf(db: Database, contentId: string) {
     .innerJoin(schema.terms, eq(schema.terms.id, schema.contentTerms.termId))
     .where(eq(schema.contentTerms.contentId, contentId))
     .orderBy(sql`${schema.contentTerms.position}`);
+}
+
+type DraftInput = z.infer<typeof draftBody>;
+
+/**
+ * Salva la copia di lavoro della persona su quel contenuto (DR-068). Una copia
+ * per persona e per contenuto: ADR-006 §3.2 rimanda la modifica collaborativa,
+ * e una copia condivisa la introdurrebbe di fatto.
+ *
+ * **Non tocca `contents`.** E' la ragione per cui il criterio 1D-36 — aprire e
+ * salvare senza modifiche non cambia nulla — resta vero: il salvataggio
+ * automatico scrive qui, e il contenuto cambia solo su comando esplicito.
+ */
+export async function saveDraft(
+  db: Database,
+  contentId: string,
+  authorId: string,
+  input: DraftInput,
+) {
+  const values = {
+    contentId,
+    authorId,
+    title: input.title,
+    excerpt: input.excerpt ?? null,
+    blocks: input.blocks,
+    baseUpdatedAt: new Date(input.baseUpdatedAt),
+    updatedAt: new Date(),
+  };
+  const [row] = await db
+    .insert(schema.contentDrafts)
+    .values(values)
+    .onConflictDoUpdate({
+      target: [schema.contentDrafts.contentId, schema.contentDrafts.authorId],
+      set: {
+        title: values.title,
+        excerpt: values.excerpt,
+        blocks: values.blocks,
+        baseUpdatedAt: values.baseUpdatedAt,
+        updatedAt: values.updatedAt,
+      },
+    })
+    .returning();
+  return row;
+}
+
+export async function findDraft(db: Database, contentId: string, authorId: string) {
+  const [row] = await db
+    .select({
+      contentId: schema.contentDrafts.contentId,
+      title: schema.contentDrafts.title,
+      excerpt: schema.contentDrafts.excerpt,
+      blocks: schema.contentDrafts.blocks,
+      baseUpdatedAt: schema.contentDrafts.baseUpdatedAt,
+      updatedAt: schema.contentDrafts.updatedAt,
+      contentUpdatedAt: schema.contents.updatedAt,
+    })
+    .from(schema.contentDrafts)
+    .innerJoin(schema.contents, eq(schema.contents.id, schema.contentDrafts.contentId))
+    .where(
+      and(
+        eq(schema.contentDrafts.contentId, contentId),
+        eq(schema.contentDrafts.authorId, authorId),
+      ),
+    )
+    .limit(1);
+  return row;
+}
+
+/**
+ * Elimina la copia di lavoro. Avviene in tre casi, e sono i soli: quando la
+ * persona la scarta, quando il suo contenuto viene eliminato (la chiave esterna
+ * lo fa in cascata) e quando la copia viene riversata nel contenuto. Non esiste
+ * scadenza automatica: cancellare il lavoro di qualcuno a tempo e' una regola
+ * di conservazione, e quelle richiedono la verifica di MI-06.
+ */
+export async function discardDraft(
+  db: Database,
+  contentId: string,
+  authorId: string,
+): Promise<boolean> {
+  const rows = await db
+    .delete(schema.contentDrafts)
+    .where(
+      and(
+        eq(schema.contentDrafts.contentId, contentId),
+        eq(schema.contentDrafts.authorId, authorId),
+      ),
+    )
+    .returning({ id: schema.contentDrafts.id });
+  return rows.length > 0;
 }

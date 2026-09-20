@@ -76,3 +76,27 @@ export const updateBody = createBody.partial().extend({
 });
 
 export const idParam = z.object({ id: z.string().uuid() });
+
+/**
+ * Copie di lavoro (DR-068). L'editor vi salva da solo; il contenuto pubblicato
+ * cambia solo su comando. `baseUpdatedAt` e' il `updatedAt` del contenuto
+ * quando la copia e' stata aperta: se non coincide piu', il contenuto e'
+ * cambiato sotto e pubblicare la copia sovrascriverebbe il lavoro di un altro.
+ */
+export const draftBody = z.object({
+  title: z.string().min(1).max(500),
+  excerpt: z.string().max(5000).nullable().optional(),
+  blocks: blockDocument,
+  baseUpdatedAt: z.string(),
+});
+
+export const draftDetail = z.object({
+  contentId: z.string(),
+  title: z.string(),
+  excerpt: z.string().nullable(),
+  blocks: blockDocument,
+  baseUpdatedAt: z.string(),
+  updatedAt: z.string(),
+  /** Falso quando il contenuto e' cambiato dopo l'apertura della copia. */
+  stillCurrent: z.boolean(),
+});

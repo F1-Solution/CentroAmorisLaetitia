@@ -12,7 +12,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { auditOutcome } from './enums.js';
+import { adminArea, auditOutcome } from './enums.js';
 import { bytea, citext } from './types.js';
 
 /**
@@ -109,6 +109,19 @@ export const sessions = pgTable(
     userAgent: text(),
     /** Digest con sale, mai l'indirizzo in chiaro. */
     ipHash: bytea(),
+    /**
+     * Ruolo attivo della sessione (DR-050, attuata da DR-067): i permessi in
+     * vigore sono quelli di questo ruolo, non l'unione dei ruoli posseduti.
+     * Nullo finche' la persona non ha scelto, cioe' fra l'accesso e la
+     * schermata di scelta dell'area.
+     */
+    activeRoleId: uuid().references(() => roles.id, { onDelete: 'set null' }),
+    /**
+     * Area in cui la persona sta lavorando (`ux-proposals.md` §4.4 punto 2): il
+     * servizio rifiuta i dati di un'altra area **anche quando il permesso ci
+     * sarebbe**. Nulla fra l'accesso e la scelta dell'area.
+     */
+    activeArea: adminArea(),
   },
   (t) => [
     unique('sessions_token_digest_unique').on(t.tokenDigest),
@@ -135,6 +148,12 @@ export const auditLog = pgTable(
     detail: jsonb().notNull().default({}),
     ipHash: bytea(),
     sessionId: uuid().references(() => sessions.id, { onDelete: 'set null' }),
+    /** In quale veste l'azione e' stata compiuta (DR-067). */
+    actorRoleId: uuid().references(() => roles.id, { onDelete: 'set null' }),
+    /** Conservata anche se il ruolo viene rimosso, come `actorLabel`. */
+    actorRoleLabel: text(),
+    /** In quale area l'azione e' stata compiuta (`ux-proposals.md` §4.3). */
+    actorArea: adminArea(),
   },
   (t) => [
     index('audit_log_occurred_at_idx').on(t.occurredAt.desc().nullsFirst()),

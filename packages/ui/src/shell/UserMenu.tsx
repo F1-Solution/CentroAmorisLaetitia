@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react';
-import { useOutsideDismiss } from './useOutsideDismiss.js';
+import { useOutsideDismiss } from './useOutsideDismiss';
 import './UserMenu.css';
 
 export interface UserMenuProps {

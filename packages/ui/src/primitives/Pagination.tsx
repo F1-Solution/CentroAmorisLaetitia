@@ -1,5 +1,5 @@
-import { IconButton } from './IconButton.js';
-import { SelectField } from './SelectField.js';
+import { IconButton } from './IconButton';
+import { SelectField } from './SelectField';
 import './Pagination.css';
 
 export interface PaginationProps {

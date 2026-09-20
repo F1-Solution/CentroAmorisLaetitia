@@ -53,7 +53,9 @@ describe('lo schema si applica', () => {
       select count(*)::text as n
       from information_schema.tables
       where table_schema = 'public' and table_type = 'BASE TABLE'`;
-    expect(Number(righe[0]?.n)).toBe(32);
+    // 33 dal 2026-09-20: DR-068 aggiunge `content_drafts`, le copie di lavoro
+    // dell'editor. Erano 32 dalla Fase 1B.
+    expect(Number(righe[0]?.n)).toBe(33);
   });
 
   it('installa le estensioni che lo schema usa davvero', async () => {

@@ -6,10 +6,13 @@ import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../aut
 import {
   issueSession,
   listSessions,
-  permissionsOf,
+  permissionsOfRole,
   revokeAllSessions,
   revokeSession,
+  rolesHeldBy,
+  setActiveContext,
   type IssuedSession,
+  type RoleHeld,
 } from '../../auth/sessions.js';
 import type { Config } from '../../config.js';
 import { csrfTokenForSession, hashAddress } from '../../lib/crypto.js';
@@ -18,6 +21,7 @@ import { sessionOf } from '../../plugins/auth.js';
 import {
   acknowledged,
   changePasswordBody,
+  chooseContextBody,
   currentUser,
   loginBody,
   revokedCount,
@@ -36,6 +40,21 @@ import { checkPassword, findByEmail, markLogin, setPassword } from './service.js
  */
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Le vesti fra cui scegliere: una per ogni coppia ruolo-area posseduta.
+ * `ux-proposals.md` §4.3: **chi ne possiede una sola non vede mai la schermata
+ * di scelta**, entra direttamente. Per quelle persone il concetto di veste non
+ * esiste proprio, e non va inventato per simmetria.
+ */
+function vestments(roles: readonly RoleHeld[]) {
+  return roles.flatMap((role) => role.areas.map((area) => ({ roleId: role.roleId, area })));
+}
+
+/** Copia mutabile: lo schema di risposta non accetta un elenco di sola lettura. */
+function serialiseRoles(roles: readonly RoleHeld[]) {
+  return roles.map((role) => ({ ...role, areas: [...role.areas] }));
+}
 
 /** ADR-007 §3.1 controllo 3, in un posto solo per non poterlo scrivere diverso. */
 function setSessionCookies(reply: FastifyReply, config: Config, session: IssuedSession): void {
@@ -152,7 +171,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       });
 
       setSessionCookies(reply, app.config, session);
-      const permissions = await permissionsOf(app.db, candidate.userId);
+
+      const rolesHeld = await rolesHeldBy(app.db, candidate.userId);
+      const choices = vestments(rolesHeld);
+      const only = choices.length === 1 ? choices[0] : undefined;
+      if (only) await setActiveContext(app.db, session.sessionId, only.roleId, only.area);
+
+      const permissions = only ? await permissionsOfRole(app.db, only.roleId) : new Set<string>();
       await uniform();
 
       return reply.send({
@@ -161,6 +186,59 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         fullName: candidate.fullName,
         mustChangePassword: false,
         permissions: [...permissions],
+        activeRoleId: only?.roleId ?? null,
+        activeArea: only?.area ?? null,
+        rolesHeld: serialiseRoles(rolesHeld),
+      });
+    },
+  );
+
+  typed.post(
+    '/auth/context',
+    {
+      onRequest: app.requireSession,
+      schema: {
+        tags: ['autenticazione'],
+        summary: 'Sceglie la veste: ruolo attivo e area in cui si lavora',
+        body: chooseContextBody,
+        response: { 200: currentUser, ...errorResponses(400, 401, 403) },
+      },
+    },
+    async (request, reply) => {
+      const session = sessionOf(request);
+      const { roleId, area } = request.body;
+
+      // Che il ruolo sia posseduto e l'area sia sua si verifica qui: il corpo
+      // della richiesta lo dice il client, e il client non decide le vesti.
+      const role = session.rolesHeld.find((held) => held.roleId === roleId);
+      if (!role || !role.areas.includes(area)) {
+        return reply.code(403).send({
+          error: {
+            code: 'NOT_AUTHORIZED',
+            message: 'Operazione non consentita.',
+            requestId: request.id,
+          },
+        });
+      }
+
+      await setActiveContext(app.db, session.sessionId, roleId, area);
+      await writeAudit(app.db, {
+        action: AUTH_ACTIONS.contextChanged,
+        actorUserId: session.user.userId,
+        actorLabel: session.user.fullName,
+        actorRoleId: roleId,
+        actorRoleLabel: role.label,
+        actorArea: area,
+        sessionId: session.sessionId,
+        ipHash: ipOf(request.ip),
+      });
+
+      return reply.send({
+        ...session.user,
+        permissions: [...(await permissionsOfRole(app.db, roleId))],
+        activeRoleId: roleId,
+        activeArea: area,
+        rolesHeld: serialiseRoles(session.rolesHeld),
       });
     },
   );
@@ -177,7 +255,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const session = sessionOf(request);
-      return reply.send({ ...session.user, permissions: [...session.permissions] });
+      return reply.send({
+        ...session.user,
+        permissions: [...session.permissions],
+        activeRoleId: session.activeRoleId,
+        activeArea: session.activeArea,
+        rolesHeld: serialiseRoles(session.rolesHeld),
+      });
     },
   );
 

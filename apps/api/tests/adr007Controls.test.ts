@@ -467,7 +467,10 @@ describe('controllo 10 — audit di accesso, fallimento, disconnessione, cambio 
         headers: signed.writeHeaders,
         payload: { currentPassword: TEST_PASSWORD, newPassword: 'altra-password-sintetica' },
       });
-      const dopoCambio = await signIn(proprio, TEST_EMAIL, 'altra-password-sintetica');
+      const dopoCambio = await signIn(proprio, {
+        email: TEST_EMAIL,
+        password: 'altra-password-sintetica',
+      });
       await proprio.app.inject({
         method: 'POST',
         url: '/auth/logout',

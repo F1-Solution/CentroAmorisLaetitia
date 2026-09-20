@@ -482,3 +482,36 @@ nel Round 4.
 | **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
 | ~~**Soglia delle 300 righe di ADR-007 §6, superata**~~ | ~~Misurata nella wave `1D-W6`: 342 righe il nucleo, 684 il totale~~ — **chiusa il 2026-09-20 da DR-066**, deroga motivata scritta in ADR-007 | — |
 | ~~**Permessi: unione dei ruoli o ruolo attivo**~~ | ~~Il criterio di uscita 24 cita DR-047 e chiede l'unione; DR-050 lo supera~~ — **chiusa il 2026-09-20 da DR-067**, che attua DR-050 per intero | — |
+
+---
+
+## 16. Round 11-bis — risposta del 2026-09-20 su D4
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-069 | 2026-09-20 | Come si spostano i blocchi nell'editor dell'albero | **Trascinamento.** L'opzione era rimasta senza risposta nel Round 11 ed è stata data separatamente | Comandi espliciti — sposta su, sposta giù, sposta in — senza alcuna libreria | «Per D4 scelgo l'opzione B» | Proprietario | Fase 1D, wave `1D-W8b`, dipendenze | sì | `CONTEXT.md` §8 punto 3, `PLAN.md` §5 e §7 punto 2, ADR-006 §3.2, `design-system.md` §9.3 |
+
+### Note sulla portata di DR-069
+
+- **Introduce una dipendenza che nessuna ADR autorizzava, e va dichiarata.** `PLAN.md` §5 elencava il trascinamento fra le cose «scritte in casa, senza pacchetto» e concludeva «nessuna libreria di trascinamento». La riga è superata da questa decisione: la libreria entra in tabella con il motivo, come 1C ha fatto per le aggiunte non previste.
+
+- **Il trascinamento non sostituisce il percorso da tastiera, e il §9.3 non si deroga.** Un albero che si riordina solo col puntatore non è utilizzabile da chi non usa il puntatore, e `design-system.md` §9.3 chiede che ogni operazione sia raggiungibile da tastiera. La libreria scelta porta con sé un sensore da tastiera, quindi i due percorsi nascono insieme invece che l'uno dopo l'altro: il «raddoppio del lavoro» dichiarato nell'impatto del Round 11 risulta minore di quanto stimato, e va detto perché la stima era mia.
+
+- **Che cosa la Fase 1G collauderà.** `CONTEXT.md` §8 punto 3 dava per collaudati i comandi espliciti. Con DR-069 la 1G collauda che un redattore riesca a spostare un blocco **trascinandolo**, e che chi usa la tastiera ci riesca lo stesso.
+
+- **Perimetro invariato.** ADR-006 §3.2 continua a limitare lo spostamento a «dentro una colonna»: la decisione riguarda il **gesto**, non che cosa si può spostare.
+
+### Decisioni rimaste aperte dopo il Round 11-bis
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni, più le regole di conservazione delle copie di lavoro introdotte da DR-068. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | Azione a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi in `importer-spec.md` §4 e nell'orchestratore, più la misura della soglia rifatta | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori dei due contenuti in bozza e ricerca insensibile alle maiuscole per l'allegato 341 | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
+| **Crescita del nucleo di autenticazione** | La misura del 2026-09-20 dà **437** righe di nucleo contro le 342 del 2026-09-16, a fronte di una soglia di 300 e della deroga di DR-066, che dichiara di ripresentare la questione se il nucleo cresce. È ripresentata | prima della security review della Fase 1F |
+| ~~**D4 — come si spostano i blocchi**~~ | ~~Comandi espliciti oppure trascinamento~~ — **chiusa il 2026-09-20 da DR-069**, trascinamento | — |

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
-import { Button } from '../primitives/Button.js';
+import { Button } from '../primitives/Button';
 import './MediaUploader.css';
 
 export interface UploadingFile {

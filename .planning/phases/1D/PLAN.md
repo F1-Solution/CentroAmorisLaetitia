@@ -64,7 +64,7 @@ Sonnet, perché l'esecuzione viene prima della stesura.
 | `1D-W6` | `1D-W1` | le rotte di scrittura validano i blocchi con gli stessi schemi Zod |
 | `1D-W7` | `1D-W0` | dipende dal documento di design, **non** dal codice: può procedere in parallelo a `1D-W2`…`1D-W5` |
 | `1D-W8a` | `1D-W6`, `1D-W7` | guscio e commutatore hanno bisogno dell'API e delle primitive; non dipende da `packages/blocks` |
-| `1D-W8b` | `1D-W1`, `1D-W8a`, **D4** | editor e anteprima hanno bisogno dei blocchi e del guscio; **D4 è senza risposta e la wave non parte** |
+| `1D-W8b` | `1D-W1`, `1D-W8a` | editor e anteprima hanno bisogno dei blocchi e del guscio. D4 è chiusa da DR-069: la wave è sbloccata |
 | `1D-W9` | `1D-W8a` | riusa il guscio e le primitive |
 | `1D-W10` | `1D-W5`, `1D-W9` | prova l'insieme |
 | `1D-W11` | `1D-W10` | non si esegue l'import vero prima che i test passino |
@@ -114,6 +114,7 @@ dichiarano in `AUDIT.md`, con il motivo, come è stato fatto in 1C.
 | `@fastify/multipart` | `apps/api` | ADR-001 §5; criterio 1D-31, caricamento dei media |
 | `@tiptap/core`, `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit` e le sole estensioni che coprono l'elenco di ADR-005 §3.5 | `apps/admin` | ADR-006 §5, che le nomina |
 | `codemirror`, `@codemirror/lang-html`, `@codemirror/state`, `@codemirror/view` | `apps/admin` | ADR-006 §3.4: il blocco di riserva si modifica «in un'area di testo con evidenziazione della sintassi» |
+| `@dnd-kit/core`, `@dnd-kit/sortable` | `apps/admin` | **DR-069**, 2026-09-20. Nessuna ADR la autorizzava: la riga qui sotto fra le cose scritte in casa diceva l'opposto ed è superata. Scelta fra le librerie di trascinamento perché porta un **sensore da tastiera** di serie, quindi il percorso accessibile che il §9.3 del sistema di design impone nasce con il trascinamento e non dopo |
 | `@radix-ui/react-*` — le sole primitive usate: menu, dialogo, pannello, selettore | `packages/ui` | DR-044, che sceglie la proposta 1; `ui-proposals.md` proposta 1 §9 le nomina |
 | `@tanstack/react-table` | `packages/ui` | stessa fonte: proposta 1 §9, «solo logica di tabella» |
 | carattere **Inter** variabile, `woff2`, sottoinsieme latino, **self-hosted** | `packages/ui` | DR-048 (carattere distinto da quello del sito pubblico); `ui-proposals.md` proposta 1 §3. Non è un pacchetto npm: è un file nel repository, con la sua licenza |
@@ -132,12 +133,12 @@ oltre a quanto `apps/admin` già usa.
 | Tokenizzatore del dump SQL | `IMPORTER-DESIGN.md` §3. Nessun pacchetto npm copre il dialetto di `mysqldump` con la fedeltà richiesta, e il codice che legge la sorgente autorevole deve essere leggibile per intero |
 | Lettore del formato serializzato di PHP | circa 150 righe, formato semplice ma con lunghezze in **byte**. I valori contengono dati personali: un pacchetto in più è superficie in più per nessun guadagno |
 | Serializzatore blocchi → HTML | `BLOCK-MODEL.md` §6: la determinatezza dipende da scelte nostre, non delegabili |
-| Spostamento dei blocchi nell'editor | comandi espliciti invece del trascinamento: nessuna libreria. Vedi `CONTEXT.md` §8 punto 3 |
+| ~~Spostamento dei blocchi nell'editor~~ | ~~comandi espliciti invece del trascinamento: nessuna libreria~~ — **superata il 2026-09-20 da DR-069**: si fa il trascinamento e la libreria entra in tabella qui sopra |
 
 **Non si installano, ed è una scelta:** nessuna libreria di invio email — ADR-010 §4.5
 la colloca in Fase 1F; nessuna libreria di elaborazione immagini — ADR-004 §3.2 vieta
 di rigenerare le varianti; nessun client MySQL — vedi `IMPORTER-DESIGN.md` §3;
-nessuna libreria di trascinamento; nessuna libreria di componenti «vestita»
+~~nessuna libreria di trascinamento~~ (superata da DR-069); nessuna libreria di componenti «vestita»
 (`ui-proposals.md` proposta 1 §9).
 
 ## 6. Cosa questa fase non dimostrerà
@@ -170,7 +171,7 @@ Va detto adesso, per non doverlo dire dopo.
 | # | Quando | Che cosa | Se manca |
 |---|---|---|---|
 | 1 | ~~prima di `1D-W8`~~ | ~~La lettura delle aree dopo DR-047~~ — **chiusa il 2026-09-15 da DR-050**, che supera DR-047 e adotta «un solo ruolo attivo per volta». Le aree tornano a essere contesto di permesso e serve un commutatore di ruolo (`CONTEXT.md` §8 punto 2) | — |
-| 2 | **prima di `1D-W8b`** | Comandi espliciti invece del trascinamento per spostare i blocchi (`CONTEXT.md` §8 punto 3). Posta il 2026-09-20 come **D4** del Round 11 e rimasta **senza risposta** | La wave `1D-W8b` **non parte**. La ricaduta sui comandi espliciti non si applica di iniziativa: è una decisione, e senza risposta non si sceglie |
+| 2 | ~~prima di `1D-W8b`~~ | ~~Comandi espliciti invece del trascinamento per spostare i blocchi~~ — **chiusa il 2026-09-20 da DR-069**: si fa il **trascinamento**, con il percorso da tastiera che resta obbligatorio. Entra una libreria, dichiarata al §5 | — |
 | 3 | **prima di `1D-W11`** | L'esecuzione reale dell'import su dati reali. `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run». Va mostrato comando, file coinvolti, impatto, backup e rollback, verifica successiva | La wave non parte. `plan` resta eseguibile senza conferma, perché non scrive |
 | 3-bis | **prima di `1D-W7`** | I tre prestiti dalle altre proposte di UI. L'utente ha chiesto di vederli descritti prima di scegliere (DR-053) | La wave usa la proposta 1 pura e lo dichiara nell'audit |
 | 4 | entro l'inizio della 1E | Il trattamento degli spazi di Divi e il divieto di stile in linea (`CONTEXT.md` §8 punto 1) | Il modello conserva comunque il valore; si rimanda la resa |

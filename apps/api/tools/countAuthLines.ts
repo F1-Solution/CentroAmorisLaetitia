@@ -26,9 +26,18 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = path.join(here, '..', 'src');
 
+/**
+ * Aggiunta del 2026-09-20, wave `1D-W8a`. `auth/areas.ts` e `auth/areaMap.ts`
+ * entrano nel nucleo perche' `plugins/auth.ts`, che gia' vi apparteneva, ora
+ * rifiuta le richieste che arrivano da un'altra area (DR-067): tenerle fuori
+ * sarebbe il modo piu' facile di far restare basso il numero, che e' proprio
+ * cio' che la regola scritta prima della misura serve a impedire.
+ */
 export const CORE_FILES = [
   'lib/crypto.ts',
   'lib/password.ts',
+  'auth/areas.ts',
+  'auth/areaMap.ts',
   'auth/audit.ts',
   'auth/loginAttempts.ts',
   'auth/permissions.ts',

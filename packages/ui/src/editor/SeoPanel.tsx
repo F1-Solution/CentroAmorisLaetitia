@@ -1,6 +1,6 @@
-import { TextField } from '../primitives/TextField.js';
-import { TextArea } from '../primitives/TextArea.js';
-import { Button } from '../primitives/Button.js';
+import { TextField } from '../primitives/TextField';
+import { TextArea } from '../primitives/TextArea';
+import { Button } from '../primitives/Button';
 import './SeoPanel.css';
 
 const TITLE_MAX = 60;

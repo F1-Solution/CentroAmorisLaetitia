@@ -1,5 +1,5 @@
-import { IconButton } from '../primitives/IconButton.js';
-import { Spinner } from '../primitives/Spinner.js';
+import { IconButton } from '../primitives/IconButton';
+import { Spinner } from '../primitives/Spinner';
 import './MenuTreeEditor.css';
 
 export interface MenuItemNode {

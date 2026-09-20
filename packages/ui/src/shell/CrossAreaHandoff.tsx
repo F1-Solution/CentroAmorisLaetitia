@@ -1,4 +1,4 @@
-import { Button } from '../primitives/Button.js';
+import { Button } from '../primitives/Button';
 import './CrossAreaHandoff.css';
 
 export interface CrossAreaHandoffProps {

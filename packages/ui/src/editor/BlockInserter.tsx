@@ -1,7 +1,7 @@
-import { Dialog } from '../layout/Dialog.js';
-import { TextField } from '../primitives/TextField.js';
-import { insertableBlockTypes } from './block-types.js';
-import type { BlockType } from './block-types.js';
+import { Dialog } from '../layout/Dialog';
+import { TextField } from '../primitives/TextField';
+import { insertableBlockTypes } from './block-types';
+import type { BlockType } from './block-types';
 import './BlockInserter.css';
 
 export interface BlockInserterProps {

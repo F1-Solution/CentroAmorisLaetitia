@@ -1,4 +1,4 @@
-import { Spinner } from '../primitives/Spinner.js';
+import { Spinner } from '../primitives/Spinner';
 import './AuditTrail.css';
 
 export interface AuditEntry {

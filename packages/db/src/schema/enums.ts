@@ -15,3 +15,9 @@ export const redirectKind = pgEnum('redirect_kind', ['exact', 'prefix']);
 export const redirectOrigin = pgEnum('redirect_origin', ['migration', 'manual', 'automatic']);
 export const submissionOrigin = pgEnum('submission_origin', ['migration', 'live']);
 export const auditOutcome = pgEnum('audit_outcome', ['success', 'failure']);
+/**
+ * Aree dell'area amministrativa (`design-system.md` §7.2). In Fase 1 sono due;
+ * le altre quattro del §7.1 non si dichiarano qui, perche' il gate vieta di
+ * pianificare le fasi gestionali e un valore enumerato e' una pianificazione.
+ */
+export const adminArea = pgEnum('admin_area', ['redazione', 'impostazioni']);

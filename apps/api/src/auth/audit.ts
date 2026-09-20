@@ -1,4 +1,5 @@
 import { schema, type Database } from '@amoris/db';
+import type { AdminArea } from './areas.js';
 
 /**
  * Scrittura del registro delle operazioni (RU-05, RN-03).
@@ -21,6 +22,10 @@ export interface AuditEntry {
   readonly detail?: Record<string, unknown>;
   readonly ipHash?: Buffer | null;
   readonly sessionId?: string | null;
+  /** In quale veste: ruolo attivo e area attiva (DR-067). */
+  readonly actorRoleId?: string | null;
+  readonly actorRoleLabel?: string | null;
+  readonly actorArea?: AdminArea | null;
 }
 
 export async function writeAudit(db: Database, entry: AuditEntry): Promise<void> {
@@ -34,6 +39,9 @@ export async function writeAudit(db: Database, entry: AuditEntry): Promise<void>
     detail: entry.detail ?? {},
     ipHash: entry.ipHash ?? null,
     sessionId: entry.sessionId ?? null,
+    actorRoleId: entry.actorRoleId ?? null,
+    actorRoleLabel: entry.actorRoleLabel ?? null,
+    actorArea: entry.actorArea ?? null,
   });
 }
 
@@ -43,4 +51,6 @@ export const AUTH_ACTIONS = {
   logout: 'auth.logout',
   passwordChanged: 'auth.password_changed',
   sessionsRevoked: 'auth.sessions_revoked',
+  /** Cambio di veste: `ux-proposals.md` §4.3 lo vuole tracciato. */
+  contextChanged: 'auth.context_changed',
 } as const;

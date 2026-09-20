@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { trapTabKey } from '../layout/focus-trap.js';
-import type { CommandResult } from './types.js';
+import { trapTabKey } from '../layout/focus-trap';
+import type { CommandResult } from './types';
 import './CommandSearch.css';
 
 export interface CommandSearchProps {

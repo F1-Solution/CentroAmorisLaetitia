@@ -1,4 +1,4 @@
-import type { NavSectionGroup } from './types.js';
+import type { NavSectionGroup } from './types';
 import './SectionNav.css';
 
 export interface SectionNavProps {

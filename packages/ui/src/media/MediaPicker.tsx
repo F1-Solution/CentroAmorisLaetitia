@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { SidePanel } from '../layout/SidePanel.js';
-import { TextField } from '../primitives/TextField.js';
-import { CheckboxField } from '../primitives/CheckboxField.js';
-import { Button } from '../primitives/Button.js';
-import { Spinner } from '../primitives/Spinner.js';
+import { SidePanel } from '../layout/SidePanel';
+import { TextField } from '../primitives/TextField';
+import { CheckboxField } from '../primitives/CheckboxField';
+import { Button } from '../primitives/Button';
+import { Spinner } from '../primitives/Spinner';
 import './MediaPicker.css';
 
 export interface MediaPickerItem {

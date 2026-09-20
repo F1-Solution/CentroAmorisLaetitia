@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { getFocusable, trapTabKey } from './focus-trap.js';
+import { getFocusable, trapTabKey } from './focus-trap';
 import './Dialog.css';
 
 export interface DialogProps {

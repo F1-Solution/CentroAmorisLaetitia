@@ -1,7 +1,7 @@
-import { IconButton } from '../primitives/IconButton.js';
-import { Button } from '../primitives/Button.js';
-import { Spinner } from '../primitives/Spinner.js';
-import type { BlockType } from './block-types.js';
+import { IconButton } from '../primitives/IconButton';
+import { Button } from '../primitives/Button';
+import { Spinner } from '../primitives/Spinner';
+import type { BlockType } from './block-types';
 import './BlockTreeEditor.css';
 
 export interface BlockNode {

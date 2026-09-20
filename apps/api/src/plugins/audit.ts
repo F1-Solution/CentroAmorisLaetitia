@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { writeAudit } from '../auth/audit.js';
 import { hashAddress } from '../lib/crypto.js';
 import './routeConfig.js';
@@ -33,6 +33,13 @@ declare module 'fastify' {
 }
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** L'etichetta del ruolo attivo, conservata come `actorLabel`: il ruolo puo' sparire. */
+function activeRoleLabel(request: FastifyRequest): string | undefined {
+  const auth = request.auth;
+  if (!auth?.activeRoleId) return undefined;
+  return auth.rolesHeld.find((role) => role.roleId === auth.activeRoleId)?.label;
+}
 
 export function registerAuditHook(app: FastifyInstance): void {
   app.decorateRequest('matchedRoute', null);
@@ -69,6 +76,11 @@ export function registerAuditHook(app: FastifyInstance): void {
         detail: { status: reply.statusCode, method: request.method },
         ipHash: hashAddress(request.ip, app.config.IP_HASH_SALT),
         sessionId: request.auth?.sessionId ?? null,
+        // «Registrato da Rosalba, area Tesoreria»: l'atto resta attribuito
+        // alla veste in cui e' stato compiuto (`ux-proposals.md` §4.3).
+        actorRoleId: request.auth?.activeRoleId ?? null,
+        actorRoleLabel: activeRoleLabel(request) ?? null,
+        actorArea: request.auth?.activeArea ?? null,
       });
     } catch (caught) {
       // Il registro non deve poter far fallire l'operazione che ha già avuto

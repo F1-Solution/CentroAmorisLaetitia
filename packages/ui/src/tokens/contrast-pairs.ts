@@ -1,5 +1,5 @@
-import type { ColorTokenName } from './tokens.js';
-import type { ContrastRole } from './contrast.js';
+import type { ColorTokenName } from './tokens';
+import type { ContrastRole } from './contrast';
 
 export interface ContrastPair {
   theme: 'light' | 'dark';

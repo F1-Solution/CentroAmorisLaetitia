@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SkipLink } from '../primitives/SkipLink.js';
+import { SkipLink } from '../primitives/SkipLink';
 import './AppShell.css';
 
 export interface AppShellProps {

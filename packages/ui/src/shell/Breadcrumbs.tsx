@@ -1,4 +1,4 @@
-import type { BreadcrumbItem } from './types.js';
+import type { BreadcrumbItem } from './types';
 import './Breadcrumbs.css';
 
 export interface BreadcrumbsProps {

@@ -92,3 +92,44 @@ export const contentRevisions = pgTable(
     index('content_revisions_content_idx').on(t.contentId, t.revisionNo.desc().nullsFirst()),
   ],
 );
+
+/**
+ * Copie di lavoro (DR-068). L'editor vi salva da solo; il contenuto pubblicato
+ * cambia solo su comando esplicito. Per questo il criterio 1D-36 — aprire e
+ * salvare senza modifiche non cambia nulla — si verifica **sul contenuto**: la
+ * copia di lavoro e' un record distinto e il salvataggio automatico non tocca
+ * `contents`.
+ *
+ * Una copia per persona e per contenuto: ADR-006 §3.2 rimanda la modifica
+ * collaborativa, e una copia condivisa la introdurrebbe di fatto, facendo
+ * sovrascrivere a due redattori lo stesso lavoro senza avvisarli.
+ */
+export const contentDrafts = pgTable(
+  'content_drafts',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    contentId: uuid()
+      .notNull()
+      .references(() => contents.id, { onDelete: 'cascade' }),
+    authorId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text().notNull(),
+    excerpt: text(),
+    /** Stesso documento a blocchi di `contents.blocks`, con lo stesso schema. */
+    blocks: jsonb().notNull(),
+    /**
+     * `contents.updated_at` al momento in cui la copia e' stata aperta. Se il
+     * contenuto e' cambiato sotto, pubblicare la copia sovrascriverebbe il
+     * lavoro di un altro: il servizio se ne accorge confrontando i due valori.
+     */
+    baseUpdatedAt: timestamp({ withTimezone: true }).notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('content_drafts_content_author_unique').on(t.contentId, t.authorId),
+    check('content_drafts_blocks_have_schema', sql`blocks ? 'schema' AND blocks ? 'blocks'`),
+    index('content_drafts_author_idx').on(t.authorId, t.updatedAt.desc().nullsFirst()),
+  ],
+);

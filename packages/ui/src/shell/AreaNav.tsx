@@ -1,4 +1,4 @@
-import type { AreaSummary } from './types.js';
+import type { AreaSummary } from './types';
 import './AreaNav.css';
 
 export interface AreaNavProps {

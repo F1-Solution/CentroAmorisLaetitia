@@ -1,4 +1,4 @@
-import { Alert } from '../primitives/Alert.js';
+import { Alert } from '../primitives/Alert';
 import './RichTextToolbar.css';
 
 /**

@@ -32,6 +32,10 @@ CREATE TYPE redirect_kind  AS ENUM ('exact', 'prefix');
 CREATE TYPE redirect_origin AS ENUM ('migration', 'manual', 'automatic');
 CREATE TYPE submission_origin AS ENUM ('migration', 'live');
 CREATE TYPE audit_outcome  AS ENUM ('success', 'failure');
+-- Aree dell'area amministrativa (design-system.md §7.2). In Fase 1 sono due: le
+-- altre quattro del §7.1 non si dichiarano, perche' il gate vieta di pianificare
+-- le fasi gestionali e un valore enumerato e' una pianificazione.
+CREATE TYPE admin_area     AS ENUM ('redazione', 'impostazioni');
 
 
 -- =====================================================================
@@ -104,6 +108,13 @@ CREATE TABLE sessions (
     revoked_at      timestamptz,
     user_agent      text,
     ip_hash         bytea,                     -- digest con sale, mai l'indirizzo in chiaro
+    -- Ruolo attivo della sessione (DR-050, attuata da DR-067): i permessi in
+    -- vigore sono quelli di questo ruolo, non l'unione dei ruoli posseduti.
+    -- Nullo fra l'accesso e la scelta dell'area.
+    active_role_id  uuid REFERENCES roles(id) ON DELETE SET NULL,
+    -- Area in cui si sta lavorando (ux-proposals.md §4.4 punto 2): il servizio
+    -- rifiuta i dati di un'altra area anche quando il permesso ci sarebbe.
+    active_area     admin_area,
     CONSTRAINT sessions_token_digest_unique UNIQUE (token_digest)
 );
 
@@ -124,7 +135,10 @@ CREATE TABLE audit_log (
     outcome       audit_outcome NOT NULL DEFAULT 'success',
     detail        jsonb NOT NULL DEFAULT '{}'::jsonb, -- MAI dati personali di terzi
     ip_hash       bytea,
-    session_id    uuid REFERENCES sessions(id) ON DELETE SET NULL
+    session_id    uuid REFERENCES sessions(id) ON DELETE SET NULL,
+    actor_role_id    uuid REFERENCES roles(id) ON DELETE SET NULL, -- in quale veste (DR-067)
+    actor_role_label text,                      -- conservata come actor_label
+    actor_area       admin_area                 -- in quale area (ux-proposals.md §4.3)
 );
 
 CREATE INDEX audit_log_occurred_at_idx ON audit_log (occurred_at DESC);
@@ -255,6 +269,30 @@ CREATE TABLE content_revisions (
 
 CREATE INDEX content_revisions_content_idx
     ON content_revisions (content_id, revision_no DESC);
+
+
+-- Copie di lavoro (DR-068). L'editor vi salva da solo; il contenuto pubblicato
+-- cambia solo su comando esplicito, ed e' per questo che il criterio 1D-36 si
+-- verifica su contents e non qui. Una copia per persona e per contenuto:
+-- ADR-006 §3.2 rimanda la modifica collaborativa.
+CREATE TABLE content_drafts (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    content_id      uuid NOT NULL REFERENCES contents(id) ON DELETE CASCADE,
+    author_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title           text NOT NULL,
+    excerpt         text,
+    blocks          jsonb NOT NULL,
+    -- contents.updated_at quando la copia e' stata aperta: se il contenuto e'
+    -- cambiato sotto, pubblicare la copia sovrascriverebbe il lavoro di un altro.
+    base_updated_at timestamptz NOT NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT content_drafts_content_author_unique UNIQUE (content_id, author_id),
+    CONSTRAINT content_drafts_blocks_have_schema CHECK (blocks ? 'schema' AND blocks ? 'blocks')
+);
+
+CREATE INDEX content_drafts_author_idx
+    ON content_drafts (author_id, updated_at DESC);
 
 
 -- =====================================================================

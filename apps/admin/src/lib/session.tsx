@@ -1,0 +1,128 @@
+'use client';
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { api, ApiError } from './api';
+import type { AreaId } from './areas';
+
+/**
+ * La sessione come la vede l'interfaccia.
+ *
+ * Non è uno specchio dell'account: è la **veste in corso**. Il ruolo attivo e
+ * l'area attiva arrivano dal servizio e non si scelgono qui — il client può
+ * chiedere di cambiarli, ma è l'API a decidere se quella veste è posseduta, e i
+ * permessi che tornano sono quelli del ruolo attivo (DR-067).
+ *
+ * Di conseguenza `permissions` è **vuoto finché la veste non è scelta**, e non
+ * è un caso limite da aggirare: è la schermata di scelta, e null'altro è
+ * raggiungibile.
+ */
+
+export interface RoleHeld {
+  readonly roleId: string;
+  readonly key: string;
+  readonly label: string;
+  readonly areas: readonly AreaId[];
+}
+
+export interface CurrentUser {
+  readonly userId: string;
+  readonly email: string;
+  readonly fullName: string;
+  readonly mustChangePassword: boolean;
+  readonly permissions: readonly string[];
+  readonly activeRoleId: string | null;
+  readonly activeArea: AreaId | null;
+  readonly rolesHeld: readonly RoleHeld[];
+}
+
+/** Una veste: una coppia ruolo-area posseduta. È questo che il commutatore commuta. */
+export interface Vestment {
+  readonly id: string;
+  readonly roleId: string;
+  readonly roleLabel: string;
+  readonly area: AreaId;
+}
+
+export function vestmentsOf(user: CurrentUser | null): Vestment[] {
+  if (!user) return [];
+  return user.rolesHeld.flatMap((role) =>
+    role.areas.map((area) => ({
+      id: `${role.roleId}:${area}`,
+      roleId: role.roleId,
+      roleLabel: role.label,
+      area,
+    })),
+  );
+}
+
+interface SessionValue {
+  readonly user: CurrentUser | null;
+  readonly loading: boolean;
+  signIn(email: string, password: string): Promise<CurrentUser>;
+  signOut(): Promise<void>;
+  chooseVestment(vestment: Vestment): Promise<CurrentUser>;
+  refresh(): Promise<void>;
+}
+
+const SessionContext = createContext<SessionValue | null>(null);
+
+export function SessionProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      setUser(await api<CurrentUser>('/auth/me'));
+    } catch (caught) {
+      // 401 non è un guasto: è il caso normale di chi non ha ancora fatto
+      // accesso. Tutto il resto risale, perché nasconderlo farebbe sembrare
+      // «non autenticato» un servizio che è semplicemente rotto.
+      if (caught instanceof ApiError && caught.status === 401) setUser(null);
+      else throw caught;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const value = useMemo<SessionValue>(
+    () => ({
+      user,
+      loading,
+      async signIn(email, password) {
+        const next = await api<CurrentUser>('/auth/login', {
+          method: 'POST',
+          body: { email, password },
+        });
+        setUser(next);
+        return next;
+      },
+      async signOut() {
+        await api('/auth/logout', { method: 'POST' });
+        setUser(null);
+      },
+      async chooseVestment(vestment) {
+        const next = await api<CurrentUser>('/auth/context', {
+          method: 'POST',
+          body: { roleId: vestment.roleId, area: vestment.area },
+        });
+        setUser(next);
+        return next;
+      },
+      refresh,
+    }),
+    [user, loading, refresh],
+  );
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+export function useSession(): SessionValue {
+  const ctx = useContext(SessionContext);
+  if (!ctx) throw new Error('useSession va usato dentro <SessionProvider>.');
+  return ctx;
+}

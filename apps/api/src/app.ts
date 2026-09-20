@@ -12,6 +12,7 @@ import {
   hasZodFastifySchemaValidationErrors,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
+import type { AdminArea } from './auth/areas.js';
 import type { Config } from './config.js';
 import { createObjectStore, type ObjectStore } from './lib/objectStore.js';
 import { authRoutes } from './modules/auth/routes.js';
@@ -37,6 +38,28 @@ declare module 'fastify' {
 }
 
 export type App = FastifyInstance & { withTypeProvider: unknown };
+
+/**
+ * Registra un modulo dichiarando l'area a cui appartiene (`design-system.md`
+ * §7.2). L'area finisce nella configurazione di **ogni** rotta del modulo senza
+ * che le rotte la ripetano: un modulo sta in una sola area, e scriverlo su ogni
+ * rotta vorrebbe dire soltanto poterlo scrivere diverso una volta.
+ *
+ * `plugins/auth.ts` la legge e rifiuta le richieste che arrivano da un'altra
+ * area, anche quando il permesso ci sarebbe (DR-067).
+ */
+async function registerArea(
+  app: FastifyInstance,
+  area: AdminArea,
+  ...modules: readonly ((scoped: FastifyInstance) => Promise<void>)[]
+): Promise<void> {
+  await app.register(async (scoped) => {
+    scoped.addHook('onRoute', (route) => {
+      route.config = { ...route.config, area };
+    });
+    for (const module of modules) await scoped.register(module);
+  });
+}
 
 export interface BuildOptions {
   /** Archivio a oggetti alternativo: i test non parlano con un bucket vero. */
@@ -160,15 +183,23 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
   );
 
   await app.register(healthRoutes);
-  // Un modulo per dominio, come impone ADR-001 §3 punto 1.
+  // `auth` non ha area: l'accesso e la scelta della veste vengono prima che una
+  // veste esista, e nessuna delle due si raggiunge da dentro un'area.
   await app.register(authRoutes);
-  await app.register(contentRoutes);
-  await app.register(termRoutes);
-  await app.register(mediaRoutes);
-  await app.register(menuRoutes);
-  await app.register(seoRoutes);
-  await app.register(redirectRoutes);
-  await app.register(settingsRoutes);
+
+  // Un modulo per dominio, come impone ADR-001 §3 punto 1; raggruppati per area
+  // secondo `design-system.md` §7.2.
+  await registerArea(
+    app,
+    'redazione',
+    contentRoutes,
+    termRoutes,
+    mediaRoutes,
+    menuRoutes,
+    seoRoutes,
+    redirectRoutes,
+  );
+  await registerArea(app, 'impostazioni', settingsRoutes);
 
   return app;
 }

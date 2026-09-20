@@ -1,22 +1,30 @@
 {
-  "misuratoIl": "2026-09-16",
+  "misuratoIl": "2026-09-20",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
   "soglia": 300,
-  "nucleo": 342,
-  "totale": 684,
+  "nucleo": 437,
+  "totale": 859,
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "ADR-007 §6 contromisura 3: la premessa della proporzione e caduta. Decisione di architettura aperta nel registro.",
+  "conseguenza": "ADR-007 §6 contromisura 3, derogata il 2026-09-20 da DR-066. La deroga dichiara che se il nucleo cresce ancora la cosa si ripresenta all'utente: questa misura lo fa.",
+  "misuraPrecedente": {
+    "misuratoIl": "2026-09-16",
+    "nucleo": 342,
+    "totale": 684,
+    "perche": "la wave 1D-W8a attua DR-067: la sessione porta ruolo e area attivi, il servizio rifiuta i dati di un'altra area, il registro dice in quale veste. Due file nuovi nel nucleo, auth/areas.ts e auth/areaMap.ts, e la crescita di auth/sessions.ts da 134 a 188."
+  },
   "perFile": {
     "lib/crypto.ts": 18,
     "lib/password.ts": 19,
-    "auth/audit.ts": 30,
+    "auth/areas.ts": 9,
+    "auth/areaMap.ts": 7,
+    "auth/audit.ts": 37,
     "auth/loginAttempts.ts": 42,
     "auth/permissions.ts": 14,
-    "auth/sessions.ts": 134,
-    "plugins/auth.ts": 55,
+    "auth/sessions.ts": 188,
+    "plugins/auth.ts": 73,
     "plugins/csrf.ts": 30,
-    "modules/auth/routes.ts": 259,
-    "modules/auth/schemas.ts": 28,
+    "modules/auth/routes.ts": 326,
+    "modules/auth/schemas.ts": 41,
     "modules/auth/service.ts": 55
   }
 }

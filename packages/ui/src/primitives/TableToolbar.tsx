@@ -1,7 +1,7 @@
-import { TextField } from './TextField.js';
-import { SelectField } from './SelectField.js';
-import type { SelectOption } from './SelectField.js';
-import { Button } from './Button.js';
+import { TextField } from './TextField';
+import { SelectField } from './SelectField';
+import type { SelectOption } from './SelectField';
+import { Button } from './Button';
 import './TableToolbar.css';
 
 export interface TableToolbarFilter {

@@ -1,6 +1,6 @@
-import { Spinner } from '../primitives/Spinner.js';
-import { Alert } from '../primitives/Alert.js';
-import type { AreaSummary } from './types.js';
+import { Spinner } from '../primitives/Spinner';
+import { Alert } from '../primitives/Alert';
+import type { AreaSummary } from './types';
 import './AreaChoiceScreen.css';
 
 export interface AreaChoiceScreenProps {

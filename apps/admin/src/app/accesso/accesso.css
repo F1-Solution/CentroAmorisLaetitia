@@ -1,0 +1,49 @@
+/**
+ * Le due schermate che stanno **fuori** dal guscio: accesso e scelta della
+ * veste. Non hanno navigazione perche' prima della veste non c'e' un'area in
+ * cui navigare. Usano soltanto i token del sistema di design: nessun valore
+ * cromatico, tipografico o di spaziatura nasce qui.
+ */
+.amoris-access,
+.amoris-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--amoris-space-6);
+  background: var(--amoris-bg-app);
+  color: var(--amoris-text-primary);
+  font-family: var(--amoris-font-family);
+}
+
+.amoris-access__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-4);
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--amoris-space-6);
+  background: var(--amoris-bg-surface);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+}
+
+.amoris-access__title {
+  margin: 0;
+  font-size: var(--amoris-text-xl-size);
+  line-height: var(--amoris-text-xl-line);
+  font-weight: var(--amoris-text-xl-weight);
+}
+
+.amoris-access__lead,
+.amoris-choice__greeting {
+  margin: 0;
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-choice__greeting {
+  margin-bottom: var(--amoris-space-6);
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+}

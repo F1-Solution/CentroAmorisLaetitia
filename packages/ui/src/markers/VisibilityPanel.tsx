@@ -1,4 +1,4 @@
-import { RadioGroup } from '../primitives/RadioGroup.js';
+import { RadioGroup } from '../primitives/RadioGroup';
 import './VisibilityPanel.css';
 
 export type Visibility = 'public' | 'restricted';

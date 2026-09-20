@@ -35,7 +35,7 @@ I dati usati nelle prove sono **sintetici** e il database è stato distrutto.
 |---|---|---|---|
 | 1 | Persone, ruoli, sessioni, audit | `users`, `roles`, `user_roles`, `permissions`, `role_permissions`, `sessions`, `audit_log` | RU-01, RU-02, RU-05, RN-03 |
 | 2 | Media | `media`, `media_variants` | RC-03 |
-| 3 | Contenuti | `contents`, `content_revisions` | RC-01, RC-03 |
+| 3 | Contenuti | `contents`, `content_revisions`, `content_drafts` | RC-01, RC-03, DR-068 |
 | 4 | Tassonomie | `terms`, `content_terms` | RC-01, RC-03 |
 | 5 | Menu | `menus`, `menu_items` | RC-01, RC-03 |
 | 6 | SEO | `seo_templates`, `content_seo`, `term_seo` | RC-04, RC-05, RC-06 |
@@ -46,9 +46,15 @@ I dati usati nelle prove sono **sintetici** e il database è stato distrutto.
 | 11 | Migrazione | `import_runs`, `import_id_map`, `import_issues` | idempotenza dell'import |
 | 12 | Conservazione legacy | `legacy_email_log`, `legacy_download_stats` | DR-026 |
 
-**32 tabelle.** Nessuna riguarda appuntamenti, corsi, soci, contabilità o documenti
+**33 tabelle.** Nessuna riguarda appuntamenti, corsi, soci, contabilità o documenti
 riservati oltre alla conservazione: il gate vieta di costruirle e lo schema lo
 rispetta.
+
+> **Correzione dichiarata del 2026-09-20.** Erano 32. **DR-068** aggiunge
+> `content_drafts`, le copie di lavoro dell'editor, con la migrazione `0002`. È la
+> seconda modifica a uno schema approvato in Fase 1B dopo DR-059, e come quella
+> avviene **con una decisione registrata**, non di iniziativa. La stessa migrazione
+> aggiunge `sessions.active_role_id` e due colonne ad `audit_log` per **DR-067**.
 
 ## 3. Tracciabilità completa: ogni tabella a un requisito
 
@@ -63,6 +69,7 @@ rispetta.
 | `media_variants` | ADR-004 §3.2 | Le dimensioni derivate sono referenziate nei `srcset`: servirle sbagliate cambia il layout |
 | `contents` | RC-01, RC-03, ADR-005 | Pagine e articoli, come documento a blocchi |
 | `content_revisions` | RC-03 | Cronologia redazionale. Le 837 revisioni di WordPress **non** si importano |
+| `content_drafts` | **DR-068** | Copia di lavoro su cui l'editor salva da solo. Il contenuto pubblicato cambia solo su comando, ed è per questo che il criterio 1D-36 si verifica su `contents`. Una copia per persona e per contenuto: ADR-006 §3.2 rimanda la modifica collaborativa |
 | `terms`, `content_terms` | RC-01 | 2 categorie, 0 tag |
 | `menus`, `menu_items` | **RC-01** | «Il menu del frontend sarà uguale». 64 voci, 41 pubbliche |
 | `seo_templates` | RC-04, RC-05, R-10 | Si migrano le **regole**, non i 282 record |
@@ -204,6 +211,10 @@ Regole vincolanti, che valgono dal primo giorno:
 5. Cifratura a riposo, tempi di conservazione e procedura di cancellazione
    **richiedono validazione legale** (MI-06) prima della produzione. Qui non si
    dichiara alcuna conformità.
+6. `content_drafts` conserva versioni intermedie di contenuti redazionali. Non
+   contiene dati personali di terzi, ma è **materiale non pubblicato**: rientra
+   nelle regole di conservazione del punto 5, e la wave `1D-W8a` dichiara quando
+   una copia di lavoro viene eliminata (DR-068).
 
 ## 8. Punti che restano aperti
 

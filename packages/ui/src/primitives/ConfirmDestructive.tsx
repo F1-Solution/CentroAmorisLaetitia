@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Dialog } from '../layout/Dialog.js';
-import { TextField } from './TextField.js';
-import { Button } from './Button.js';
+import { Dialog } from '../layout/Dialog';
+import { TextField } from './TextField';
+import { Button } from './Button';
 import './ConfirmDestructive.css';
 
 export interface ConfirmDestructiveProps {

@@ -1,4 +1,4 @@
-import { useDensity } from './DensityContext.js';
+import { useDensity } from './DensityContext';
 import './DensityToggle.css';
 
 /**

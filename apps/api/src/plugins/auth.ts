@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { resolveSession, type ResolvedSession } from '../auth/sessions.js';
 import type { Permission } from '../auth/permissions.js';
+import './routeConfig.js';
 
 /**
  * Riconoscimento della sessione e autorizzazione.
@@ -35,6 +36,34 @@ function notAuthenticated(request: FastifyRequest, reply: FastifyReply): void {
 }
 
 /**
+ * `ux-proposals.md` §4.4 punto 2, attuato da DR-067: il sistema rifiuta i dati
+ * di un'altra area **anche quando il permesso ci sarebbe**. Il permesso non
+ * basta, serve essere nell'area giusta — ed è questo che rende la separazione
+ * non aggirabile per distrazione.
+ *
+ * Il controllo viene **prima** di quello sul permesso: altrimenti la risposta
+ * distinguerebbe «sei nell'area sbagliata» da «non hai il permesso», che è la
+ * stessa mappa dei permessi che il controllo 9 di ADR-007 §3.1 vieta di far
+ * trapelare da un messaggio di errore.
+ *
+ * Restituisce `true` se ha già risposto e il gestore non deve proseguire.
+ */
+function wrongArea(request: FastifyRequest, reply: FastifyReply): boolean {
+  const required = request.routeOptions.config.area;
+  if (!required) return false;
+  if (request.auth?.activeArea === required) return false;
+
+  void reply.code(403).send({
+    error: {
+      code: 'NOT_AUTHORIZED',
+      message: 'Operazione non consentita.',
+      requestId: request.id,
+    },
+  });
+  return true;
+}
+
+/**
  * Sessione certa. Si usa **solo** dentro rotte che hanno `requireSession` o
  * `requirePermission`: lì il gestore non viene raggiunto senza sessione, e
  * questa funzione toglie di mezzo un controllo che il tipo non sa fare da sé.
@@ -56,7 +85,11 @@ export function registerAuth(app: FastifyInstance): void {
   });
 
   app.decorate('requireSession', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!request.auth) notAuthenticated(request, reply);
+    if (!request.auth) {
+      notAuthenticated(request, reply);
+      return;
+    }
+    wrongArea(request, reply);
   });
 
   app.decorate('requirePermission', (permission: Permission) => {
@@ -65,6 +98,7 @@ export function registerAuth(app: FastifyInstance): void {
         notAuthenticated(request, reply);
         return;
       }
+      if (wrongArea(request, reply)) return;
       if (!request.auth.permissions.has(permission)) {
         // Stesso principio del controllo 9: il messaggio non dice quale
         // permesso manchi, perché sarebbe una mappa dei permessi.

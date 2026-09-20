@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { IconButton } from '../primitives/IconButton.js';
-import { Spinner } from '../primitives/Spinner.js';
-import { Alert } from '../primitives/Alert.js';
+import { IconButton } from '../primitives/IconButton';
+import { Spinner } from '../primitives/Spinner';
+import { Alert } from '../primitives/Alert';
 import './PreviewPane.css';
 
 export type PreviewViewport = 'desktop' | 'mobile';

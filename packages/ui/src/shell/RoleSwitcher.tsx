@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
-import type { RoleOption } from './types.js';
-import { useOutsideDismiss } from './useOutsideDismiss.js';
+import type { RoleOption } from './types';
+import { useOutsideDismiss } from './useOutsideDismiss';
 import './RoleSwitcher.css';
 
 export interface RoleSwitcherProps {

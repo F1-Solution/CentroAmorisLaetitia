@@ -6,6 +6,7 @@ import path from 'node:path';
 import postgres from 'postgres';
 import { buildApp } from '../../src/app.js';
 import { loadConfig, type Config } from '../../src/config.js';
+import type { AdminArea } from '../../src/auth/areas.js';
 import { ALL_PERMISSIONS } from '../../src/auth/permissions.js';
 import { hashPassword } from '../../src/lib/password.js';
 import type { ObjectStore } from '../../src/lib/objectStore.js';
@@ -143,12 +144,21 @@ export interface Signed {
   readonly writeHeaders: Record<string, string>;
 }
 
-/** Esegue l'accesso e restituisce ciò che serve per le richieste successive. */
-export async function signIn(
-  harness: Harness,
-  email = TEST_EMAIL,
-  password = TEST_PASSWORD,
-): Promise<Signed> {
+export interface SignInOptions {
+  readonly email?: string;
+  readonly password?: string;
+  /**
+   * Veste da indossare dopo l'accesso. La persona di prova possiede il ruolo
+   * `editor`, che fa entrare in **due** aree: quindi non c'è scelta automatica
+   * e senza questo passo la sessione non è in alcuna area, come per una persona
+   * vera ferma sulla schermata di scelta (`ux-proposals.md` §4.3).
+   */
+  readonly area?: AdminArea | null;
+}
+
+/** Esegue l'accesso, sceglie la veste e restituisce ciò che serve dopo. */
+export async function signIn(harness: Harness, options: SignInOptions = {}): Promise<Signed> {
+  const { email = TEST_EMAIL, password = TEST_PASSWORD, area = 'redazione' } = options;
   const response = await harness.app.inject({
     method: 'POST',
     url: '/auth/login',
@@ -164,9 +174,26 @@ export async function signIn(
   if (!session || !csrf) throw new Error('i cookie di sessione non sono stati impostati');
 
   const cookie = `${session.name}=${session.value}; ${csrf.name}=${csrf.value}`;
-  return {
+  const signed: Signed = {
     cookie,
     csrf: csrf.value,
     writeHeaders: { cookie, 'x-csrf-token': csrf.value },
   };
+
+  if (area) {
+    const body = response.json() as { rolesHeld: { roleId: string; areas: string[] }[] };
+    const role = body.rolesHeld.find((held) => held.areas.includes(area));
+    if (!role) throw new Error(`la persona di prova non può entrare nell'area ${area}`);
+    const chosen = await harness.app.inject({
+      method: 'POST',
+      url: '/auth/context',
+      headers: signed.writeHeaders,
+      payload: { roleId: role.roleId, area },
+    });
+    if (chosen.statusCode !== 200) {
+      throw new Error(`scelta della veste fallita: ${chosen.statusCode} ${chosen.body}`);
+    }
+  }
+
+  return signed;
 }

@@ -6,12 +6,24 @@ import { sessionOf } from '../../plugins/auth.js';
 import {
   contentDetail,
   createBody,
+  draftBody,
+  draftDetail,
   idParam,
   listQuery,
   listResponse,
   updateBody,
 } from './schemas.js';
-import { create, findById, list, remove, setPublication, update } from './service.js';
+import {
+  create,
+  discardDraft,
+  findById,
+  findDraft,
+  list,
+  remove,
+  saveDraft,
+  setPublication,
+  update,
+} from './service.js';
 
 /** Modulo `content` (ADR-001 §3 punto 1). */
 
@@ -168,6 +180,98 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const removed = await remove(app.db, request.params.id);
       if (!removed) return reply.callNotFound();
+      return reply.code(204).send(null);
+    },
+  );
+
+  /**
+   * Copie di lavoro (DR-068). Sono **della persona**: il percorso non le nomina
+   * perche' non c'e' nulla da nominare, la copia e' quella di chi ha la
+   * sessione in corso. Nessuna di queste tre rotte scrive in `contents`.
+   */
+
+  typed.put(
+    '/contents/:id/draft',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentWrite),
+      config: { audit: { action: 'content.draft.save', entityType: ENTITY } },
+      schema: {
+        tags: ['contenuti'],
+        summary: 'Salva la copia di lavoro: il contenuto pubblicato non cambia',
+        params: idParam,
+        body: draftBody,
+        response: { 200: draftDetail, ...errorResponses(400, 401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const content = await findById(app.db, request.params.id);
+      if (!content) return reply.callNotFound();
+
+      const row = await saveDraft(
+        app.db,
+        request.params.id,
+        sessionOf(request).user.userId,
+        request.body,
+      );
+      if (!row) return reply.callNotFound();
+
+      return reply.send({
+        contentId: row.contentId,
+        title: row.title,
+        excerpt: row.excerpt,
+        blocks: row.blocks as { schema: number; blocks: unknown[] },
+        baseUpdatedAt: row.baseUpdatedAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+        stillCurrent: row.baseUpdatedAt.getTime() === content.updatedAt.getTime(),
+      });
+    },
+  );
+
+  typed.get(
+    '/contents/:id/draft',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentWrite),
+      schema: {
+        tags: ['contenuti'],
+        summary: 'La propria copia di lavoro, se esiste',
+        params: idParam,
+        response: { 200: draftDetail, ...errorResponses(401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const row = await findDraft(app.db, request.params.id, sessionOf(request).user.userId);
+      if (!row) return reply.callNotFound();
+      return reply.send({
+        contentId: row.contentId,
+        title: row.title,
+        excerpt: row.excerpt,
+        blocks: row.blocks as { schema: number; blocks: unknown[] },
+        baseUpdatedAt: row.baseUpdatedAt.toISOString(),
+        updatedAt: row.updatedAt.toISOString(),
+        stillCurrent: row.baseUpdatedAt.getTime() === row.contentUpdatedAt.getTime(),
+      });
+    },
+  );
+
+  typed.delete(
+    '/contents/:id/draft',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentWrite),
+      config: { audit: { action: 'content.draft.discard', entityType: ENTITY } },
+      schema: {
+        tags: ['contenuti'],
+        summary: 'Scarta la propria copia di lavoro',
+        params: idParam,
+        response: { 204: noContent, ...errorResponses(401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const discarded = await discardDraft(
+        app.db,
+        request.params.id,
+        sessionOf(request).user.userId,
+      );
+      if (!discarded) return reply.callNotFound();
       return reply.code(204).send(null);
     },
   );

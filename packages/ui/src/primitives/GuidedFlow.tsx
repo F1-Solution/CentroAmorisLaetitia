@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Button } from './Button.js';
-import { Alert } from './Alert.js';
+import { Button } from './Button';
+import { Alert } from './Alert';
 import './GuidedFlow.css';
 
 export interface GuidedFlowStep {

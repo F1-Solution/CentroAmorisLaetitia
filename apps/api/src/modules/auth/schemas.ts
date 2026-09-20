@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ADMIN_AREAS } from '../../auth/areas.js';
 
 export const loginBody = z.object({
   email: z.string().min(3).max(320),
@@ -13,12 +14,29 @@ export const changePasswordBody = z.object({
     .max(1024),
 });
 
+/** Una veste offerta dal commutatore: un ruolo posseduto e le sue aree. */
+export const roleHeld = z.object({
+  roleId: z.string(),
+  key: z.string(),
+  label: z.string(),
+  areas: z.array(z.enum(ADMIN_AREAS)),
+});
+
 export const currentUser = z.object({
   userId: z.string(),
   email: z.string(),
   fullName: z.string(),
   mustChangePassword: z.boolean(),
+  /** I permessi del **ruolo attivo**. Vuoti finche' la veste non e' scelta. */
   permissions: z.array(z.string()),
+  activeRoleId: z.string().nullable(),
+  activeArea: z.enum(ADMIN_AREAS).nullable(),
+  rolesHeld: z.array(roleHeld),
+});
+
+export const chooseContextBody = z.object({
+  roleId: z.string().uuid(),
+  area: z.enum(ADMIN_AREAS),
 });
 
 export const sessionSummary = z.object({

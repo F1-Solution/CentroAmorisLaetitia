@@ -342,8 +342,9 @@ dipendenza in più e un rischio di accessibilità.
 **Default vietato sul trascinamento**: in assenza di risposta si realizzano i comandi
 espliciti, e questo è ciò che la 1G collauderà.
 
-> **Stato al 2026-09-20.** La domanda è stata posta nel Round 11 come **D4** ed è
-> rimasta **senza risposta**. La ricaduta descritta qui sopra **non è stata
-> applicata**: senza risposta non si sceglie. La wave `1D-W8b`, che contiene
-> l'editor dell'albero dei blocchi, non parte finché D4 non è chiusa. La `1D-W8a`
-> non ne dipende e procede.
+> **CHIUSA il 2026-09-20 da DR-069: si fa il trascinamento.** La ricaduta
+> descritta qui sopra non si applica — era la proposta, non la risposta. Con la
+> scelta dell'utente: entra una libreria di trascinamento, dichiarata in
+> `PLAN.md` §5; il percorso da tastiera **resta obbligatorio** (§9.3 del sistema
+> di design), e nasce insieme al trascinamento perché la libreria porta il
+> proprio sensore da tastiera; la Fase 1G collauda entrambi i gesti.

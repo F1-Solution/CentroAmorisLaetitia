@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { CheckboxField } from './CheckboxField.js';
+import { CheckboxField } from './CheckboxField';
 import './DataTable.css';
 
 export type SortDirection = 'asc' | 'desc' | null;
