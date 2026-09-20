@@ -615,6 +615,19 @@ una veste e l'ambiente si riconfigura — è di nuovo vero.
 - **In Fase 1 l'effetto pratico è piccolo.** Esistono un solo ruolo applicativo
   (`editor`, ADR-007 §3.2) e due aree. Il commutatore esiste, ma quasi nessuno lo
   vedrà. Va costruito comunque: è il meccanismo su cui poggia tutto il resto.
+
+  > **Correzione del 2026-09-20, dalla wave `1D-W8a`.** «Quasi nessuno lo vedrà»
+  > è **sbagliato**, e l'errore sta nel contare i ruoli. `ux-proposals.md` §4.3,
+  > che è la fonte approvata da DR-045, conta le **aree**: «chi possiede una sola
+  > **area** non vede mai la schermata di scelta». In Fase 1 il ruolo è uno ma le
+  > aree sono due, quindi le vesti sono due: la schermata di scelta **si mostra**
+  > e il commutatore ha due voci. Il §8.3 punto 4 dice «chi ha più ruoli sceglie»
+  > per lo stesso motivo, e va letto «chi ha più vesti».
+  >
+  > La conseguenza buona è che il vincolo d'ambiente del §8.2 punto 2 è
+  > **osservabile già in Fase 1**, invece di restare un meccanismo senza nulla da
+  > rifiutare: chi lavora in Redazione non raggiunge le impostazioni pur avendone
+  > il permesso.
 - **DR-045 e DR-046 non sono toccate.** La proposta B resta la base, e la premessa
   sulle sei aree resta confermata.
 
