@@ -23,12 +23,12 @@
 |---|---|
 | 2026-09-15 | Prima stesura, sulle cinque risposte a HO-004 (DR-044…DR-048). |
 | 2026-09-15 | **Revisione dopo le risposte alle decisioni del capitolo 11.** L'utente ha **revocato DR-047** e ha adottato l'opzione (a) di D-UX-3: **un solo ruolo attivo per volta, scelto esplicitamente**. Riscritti il capitolo 8 e i punti che dipendevano dalla lettura «aree = sola navigazione»; aggiunti cinque componenti al capitolo 6; chiuse le decisioni 1, 2 e 3. |
+| 2026-09-20 | **Correzione di due affermazioni superate** ai capitoli 11 e 11.B: dicevano che le sette risposte del 2026-09-15 non erano ancora iscritte nel registro, mentre lo erano già dai Round 6 e 7 (DR-050…DR-057). Il capitolo 8 non cambia: DR-067 lo conferma per intero e chiude la discrepanza con il criterio di uscita 24. |
 | 2026-09-15 | **Chiusura delle ultime decisioni aperte.** I **tre prestiti sono adottati**, con l'interruttore di densità come requisito dichiarato dall'utente; decisione 4 (a), decisione 6 (a), decisione 7 (a). I prestiti entrano nel corpo del documento — capitoli 4, 5 e 6 — invece di restare ipotesi. **Il capitolo 11 non ha più decisioni aperte che riguardino questo documento.** |
 
-> **Registrazione ancora da fare.** Le risposte del 2026-09-15 alle decisioni 1, 2
-> e 3 vanno registrate in `docs/decisions/decision-register.md` come **voci nuove**,
-> e quella su D-UX-3 come voce che **supera DR-047**: il registro è append-only e
-> DR-047 non si riscrive. Questo documento non modifica il registro.
+> **Registrazione eseguita.** Le risposte del 2026-09-15 sono nel registro come
+> DR-050…DR-057, e quella su D-UX-3 come DR-050, che **supera DR-047** senza
+> riscriverlo. Questo documento non modifica il registro.
 
 ---
 
@@ -364,6 +364,13 @@ S selezionato. Uno stato assente significa che il componente non lo ha.
 
 La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti in
 `1D-W7`.
+
+> **Nota del 2026-09-20.** La wave `1D-W8` è stata divisa in `1D-W8a` e `1D-W8b`.
+> La colonna non viene riscritta riga per riga: `1D-W8` vi si legge come **`1D-W8a`**
+> — guscio, navigazione, commutatore di ruolo, elenco dei contenuti — tranne per i
+> componenti dell'editor e dell'anteprima — `SaveBar` (29), `PreviewPane` (40),
+> `BlockTreeEditor` (41), `BlockInserter` (42), `ColumnRatioControl` (43),
+> `RichTextToolbar` (44), `HtmlFallbackEditor` (45) — che servono in **`1D-W8b`**.
 
 | # | Nome | Che cosa fa | Stati | Serve in |
 |---|---|---|---|---|
@@ -760,8 +767,11 @@ così.
 | 6 | L'utente prioritario dell'area amministrativa | **chiusa** — opzione (a), chi entra ogni giorno |
 | 7 | Azioni non permesse: nascoste o disabilitate | **chiusa** — opzione (a), non si mostrano |
 
-Tutte le risposte sono del **2026-09-15** e **vanno ancora iscritte** in
-`docs/decisions/decision-register.md`: finché non lo sono, la traccia sta solo qui.
+Tutte le risposte sono del **2026-09-15** e sono **iscritte** in
+`docs/decisions/decision-register.md`, Round 6 e Round 7: decisione 1 → DR-051,
+decisione 2 → DR-050 (che supera DR-047), decisione 3 → DR-052, decisione 4 → DR-055,
+decisione 5 → DR-054, decisione 6 → DR-056, decisione 7 → DR-057. La traccia non sta
+solo qui.
 
 ---
 
@@ -907,10 +917,11 @@ Restano aperte, **fuori da questo documento** e già tracciate altrove, le decis
 dati), D8 (WhatsApp nelle comunicazioni) e MI-06 (verifica privacy e legale, che
 richiede un professionista). Nessuna riguarda il sistema di design.
 
-**Registrazione ancora da fare.** Le risposte del 2026-09-15 — quelle sulle decisioni
-1, 2, 3, 4, 5, 6 e 7 — vanno iscritte in `docs/decisions/decision-register.md`, e
-quella su D-UX-3 come voce che **supera DR-047**. Questo documento non modifica il
-registro.
+**Registrazione eseguita.** Le risposte del 2026-09-15 sulle decisioni 1…7 sono nel
+registro come DR-050…DR-057, e quella su D-UX-3 come DR-050, che **supera DR-047**.
+Il capitolo 8 di questo documento è stato poi confermato per intero da **DR-067**
+(2026-09-20), che lo rende vincolante anche lato servizio. Questo documento non
+modifica il registro.
 
 ---
 

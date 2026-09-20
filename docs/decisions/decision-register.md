@@ -434,3 +434,51 @@ nel Round 4.
 | ~~**Due contenuti con percorso in collisione**~~ | ~~Slug condiviso fra tipi diversi in un caso, bozza senza slug nell'altro~~ — **chiusa il 2026-09-16 da DR-063 e DR-064** | — |
 | ~~**Un allegato non recuperabile**~~ | ~~Il database lo cerca con maiuscole diverse da quelle del file vero~~ — **chiusa il 2026-09-16 da DR-065** | — |
 | ~~**Ordine delle fasi e soglia del blocco di riserva**~~ | ~~`contents` è la fase 5 e `forms` la 11, quindi il convertitore non può risolvere i moduli form~~ — **chiusa il 2026-09-16 da DR-062** | — |
+
+---
+
+## 15. Round 11 — risposte del 2026-09-20, soglia di ADR-007, ruolo attivo e salvataggio
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-066 | 2026-09-20 | Soglia delle 300 righe di ADR-007 §6, misurata e superata nella wave `1D-W6` | **Deroga motivata**: in Fase 1 si resta sulle sessioni proprie, scrivendo nell'ADR perché la premessa della proporzione regge lo stesso. Better Auth resta l'opzione di riferimento del riesame obbligatorio di ADR-007 §3.3, prima della fase gestionale | Adottare Better Auth adesso, prima della `1D-W8`; deroga con adozione anticipata alla Fase 1F dentro la security review | «D1 = A» | Proprietario | ADR-007, Fase 1D, Fase 1F | sì — ADR-007 §7 dichiara la reversibilità alta | `apps/api/tests/auth-line-count.json`, ADR-007 §6 contromisura 3 e §3.3, `PLAN.md` §7 punto 7 |
+| DR-067 | 2026-09-20 | Permessi e commutatore di ruolo nell'area amministrativa | **DR-050 si attua per intero**: commutatore di ruolo esplicito, ambiente attivo nell'intestazione di ogni schermata, sessione vincolata al ruolo attivo con rifiuto lato servizio dei dati di un'altra area anche quando il permesso ci sarebbe, registro delle operazioni che attribuisce l'azione al ruolo | Restare sull'unione dei permessi e rimandare il commutatore; commutatore nella sola interfaccia, con l'API che continua a valutare l'unione | «D2 = A» | Proprietario | Fase 1D, `apps/api`, `apps/admin`, criterio di uscita 24 | sì, con ADR | **chiude la discrepanza fra il criterio 24 (DR-047) e DR-050**; `CONTEXT.md` §8 punto 2; `design-system.md` cap. 8 |
+| DR-068 | 2026-09-20 | Salvataggio nell'editor del contenuto | **Bozza automatica separata**: si salva in automatico su una copia di lavoro; il contenuto pubblicato cambia solo su comando esplicito | Solo salvataggio esplicito, senza copia di lavoro | «D3 = B» | Proprietario | Fase 1D, `packages/db`, `apps/api`, `apps/admin`, schema | sì, con ADR | criterio di uscita 1D-36 e requisito F-05; `design-system.md` componente 29; ADR-006 §3.2 |
+
+### Note sulla portata del Round 11
+
+- **DR-066 modifica una ADR approvata, e la modifica si dichiara.** ADR-007 §6 contromisura 3 dice «si adotta Better Auth **senza discutere**». La deroga va scritta dentro l'ADR come revisione datata, non lasciata nel solo registro: chi legge l'ADR fra un anno deve trovare lì perché la contromisura non è scattata. È la terza volta, dopo DR-059 e DR-062, che una decisione registrata corregge un documento approvato.
+
+- **La deroga non cancella l'obbligo, lo sposta.** Il riesame di ADR-007 §3.3 resta vincolante prima della prima fase gestionale, e la verifica di ADR-007 §8 per la Fase 1F resta invariata: la security review deve coprire il modulo in modo esplicito. La misura delle righe non si rifà per far tornare il numero.
+
+- **DR-067 comporta una correzione all'API già committata.** La wave `1D-W6` ha realizzato l'unione dei permessi dichiarando la discrepanza invece di risolverla. Con DR-067 la sessione deve portare il ruolo attivo e il servizio deve restringere di conseguenza: è lavoro della `1D-W8`, non una riscrittura della `1D-W6`.
+
+- **DR-067 riscrive il criterio di uscita 24.** Il criterio diceva «l'area amministrativa **non ha** un commutatore di ruolo, e i permessi di una persona sono l'**unione** di quelli dei suoi ruoli (DR-047)». DR-047 è superata da DR-050 dal 2026-09-15 e il criterio non era stato adeguato. Ora dice il contrario, e la riga di verifica della `1D-W8` nel piano va corretta insieme.
+
+- **DR-067 recupera la riservatezza come separazione di ambiente.** È il punto 5 delle conseguenze di `CONTEXT.md` §8, decaduto con DR-047 e ora valido: rilevante per una fase gestionale che tratterà consulenze familiari, minori e documenti.
+
+- **DR-068 allarga il perimetro della `1D-W8` oltre quanto il piano dichiara.** Una copia di lavoro è una tabella nuova, quindi una migrazione, quindi un numero di versione dello schema diverso da quello che il controllo 5 del preflight dell'importer confronta, e un conteggio in più in `database-schema.md`. Il §2 del piano assegnava alla `1D-W8` i soli `apps/admin/**` e `packages/ui`. La conseguenza si dichiara qui e il piano si corregge.
+
+- **DR-068 non indebolisce il criterio discriminante della fase.** Il criterio 1D-36 e il requisito F-05 — aprire un contenuto e salvarlo senza modifiche non cambia né i blocchi né l'HTML reso — restano veri **sul contenuto**, perché la copia di lavoro è un record distinto e il contenuto pubblicato si scrive solo su comando. Il test che lo prova va scritto contro il contenuto, non contro la bozza.
+
+- **DR-068 ha una conseguenza di conservazione dei dati.** Le copie di lavoro sono versioni intermedie di contenuti: vanno incluse nelle regole di conservazione e cancellazione, e la `1D-W8` deve dichiarare quando una bozza viene eliminata. Non è una dichiarazione di conformità: resta materia da sottoporre a verifica professionale insieme a MI-06.
+
+- **DR-068 interagisce con la protezione del lavoro redazionale dell'importer.** `importer-spec.md` §6.3 non sovrascrive un contenuto modificato dopo l'ultima esecuzione. Con una copia di lavoro esiste un secondo luogo in cui il lavoro redazionale può trovarsi, e la verifica va estesa a quello: da attuare prima della `1D-W11`.
+
+- **Le sette risposte del 2026-09-15 sul sistema di design erano già registrate.** Il capitolo 11 di `docs/design/design-system.md` afferma che «vanno ancora iscritte»: l'affermazione è **superata** e risale alla wave `1D-W0`, scritta prima dei Round 6 e 7. La corrispondenza è: decisione 1 → DR-051, decisione 2 → DR-050, decisione 3 → DR-052, decisione 4 → DR-055, decisione 5 → DR-054, decisione 6 → DR-056, decisione 7 → DR-057. Nessuna voce nuova viene creata: si corregge il documento che dichiara il contrario.
+
+### Decisioni rimaste aperte dopo il Round 11
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D4** | **Come si spostano i blocchi nell'editor dell'albero**: comandi espliciti oppure trascinamento. Posta nel Round 11 e **rimasta senza risposta**. `PLAN.md` §5 dichiara che nessuna libreria di trascinamento è autorizzata e `CONTEXT.md` §8 punto 3 prevede una ricaduta sui comandi espliciti, ma la ricaduta **non si applica** senza risposta | **prima della wave `1D-W8b`** |
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni, **più** le regole di conservazione delle copie di lavoro introdotte da DR-068. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi in `importer-spec.md` §4 e nell'orchestratore, più la misura della soglia rifatta con l'ordine nuovo | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori dei due contenuti in bozza e ricerca insensibile alle maiuscole per l'allegato 341 | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
+| ~~**Soglia delle 300 righe di ADR-007 §6, superata**~~ | ~~Misurata nella wave `1D-W6`: 342 righe il nucleo, 684 il totale~~ — **chiusa il 2026-09-20 da DR-066**, deroga motivata scritta in ADR-007 | — |
+| ~~**Permessi: unione dei ruoli o ruolo attivo**~~ | ~~Il criterio di uscita 24 cita DR-047 e chiede l'unione; DR-050 lo supera~~ — **chiusa il 2026-09-20 da DR-067**, che attua DR-050 per intero | — |

@@ -22,7 +22,8 @@ Decisioni di dettaglio sull'importer: [`IMPORTER-DESIGN.md`](IMPORTER-DESIGN.md)
 | `1D-W5` | Fasi 11–16: `forms`, `submissions`, `legacy`, `redirects`, `rewrite`, `verify`; idempotenza completa; protezione del lavoro redazionale (`importer-spec.md` §6.3); `rollback` | Due `apply` di fila producono lo stesso stato, confrontato strutturalmente; un contenuto modificato dopo l'ultima esecuzione **non** viene sovrascritto e compare in testa al rapporto; dopo `rewrite`, **zero** occorrenze di `wp-content/uploads`; `rollback` riporta allo stato precedente e **rifiuta** di procedere se c'è stato lavoro redazionale |
 | `1D-W6` | `apps/api`: moduli `auth`, `content`, `media`, `menu`, `seo`, `redirects`, `settings`, `terms` (ADR-001 §3 punto 1); sessioni opache e i 12 controlli di ADR-007 §3.1; permessi come unione dei ruoli; hook unico di audit; OpenAPI rigenerata e test | Ognuno dei 12 controlli di ADR-007 ha un test che passa, escluso il controllo 11 dichiarato fuori perimetro; la logica di autenticazione è **contata in righe** contro la soglia di 300; un test fallisce se `openapi.json` cambia senza dichiarazione; ogni scrittura produce una riga di audit log |
 | `1D-W7` | `packages/ui`: token del sistema di design in variabili CSS native (tema chiaro e scuro), carattere d'interfaccia self-hosted, primitive — bottone, campo, casella, badge di stato, tabella, pannello laterale, modale, notifica, stato vuoto, stato di errore | Ogni coppia di colori dichiarata in `ui-proposals.md` proposta 1 §2 è **ricalcolata** e confrontata con il valore dichiarato; l'anello di focus è presente su ogni elemento focalizzabile; nessuna primitiva importa da `packages/blocks`; test di componente per ogni primitiva |
-| `1D-W8` | `apps/admin`: accesso e uscita; guscio con navigazione per aree (Redazione, Impostazioni); elenco dei contenuti con filtri e impaginazione; editor del contenuto; editor dell'albero dei blocchi; TipTap dentro `rich_text` con lo schema del §3.1 di ADR-006; editor del blocco di riserva con evidenziazione; anteprima con i componenti di `packages/blocks` | I criteri 1D-28, 1D-29, 1D-30 e 1D-36 sono eseguiti nell'applicazione avviata; l'anteprima importa **gli stessi** componenti del sito, verificato dal grafo delle importazioni; incollare markup non ammesso lo **ripulisce visibilmente**, non in silenzio; non esiste alcun commutatore di ruolo |
+| `1D-W8a` | `apps/admin`: accesso e uscita; **commutatore di ruolo** e schermata di scelta dell'area; guscio con navigazione per aree (Redazione, Impostazioni) e ambiente attivo dichiarato in ogni schermata; elenco dei contenuti con filtri e impaginazione. `apps/api` e `packages/db`: ruolo attivo nella sessione, restrizione dei permessi al ruolo attivo, rifiuto dei dati di un'altra area, ruolo nel registro delle operazioni, tabella delle **copie di lavoro** e sua migrazione | Il criterio 24 riscritto è eseguito nell'applicazione avviata: il commutatore esiste, l'ambiente attivo è scritto in parole compiute, un'azione non permessa nel ruolo attivo **non si mostra**; una richiesta su dati di un'altra area è **respinta dal servizio** anche con il permesso, provato con un test; ogni riga del registro porta il ruolo |
+| `1D-W8b` | `apps/admin`: editor del contenuto con salvataggio automatico sulla copia di lavoro e pubblicazione su comando esplicito; editor dell'albero dei blocchi; TipTap dentro `rich_text` con lo schema del §3.1 di ADR-006; editor del blocco di riserva con evidenziazione; anteprima con i componenti di `packages/blocks` | I criteri 1D-28, 1D-29, 1D-30 e 1D-36 sono eseguiti nell'applicazione avviata; l'anteprima importa **gli stessi** componenti del sito, verificato dal grafo delle importazioni; incollare markup non ammesso lo **ripulisce visibilmente**, non in silenzio; aprire e salvare senza modifiche non cambia il **contenuto**, provato sul contenuto e non sulla bozza |
 | `1D-W9` | `apps/admin`: media con caricamento, sostituzione, eliminazione, testo alternativo e didascalia; menu con annidamento e i quattro casi di visibilità; SEO per contenuto e template globali; redirect; impostazioni globali | I criteri 1D-31…1D-35 sono eseguiti nell'applicazione avviata; i quattro casi di `menu_items.visibility` sono tutti impostabili e il vincolo che vieta i ruoli dove non servono **fallisce** quando deve |
 | `1D-W10` | Test di andata e ritorno su tutti i contenuti; test end-to-end Playwright sui flussi del CMS; test di idempotenza dell'import su sottoinsieme **sintetico**; misura della copertura | L'andata e ritorno non produce differenze; i flussi end-to-end passano contro le applicazioni avviate; la copertura è misurata e riportata; la CI esegue **solo** le suite sintetiche |
 | `1D-W11` | Esecuzione reale in locale: `plan`, poi `apply --confirm`, poi `apply --confirm` di nuovo; rapporto di completezza in `docs/migration/import-completeness-report.md` — **soli conteggi** | Tutti i conteggi di `database-schema.md` §6 coincidono; le soglie del blocco di riserva sono rispettate; l'esito è `success`; il rapporto viene **letto** per verificare che non contenga dati personali prima di essere scritto nel repository |
@@ -44,7 +45,8 @@ Sonnet, perché l'esecuzione viene prima della stesura.
 | `1D-W5` | **Sonnet** | `apps/importer/src/stages/**`, `apps/importer/src/rollback/**`, `apps/importer/src/report/**` |
 | `1D-W6` | **Sonnet** | `apps/api/src/**`, `packages/contracts/src/**`, `packages/db/src` in sola lettura |
 | `1D-W7` | **Sonnet** | `packages/ui/**` |
-| `1D-W8` | **Sonnet** | `apps/admin/**`, `packages/ui` per le primitive mancanti |
+| `1D-W8a` | **Sonnet** | `apps/admin/**`, `packages/ui` per le primitive mancanti, **`apps/api/src/**`, `packages/db/**` e `packages/contracts/src/**`**: DR-067 e DR-068 allargano il perimetro oltre quanto questo piano dichiarava, ed è scritto nelle note del Round 11 del registro |
+| `1D-W8b` | **Sonnet** | `apps/admin/**`, `packages/ui` per le primitive mancanti |
 | `1D-W9` | **Sonnet** | `apps/admin/**` |
 | `1D-W10` | **Sonnet** | `apps/admin/tests/**`, `tests/e2e/**`, `.github/workflows/ci.yml` |
 | `1D-W11` | **Sonnet** | nessun file sorgente; scrive solo `docs/migration/import-completeness-report.md`. La sorgente resta in sola lettura |
@@ -61,8 +63,9 @@ Sonnet, perché l'esecuzione viene prima della stesura.
 | `1D-W5` | `1D-W4` | `rewrite` e `verify` operano su ciò che le fasi precedenti hanno scritto |
 | `1D-W6` | `1D-W1` | le rotte di scrittura validano i blocchi con gli stessi schemi Zod |
 | `1D-W7` | `1D-W0` | dipende dal documento di design, **non** dal codice: può procedere in parallelo a `1D-W2`…`1D-W5` |
-| `1D-W8` | `1D-W1`, `1D-W6`, `1D-W7` | guscio, editor e anteprima hanno bisogno di tutti e tre |
-| `1D-W9` | `1D-W8` | riusa il guscio e le primitive |
+| `1D-W8a` | `1D-W6`, `1D-W7` | guscio e commutatore hanno bisogno dell'API e delle primitive; non dipende da `packages/blocks` |
+| `1D-W8b` | `1D-W1`, `1D-W8a`, **D4** | editor e anteprima hanno bisogno dei blocchi e del guscio; **D4 è senza risposta e la wave non parte** |
+| `1D-W9` | `1D-W8a` | riusa il guscio e le primitive |
 | `1D-W10` | `1D-W5`, `1D-W9` | prova l'insieme |
 | `1D-W11` | `1D-W10` | non si esegue l'import vero prima che i test passino |
 | `1D-W12` | tutte | è l'audit |
@@ -117,6 +120,11 @@ dichiarano in `AUDIT.md`, con il motivo, come è stato fatto in 1C.
 | `drizzle-orm`, `postgres` | `apps/importer` | ADR-002 §5; ADR-008 §3.3 regola 4, che ammette l'importer come unica eccezione all'accesso diretto al database |
 | `tsx` | `apps/importer` | già in uso in `packages/db` e `apps/api` dalla 1C, per eseguire TypeScript senza un passo di compilazione. Non entra in produzione |
 
+**Aggiunta del 2026-09-20 — DR-068 non introduce alcun pacchetto.** La copia di
+lavoro è una tabella e una rotta: si realizza con `drizzle-orm` e Zod, già in
+tabella. Nessuna libreria di salvataggio automatico, nessuna di gestione dello stato
+oltre a quanto `apps/admin` già usa.
+
 **Scritto in casa, senza pacchetto:**
 
 | Componente | Perché non una libreria |
@@ -162,13 +170,13 @@ Va detto adesso, per non doverlo dire dopo.
 | # | Quando | Che cosa | Se manca |
 |---|---|---|---|
 | 1 | ~~prima di `1D-W8`~~ | ~~La lettura delle aree dopo DR-047~~ — **chiusa il 2026-09-15 da DR-050**, che supera DR-047 e adotta «un solo ruolo attivo per volta». Le aree tornano a essere contesto di permesso e serve un commutatore di ruolo (`CONTEXT.md` §8 punto 2) | — |
-| 2 | prima di `1D-W8` | Comandi espliciti invece del trascinamento per spostare i blocchi (`CONTEXT.md` §8 punto 3) | Si realizzano i comandi espliciti e lo si dichiara nell'audit |
+| 2 | **prima di `1D-W8b`** | Comandi espliciti invece del trascinamento per spostare i blocchi (`CONTEXT.md` §8 punto 3). Posta il 2026-09-20 come **D4** del Round 11 e rimasta **senza risposta** | La wave `1D-W8b` **non parte**. La ricaduta sui comandi espliciti non si applica di iniziativa: è una decisione, e senza risposta non si sceglie |
 | 3 | **prima di `1D-W11`** | L'esecuzione reale dell'import su dati reali. `CLAUDE.md` la colloca fra le azioni a conferma obbligatoria: «import reali non dry-run». Va mostrato comando, file coinvolti, impatto, backup e rollback, verifica successiva | La wave non parte. `plan` resta eseguibile senza conferma, perché non scrive |
 | 3-bis | **prima di `1D-W7`** | I tre prestiti dalle altre proposte di UI. L'utente ha chiesto di vederli descritti prima di scegliere (DR-053) | La wave usa la proposta 1 pura e lo dichiara nell'audit |
 | 4 | entro l'inizio della 1E | Il trattamento degli spazi di Divi e il divieto di stile in linea (`CONTEXT.md` §8 punto 1) | Il modello conserva comunque il valore; si rimanda la resa |
 | 5 | se accade | Se il lettore del dump non regge la verifica dei conteggi, la strada alternativa introduce un client MySQL locale (`IMPORTER-DESIGN.md` §3.5): è una dipendenza che nessuna ADR autorizza | Ci si ferma e si chiede |
 | 6 | se accade | Se la soglia del blocco di riserva viene superata, la conversione va rivista **prima** della 1E (ADR-005 §3.4): è una decisione sull'ambizione della conversione, non un dettaglio | Ci si ferma e si chiede |
-| 7 | se accade | Se la logica di autenticazione supera le 300 righe, ADR-007 §6 impone di adottare Better Auth «senza discutere». Va comunque comunicato, perché cambia una dipendenza | Si adotta, e si dichiara nell'audit |
+| 7 | ~~se accade~~ | ~~Se la logica di autenticazione supera le 300 righe, ADR-007 §6 impone di adottare Better Auth «senza discutere»~~ — **accaduto e chiuso**: misurata nella `1D-W6` a 342 righe il nucleo e 684 il totale, portata all'utente e risolta il 2026-09-20 da **DR-066** con **deroga motivata** scritta in ADR-007. Better Auth resta l'opzione del riesame di ADR-007 §3.3 | — |
 
 Restano a conferma obbligatoria e **non** avvengono in questa fase: deploy, DNS,
 certificati, configurazione e invio di email, pagamenti, migrazioni su database di

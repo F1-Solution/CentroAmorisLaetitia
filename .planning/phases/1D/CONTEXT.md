@@ -243,8 +243,19 @@ ADR-004 §7. I restanti attuano `acceptance-criteria.md` §3.
     a occhio (ADR-006 §3.3).
 23. Il blocco di riserva si modifica in un'area di testo con evidenziazione della
     sintassi, **non** con l'editor di testo ricco, e mostra l'avviso (ADR-006 §3.4).
-24. L'area amministrativa **non ha un commutatore di ruolo**, e i permessi di una
-    persona sono l'**unione** di quelli dei suoi ruoli (DR-047).
+24. L'area amministrativa **ha un commutatore di ruolo** esplicito, ogni schermata
+    dichiara l'ambiente attivo in parole compiute, e i permessi in vigore sono quelli
+    del **ruolo attivo**, non l'unione dei ruoli posseduti. Il servizio **rifiuta**
+    dati di un'altra area anche quando il permesso ci sarebbe, e il registro delle
+    operazioni attribuisce l'azione al ruolo con cui è stata compiuta (DR-050,
+    attuata per intero da **DR-067**).
+    *Riscritto il 2026-09-20.* Diceva l'opposto, citando DR-047, che DR-050 aveva
+    superata il 2026-09-15 senza che il criterio venisse adeguato.
+24-bis. L'editor salva in automatico su una **copia di lavoro**; il contenuto
+    pubblicato cambia **solo su comando esplicito**. La copia di lavoro è un record
+    distinto, quindi il criterio 1D-36 e il requisito F-05 si verificano **sul
+    contenuto**, non sulla bozza. Quando una copia di lavoro viene eliminata è
+    dichiarato (**DR-068**).
 
 **Struttura e igiene**
 
@@ -330,3 +341,9 @@ dipendenza in più e un rischio di accessibilità.
 
 **Default vietato sul trascinamento**: in assenza di risposta si realizzano i comandi
 espliciti, e questo è ciò che la 1G collauderà.
+
+> **Stato al 2026-09-20.** La domanda è stata posta nel Round 11 come **D4** ed è
+> rimasta **senza risposta**. La ricaduta descritta qui sopra **non è stata
+> applicata**: senza risposta non si sceglie. La wave `1D-W8b`, che contiene
+> l'editor dell'albero dei blocchi, non parte finché D4 non è chiusa. La `1D-W8a`
+> non ne dipende e procede.

@@ -116,7 +116,8 @@ contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
 | `1D-W5` | Fasi 11–16: form, compilazioni, tabelle storiche, redirect, riscrittura dei riferimenti ai media, verifica. Idempotenza e rientro | — |
 | `1D-W6` | Rotte dell'API per contenuti, media, menu, SEO, redirect, impostazioni e tassonomie; sessioni; OpenAPI | `apps/api` |
 | `1D-W7` | Attuazione del sistema di design: token e componenti dell'area amministrativa | `packages/ui` |
-| `1D-W8` | CMS: navigazione per aree, accesso, elenco e modifica dei contenuti, editor dell'albero dei blocchi, anteprima | `apps/admin` |
+| `1D-W8a` | CMS: accesso, commutatore di ruolo, navigazione per aree, elenco dei contenuti; ruolo attivo nella sessione e copie di lavoro lato servizio | `apps/admin`, `apps/api`, `packages/db` |
+| `1D-W8b` | CMS: modifica dei contenuti, editor dell'albero dei blocchi, anteprima | `apps/admin` |
 | `1D-W9` | CMS: media, menu, SEO, redirect, impostazioni | `apps/admin` |
 | `1D-W10` | Test di andata e ritorno su tutti i contenuti, E2E sul CMS, copertura | — |
 | `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza | `docs/migration/import-report.md` |

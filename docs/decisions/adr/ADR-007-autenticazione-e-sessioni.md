@@ -8,6 +8,13 @@
 | **Decide** | come si accede all'area amministrativa e come si mantiene la sessione |
 | **Origine** | DR-033, RU-01, RU-02, RU-05 |
 
+## Revisioni
+
+| Data | Che cosa è cambiato |
+|---|---|
+| 2026-09-14 | Prima stesura, approvata in blocco con DR-038. |
+| 2026-09-20 | **Due correzioni dichiarate, entrambe da decisioni registrate.** §6 contromisura 3: la soglia delle 300 righe è stata misurata e superata, e **DR-066** la risolve con una **deroga motivata** invece che con l'adozione di Better Auth. §3.2: la scelta fra «un ruolo attivo per volta» e «unione dei permessi», che questa ADR dichiarava di non decidere, è stata decisa da DR-050 e attuata per intero da **DR-067**. Nessuna delle due tocca i 12 controlli del §3.1, che restano invariati. |
+
 ---
 
 ## 1. Contesto
@@ -112,6 +119,15 @@ La scelta fra «un ruolo attivo per volta» e «unione dei permessi di tutti i r
 più costosa da cambiare dopo. Fino alla risposta lo schema resta compatibile con
 entrambe.
 
+> **Decisa il 2026-09-20 — correzione dichiarata.** La risposta è **un solo ruolo
+> attivo per volta** (DR-050, che supera DR-047), attuata per intero da **DR-067**:
+> la sessione porta il ruolo attivo, i permessi in vigore sono quelli di quel ruolo,
+> il servizio rifiuta dati di un'altra area anche quando il permesso ci sarebbe, e
+> il registro delle operazioni attribuisce l'azione al ruolo.
+> **Lo schema non cambia**: la relazione molti-a-molti fra persona e ruolo era già
+> prevista proprio per questo, e resta compatibile con entrambe le letture. Cambia
+> che cosa la sessione porta con sé.
+
 ### 3.3 Riesame obbligatorio
 
 Prima della prima fase gestionale, questa ADR va riaperta. Quando arriveranno
@@ -160,6 +176,38 @@ Tre contromisure, tutte vincolanti:
 3. Se durante la Fase 1C la soluzione propria superasse le 300 righe di logica di
    autenticazione, la premessa della proporzione è caduta e si adotta Better Auth
    senza discutere.
+
+> **La contromisura 3 è scattata, ed è stata derogata. Correzione dichiarata del
+> 2026-09-20, decisione DR-066.**
+>
+> **La misura.** Il conteggio è stato fatto nella wave `1D-W6` con una regola scritta
+> **prima** di vedere il numero e non modificata dopo — `apps/api/tools/countAuthLines.ts`,
+> esito in `apps/api/tests/auth-line-count.json`, un test che fallisce se il numero
+> cambia senza dichiararlo. Righe eseguibili, senza vuote, commenti e import. Due
+> insiemi, perché «logica di autenticazione» ammette due letture oneste e tenerne una
+> sola sarebbe stato il modo più facile di far tornare il conto:
+> **nucleo 342**, **totale 684**, soglia **300**. Superata in entrambe le letture.
+>
+> **La deroga.** L'utente ha scelto di **restare sulle sessioni proprie per la Fase 1**.
+> Il motivo per cui la premessa della proporzione regge lo stesso: le 342 righe del
+> nucleo non sono 342 righe di *autenticazione*. Limitazione dei tentativi, audit,
+> anti-CSRF e uniformità dei tempi di risposta — i controlli 7, 8, 9 e 10 del §3.1 —
+> pesano per la maggior parte del conto, e **nessuno dei quattro sparirebbe** adottando
+> Better Auth: andrebbero comunque scritti, cablati e provati. Ciò che la libreria
+> sostituirebbe davvero — password, token, cookie, scadenze, rotazione, revoca — è la
+> parte piccola. La soglia delle 300 righe era una regola posta prima di sapere come si
+> sarebbe distribuito il codice, e il codice si è distribuito diversamente da come la
+> regola supponeva.
+>
+> **Che cosa la deroga non tocca.**
+> - Il **riesame obbligatorio del §3.3 resta vincolante** prima della prima fase
+>   gestionale, e Better Auth resta la sua opzione di riferimento.
+> - La **verifica del §8 per la Fase 1F resta invariata**: la security review deve
+>   coprire questo modulo in modo esplicito.
+> - La **misura non si rifà** per far tornare il numero, e la regola di conteggio non
+>   si cambia. Se il nucleo cresce ancora, la cosa si ripresenta all'utente.
+> - I **12 controlli del §3.1 restano una lista di verifica**: 11 hanno un test che
+>   passa, il 12º — recupero password — è dichiarato fuori perimetro dal §3.1 stesso.
 
 ## 7. Reversibilità
 
