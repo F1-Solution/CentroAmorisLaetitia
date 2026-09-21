@@ -13,6 +13,8 @@ export default function NotiziePage(): React.JSX.Element {
       searchLabel="Cerca fra le notizie"
       emptyText="Nessuna notizia corrisponde a questi filtri."
       caption="Notizie del sito"
+      basePath="/redazione/notizie"
+      createLabel="Nuova notizia"
     />
   );
 }

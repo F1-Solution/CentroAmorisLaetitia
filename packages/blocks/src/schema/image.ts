@@ -1,6 +1,6 @@
 /** `image`. Non contiene blocchi (`BLOCK-MODEL.md` §3.5). */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 const animationSchema = z
   .object({

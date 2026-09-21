@@ -1,6 +1,6 @@
 /** `separator`. Non contiene blocchi (`BLOCK-MODEL.md` §3.9). */
 import { z } from 'zod';
-import { classesField } from '../common.js';
+import { classesField } from '../common';
 
 export const separatorPropsSchema = z
   .object({

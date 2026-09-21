@@ -1,0 +1,17 @@
+.amoris-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-4);
+}
+
+.amoris-inspector__empty,
+.amoris-inspector__note {
+  margin: 0;
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+}
+
+.amoris-inspector__empty {
+  padding: var(--amoris-space-6) var(--amoris-space-4);
+  text-align: center;
+}

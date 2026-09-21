@@ -1,3 +1,3 @@
-export * from './escape.js';
-export * from './serialize.js';
-export * from './text-extract.js';
+export * from './escape';
+export * from './serialize';
+export * from './text-extract';

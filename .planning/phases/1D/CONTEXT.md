@@ -109,7 +109,7 @@ Stato reale del repository, verificato e non assunto:
 | F-19 | Le compilazioni dei form **non si aggiornano mai**: solo inserimento se assenti | `importer-spec.md` §6.2 | Sono un fatto storico, non uno stato |
 | F-20 | Un contenuto modificato nel CMS **dopo** l'ultima esecuzione riuscita non viene sovrascritto | `importer-spec.md` §6.3 | Senza questa protezione il secondo import distrugge lavoro redazionale |
 | F-21 | Le sessioni sono **opache**, il token si conserva come digest, e i 12 controlli di ADR-007 §3.1 **non sono facoltativi** | ADR-007 §3.1 | Ognuno ha un test in questa fase. ADR-007 §8 li assegnava alla Fase 1C, che però non ha costruito l'autenticazione: l'obbligo cade qui |
-| F-22 | Se la logica di autenticazione supera le **300 righe**, si adotta Better Auth «senza discutere» | ADR-007 §6 contromisura 3 | È una soglia da misurare in `1D-W6`, non da stimare |
+| F-22 | Se la logica di autenticazione supera le **500 righe**, si adotta Better Auth «senza discutere» | ADR-007 §6 contromisura 3, soglia portata da 300 a 500 il 2026-09-21 da **DR-070** | È una soglia da misurare in `1D-W6`, non da stimare. Misurata: nucleo 437, totale 859 — rispettata dal nucleo, superata dal totale, e per il totale vale la deroga di DR-066 |
 | F-23 | Le autorizzazioni si esprimono come **permessi**, mai confrontando il nome del ruolo | ADR-007 §3.2 | In Fase 1: `content.read`, `content.write`, `content.publish`, `media.write`, `settings.write`, `submissions.read` |
 | F-24 | **DR-047**: tutti i ruoli sono attivi insieme, unione dei permessi, **nessuna commutazione di ruolo** | DR-047 | L'area amministrativa **non** ha un commutatore di ruolo. Vedi §8, punto aperto 2 |
 | F-25 | **DR-044**: UI «Scrivania». **DR-048**: carattere d'interfaccia distinto da quello del sito pubblico | DR-044, DR-048 | Inter come carattere d'interfaccia, come propone `ui-proposals.md` proposta 1 §3; Open Sans resta al sito pubblico |
@@ -224,7 +224,9 @@ ADR-004 §7. I restanti attuano `acceptance-criteria.md` §3.
 17. I **12 controlli** di ADR-007 §3.1 sono attuati e **ognuno ha un test che passa**.
     Il controllo 11, il recupero password, è fuori perimetro e questo va scritto.
 18. La logica di autenticazione è stata **contata in righe** e il numero è riportato
-    nell'audit, con l'esito rispetto alla soglia di 300 righe di ADR-007 §6.
+    nell'audit, con l'esito rispetto alla soglia di **500** righe di ADR-007 §6
+    (era 300 fino al 2026-09-21, DR-070), dichiarato separatamente per il nucleo e
+    per il totale.
 19. `GET /openapi.json` è generata dagli schemi, e un test **fallisce** se la
     specifica cambia senza che la modifica sia dichiarata (ADR-001 §3 punto 4).
 20. Ogni richiesta che modifica dati produce **una riga di audit log**, scritta da un
@@ -290,6 +292,14 @@ criterio di uscita: finché non è decisa, il divieto si enuncia come «nessuna
 **dichiarazione** CSS in linea», non «nessun attributo `style`».
 
 **Default vietato.** Da chiedere all'utente entro l'inizio della Fase 1E.
+
+> **CHIUSA il 2026-09-21 da DR-071: si fa la strada C**, sole proprietà
+> personalizzate CSS sul contenitore, con le regole nel foglio di stile. Resta
+> da attuare la conseguenza: ADR-005 §3.3 regola 2 va **riformulata** con una
+> revisione datata dentro l'ADR — un attributo `style` che porta un valore non
+> è «stile in linea generato automaticamente» nel senso che la regola vieta —
+> e il criterio di uscita della 1E va riformulato con essa. Prima dell'inizio
+> della Fase 1E, non adesso: la Fase 1D non dipinge nulla.
 
 ### 2. Che cosa sono le aree — **CHIUSA il 2026-09-15 da DR-050**
 

@@ -1,5 +1,5 @@
-import type { BlockDocument } from '../schema/document.js';
-import { BlockRenderer } from './BlockRenderer.js';
+import type { BlockDocument } from '../schema/document';
+import { BlockRenderer } from './BlockRenderer';
 
 export interface BlocksDocumentProps {
   readonly document: BlockDocument;

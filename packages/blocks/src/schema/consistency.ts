@@ -4,7 +4,7 @@
  * controlla che non si contraddicano.
  */
 import type { z } from 'zod';
-import type { BlockNode } from './block.js';
+import type { BlockNode } from './block';
 
 interface BooleanConsistencyRule {
   readonly blockType: BlockNode['type'];

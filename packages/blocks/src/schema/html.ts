@@ -4,7 +4,7 @@
  * (`stripDangerousMarkup`), ed è compito del convertitore, non dello schema.
  */
 import { z } from 'zod';
-import { classesField } from '../common.js';
+import { classesField } from '../common';
 
 export const HTML_BLOCK_REASONS = [
   'wp_html_block',

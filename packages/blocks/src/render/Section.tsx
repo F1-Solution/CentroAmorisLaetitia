@@ -1,6 +1,6 @@
-import type { SectionBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
-import { BlockRenderer } from './BlockRenderer.js';
+import type { SectionBlock } from '../schema/block';
+import { blockClassName } from './class-name';
+import { BlockRenderer } from './BlockRenderer';
 
 export interface SectionComponentProps {
   readonly block: SectionBlock;

@@ -3,7 +3,7 @@
  * `slider_slides`, non nel blocco.
  */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const sliderPropsSchema = z
   .object({

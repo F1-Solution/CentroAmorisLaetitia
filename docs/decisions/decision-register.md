@@ -515,3 +515,75 @@ nel Round 4.
 | **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
 | **Crescita del nucleo di autenticazione** | La misura del 2026-09-20 dà **437** righe di nucleo contro le 342 del 2026-09-16, a fronte di una soglia di 300 e della deroga di DR-066, che dichiara di ripresentare la questione se il nucleo cresce. È ripresentata | prima della security review della Fase 1F |
 | ~~**D4 — come si spostano i blocchi**~~ | ~~Comandi espliciti oppure trascinamento~~ — **chiusa il 2026-09-20 da DR-069**, trascinamento | — |
+
+---
+
+## 17. Round 12 — risposta del 2026-09-21, soglia dell'autenticazione portata a 500
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-070 | 2026-09-21 | Soglia di ADR-007 §6 contromisura 3, dopo la crescita del nucleo da 342 a 437 righe misurata nella `1D-W8a` | **La soglia sale da 300 a 500 righe.** Supera DR-066 sul punto della soglia, non sulla deroga: con 500, il nucleo (437) la rispetta e il totale (859) la supera ancora, quindi la deroga di DR-066 resta in vigore per la lettura del totale | Lasciare la soglia a 300 e ripresentare la questione a ogni crescita; adottare Better Auth adesso; restringere la definizione di nucleo escludendo audit e limitazione dei tentativi | «Rivediamo la soglia di DR-066, alzala a 500» | Proprietario | ADR-007 §6, `apps/api/tools/countAuthLines.ts`, `apps/api/tests/auth-line-count.json`, criteri 1C-7 e 18 | sì — ADR-007 §7 dichiara la reversibilità alta | ADR-007 revisione del 2026-09-21, `.planning/phases/1D/CONTEXT.md` F-22 e criterio 18, `PLAN.md` §7 punto 7, `docs/qa/acceptance-criteria.md` 1C-7 |
+
+### Note sulla portata di DR-070
+
+- **Alzare la soglia dopo aver visto il numero è l'operazione che la regola di conteggio serviva a rendere visibile, e resta visibile.** La regola di conteggio **non** è stata toccata e la misura **non** è stata rifatta: a cambiare è solo la soglia, e la dichiarazione in `apps/api/tests/auth-line-count.json` porta ora la soglia precedente, la data del cambio e l'esito separato per ciascuna delle due letture. È la differenza fra cambiare il metro e cambiare il limite: la seconda è una decisione dichiarabile, la prima no.
+
+- **Non azzera la deroga di DR-066, e dirlo è il punto.** Con soglia 500 il totale resta a 859. La contromisura 3 continua a scattare su quella lettura, ed è la deroga motivata del 2026-09-20 — non la soglia nuova — a spiegare perché il progetto non adotta Better Auth in Fase 1.
+
+- **Il riesame obbligatorio di ADR-007 §3.3 resta vincolante** prima della prima fase gestionale, con Better Auth come opzione di riferimento, e la security review della Fase 1F deve continuare a coprire il modulo in modo esplicito (ADR-007 §8). DR-070 non tocca nessuno dei due.
+
+- **La voce aperta «Crescita del nucleo di autenticazione» si chiude qui**, ma solo per la misura del 2026-09-20. La clausola di DR-066 — se il nucleo cresce, la cosa si ripresenta — resta valida con il limite nuovo: sopra 500 righe di nucleo si torna a chiedere.
+
+### Decisioni rimaste aperte dopo il Round 12
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni, più le regole di conservazione delle copie di lavoro introdotte da DR-068. **Richiede un professionista** | prima della produzione |
+| **Spaziature di Divi** | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea di ADR-005 §3.3 regola 2 | prima dell'inizio della Fase 1E |
+| **Esecuzione reale dell'import** | Azione a conferma obbligatoria: «import reali non dry-run» | prima della wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi in `importer-spec.md` §4 e nell'orchestratore, più la misura della soglia rifatta | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori dei due contenuti in bozza e ricerca insensibile alle maiuscole per l'allegato 341 | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
+| ~~**Crescita del nucleo di autenticazione**~~ | ~~437 righe di nucleo contro una soglia di 300~~ — **chiusa il 2026-09-21 da DR-070**, che porta la soglia a 500. Si ripresenta se il nucleo supera 500 | — |
+
+---
+
+## 18. Round 13 — risposte del 2026-09-21, spaziature di Divi, import reale e MI-06
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-071 | 2026-09-21 | Come si rendono le spaziature per modulo di Divi senza violare il divieto di stile in linea | **Opzione C — sole proprietà personalizzate CSS** sul contenitore del blocco (`style="--blk-pad-top:54px"`), con le regole che le usano nel foglio di stile | A — classi da una scala di token, arrotondando i valori; B — stile in linea vero e proprio | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1E, ADR-005 §3.3 regola 2, `BLOCK-MODEL.md` §7.3, criterio di uscita della 1E | sì, con ADR | `CONTEXT.md` §8 punto 1, `BLOCK-MODEL.md` §7.3 strada C, `divi-shortcode-strategy.md` §3.1 e §6 |
+| DR-072 | 2026-09-21 | Come si arriva all'esecuzione reale dell'import della `1D-W11` | **Opzione B — a due tempi**: `plan` si esegue senza conferma perché non scrive; il rapporto viene letto e ripulito e mostrato all'utente; la conferma riguarda **solo** `apply --confirm` e si dà sui conteggi veri | A — un solo documento di handoff e una conferma su descrizione; C — l'esecuzione la fa l'utente e l'agente produce solo l'handoff | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, wave `1D-W11`, `docs/handoff/` | sì | `PLAN.md` §7 punto 3, `CLAUDE.md` «conferma obbligatoria», RD-12 |
+| DR-073 | 2026-09-21 | Quando si coinvolge il professionista di MI-06 e che cosa fa il progetto nel frattempo | **Opzione A — dossier adesso, professionista prima della Fase 1F**: si prepara in `docs/handoff/` l'inventario di categorie, volumi, collocazione, regole tecniche già in vigore e domande aperte. Il codice non cambia e la `1D-W11` non slitta | B — professionista prima della `1D-W11`, con la wave ferma al responso; C — perimetro ridotto, senza le 425 compilazioni, che avrebbe superato DR-026 | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | MI-06, Fase 1D, Fase 1F, `database-schema.md` §7 | sì | `database-schema.md` §7 regole 5 e 6, DR-026, DR-068, RD-12 |
+
+### Note sulla portata delle tre decisioni
+
+- **DR-071 obbliga a riformulare una regola approvata, e la riformulazione non è questa riga.** ADR-005 §3.3 regola 2 dice «mai stile in linea generato automaticamente»; la strada C produce un attributo `style`, che porta un **valore** e non una **regola**. La distinzione regge, ma va scritta dentro ADR-005 come revisione datata prima dell'inizio della Fase 1E: è la quarta volta, dopo DR-059, DR-062 e DR-066, che una decisione registrata corregge un documento approvato.
+
+- **DR-071 non cambia nulla nel modello a blocchi né in questa fase.** Il valore è già conservato nella proprietà `padding` dal `1D-W1`; a cambiare è **come venga dipinto**, che è lavoro della 1E dove il CSS si estrae dal reso. Nessuna wave della Fase 1D si modifica per questo.
+
+- **DR-072 non è una pre-autorizzazione, ed è la ragione per cui è stata posta così.** `CLAUDE.md` dice che una conferma vale per quella azione e non si eredita: questa decisione stabilisce **con quali prove** la conferma verrà chiesta, non la sostituisce. Alla `1D-W11` la richiesta di conferma su `apply --confirm` si fa comunque, con comando, file coinvolti, impatto, backup, rollback e verifica.
+
+- **DR-072 aggiunge un obbligo di lettura.** Il rapporto di `plan` si legge **prima** di mostrarlo, perché RD-12 vieta che righe di dati personali escano dal database, e un rapporto che elenca anomalie potrebbe citarne.
+
+- **DR-073 non dichiara alcuna conformità, e il dossier non è un parere.** È un inventario che serve al professionista per darne uno. Finché MI-06 è aperta, cifratura a riposo, tempi di conservazione e procedura di cancellazione restano non validati (`database-schema.md` §7 regola 5), e le copie di lavoro di DR-068 rientrano nello stesso perimetro (regola 6).
+
+- **DR-073 lascia dati personali reali in un database locale più a lungo delle alternative, e va detto.** È la conseguenza dell'opzione scelta: le 425 compilazioni entrano con la `1D-W11` e restano fino al responso. Le regole del §7 di `database-schema.md` sono già in vigore e sono ciò che nel frattempo limita l'esposizione — non una validazione.
+
+### Decisioni rimaste aperte dopo il Round 13
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni e sulle copie di lavoro. **Richiede un professionista.** Il *come* è deciso da DR-073; il *responso* no | prima della produzione |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071: revisione datata dentro ADR-005 che distingue un valore da una regola, e criterio di uscita della 1E riformulato di conseguenza | prima dell'inizio della Fase 1E |
+| **Dossier di MI-06** | Attuazione di DR-073: inventario in `docs/handoff/` | prima della Fase 1F, e comunque prima di portarlo al professionista |
+| **Conferma puntuale di `apply --confirm`** | Attuazione di DR-072: la conferma vera, sui conteggi del rapporto di `plan` | alla wave `1D-W11`, non prima |
+| **Attuazione di DR-062** | Riordino delle fasi in `importer-spec.md` §4 e nell'orchestratore, più la misura della soglia rifatta | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori dei due contenuti in bozza e ricerca insensibile alle maiuscole per l'allegato 341 | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
+| ~~**Spaziature di Divi**~~ | ~~Tre strade in `BLOCK-MODEL.md` §7.3~~ — **chiusa il 2026-09-21 da DR-071**, strada C | — |
+| ~~**Esecuzione reale dell'import**~~ | ~~Come ci si arriva~~ — **chiusa il 2026-09-21 da DR-072**, a due tempi. La conferma puntuale resta dovuta | — |

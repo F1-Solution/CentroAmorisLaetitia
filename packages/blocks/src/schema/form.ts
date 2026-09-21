@@ -3,7 +3,7 @@
  * contiene la definizione dei campi: quella sta in `forms` (ADR-010 §4.1).
  */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const formPropsSchema = z
   .object({

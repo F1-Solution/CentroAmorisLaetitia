@@ -1,5 +1,5 @@
-import type { FormBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { FormBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface FormComponentProps {
   readonly block: FormBlock;

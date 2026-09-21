@@ -1,6 +1,6 @@
 /** `row` — contenitore. Può contenere solo `column` (`BLOCK-MODEL.md` §3.2). */
 import { z } from 'zod';
-import { ColorValue, CustomWidth, classesField, defaultCustomWidth, EntityRef, emptySpacing, Spacing } from '../common.js';
+import { ColorValue, CustomWidth, classesField, defaultCustomWidth, EntityRef, emptySpacing, Spacing } from '../common';
 
 const gutterSchema = z
   .object({

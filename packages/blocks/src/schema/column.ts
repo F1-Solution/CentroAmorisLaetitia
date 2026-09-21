@@ -5,7 +5,7 @@
  * regolare finché `1D-W3` non lo enumera.
  */
 import { z } from 'zod';
-import { classesField, emptySpacing, Spacing } from '../common.js';
+import { classesField, emptySpacing, Spacing } from '../common';
 
 export const columnPropsSchema = z
   .object({

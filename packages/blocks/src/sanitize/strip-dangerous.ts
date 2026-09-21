@@ -8,10 +8,10 @@
  */
 import { parseFragment } from 'parse5';
 import type { DefaultTreeAdapterTypes as Tree } from 'parse5';
-import { DANGEROUS_ELEMENTS, isEventHandlerAttribute } from './allowlist.js';
-import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from '../serialize/escape.js';
-import { isCommentNode, isElementNode, isTextNode } from './tree.js';
-import type { SanitizeIssue } from './sanitize.js';
+import { DANGEROUS_ELEMENTS, isEventHandlerAttribute } from './allowlist';
+import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from '../serialize/escape';
+import { isCommentNode, isElementNode, isTextNode } from './tree';
+import type { SanitizeIssue } from './sanitize';
 
 export interface StripDangerousResult {
   readonly html: string;

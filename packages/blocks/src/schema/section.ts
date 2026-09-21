@@ -1,6 +1,6 @@
 /** `section` — contenitore. Può contenere solo `row` (`BLOCK-MODEL.md` §3.1). */
 import { z } from 'zod';
-import { classesField, ColorValue, CustomWidth, defaultCustomWidth, EntityRef, emptySpacing, Spacing } from '../common.js';
+import { classesField, ColorValue, CustomWidth, defaultCustomWidth, EntityRef, emptySpacing, Spacing } from '../common';
 
 export const sectionPropsSchema = z
   .object({

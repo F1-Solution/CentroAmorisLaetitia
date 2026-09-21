@@ -4,7 +4,7 @@
  * in `1D-W3` (assunzione vietata 3 di `BLOCK-MODEL.md` §9).
  */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const postListPropsSchema = z
   .object({

@@ -706,6 +706,11 @@ decisione su *come* dipingere resta nel foglio di stile, che è ciò che ADR-005
 proteggere. Ma è una riformulazione della regola, e riformulare una regola approvata
 non è compito mio.
 
+> **DECISA il 2026-09-21 da DR-071: strada C.** La riformulazione di ADR-005 §3.3
+> regola 2 è dovuta e va scritta come revisione datata dentro l'ADR prima
+> dell'inizio della Fase 1E. Le strade A e B sono scartate: A perde fedeltà al
+> pixel su valori che non cadono sulla scala, B rende il divieto lettera morta.
+
 **Impatto sulla wave `1D-W1`: nessuno.** Il modello conserva comunque il valore in
 `padding`; come venga dipinto è lavoro della Fase 1E, dove il CSS si estrae dal reso
 (`divi-shortcode-strategy.md` §6). Impatto sulla formulazione del criterio di uscita:

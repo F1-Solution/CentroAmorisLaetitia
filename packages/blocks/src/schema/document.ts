@@ -4,9 +4,9 @@
  * `packages/db/src/schema/content.ts`).
  */
 import { z } from 'zod';
-import { blockNodeSchema } from './block.js';
-import { ROOT_ALLOWED_TYPES } from './block-type.js';
-import { validateContainment } from './containment.js';
+import { blockNodeSchema } from './block';
+import { ROOT_ALLOWED_TYPES } from './block-type';
+import { validateContainment } from './containment';
 
 export const blockDocumentSchema = z
   .object({

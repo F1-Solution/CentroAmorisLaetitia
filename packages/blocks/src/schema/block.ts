@@ -7,21 +7,21 @@
  * tipo del genitore» senza perdere la forma dell'unione discriminata.
  */
 import { z } from 'zod';
-import { BlockId } from '../common.js';
-import { sectionPropsSchema, type SectionProps } from './section.js';
-import { rowPropsSchema, type RowProps } from './row.js';
-import { columnPropsSchema, type ColumnProps } from './column.js';
-import { richTextPropsSchema, type RichTextProps } from './rich-text.js';
-import { imagePropsSchema, type ImageProps } from './image.js';
-import { mediaTextPropsSchema, type MediaTextProps } from './media-text.js';
-import { videoPropsSchema, type VideoProps } from './video.js';
-import { mapPropsSchema, type MapProps } from './map.js';
-import { separatorPropsSchema, type SeparatorProps } from './separator.js';
-import { formPropsSchema, type FormProps } from './form.js';
-import { postListPropsSchema, type PostListProps } from './post-list.js';
-import { docBlockPropsSchema, type DocBlockProps } from './document-block.js';
-import { sliderPropsSchema, type SliderProps } from './slider.js';
-import { htmlPropsSchema, type HtmlProps } from './html.js';
+import { BlockId } from '../common';
+import { sectionPropsSchema, type SectionProps } from './section';
+import { rowPropsSchema, type RowProps } from './row';
+import { columnPropsSchema, type ColumnProps } from './column';
+import { richTextPropsSchema, type RichTextProps } from './rich-text';
+import { imagePropsSchema, type ImageProps } from './image';
+import { mediaTextPropsSchema, type MediaTextProps } from './media-text';
+import { videoPropsSchema, type VideoProps } from './video';
+import { mapPropsSchema, type MapProps } from './map';
+import { separatorPropsSchema, type SeparatorProps } from './separator';
+import { formPropsSchema, type FormProps } from './form';
+import { postListPropsSchema, type PostListProps } from './post-list';
+import { docBlockPropsSchema, type DocBlockProps } from './document-block';
+import { sliderPropsSchema, type SliderProps } from './slider';
+import { htmlPropsSchema, type HtmlProps } from './html';
 
 export interface SectionBlock {
   type: 'section';
@@ -213,18 +213,18 @@ export const blockNodeSchema: z.ZodType<BlockNode> = z.lazy(() =>
   ]),
 );
 
-export * from './block-type.js';
-export * from './section.js';
-export * from './row.js';
-export * from './column.js';
-export * from './rich-text.js';
-export * from './image.js';
-export * from './media-text.js';
-export * from './video.js';
-export * from './map.js';
-export * from './separator.js';
-export * from './form.js';
-export * from './post-list.js';
-export * from './document-block.js';
-export * from './slider.js';
-export * from './html.js';
+export * from './block-type';
+export * from './section';
+export * from './row';
+export * from './column';
+export * from './rich-text';
+export * from './image';
+export * from './media-text';
+export * from './video';
+export * from './map';
+export * from './separator';
+export * from './form';
+export * from './post-list';
+export * from './document-block';
+export * from './slider';
+export * from './html';

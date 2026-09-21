@@ -1,5 +1,5 @@
-import type { RichTextBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { RichTextBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface RichTextComponentProps {
   readonly block: RichTextBlock;

@@ -13,6 +13,7 @@
 | Data | Che cosa è cambiato |
 |---|---|
 | 2026-09-14 | Prima stesura, approvata in blocco con DR-038. |
+| 2026-09-21 | **La soglia del §6 contromisura 3 passa da 300 a 500 righe**, decisione **DR-070**, che supera DR-066 sul punto della soglia e non sulla deroga. Con la soglia nuova il **nucleo la rispetta** (437) e il **totale la supera ancora** (859): la deroga di DR-066 resta in vigore per la lettura del totale. La regola di conteggio non cambia. |
 | 2026-09-20 | **Due correzioni dichiarate, entrambe da decisioni registrate.** §6 contromisura 3: la soglia delle 300 righe è stata misurata e superata, e **DR-066** la risolve con una **deroga motivata** invece che con l'adozione di Better Auth. §3.2: la scelta fra «un ruolo attivo per volta» e «unione dei permessi», che questa ADR dichiarava di non decidere, è stata decisa da DR-050 e attuata per intero da **DR-067**. Nessuna delle due tocca i 12 controlli del §3.1, che restano invariati. |
 
 ---
@@ -173,9 +174,10 @@ Tre contromisure, tutte vincolanti:
 1. I 12 controlli del §3.1 sono una **lista di verifica**, non una descrizione: la
    Fase 1F non si chiude senza averli spuntati uno per uno.
 2. La security review della Fase 1F **deve** coprire questo modulo in modo esplicito.
-3. Se durante la Fase 1C la soluzione propria superasse le 300 righe di logica di
-   autenticazione, la premessa della proporzione è caduta e si adotta Better Auth
-   senza discutere.
+3. Se durante la Fase 1C la soluzione propria superasse le **500** righe di logica
+   di autenticazione, la premessa della proporzione è caduta e si adotta Better Auth
+   senza discutere. *La soglia era 300; è stata portata a 500 il 2026-09-21 da
+   DR-070, e il perché è scritto nel riquadro qui sotto.*
 
 > **La contromisura 3 è scattata, ed è stata derogata. Correzione dichiarata del
 > 2026-09-20, decisione DR-066.**
@@ -208,6 +210,31 @@ Tre contromisure, tutte vincolanti:
 >   si cambia. Se il nucleo cresce ancora, la cosa si ripresenta all'utente.
 > - I **12 controlli del §3.1 restano una lista di verifica**: 11 hanno un test che
 >   passa, il 12º — recupero password — è dichiarato fuori perimetro dal §3.1 stesso.
+
+> **La soglia è stata alzata a 500. Revisione dichiarata del 2026-09-21,
+> decisione DR-070.**
+>
+> **Che cosa è successo prima.** La deroga qui sopra dichiarava che «se il nucleo
+> cresce ancora, la cosa si ripresenta all'utente». È cresciuto: la wave `1D-W8a`,
+> attuando DR-067, ha portato il nucleo da **342** a **437** righe e il totale da
+> **684** a **859**. La questione è stata ripresentata, e l'utente ha risposto
+> portando la soglia a **500**.
+>
+> **Che cosa cambia.** Con 500, il **nucleo rispetta la soglia** (437) e il
+> **totale la supera** (859). La contromisura 3 non scatta più sulla lettura del
+> nucleo; sulla lettura del totale continua a scattare, ed è per questo che la
+> deroga di DR-066 **non è revocata**: resta la ragione per cui il progetto non
+> adotta Better Auth in Fase 1.
+>
+> **Che cosa non cambia, e va detto.** Alzare una soglia dopo aver visto il numero
+> è l'operazione che la regola di conteggio serviva a rendere visibile, e resta
+> visibile: la regola di conteggio **non è stata toccata**, la misura **non è
+> stata rifatta**, e la dichiarazione in `apps/api/tests/auth-line-count.json`
+> porta ora la soglia precedente, la data del cambio e l'esito **separato per
+> ciascuna delle due letture**, così che la differenza non sparisca dentro un
+> esito solo. Il riesame obbligatorio del §3.3 prima della fase gestionale e la
+> copertura esplicita nella security review della Fase 1F restano vincolanti e
+> invariati.
 
 ## 7. Reversibilità
 

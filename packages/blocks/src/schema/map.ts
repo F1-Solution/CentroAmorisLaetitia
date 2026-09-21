@@ -5,7 +5,7 @@
  * dichiarato, §3.8).
  */
 import { z } from 'zod';
-import { classesField } from '../common.js';
+import { classesField } from '../common';
 
 const latLngPattern = /^-?\d+(\.\d+)?$/;
 

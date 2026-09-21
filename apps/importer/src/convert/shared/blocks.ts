@@ -7,3 +7,10 @@
  * (ADR-006 §3.3) resta il punto d'ingresso principale del pacchetto.
  */
 export * from '@amoris/blocks/model';
+
+/**
+ * La derivazione degli identificatori dalla sorgente sta in un modulo a parte
+ * (`BLOCK-MODEL.md` §4.1): usa `node:crypto`, che nel browser non esiste, e
+ * l'area amministrativa importa lo stesso pacchetto per l'anteprima.
+ */
+export * from '@amoris/blocks/import-ids';

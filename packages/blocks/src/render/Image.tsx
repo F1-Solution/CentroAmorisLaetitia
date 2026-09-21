@@ -1,5 +1,5 @@
-import type { ImageBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { ImageBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface ImageComponentProps {
   readonly block: ImageBlock;

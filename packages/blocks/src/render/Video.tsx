@@ -1,5 +1,5 @@
-import type { VideoBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { VideoBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface VideoComponentProps {
   readonly block: VideoBlock;

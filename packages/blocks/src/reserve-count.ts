@@ -4,10 +4,10 @@
  * nulla su di essi — la decisione, se una soglia è superata, spetta a chi
  * chiama (`apps/importer`, 1D-W2…W3).
  */
-import { CONTAINER_BLOCK_TYPES } from './schema/block-type.js';
-import type { BlockNode } from './schema/block.js';
-import type { BlockDocument } from './schema/document.js';
-import { HTML_BLOCK_REASONS, type HtmlBlockReason } from './schema/html.js';
+import { CONTAINER_BLOCK_TYPES } from './schema/block-type';
+import type { BlockNode } from './schema/block';
+import type { BlockDocument } from './schema/document';
+import { HTML_BLOCK_REASONS, type HtmlBlockReason } from './schema/html';
 
 export interface ReserveCountResult {
   /** Denominatore (§8.1): tutti i blocchi il cui tipo non è un contenitore, `media_text` incluso. */

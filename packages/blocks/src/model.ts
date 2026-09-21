@@ -11,9 +11,9 @@
  * anteprima resta il punto d'ingresso principale, e questa separazione non la
  * indebolisce: toglie React a chi non lo usa, non aggiunge un secondo modello.
  */
-export * from './common.js';
-export * from './ids.js';
-export * from './schema/index.js';
-export * from './sanitize/index.js';
-export * from './serialize/index.js';
-export * from './reserve-count.js';
+export * from './common';
+export * from './ids';
+export * from './schema/index';
+export * from './sanitize/index';
+export * from './serialize/index';
+export * from './reserve-count';

@@ -5,8 +5,9 @@ import { fileURLToPath } from 'node:url';
 /**
  * Conta le righe della logica di autenticazione, per il criterio di uscita 18 e
  * per la contromisura 3 del §6 di ADR-007: «se la soluzione propria superasse le
- * 300 righe di logica di autenticazione, la premessa della proporzione è caduta
- * e si adotta Better Auth senza discutere».
+ * 500 righe di logica di autenticazione, la premessa della proporzione è caduta
+ * e si adotta Better Auth senza discutere». La soglia era 300 fino al 2026-09-21,
+ * quando DR-070 l'ha portata a 500.
  *
  * Perché il numero voglia dire qualcosa, la regola di conteggio deve essere
  * scritta prima e non cambiata dopo averlo visto:
@@ -52,8 +53,13 @@ export const WRAPPER_FILES = [
   'modules/auth/service.ts',
 ] as const;
 
-/** Soglia di ADR-007 §6 contromisura 3. */
-export const THRESHOLD = 300;
+/**
+ * Soglia di ADR-007 §6 contromisura 3, portata da 300 a 500 il 2026-09-21 da
+ * DR-070. La regola di conteggio qui sopra **non** cambia: cambiare la regola
+ * dopo aver visto il numero e cambiare la soglia sono due cose diverse, e solo
+ * la seconda è stata decisa.
+ */
+export const THRESHOLD = 500;
 
 function countExecutableLines(source: string): number {
   let inBlockComment = false;

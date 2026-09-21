@@ -3,8 +3,8 @@
  * §3.4). Vincolo Zod: `html` deve essere un punto fisso della sanificazione.
  */
 import { z } from 'zod';
-import { classesField, ColorValue, CssLength, emptySpacing, Spacing } from '../common.js';
-import { isSanitizedFixedPoint } from '../sanitize/sanitize.js';
+import { classesField, ColorValue, CssLength, emptySpacing, Spacing } from '../common';
+import { isSanitizedFixedPoint } from '../sanitize/sanitize';
 
 const borderSchema = z
   .object({

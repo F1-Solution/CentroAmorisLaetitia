@@ -1,5 +1,5 @@
-import type { SliderBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { SliderBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface SliderComponentProps {
   readonly block: SliderBlock;

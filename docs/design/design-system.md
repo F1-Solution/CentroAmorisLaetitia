@@ -414,7 +414,7 @@ La colonna «Serve in» dice la wave che lo usa per prima. Tutti sono costruiti 
 | 38 | `MediaPicker` | selettore di media: griglia con ricerca e filtri, anteprima, testo alternativo obbligatorio alla scelta; apre in `SidePanel`, non in `Dialog` | R, H, F, A, S, L, V, E | `1D-W8` |
 | 39 | `MediaUploader` | caricamento con trascinamento e da pulsante, avanzamento per file, errori per file | R, H, F, D, L, E | `1D-W9` |
 | 40 | `PreviewPane` | riquadro di anteprima: contenitore, commutatore schermo/telefono, aggiornamento. Ciò che disegna dentro viene da `packages/blocks` (ADR-006 §3.3): l'anteprima **è** il sito, non una sua riproduzione | R, L, E | `1D-W8` |
-| 41 | `BlockTreeEditor` | editor dell'albero dei blocchi di ADR-005: aggiunge, sposta, elimina e annida blocchi dentro una colonna; ambito limitato da ADR-006 §3.2 | R, H, F, A, D, S, L, V, E | `1D-W8` |
+| 41 | `BlockTreeEditor` | editor dell'albero dei blocchi di ADR-005: aggiunge, sposta, elimina e annida blocchi dentro una colonna; ambito limitato da ADR-006 §3.2. Lo spostamento si fa **per trascinamento** (**DR-069**, 2026-09-20) e, in modo equivalente, con i comandi «Sposta su» e «Sposta giù», che restano il percorso da tastiera del §9.3. Il componente non conosce alcuna libreria: il trascinamento si innesta dall'esterno | R, H, F, A, D, S, L, V, E | `1D-W8` |
 | 42 | `BlockInserter` | «Aggiungi blocco»: elenco dei 14 tipi di ADR-005 §3.2 con ricerca; l'insieme è **chiuso** e non si allarga in Fase 1 | R, H, F, V | `1D-W8` |
 | 43 | `ColumnRatioControl` | cambia la ripartizione delle colonne di una riga; è l'unica modifica di impaginazione ammessa in Fase 1 (ADR-006 §3.2) | R, H, F, A, D | `1D-W8` |
 | 44 | `RichTextToolbar` | barra degli strumenti del testo ricco sopra un blocco `rich_text`: solo i comandi che corrispondono agli elementi ammessi da ADR-005 §3.5. `h1` assente, stile in linea assente. L'incollaggio non ammesso è **rifiutato con avviso visibile**, mai riscritto in silenzio (ADR-006 §3.1) | R, H, F, A, D, S | `1D-W8` |
@@ -691,7 +691,11 @@ Vedi §9.7.
   schermata.
 - **Ogni operazione si completa da sola tastiera**, editor compreso. `Dialog` e
   `SidePanel` intrappolano il fuoco, si chiudono con Esc e restituiscono il fuoco
-  all'elemento che li ha aperti.
+  all'elemento che li ha aperti. Lo **spostamento dei blocchi** ha due percorsi da
+  tastiera, non uno: il sensore da tastiera della libreria di trascinamento — barra
+  spaziatrice per prendere, frecce per spostare, barra per posare — e i comandi
+  espliciti «Sposta su» e «Sposta giù», che funzionano anche senza la libreria
+  (DR-069).
 - **Nessuna scorciatoia a tasto singolo** che non si possa disattivare o rimappare:
   `Ctrl+K` è una combinazione, e va bene.
 

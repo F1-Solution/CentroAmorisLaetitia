@@ -24,16 +24,55 @@ describe('BlockTreeEditor — componente 41', () => {
     expect(screen.getByText('Questa colonna non contiene ancora blocchi.')).toBeDefined();
   });
 
-  it('sposta un blocco con comandi espliciti, non con il trascinamento', () => {
+  // Riscritto il 2026-09-21. Diceva «non con il trascinamento» e verificava
+  // l'assenza di `draggable`: DR-069 ha scelto il trascinamento, quindi quella
+  // attesa non descrive più il prodotto. Ciò che resta vero, e che il §9.3 del
+  // sistema di design impone, è che lo stesso spostamento si faccia **anche**
+  // da tastiera: è questo che il test verifica adesso.
+  it('sposta un blocco con un comando raggiungibile da tastiera', () => {
     const onMoveDown = vi.fn();
     render(
       <BlockTreeEditor blocks={blocks} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={onMoveDown} onDelete={vi.fn()} onAddRequest={vi.fn()} />,
     );
     const moveDownButton = screen.getByRole('button', { name: 'Sposta giù: Introduzione' });
-    // Nessun trascinamento: né l'elemento né i suoi antenati sono `draggable`.
-    expect(moveDownButton.closest('[draggable="true"]')).toBeNull();
+    expect(moveDownButton.tagName).toBe('BUTTON');
     moveDownButton.click();
     expect(onMoveDown).toHaveBeenCalledWith('b1');
+  });
+
+  it('senza involucri di trascinamento l’albero resta un elenco semplice', () => {
+    const { container } = render(
+      <BlockTreeEditor blocks={blocks} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} onDelete={vi.fn()} onAddRequest={vi.fn()} />,
+    );
+    expect(container.querySelectorAll('ul.amoris-block-tree').length).toBe(1);
+    expect(container.querySelector('[data-drag-wrapper]')).toBeNull();
+  });
+
+  it('con `renderList` e `renderRow` il trascinamento si innesta dall’esterno', () => {
+    const { container } = render(
+      <BlockTreeEditor
+        blocks={blocks}
+        onSelect={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onDelete={vi.fn()}
+        onAddRequest={vi.fn()}
+        renderList={({ ids, children }) => (
+          <div data-drag-wrapper="lista" data-ids={ids.join(',')}>
+            {children}
+          </div>
+        )}
+        renderRow={({ id, children }) => (
+          <li data-drag-wrapper="riga" data-id={id}>
+            {children}
+          </li>
+        )}
+      />,
+    );
+    // L'elenco e ogni riga passano dagli involucri, che è ciò che permette a
+    // `apps/admin` di montarvi la libreria senza che `packages/ui` la conosca.
+    expect(container.querySelector('[data-drag-wrapper="lista"]')?.getAttribute('data-ids')).toBe('b1,b2');
+    expect(container.querySelectorAll('[data-drag-wrapper="riga"]').length).toBe(2);
   });
 
   it('il primo blocco non può salire, l\'ultimo non può scendere', () => {

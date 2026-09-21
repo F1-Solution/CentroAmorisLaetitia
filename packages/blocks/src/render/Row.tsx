@@ -1,6 +1,6 @@
-import type { RowBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
-import { BlockRenderer } from './BlockRenderer.js';
+import type { RowBlock } from '../schema/block';
+import { blockClassName } from './class-name';
+import { BlockRenderer } from './BlockRenderer';
 
 export interface RowComponentProps {
   readonly block: RowBlock;

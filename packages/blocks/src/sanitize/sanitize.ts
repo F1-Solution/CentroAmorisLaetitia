@@ -14,10 +14,10 @@ import {
   RESIDUAL_ATTRIBUTES,
   allowedAttributesFor,
   isEventHandlerAttribute,
-} from './allowlist.js';
-import { ALLOWED_TARGET_VALUES, isAllowedUrl } from './url.js';
-import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from '../serialize/escape.js';
-import { isCommentNode, isElementNode, isTextNode } from './tree.js';
+} from './allowlist';
+import { ALLOWED_TARGET_VALUES, isAllowedUrl } from './url';
+import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from '../serialize/escape';
+import { isCommentNode, isElementNode, isTextNode } from './tree';
 
 export type SanitizeIssueSeverity = 'info' | 'warning' | 'error';
 

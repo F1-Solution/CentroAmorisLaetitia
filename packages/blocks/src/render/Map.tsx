@@ -1,5 +1,5 @@
-import type { MapBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { MapBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface MapComponentProps {
   readonly block: MapBlock;

@@ -6,9 +6,9 @@
  * Puro, totale, deterministico (regola 12): nessuna data, nessuna lingua,
  * nessun valore casuale, nessuna lettura di configurazione.
  */
-import type { BlockNode } from '../schema/block.js';
-import type { BlockDocument } from '../schema/document.js';
-import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from './escape.js';
+import type { BlockNode } from '../schema/block';
+import type { BlockDocument } from '../schema/document';
+import { escapeAttributeValue, escapeText, VOID_ELEMENTS } from './escape';
 
 /** Involucro di ogni blocco: un solo elemento, con `class` e `id` (§6.2, §6.3). */
 function wrapBlock(

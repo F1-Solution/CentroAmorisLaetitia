@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createBlockIdAllocator, deriveBlockId, generateAdminBlockId } from '../src/ids.js';
+import { createBlockIdAllocator, deriveBlockId } from '../src/import-ids.js';
+import { generateAdminBlockId } from '../src/ids.js';
 
 const BLOCK_ID_PATTERN = /^b_[0-9a-f]{12}$/;
 

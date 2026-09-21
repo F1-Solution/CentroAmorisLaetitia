@@ -1,5 +1,5 @@
-import type { SeparatorBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { SeparatorBlock } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface SeparatorComponentProps {
   readonly block: SeparatorBlock;

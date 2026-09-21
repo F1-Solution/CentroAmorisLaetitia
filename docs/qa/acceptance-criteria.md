@@ -28,7 +28,7 @@ esito negativo registrato vale più di un esito positivo affermato.
 | 1C-4 | Lo schema generato corrisponde a `docs/architecture/schema.sql` | confronto automatico, differenza vuota |
 | 1C-5 | Le colonne del database sono in `snake_case` senza annotazioni per campo | ispezione dello schema (DR-036, ADR-002 §7) |
 | 1C-6 | I 12 controlli di sicurezza di ADR-007 §3.1 sono attuati, ciascuno con un test | elenco spuntato, test verdi |
-| 1C-7 | La logica di autenticazione propria **sta sotto le 300 righe** | conteggio. Sopra quella soglia, ADR-007 §6, contromisura 3, impone di adottare una libreria |
+| 1C-7 | La logica di autenticazione propria **sta sotto le 500 righe** | conteggio. Sopra quella soglia, ADR-007 §6, contromisura 3, impone di adottare una libreria. Soglia portata da 300 a 500 il 2026-09-21 da **DR-070**; misurata il 2026-09-20 a 437 righe di nucleo e 859 di totale, quindi rispettata dal nucleo e superata dal totale, e per il totale vale la deroga di DR-066 |
 | 1C-8 | Regola di lint che vieta al sito pubblico di importare i componenti dell'area amministrativa | la regola esiste e fallisce quando deve (ADR-008 §3.3) |
 | 1C-9 | `.env.example` completo; nessun segreto nel repository | scansione automatica |
 | 1C-10 | Build, test, lint e controllo dei tipi verdi in CI | **condizione 12 del gate** |

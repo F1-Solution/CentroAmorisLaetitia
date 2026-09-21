@@ -1,6 +1,6 @@
 /** `video`. Non contiene blocchi (`BLOCK-MODEL.md` §3.7). */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const videoPropsSchema = z
   .object({

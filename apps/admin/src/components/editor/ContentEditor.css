@@ -1,0 +1,22 @@
+.amoris-editor {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr) minmax(320px, 1.4fr);
+  gap: var(--amoris-space-5);
+  align-items: start;
+  margin-bottom: var(--amoris-space-8);
+}
+
+.amoris-editor__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-4);
+  min-width: 0;
+}
+
+/* Sotto i 1200 px le tre colonne diventano una: l'anteprima resta in fondo,
+   dove non toglie spazio alla struttura mentre si lavora. */
+@media (max-width: 1200px) {
+  .amoris-editor {
+    grid-template-columns: 1fr;
+  }
+}

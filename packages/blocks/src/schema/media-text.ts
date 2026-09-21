@@ -3,7 +3,7 @@
  * collocazione (`BLOCK-MODEL.md` §3.6). Non può contenere sé stesso.
  */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const mediaTextPropsSchema = z
   .object({

@@ -4,8 +4,8 @@
  * e fra genitore e figli, non del solo nodo.
  */
 import type { z } from 'zod';
-import { ALLOWED_CHILDREN, type BlockNode, type BlockType } from './block.js';
-import { checkClassConsistency } from './consistency.js';
+import { ALLOWED_CHILDREN, type BlockNode, type BlockType } from './block';
+import { checkClassConsistency } from './consistency';
 
 export function validateContainment(
   nodes: readonly BlockNode[],

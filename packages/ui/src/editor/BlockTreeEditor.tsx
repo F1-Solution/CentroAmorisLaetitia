@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { IconButton } from '../primitives/IconButton';
 import { Button } from '../primitives/Button';
 import { Spinner } from '../primitives/Spinner';
@@ -13,16 +14,45 @@ export interface BlockNode {
   children?: BlockNode[];
 }
 
+/**
+ * Come si avvolge l'elenco dei fratelli di un genitore. `parentId` è `null` per
+ * la radice. Chi non trascina non passa nulla e l'elenco resta un `<ul>`.
+ */
+export interface BlockTreeListRenderProps {
+  readonly parentId: string | null;
+  readonly ids: readonly string[];
+  readonly children: ReactNode;
+}
+
+/** Come si avvolge la riga di un blocco. `children` è etichetta più comandi. */
+export interface BlockTreeRowRenderProps {
+  readonly id: string;
+  readonly children: ReactNode;
+}
+
 export interface BlockTreeEditorProps {
   blocks: BlockNode[];
   selectedId?: string;
   onSelect: (id: string) => void;
-  /** Comandi espliciti: nessun trascinamento (§8, CONTEXT.md §8). */
+  /**
+   * Comandi espliciti. Con DR-069 non sono più **il** modo di spostare un
+   * blocco, ma restano: sono il percorso da tastiera che `design-system.md`
+   * §9.3 impone, e sono l'unico che funziona anche senza la libreria di
+   * trascinamento montata.
+   */
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   onDelete: (id: string) => void;
   /** `parentId` è `null` per aggiungere alla radice della colonna. */
   onAddRequest: (parentId: string | null) => void;
+  /**
+   * Trascinamento (DR-069). Il componente **non** conosce alcuna libreria: chi
+   * lo usa passa due involucri, e `packages/ui` resta senza la dipendenza, che
+   * `PLAN.md` §5 colloca in `apps/admin`. Assenti, l'albero funziona lo stesso
+   * con i soli comandi espliciti.
+   */
+  renderList?: (props: BlockTreeListRenderProps) => React.JSX.Element;
+  renderRow?: (props: BlockTreeRowRenderProps) => React.JSX.Element;
   loading?: boolean;
   errorText?: string;
   emptyText?: string;
@@ -47,69 +77,117 @@ const TYPE_LABEL: Record<BlockType, string> = {
 
 interface BlockListProps {
   nodes: BlockNode[];
+  parentId: string | null;
   selectedId: string | undefined;
   onSelect: (id: string) => void;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   onDelete: (id: string) => void;
   onAddRequest: (parentId: string | null) => void;
+  renderList: ((props: BlockTreeListRenderProps) => React.JSX.Element) | undefined;
+  renderRow: ((props: BlockTreeRowRenderProps) => React.JSX.Element) | undefined;
+  className: string;
 }
 
-function BlockList({ nodes, selectedId, onSelect, onMoveUp, onMoveDown, onDelete, onAddRequest }: BlockListProps): React.JSX.Element {
-  return (
-    <ul className="amoris-block-tree">
-      {nodes.map((node, index) => {
-        const isFirst = index === 0;
-        const isLast = index === nodes.length - 1;
-        return (
-          <li key={node.id}>
-            <div
-              className={[
-                'amoris-block-tree__row',
-                node.id === selectedId ? 'amoris-block-tree__row--selected' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <button type="button" className="amoris-focusable amoris-block-tree__label" onClick={() => onSelect(node.id)}>
-                <span className="amoris-block-tree__type">{TYPE_LABEL[node.type]}</span> — {node.label}
-              </button>
-              <div className="amoris-block-tree__actions">
-                <IconButton icon={<span aria-hidden="true">↑</span>} label={`Sposta su: ${node.label}`} onClick={() => onMoveUp(node.id)} disabled={isFirst} />
-                <IconButton icon={<span aria-hidden="true">↓</span>} label={`Sposta giù: ${node.label}`} onClick={() => onMoveDown(node.id)} disabled={isLast} />
-                <IconButton icon={<span aria-hidden="true">🗑</span>} label={`Elimina: ${node.label}`} onClick={() => onDelete(node.id)} />
-              </div>
-            </div>
-            {node.children ? (
-              <ul className="amoris-block-tree__children">
-                <BlockList
-                  nodes={node.children}
-                  selectedId={selectedId}
-                  onSelect={onSelect}
-                  onMoveUp={onMoveUp}
-                  onMoveDown={onMoveDown}
-                  onDelete={onDelete}
-                  onAddRequest={onAddRequest}
-                />
-                <li>
-                  <Button variant="tertiary" onClick={() => onAddRequest(node.id)}>
-                    Aggiungi blocco in «{node.label}»
-                  </Button>
-                </li>
-              </ul>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
-  );
+function DefaultRow({ children }: BlockTreeRowRenderProps): React.JSX.Element {
+  return <li>{children}</li>;
+}
+
+function BlockList({
+  nodes,
+  parentId,
+  selectedId,
+  onSelect,
+  onMoveUp,
+  onMoveDown,
+  onDelete,
+  onAddRequest,
+  renderList,
+  renderRow,
+  className,
+}: BlockListProps): React.JSX.Element {
+  const Row = renderRow ?? DefaultRow;
+
+  const items = nodes.map((node, index) => {
+    const isFirst = index === 0;
+    const isLast = index === nodes.length - 1;
+    return (
+      <Row key={node.id} id={node.id}>
+        <div
+          className={[
+            'amoris-block-tree__row',
+            node.id === selectedId ? 'amoris-block-tree__row--selected' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <button
+            type="button"
+            className="amoris-focusable amoris-block-tree__label"
+            onClick={() => onSelect(node.id)}
+          >
+            <span className="amoris-block-tree__type">{TYPE_LABEL[node.type]}</span> — {node.label}
+          </button>
+          <div className="amoris-block-tree__actions">
+            <IconButton
+              icon={<span aria-hidden="true">↑</span>}
+              label={`Sposta su: ${node.label}`}
+              onClick={() => onMoveUp(node.id)}
+              disabled={isFirst}
+            />
+            <IconButton
+              icon={<span aria-hidden="true">↓</span>}
+              label={`Sposta giù: ${node.label}`}
+              onClick={() => onMoveDown(node.id)}
+              disabled={isLast}
+            />
+            <IconButton
+              icon={<span aria-hidden="true">🗑</span>}
+              label={`Elimina: ${node.label}`}
+              onClick={() => onDelete(node.id)}
+            />
+          </div>
+        </div>
+        {node.children ? (
+          <ul className="amoris-block-tree__children">
+            <BlockList
+              nodes={node.children}
+              parentId={node.id}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              onDelete={onDelete}
+              onAddRequest={onAddRequest}
+              renderList={renderList}
+              renderRow={renderRow}
+              className="amoris-block-tree__nested"
+            />
+            <li>
+              <Button variant="tertiary" onClick={() => onAddRequest(node.id)}>
+                Aggiungi blocco in «{node.label}»
+              </Button>
+            </li>
+          </ul>
+        ) : null}
+      </Row>
+    );
+  });
+
+  const list = <ul className={className}>{items}</ul>;
+  if (!renderList) return list;
+  return renderList({ parentId, ids: nodes.map((node) => node.id), children: list });
 }
 
 /**
  * Componente 41: editor dell'albero dei blocchi. Aggiunge, sposta, elimina e
- * annida blocchi dentro una colonna con **comandi espliciti** — bottoni «Sposta
- * su» e «Sposta giù» — mai con il trascinamento (ADR-006 §3.2, vincolo di
- * prodotto sul trascinamento).
+ * annida blocchi dentro una colonna (ADR-006 §3.2).
+ *
+ * **Due percorsi, non uno.** DR-069 ha scelto il trascinamento; `design-system.md`
+ * §9.3 impone che ogni operazione sia raggiungibile da tastiera. I bottoni
+ * «Sposta su» e «Sposta giù» restano quindi al loro posto, e il trascinamento si
+ * aggiunge dall'esterno con `renderList` e `renderRow`: la libreria non entra
+ * qui, perché `PLAN.md` §5 la colloca in `apps/admin`.
  */
 export function BlockTreeEditor({
   blocks,
@@ -119,6 +197,8 @@ export function BlockTreeEditor({
   onMoveDown,
   onDelete,
   onAddRequest,
+  renderList,
+  renderRow,
   loading = false,
   errorText,
   emptyText = 'Questa colonna non contiene ancora blocchi.',
@@ -146,12 +226,16 @@ export function BlockTreeEditor({
       ) : (
         <BlockList
           nodes={blocks}
+          parentId={null}
           selectedId={selectedId}
           onSelect={onSelect}
           onMoveUp={onMoveUp}
           onMoveDown={onMoveDown}
           onDelete={onDelete}
           onAddRequest={onAddRequest}
+          renderList={renderList}
+          renderRow={renderRow}
+          className="amoris-block-tree"
         />
       )}
       <Button variant="secondary" onClick={() => onAddRequest(null)}>

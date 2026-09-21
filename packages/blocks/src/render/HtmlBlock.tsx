@@ -1,5 +1,5 @@
-import type { HtmlBlock as HtmlBlockNode } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
+import type { HtmlBlock as HtmlBlockNode } from '../schema/block';
+import { blockClassName } from './class-name';
 
 export interface HtmlBlockComponentProps {
   readonly block: HtmlBlockNode;

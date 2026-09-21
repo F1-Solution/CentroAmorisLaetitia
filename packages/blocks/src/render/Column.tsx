@@ -1,6 +1,6 @@
-import type { ColumnBlock } from '../schema/block.js';
-import { blockClassName } from './class-name.js';
-import { BlockRenderer } from './BlockRenderer.js';
+import type { ColumnBlock } from '../schema/block';
+import { blockClassName } from './class-name';
+import { BlockRenderer } from './BlockRenderer';
 
 export interface ColumnComponentProps {
   readonly block: ColumnBlock;

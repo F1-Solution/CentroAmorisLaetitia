@@ -1,0 +1,6 @@
+.amoris-content-list__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}

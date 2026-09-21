@@ -4,7 +4,7 @@
  * `BlockDocument`, l'involucro dell'intero documento a blocchi (§1).
  */
 import { z } from 'zod';
-import { classesField, EntityRef } from '../common.js';
+import { classesField, EntityRef } from '../common';
 
 export const docBlockPropsSchema = z
   .object({

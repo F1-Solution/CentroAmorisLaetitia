@@ -1,16 +1,24 @@
 'use client';
 
 import {
+  Alert,
+  Button,
   DataTable,
+  Dialog,
   Pagination,
   PageHeader,
   PublishStatusBadge,
   TableToolbar,
+  TextField,
   type PublishStatus,
 } from '@amoris/ui';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { useSession } from '../lib/session';
 import { AreaShell } from './AreaShell';
+import './ContentList.css';
 
 /**
  * Elenco dei contenuti, con filtri e impaginazione. Pagine e notizie sono lo
@@ -71,6 +79,24 @@ export interface ContentListProps {
   readonly searchLabel: string;
   readonly emptyText: string;
   readonly caption: string;
+  /** Radice degli indirizzi dell'editor: `/redazione/pagine`, `/redazione/notizie`. */
+  readonly basePath: string;
+  readonly createLabel: string;
+}
+
+/**
+ * Lo slug proposto a partire dal titolo. Non e' una normalizzazione «bella»:
+ * l'insieme dei caratteri e' esattamente quello che `createBody` dell'API
+ * ammette nel percorso, perche' proporre qualcosa che il servizio rifiuta
+ * sposterebbe l'errore dopo il clic invece che prima.
+ */
+export function slugFromTitle(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 export function ContentList({
@@ -81,7 +107,17 @@ export function ContentList({
   searchLabel,
   emptyText,
   caption,
+  basePath,
+  createLabel,
 }: ContentListProps): React.JSX.Element {
+  const router = useRouter();
+  const { user } = useSession();
+  const canWrite = user?.permissions.includes('content.write') ?? false;
+  const [creating, setCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newSlug, setNewSlug] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -135,7 +171,25 @@ export function ContentList({
       sectionId={sectionId}
       breadcrumbs={[{ label: 'Redazione', href: '/redazione/pagine' }, { label: title }]}
     >
-      <PageHeader title={title} summary={summary} />
+      <PageHeader
+        title={title}
+        summary={summary}
+        action={
+          canWrite ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                setNewTitle('');
+                setNewSlug('');
+                setCreateError(null);
+                setCreating(true);
+              }}
+            >
+              {createLabel}
+            </Button>
+          ) : undefined
+        }
+      />
 
       <TableToolbar
         searchLabel={searchLabel}
@@ -173,7 +227,11 @@ export function ContentList({
         {...(error ? { errorText: error } : {})}
         emptyText={emptyText}
         columns={[
-          { key: 'title', header: 'Titolo', render: (row) => row.title },
+          {
+            key: 'title',
+            header: 'Titolo',
+            render: (row) => <Link href={`${basePath}/${row.id}`}>{row.title}</Link>,
+          },
           { key: 'path', header: 'Indirizzo', render: (row) => row.path },
           {
             key: 'status',
@@ -188,6 +246,64 @@ export function ContentList({
           },
         ]}
       />
+
+      {creating ? (
+        <Dialog open onClose={() => setCreating(false)} title={createLabel}>
+          <TextField
+            label="Titolo"
+            value={newTitle}
+            onChange={(event) => {
+              setNewTitle(event.target.value);
+              setNewSlug(slugFromTitle(event.target.value));
+            }}
+          />
+          <TextField
+            label="Indirizzo"
+            value={newSlug}
+            helpText="L'ultima parte dell'indirizzo pubblico. Si puo' correggere."
+            onChange={(event) => setNewSlug(event.target.value)}
+          />
+          {createError ? (
+            <Alert variant="error" title="Non è stato creato">
+              {createError}
+            </Alert>
+          ) : null}
+          <div className="amoris-content-list__dialog-actions">
+            <Button variant="secondary" onClick={() => setCreating(false)} disabled={busy}>
+              Annulla
+            </Button>
+            <Button
+              variant="primary"
+              loading={busy}
+              onClick={() => {
+                void (async () => {
+                  setBusy(true);
+                  setCreateError(null);
+                  try {
+                    // Nasce sempre in bozza, come l'API impone: creare e
+                    // pubblicare sono due gesti, e il secondo e' esplicito.
+                    const created = await api<{ id: string }>('/contents', {
+                      method: 'POST',
+                      body: { type, title: newTitle, slug: newSlug },
+                    });
+                    router.push(`${basePath}/${created.id}`);
+                  } catch (caught) {
+                    setCreateError(
+                      caught instanceof ApiError
+                        ? caught.message
+                        : 'Non è stato possibile contattare il servizio.',
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            >
+              Crea in bozza
+            </Button>
+          </div>
+        </Dialog>
+      ) : null}
 
       <Pagination
         page={data?.meta.page ?? page}

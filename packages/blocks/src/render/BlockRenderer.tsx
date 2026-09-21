@@ -1,18 +1,18 @@
-import type { BlockNode } from '../schema/block.js';
-import { Section } from './Section.js';
-import { Row } from './Row.js';
-import { Column } from './Column.js';
-import { RichText } from './RichText.js';
-import { Image } from './Image.js';
-import { MediaText } from './MediaText.js';
-import { Video } from './Video.js';
-import { Map } from './Map.js';
-import { Separator } from './Separator.js';
-import { Form } from './Form.js';
-import { PostList } from './PostList.js';
-import { DocBlock } from './DocBlock.js';
-import { Slider } from './Slider.js';
-import { ReserveHtmlBlock } from './HtmlBlock.js';
+import type { BlockNode } from '../schema/block';
+import { Section } from './Section';
+import { Row } from './Row';
+import { Column } from './Column';
+import { RichText } from './RichText';
+import { Image } from './Image';
+import { MediaText } from './MediaText';
+import { Video } from './Video';
+import { Map } from './Map';
+import { Separator } from './Separator';
+import { Form } from './Form';
+import { PostList } from './PostList';
+import { DocBlock } from './DocBlock';
+import { Slider } from './Slider';
+import { ReserveHtmlBlock } from './HtmlBlock';
 
 export interface BlockRendererProps {
   readonly block: BlockNode;

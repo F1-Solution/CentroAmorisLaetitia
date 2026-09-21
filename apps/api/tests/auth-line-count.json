@@ -1,11 +1,15 @@
 {
   "misuratoIl": "2026-09-20",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
-  "soglia": 300,
+  "soglia": 500,
+  "sogliaPrecedente": 300,
+  "sogliaModificataIl": "2026-09-21",
   "nucleo": 437,
   "totale": 859,
+  "esitoNucleo": "rispettata",
+  "esitoTotale": "superata",
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "ADR-007 §6 contromisura 3, derogata il 2026-09-20 da DR-066. La deroga dichiara che se il nucleo cresce ancora la cosa si ripresenta all'utente: questa misura lo fa.",
+  "conseguenza": "ADR-007 §6 contromisura 3. La soglia è stata portata da 300 a 500 il 2026-09-21 da DR-070, che supera DR-066. Con la soglia nuova il nucleo la rispetta (437 su 500) e il totale la supera ancora (859 su 500): la deroga di DR-066 resta quindi necessaria per la lettura del totale, e non è stata revocata. La misura non è stata rifatta e la regola di conteggio non è cambiata: a cambiare è solo la soglia.",
   "misuraPrecedente": {
     "misuratoIl": "2026-09-16",
     "nucleo": 342,
