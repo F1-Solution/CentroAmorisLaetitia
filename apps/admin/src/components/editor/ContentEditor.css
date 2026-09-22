@@ -20,3 +20,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Scheda SEO del contenuto (DR-076). */
+.amoris-editor__seo {
+  display: grid;
+  gap: var(--amoris-space-4);
+  max-width: 44rem;
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-editor__seo-actions {
+  display: flex;
+  justify-content: flex-end;
+}

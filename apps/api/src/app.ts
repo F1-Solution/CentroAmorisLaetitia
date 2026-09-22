@@ -20,6 +20,7 @@ import { contentRoutes } from './modules/content/routes.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { menuRoutes } from './modules/menu/routes.js';
 import { redirectRoutes } from './modules/redirects/routes.js';
+import { roleRoutes } from './modules/roles/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
 import { settingsRoutes } from './modules/settings/routes.js';
 import { termRoutes } from './modules/terms/routes.js';
@@ -134,6 +135,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
         { name: 'menu', description: 'Voci di navigazione' },
         { name: 'seo', description: 'Template globali e sovrascritture' },
         { name: 'redirect', description: 'Reindirizzamenti, che sono dati' },
+      { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
         { name: 'impostazioni', description: 'Impostazioni globali del sito' },
       ],
     },
@@ -198,6 +200,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     menuRoutes,
     seoRoutes,
     redirectRoutes,
+    roleRoutes,
   );
   await registerArea(app, 'impostazioni', settingsRoutes);
 

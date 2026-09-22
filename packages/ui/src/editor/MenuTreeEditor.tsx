@@ -5,8 +5,13 @@ import './MenuTreeEditor.css';
 export interface MenuItemNode {
   id: string;
   label: string;
-  linkType: 'content' | 'url';
-  /** Titolo del contenuto collegato, o l'indirizzo, secondo `linkType`. */
+  /**
+   * `term` esiste perché una voce di menu può puntare a una categoria e non a
+   * una pagina: la sorgente WordPress ne ha, e mostrarle come «Indirizzo»
+   * direbbe una cosa falsa a chi le legge.
+   */
+  linkType: 'content' | 'term' | 'url';
+  /** Titolo del contenuto, nome della categoria o indirizzo, secondo `linkType`. */
   linkTarget: string;
   children?: MenuItemNode[];
 }
@@ -27,6 +32,12 @@ export interface MenuTreeEditorProps {
   emptyText?: string;
   disabled?: boolean;
 }
+
+const TARGET_PREFIX: Readonly<Record<MenuItemNode['linkType'], string>> = {
+  content: 'Contenuto: ',
+  term: 'Categoria: ',
+  url: 'Indirizzo: ',
+};
 
 interface MenuListProps {
   nodes: MenuItemNode[];
@@ -56,7 +67,8 @@ function MenuList({ nodes, depth, selectedId, onSelect, onMoveUp, onMoveDown, on
               <button type="button" className="amoris-focusable amoris-menu-tree__label" onClick={() => onSelect(node.id)} disabled={disabled}>
                 {node.label}
                 <span className="amoris-menu-tree__target">
-                  {node.linkType === 'content' ? `Contenuto: ${node.linkTarget}` : `Indirizzo: ${node.linkTarget}`}
+                  {TARGET_PREFIX[node.linkType]}
+                  {node.linkTarget}
                 </span>
               </button>
               <div className="amoris-menu-tree__actions">
@@ -92,7 +104,7 @@ function MenuList({ nodes, depth, selectedId, onSelect, onMoveUp, onMoveDown, on
 
 /**
  * Componente 46: albero del menu di navigazione del sito. Sposta, annida,
- * collega a un contenuto o a un indirizzo — con comandi espliciti
+ * collega a un contenuto, a una categoria o a un indirizzo — con comandi espliciti
  * (Sposta su/giù, Annida, Riporta al livello superiore), non con il
  * trascinamento.
  */

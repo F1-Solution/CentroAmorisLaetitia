@@ -1,5 +1,5 @@
 import { schema, type Database } from '@amoris/db';
-import { and, count, desc, eq, ilike, like, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, like, or, sql, type SQL } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import type { z } from 'zod';
 import type { ObjectStore } from '../../lib/objectStore.js';
@@ -109,6 +109,57 @@ export async function upload(
   return row.id;
 }
 
+export interface ReplaceInput {
+  readonly mimeType: string;
+  readonly body: Buffer;
+}
+
+/**
+ * Sostituzione del file di un media (DR-074, opzione A).
+ *
+ * I byte si riscrivono **sulla chiave che il media già usa**: il percorso
+ * pubblico non cambia, e ogni riferimento — blocchi, `srcset`, indirizzi
+ * storici — continua a funzionare. È anche il motivo per cui il tipo del file
+ * non può cambiare: la chiave porta l'estensione del file di partenza, e
+ * servire un PNG sotto un nome `.jpg` renderebbe il nome una bugia.
+ *
+ * L'operazione **non è annullabile**: il file precedente viene sovrascritto e
+ * non esiste versione da recuperare. Chi la offre in interfaccia lo dichiara.
+ */
+export async function replaceFile(
+  db: Database,
+  store: ObjectStore,
+  id: string,
+  input: ReplaceInput,
+) {
+  const current = await findById(db, id);
+  if (!current) return null;
+
+  if (input.mimeType !== current.mimeType) {
+    throw Object.assign(
+      new Error(
+        `Il file nuovo è di tipo ${input.mimeType}, quello sostituito è ${current.mimeType}. ` +
+          'La sostituzione conserva indirizzo e nome del file, quindi il tipo deve coincidere.',
+      ),
+      { statusCode: 409 },
+    );
+  }
+
+  const bucket = current.isPrivate ? store.privateBucket : store.publicBucket;
+  await store.put(bucket, current.storageKey, input.body, input.mimeType);
+
+  await db
+    .update(schema.media)
+    .set({
+      byteSize: input.body.byteLength,
+      checksum: createHash('sha256').update(input.body).digest(),
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.media.id, id));
+
+  return findById(db, id);
+}
+
 export async function update(db: Database, id: string, input: UpdateInput) {
   const current = await findById(db, id);
   if (!current) return null;
@@ -126,17 +177,46 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   return findById(db, id);
 }
 
+/**
+ * Contenuti che citano il media: in evidenza, oppure dentro il documento a
+ * blocchi (DR-077).
+ *
+ * Il documento si cerca **come testo**, non prop per prop. I riferimenti a un
+ * media vivono in proprietà diverse secondo il tipo di blocco — `mediaId` in
+ * `image` e `media_text`, `posterMediaId` in `video` — e un elenco scritto a
+ * mano andrebbe rifatto a ogni tipo nuovo, dimenticandosene uno. Un
+ * identificativo è unico: cercarlo nel testo del documento non produce falsi
+ * positivi e non dimentica nulla.
+ *
+ * Quello che **non** copre, e va detto: un media citato per indirizzo dentro un
+ * blocco di riserva `html` scritto a mano non porta l'identificativo, e resta
+ * fuori.
+ */
+async function citedBy(db: Database, id: string) {
+  return db
+    .select({ id: schema.contents.id, title: schema.contents.title })
+    .from(schema.contents)
+    .where(
+      or(
+        eq(schema.contents.featuredMediaId, id),
+        sql`${schema.contents.blocks}::text like ${`%${id}%`}`,
+      ),
+    )
+    .limit(10);
+}
+
 /** Un media ancora citato da un contenuto non si elimina in silenzio. */
 export async function remove(db: Database, store: ObjectStore, id: string): Promise<boolean> {
   const current = await findById(db, id);
   if (!current) return false;
 
-  const [used] = await db
-    .select({ value: count() })
-    .from(schema.contents)
-    .where(eq(schema.contents.featuredMediaId, id));
-  if ((used?.value ?? 0) > 0) {
-    throw Object.assign(new Error('il media è in evidenza su dei contenuti'), { statusCode: 409 });
+  const used = await citedBy(db, id);
+  if (used.length > 0) {
+    const titles = used.map((row) => row.title).join(', ');
+    throw Object.assign(
+      new Error(`Il media è citato da questi contenuti e non si elimina finché lo citano: ${titles}.`),
+      { statusCode: 409 },
+    );
   }
 
   const variants = await db

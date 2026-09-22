@@ -1,0 +1,37 @@
+/* Impostazioni globali del sito. */
+
+.amoris-settings__list {
+  display: grid;
+  gap: var(--amoris-space-6);
+  margin: var(--amoris-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amoris-settings__row {
+  display: grid;
+  gap: var(--amoris-space-2);
+  justify-items: start;
+  padding-bottom: var(--amoris-space-4);
+  border-bottom: 1px solid var(--amoris-border);
+}
+
+.amoris-settings__label {
+  margin: 0;
+  font-size: var(--amoris-text-base-size);
+  font-weight: 600;
+}
+
+.amoris-settings__description,
+.amoris-settings__secret {
+  margin: 0;
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}
+
+.amoris-settings__saved {
+  margin: 0;
+  color: var(--amoris-success);
+  font-size: var(--amoris-text-sm-size);
+}

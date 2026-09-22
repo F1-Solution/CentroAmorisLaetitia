@@ -27,6 +27,16 @@ export function SidePanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
+  /**
+   * Il fuoco si sposta **all'apertura e basta**, e questo effetto dipende dalla
+   * sola apertura.
+   *
+   * Tenere `onClose` fra le dipendenze — come faceva fino al 2026-09-22 —
+   * rieseguiva l'effetto a ogni resa, perché chi lo usa scrive quasi sempre una
+   * funzione in linea, che è nuova ogni volta. Il risultato era che scrivendo
+   * nel secondo campo il fuoco tornava al primo dopo ogni lettera. Un solo
+   * carattere finiva dove si voleva.
+   */
   useEffect(() => {
     if (!open) return undefined;
 
@@ -36,6 +46,17 @@ export function SidePanel({
       const focusable = getFocusable(node);
       (focusable[0] ?? node).focus();
     }
+
+    return () => {
+      previouslyFocused.current?.focus();
+    };
+  }, [open]);
+
+  // La tastiera, invece, ha bisogno della `onClose` corrente: l'ascoltatore si
+  // riaggancia quando cambia, e non tocca il fuoco.
+  useEffect(() => {
+    if (!open) return undefined;
+    const node = panelRef.current;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
@@ -47,10 +68,7 @@ export function SidePanel({
     }
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused.current?.focus();
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;

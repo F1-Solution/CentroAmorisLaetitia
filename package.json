@@ -21,6 +21,7 @@
     "db:generate": "pnpm --filter @amoris/db generate",
     "db:migrate": "pnpm --filter @amoris/db migrate",
     "db:verify": "pnpm --filter @amoris/db verify",
+    "db:seed": "pnpm --filter @amoris/api seed",
     "compose:up": "docker compose -f infra/compose/docker-compose.yml --env-file .env up -d",
     "compose:down": "docker compose -f infra/compose/docker-compose.yml --env-file .env down",
     "compose:reset": "docker compose -f infra/compose/docker-compose.yml --env-file .env down -v"

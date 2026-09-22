@@ -8,6 +8,7 @@ import {
   Button,
   PageHeader,
   SaveBar,
+  Tabs,
   TextField,
   insertableBlockTypes,
   type PreviewViewport,
@@ -37,6 +38,7 @@ import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { BlockInspector } from './BlockInspector';
 import { BlockTreeDragArea, SortableBlockRow, SortableSiblings } from './BlockTreeDnd';
+import { ContentSeoPanel } from './ContentSeoPanel';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
 
@@ -103,6 +105,7 @@ export function ContentEditor({
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [inserterParent, setInserterParent] = useState<string | null | undefined>(undefined);
+  const [tab, setTab] = useState('contenuto');
   const [inserterSearch, setInserterSearch] = useState('');
   const [viewport, setViewport] = useState<PreviewViewport>('desktop');
   const [pending, setPending] = useState(false);
@@ -348,6 +351,25 @@ export function ContentEditor({
       ) : null}
 
       {state ? (
+        <Tabs
+          tabs={[
+            { key: 'contenuto', label: 'Contenuto' },
+            { key: 'seo', label: 'SEO' },
+          ]}
+          activeKey={tab}
+          onChange={setTab}
+        >
+          {tab === 'seo' ? (
+            <ContentSeoPanel
+              contentId={contentId}
+              path={content?.path ?? ''}
+              disabled={readOnly}
+            />
+          ) : null}
+        </Tabs>
+      ) : null}
+
+      {state && tab === 'contenuto' ? (
         <div className="amoris-editor">
           <section className="amoris-editor__column" aria-label="Struttura del contenuto">
             <TextField

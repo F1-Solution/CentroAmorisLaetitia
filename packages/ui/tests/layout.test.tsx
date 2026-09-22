@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Dialog } from '../src/layout/Dialog.js';
@@ -93,4 +93,43 @@ describe('Toast — componente 31', () => {
     expect(onDismiss).toHaveBeenCalledWith('2');
     vi.useRealTimers();
   });
+});
+
+/**
+ * Difetto trovato nella `1D-W9` e corretto qui: l'effetto che sposta il fuoco
+ * all'apertura dipendeva anche da `onClose`, che chi usa questi componenti
+ * scrive quasi sempre in linea ed è quindi nuova a ogni resa. L'effetto si
+ * rieseguiva a ogni resa e riportava il fuoco al **primo** campo: scrivendo nel
+ * secondo, dopo una lettera si finiva a scrivere nel primo.
+ */
+describe('il fuoco non torna al primo campo a ogni resa', () => {
+  function Secondo({ componente }: { componente: 'dialog' | 'sidepanel' }) {
+    const [testo, setTesto] = useState('');
+    const corpo = (
+      <>
+        <input aria-label="Primo" />
+        <input aria-label="Secondo" value={testo} onChange={(e) => setTesto(e.target.value)} />
+      </>
+    );
+    // `onClose` in linea, com'è nell'uso reale: è proprio ciò che scatenava il difetto.
+    return componente === 'dialog' ? (
+      <Dialog open onClose={() => undefined} title="Prova">
+        {corpo}
+      </Dialog>
+    ) : (
+      <SidePanel open onClose={() => undefined} title="Prova">
+        {corpo}
+      </SidePanel>
+    );
+  }
+
+  for (const componente of ['sidepanel', 'dialog'] as const) {
+    it(`${componente}: il fuoco resta sul campo in cui si sta scrivendo`, () => {
+      render(<Secondo componente={componente} />);
+      const campo = within(screen.getByRole('dialog')).getByLabelText('Secondo');
+      campo.focus();
+      fireEvent.change(campo, { target: { value: 'p' } });
+      expect(document.activeElement).toBe(campo);
+    });
+  }
 });

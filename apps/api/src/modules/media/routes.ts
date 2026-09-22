@@ -4,7 +4,7 @@ import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
 import { idParam, listQuery, listResponse, mediaSchema, updateBody } from './schemas.js';
-import { findById, list, remove, update, upload } from './service.js';
+import { findById, list, remove, replaceFile, update, upload } from './service.js';
 
 /** Modulo `media`. */
 
@@ -92,6 +92,40 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
       const row = await findById(app.db, id);
       if (!row) throw new Error('media caricato ma non rileggibile');
       return reply.code(201).send(serialise(row));
+    },
+  );
+
+  typed.put(
+    '/media/:id/file',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.mediaWrite),
+      config: { audit: { action: 'media.replace', entityType: ENTITY } },
+      schema: {
+        tags: ['media'],
+        summary: 'Sostituisce il file di un media conservandone l’indirizzo',
+        consumes: ['multipart/form-data'],
+        params: idParam,
+        response: { 200: mediaSchema, ...errorResponses(400, 401, 403, 404, 409) },
+      },
+    },
+    async (request, reply) => {
+      const part = await request.file();
+      if (!part) {
+        return reply.code(400).send({
+          error: {
+            code: 'FILE_MISSING',
+            message: 'La richiesta non porta alcun file.',
+            requestId: request.id,
+          },
+        });
+      }
+
+      const row = await replaceFile(app.db, app.objectStore, request.params.id, {
+        mimeType: part.mimetype,
+        body: await part.toBuffer(),
+      });
+      if (!row) return reply.callNotFound();
+      return reply.send(serialise(row));
     },
   );
 

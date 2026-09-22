@@ -1,0 +1,30 @@
+/* SEO e indirizzi. */
+
+.amoris-seo__link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--amoris-accent);
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.amoris-seo__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-seo__toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--amoris-space-3);
+}
+
+.amoris-seo__toolbar-row > *:first-child {
+  flex: 1 1 20rem;
+}

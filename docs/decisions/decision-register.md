@@ -587,3 +587,42 @@ nel Round 4.
 | **Protezione del lavoro redazionale sulle copie di lavoro** | Estendere la verifica di `importer-spec.md` §6.3 al secondo luogo introdotto da DR-068 | prima della wave `1D-W11` |
 | ~~**Spaziature di Divi**~~ | ~~Tre strade in `BLOCK-MODEL.md` §7.3~~ — **chiusa il 2026-09-21 da DR-071**, strada C | — |
 | ~~**Esecuzione reale dell'import**~~ | ~~Come ci si arriva~~ — **chiusa il 2026-09-21 da DR-072**, a due tempi. La conferma puntuale resta dovuta | — |
+
+---
+
+## 19. Round 14 — risposte del 2026-09-22, media, menu, SEO ed eliminazione
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-074 | 2026-09-22 | Come si sostituisce il file di un media già esistente | **Opzione A — stessa chiave**: una rotta nuova riscrive i byte sulla chiave dell'archivio che il media già usa. Il percorso pubblico non cambia e ogni riferimento — blocchi, `srcset`, indirizzi storici — continua a funzionare | B — chiave nuova con `publicPath` aggiornato e indirizzi storici rotti; C — nessuna sostituzione, criterio 1D-31 soddisfatto solo in parte | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, wave `1D-W9`, `apps/api/src/modules/media`, criterio 1D-31 | sì | criterio 1D-31; ADR-004 §3.1 e §3.4; `PLAN.md` §2, che assegnava alla wave il solo `apps/admin/**` |
+| DR-075 | 2026-09-22 | Da dove l'interfaccia prende i ruoli nel caso `roles` della visibilità di una voce di menu | **Opzione A — rotta di sola lettura che elenca i ruoli**, chiave ed etichetta, con permesso `content.read`; l'interfaccia mostra un elenco a spunte | B — chiavi di ruolo digitate a mano, validate solo dal servizio | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, wave `1D-W9`, `apps/api`, criterio 1D-32 | sì | criterio 1D-32; vincolo `menu_items_roles_only_when_needed`; ADR-007 §3.2 — nessun permesso nuovo |
+| DR-076 | 2026-09-22 | Dove si modificano i metadati SEO di un singolo contenuto | **Opzione A — scheda dentro l'editor del contenuto**; la sezione «SEO e indirizzi» tiene i soli template globali e i redirect | B — tutto nella sezione «SEO e indirizzi», con un secondo elenco dei contenuti | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, wave `1D-W9`, `apps/admin`, criterio 1D-33 | sì | criterio 1D-33; `design-system.md` §7.2 e componente 47 |
+| DR-077 | 2026-09-22 | Se l'eliminazione di un media va impedita quando il media è citato dentro i blocchi di un contenuto | **Opzione A — il servizio la impedisce**: il controllo si estende dai soli media in evidenza ai media citati dentro il documento a blocchi, e il rifiuto elenca i contenuti che lo citano | B — il servizio resta com'è e l'interfaccia avvisa prima della conferma; C — nulla cambia, difetto dichiarato in `AUDIT.md` | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, wave `1D-W9`, `apps/api/src/modules/media`, criterio 1D-31, parità di Fase 1E | sì | criterio 1D-31; il controllo esistente su `contents.featured_media_id`; `BLOCK-MODEL.md` §3 per i tipi che citano media |
+
+### Note sulla portata delle quattro decisioni
+
+- **Tre decisioni su quattro allargano il perimetro della wave oltre quanto `PLAN.md` §2 le assegnava.** La riga della `1D-W9` diceva `apps/admin/**`; DR-074, DR-075 e DR-077 la portano anche dentro `apps/api/src/**`. È la terza volta nella fase, dopo la `1D-W8a` e la `1D-W8b`, e il piano va corretto invece che smentito in silenzio.
+
+- **DR-074 rende la sostituzione un'operazione non annullabile, e va detto.** Riscrivere sulla stessa chiave cancella il file precedente: non esiste versione da recuperare. La conferma in interfaccia lo dichiara.
+
+- **DR-074 lascia scoperte le cache.** Un browser che ha già il file vecchio continua a mostrarlo fino alla scadenza. Non si risolve in Fase 1D: le intestazioni di cache dei media sono lavoro del reverse proxy, che è materia di Fase 1F.
+
+- **DR-075 non introduce alcun permesso nuovo.** ADR-007 §3.2 fissa cinque permessi e la rotta si appoggia a `content.read`, come ogni altra lettura dei moduli di Redazione.
+
+- **DR-077 non copre tutti i riferimenti possibili.** Copre i media in evidenza e i media citati dentro i blocchi; un media citato dentro il testo di un blocco di riserva `html`, scritto a mano, resta fuori dal controllo, e questo si dichiara in `AUDIT.md` invece di essere presentato come risolto.
+
+### Decisioni rimaste aperte dopo il Round 14
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale sulle 425 compilazioni e sulle copie di lavoro. **Richiede un professionista.** Il *come* è deciso da DR-073; il *responso* no | prima della produzione |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071 | prima dell'inizio della Fase 1E |
+| **Dossier di MI-06** | Attuazione di DR-073 | prima della Fase 1F |
+| **Conferma puntuale di `apply --confirm`** | Attuazione di DR-072 | alla wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi e misura della soglia rifatta | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori e ricerca insensibile alle maiuscole | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
+| **Intestazioni di cache dei media** | Conseguenza di DR-074: la sostituzione sulla stessa chiave lascia le cache dei browser a servire il file vecchio | prima del deploy, con il reverse proxy di Fase 1F |
+| **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077: restano fuori dal controllo di eliminazione | prima della Fase 1E |

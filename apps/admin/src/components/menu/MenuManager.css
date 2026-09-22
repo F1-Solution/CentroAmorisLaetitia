@@ -1,0 +1,25 @@
+/* Menu di navigazione. */
+
+.amoris-menu-manager__roles {
+  margin: var(--amoris-space-3) 0 0;
+  padding: var(--amoris-space-3);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+}
+
+.amoris-menu-manager__roles legend {
+  padding: 0 var(--amoris-space-1);
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-xs-size);
+  font-weight: var(--amoris-text-xs-weight);
+  letter-spacing: var(--amoris-text-xs-caps-tracking);
+  text-transform: uppercase;
+}
+
+.amoris-menu-manager__panel-actions,
+.amoris-menu-manager__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}
