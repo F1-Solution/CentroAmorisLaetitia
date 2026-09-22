@@ -6,8 +6,8 @@
 
 ## 1. Perché serve
 
-I criteri 1D-31…1D-35 sono eseguiti automaticamente: 25 prove nuove fra
-`apps/api` e `apps/admin` li percorrono tutti, e il riepilogo è in fondo a questo
+I criteri 1D-31…1D-35 sono eseguiti automaticamente: 55 prove nuove fra
+`apps/api`, `apps/admin` e `packages/ui` li percorrono tutti, e il riepilogo è in fondo a questo
 documento. Quello che le prove automatiche **non** possono dirti è se le
 schermate si usano bene: se le parole sono quelle giuste, se un passaggio è
 scomodo, se manca qualcosa che ti aspettavi.
