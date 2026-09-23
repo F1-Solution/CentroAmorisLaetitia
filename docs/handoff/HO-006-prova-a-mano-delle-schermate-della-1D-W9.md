@@ -138,6 +138,7 @@ limita a media, menu, SEO, redirect e impostazioni.
 | «Questo database porta i segni di un'importazione» | c'è dentro il sito vero | **non forzare**: usa un database diverso, o `pnpm compose:reset` seguito da `pnpm db:migrate`, che **cancella** il volume locale |
 | Le immagini si vedono rotte | il seme scrive le righe dei media ma non carica i byte nell'archivio a oggetti | è atteso: carica un file vero dalla schermata Media per vedere un'anteprima |
 | L'accesso risponde «Operazione non consentita» | sei nell'area sbagliata | usa il commutatore in alto a destra |
+| «EADDRINUSE … 3001» o «… 3002» | c'è già un servizio in ascolto su quella porta, quasi sempre un avvio di sviluppo rimasto aperto da una sessione precedente | chiudilo e riavvialo: un processo vecchio serve una versione vecchia del codice |
 
 ---
 

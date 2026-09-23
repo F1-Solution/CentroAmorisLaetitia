@@ -77,12 +77,43 @@ const COMANDI: readonly { readonly manifesto: string; readonly script: string }[
   { manifesto: 'apps/api/package.json', script: 'seed' },
 ];
 
+/**
+ * Il flag non basta che ci sia: deve stare **al posto giusto**.
+ *
+ * Il 2026-09-23 lo script di sviluppo era `tsx --env-file-if-exists=… watch
+ * src/server.ts`, e `tsx` ha creduto che il file da avviare fosse `watch`.
+ * Il controllo che si limitava a cercare il flag nella stringa passava lo
+ * stesso. Qui si guarda la forma della riga: `watch` è un sottocomando e viene
+ * prima di ogni flag, e l'ultimo argomento è il file da avviare.
+ */
+function pezziDi(comando: string): string[] {
+  return comando.trim().split(/\s+/);
+}
+
 describe('nessuno script perde il caricamento del .env', () => {
   for (const { manifesto, script } of COMANDI) {
     it(`${manifesto} → ${script}`, () => {
       const comando = scriptsOf(manifesto)[script];
       expect(comando, `lo script ${script} non esiste più`).toBeDefined();
       expect(comando).toContain('--env-file-if-exists=../../.env');
+
+      const pezzi = pezziDi(comando ?? '');
+      expect(pezzi[0]).toBe('tsx');
+
+      const posizioneFlag = pezzi.findIndex((pezzo) =>
+        pezzo.startsWith('--env-file-if-exists='),
+      );
+      const sottocomandi = pezzi.filter((pezzo) => pezzo === 'watch');
+      for (const sottocomando of sottocomandi) {
+        expect(
+          pezzi.indexOf(sottocomando),
+          'il sottocomando di tsx viene prima dei flag, altrimenti tsx lo scambia per il file da avviare',
+        ).toBeLessThan(posizioneFlag);
+      }
+
+      expect(pezzi[pezzi.length - 1], 'l’ultimo argomento è il file da avviare').toMatch(
+        /\.ts$/,
+      );
     });
   }
 
