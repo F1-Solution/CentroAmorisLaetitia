@@ -97,8 +97,13 @@ pnpm --filter @amoris/api dev      # servizio, porta 3002
 pnpm --filter @amoris/admin dev    # area amministrativa, porta 3001
 ```
 
-Apri `http://localhost:3001`, entra con `redazione@esempio.invalid` e la parola
-che hai scelto, e scegli la veste **Redazione**.
+Apri **`http://localhost:3001/admin`**, entra con `redazione@esempio.invalid` e
+la parola che hai scelto, e scegli la veste **Redazione**.
+
+Il segmento `/admin` non è facoltativo: l'area amministrativa è servita lì e
+`http://localhost:3001` da solo risponde 404. È il percorso su cui il reverse
+proxy la instraderà (ADR-003 §3.2, ADR-008 §3.2), ed è lo stesso in sviluppo
+perché gli indirizzi degli asset restino quelli veri.
 
 ---
 
@@ -139,6 +144,8 @@ limita a media, menu, SEO, redirect e impostazioni.
 | Le immagini si vedono rotte | il seme scrive le righe dei media ma non carica i byte nell'archivio a oggetti | è atteso: carica un file vero dalla schermata Media per vedere un'anteprima |
 | L'accesso risponde «Operazione non consentita» | sei nell'area sbagliata | usa il commutatore in alto a destra |
 | «EADDRINUSE … 3001» o «… 3002» | c'è già un servizio in ascolto su quella porta, quasi sempre un avvio di sviluppo rimasto aperto da una sessione precedente | chiudilo e riavvialo: un processo vecchio serve una versione vecchia del codice |
+| Pagina 404 al centro dello schermo | manca `/admin` nell'indirizzo | vai su `http://localhost:3001/admin` |
+| In console: «A tree hydrated but some attributes… didn't match», con `cz-shortcut-listen` sul `body` | è un'estensione del browser che modifica la pagina prima che React la prenda in carico, non un difetto dell'area amministrativa | nulla da fare: dal 2026-09-23 l'attributo aggiunto dalle estensioni non produce più l'avviso |
 
 ---
 
