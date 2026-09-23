@@ -10,6 +10,7 @@ import {
   TextField,
 } from '@amoris/ui';
 import { useEffect, useState } from 'react';
+import { ApiError } from '../../lib/api';
 import type { MenuItem, MenuVisibility, RoleOption } from './types';
 
 /**
@@ -92,7 +93,13 @@ export function MenuItemPanel({
       });
       setSaved(true);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Operazione non riuscita.');
+      setError(
+        caught instanceof ApiError
+          ? caught.fullMessage
+          : caught instanceof Error
+            ? caught.message
+            : 'Operazione non riuscita.',
+      );
     } finally {
       setBusy(false);
     }

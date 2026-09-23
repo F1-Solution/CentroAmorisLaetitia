@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { IconButton } from '../primitives/IconButton';
 import { getFocusable, trapTabKey } from './focus-trap';
 import './SidePanel.css';
 
@@ -15,6 +16,11 @@ export interface SidePanelProps {
 /**
  * Componente 33: pannello da destra, 480 px (§4.2), per tutto ciò che non è una
  * conferma breve. Stessa disciplina di fuoco di `Dialog` (§9.3).
+ *
+ * Il comando di chiusura **è visibile**, non solo Esc: fino al 2026-09-23 si
+ * usciva unicamente con una scorciatoia da tastiera, e chi non la conosce non
+ * aveva alcuna via d'uscita apparente. §9.6 vieta che una cosa necessaria abbia
+ * un solo veicolo; Esc resta, sono due strade per la stessa azione.
  */
 export function SidePanel({
   open,
@@ -84,9 +90,16 @@ export function SidePanel({
         aria-busy={loading || undefined}
         tabIndex={-1}
       >
-        <h2 id="amoris-sidepanel-title" className="amoris-sidepanel__title">
-          {title}
-        </h2>
+        <div className="amoris-sidepanel__header">
+          <h2 id="amoris-sidepanel-title" className="amoris-sidepanel__title">
+            {title}
+          </h2>
+          <IconButton
+            icon={<span aria-hidden="true">✕</span>}
+            label="Chiudi il pannello"
+            onClick={onClose}
+          />
+        </div>
         {errorText ? (
           <p className="amoris-sidepanel__error" role="alert">
             {errorText}

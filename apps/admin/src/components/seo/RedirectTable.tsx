@@ -69,7 +69,7 @@ const ORIGIN_LABEL: Readonly<Record<Redirect['origin'], string>> = {
 
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
-    ? caught.message
+    ? caught.fullMessage
     : 'Non è stato possibile contattare il servizio.';
 }
 
@@ -233,6 +233,18 @@ export function RedirectTable(): React.JSX.Element {
         />
       ) : null}
       <div className="amoris-seo__actions">
+        {/* Annullare è un gesto a sé: chiudere con Esc o con la X non è la stessa
+            cosa per chi si aspetta un bottone accanto a quello che conferma. */}
+        <Button
+          variant="secondary"
+          disabled={busy}
+          onClick={() => {
+            setEditing(null);
+            setCreating(false);
+          }}
+        >
+          Annulla
+        </Button>
         <Button variant="primary" permitted={canWrite} loading={busy} onClick={() => void save()}>
           {editing ? 'Salva il redirect' : 'Crea il redirect'}
         </Button>

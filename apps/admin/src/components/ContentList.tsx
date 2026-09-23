@@ -144,7 +144,7 @@ export function ContentList({
         if (signal.aborted) return;
         setError(
           caught instanceof ApiError
-            ? caught.message
+            ? caught.fullMessage
             : 'Non è stato possibile contattare il servizio.',
         );
       } finally {
@@ -290,7 +290,7 @@ export function ContentList({
                   } catch (caught) {
                     setCreateError(
                       caught instanceof ApiError
-                        ? caught.message
+                        ? caught.fullMessage
                         : 'Non è stato possibile contattare il servizio.',
                     );
                   } finally {

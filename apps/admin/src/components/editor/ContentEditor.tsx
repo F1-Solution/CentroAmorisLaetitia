@@ -151,7 +151,7 @@ export function ContentEditor({
       }
     } catch (caught) {
       setLoadError(
-        caught instanceof ApiError ? caught.message : 'Non è stato possibile contattare il servizio.',
+        caught instanceof ApiError ? caught.fullMessage : 'Non è stato possibile contattare il servizio.',
       );
     }
   }, [contentId]);
@@ -185,7 +185,7 @@ export function ContentEditor({
     } catch (caught) {
       setActionError(
         caught instanceof ApiError
-          ? caught.message
+          ? caught.fullMessage
           : 'La copia di lavoro non è stata salvata: le modifiche sono ancora solo sullo schermo.',
       );
     }
@@ -242,7 +242,7 @@ export function ContentEditor({
       await load();
     } catch (caught) {
       setActionError(
-        caught instanceof ApiError ? caught.message : 'L’operazione non è riuscita.',
+        caught instanceof ApiError ? caught.fullMessage : 'L’operazione non è riuscita.',
       );
     } finally {
       setBusy(false);

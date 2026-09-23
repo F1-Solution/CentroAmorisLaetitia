@@ -38,7 +38,7 @@ export interface Setting {
 
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
-    ? caught.message
+    ? caught.fullMessage
     : 'Non è stato possibile contattare il servizio.';
 }
 

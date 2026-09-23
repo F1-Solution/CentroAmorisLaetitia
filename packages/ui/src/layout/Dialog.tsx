@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { IconButton } from '../primitives/IconButton';
 import { getFocusable, trapTabKey } from './focus-trap';
 import './Dialog.css';
 
@@ -15,6 +16,11 @@ export interface DialogProps {
  * Componente 32: finestra di dialogo modale, riservata alle conferme brevi.
  * Fuoco intrappolato, chiusura con Esc, ritorno del fuoco all'elemento che
  * l'ha aperta (§9.3).
+ *
+ * Il comando di chiusura **è visibile**, non solo Esc: fino al 2026-09-23 si
+ * usciva unicamente con una scorciatoia da tastiera, e chi non la conosce non
+ * aveva alcuna via d'uscita apparente. §9.6 vieta che una cosa necessaria abbia
+ * un solo veicolo; Esc resta, sono due strade per la stessa azione.
  */
 export function Dialog({ open, onClose, title, children, loading = false }: DialogProps): React.JSX.Element | null {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -77,9 +83,16 @@ export function Dialog({ open, onClose, title, children, loading = false }: Dial
         aria-busy={loading || undefined}
         tabIndex={-1}
       >
-        <h2 id="amoris-dialog-title" className="amoris-dialog__title">
-          {title}
-        </h2>
+        <div className="amoris-dialog__header">
+          <h2 id="amoris-dialog-title" className="amoris-dialog__title">
+            {title}
+          </h2>
+          <IconButton
+            icon={<span aria-hidden="true">✕</span>}
+            label="Chiudi"
+            onClick={onClose}
+          />
+        </div>
         <div className="amoris-dialog__body">{children}</div>
       </div>
     </div>

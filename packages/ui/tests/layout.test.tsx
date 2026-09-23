@@ -133,3 +133,42 @@ describe('il fuoco non torna al primo campo a ogni resa', () => {
     });
   }
 });
+
+/**
+ * Il comando di chiusura, aggiunto il 2026-09-23. Prima si usciva solo con Esc:
+ * una scorciatoia, non un comando visibile, e chi non la conosce restava dentro.
+ */
+describe('pannello e finestra si chiudono anche con il mouse', () => {
+  it('SidePanel: la X chiama onClose', () => {
+    const onClose = vi.fn();
+    render(
+      <SidePanel open onClose={onClose} title="Dettaglio">
+        <p>Corpo</p>
+      </SidePanel>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Chiudi il pannello' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('Dialog: la X chiama onClose', () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog open onClose={onClose} title="Conferma">
+        <p>Corpo</p>
+      </Dialog>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Chiudi' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('Esc continua a funzionare: sono due strade, non una sostituzione', () => {
+    const onClose = vi.fn();
+    render(
+      <SidePanel open onClose={onClose} title="Dettaglio">
+        <p>Corpo</p>
+      </SidePanel>,
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+});

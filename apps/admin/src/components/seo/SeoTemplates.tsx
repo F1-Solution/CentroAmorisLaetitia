@@ -35,7 +35,7 @@ const SCOPE_LABEL: Readonly<Record<string, string>> = {
 
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
-    ? caught.message
+    ? caught.fullMessage
     : 'Non è stato possibile contattare il servizio.';
 }
 

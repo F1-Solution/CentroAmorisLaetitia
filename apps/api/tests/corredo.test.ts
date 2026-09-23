@@ -261,3 +261,31 @@ describe('i quattro casi di visibilità di una voce di menu (criterio 1D-32)', (
     expect(cause?.constraint_name).toBe('menu_items_roles_only_when_needed');
   });
 });
+
+describe('creazione di un redirect (criterio 1D-34)', () => {
+  /** Il corpo che la schermata manda quando si riempiono i due campi e basta. */
+  function crea(sourcePath: string, targetPath: string) {
+    return harness.app.inject({
+      method: 'POST',
+      url: '/redirects',
+      headers: signed.writeHeaders,
+      payload: { sourcePath, targetPath, statusCode: 301, kind: 'exact', note: null },
+    });
+  }
+
+  it('il corpo che la schermata compone viene accettato', async () => {
+    const response = await crea('/indirizzo-vecchio-inventato/', '/indirizzo-nuovo-inventato/');
+    expect(response.statusCode).toBe(201);
+  });
+
+  it('un percorso senza barra iniziale viene rifiutato, e il rifiuto dice quale campo', async () => {
+    const response = await crea('senza-barra', '/qualunque/');
+    expect(response.statusCode).toBe(400);
+
+    // È questo elenco che l'interfaccia buttava via fino al 2026-09-23,
+    // mostrando «La richiesta non è valida» e nient'altro.
+    const corpo = response.json() as { error: { details?: { path: string; message: string }[] } };
+    expect(corpo.error.details?.length).toBeGreaterThan(0);
+    expect(JSON.stringify(corpo.error.details)).toContain('sourcePath');
+  });
+});

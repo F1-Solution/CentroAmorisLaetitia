@@ -24,15 +24,39 @@ function csrfToken(): string | null {
   return match ? decodeURIComponent(match.slice(CSRF_COOKIE.length + 1)) : null;
 }
 
+/** Un campo che il servizio ha rifiutato, con il motivo. */
+export interface ApiErrorDetail {
+  readonly path: string;
+  readonly message: string;
+}
+
 /** Errore dell'API, con il codice che l'API dichiara nel suo involucro. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
     message: string,
+    /**
+     * I campi rifiutati, quando il servizio li elenca.
+     *
+     * **Fino al 2026-09-23 si buttavano via**, e ogni richiesta non valida
+     * mostrava «La richiesta non è valida» e nient'altro: chi la leggeva non
+     * poteva sapere quale campo correggere. Il servizio glieli manda; era
+     * l'interfaccia a non guardarli.
+     */
+    readonly details: readonly ApiErrorDetail[] = [],
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+
+  /** Il messaggio con i campi rifiutati in coda, pronto da mostrare. */
+  get fullMessage(): string {
+    if (this.details.length === 0) return this.message;
+    const elenco = this.details
+      .map((detail) => (detail.path ? `${detail.path}: ${detail.message}` : detail.message))
+      .join('; ');
+    return `${this.message} ${elenco}`;
   }
 }
 
@@ -63,7 +87,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (response.status === 204) return undefined as T;
 
   const payload = (await response.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string } }
+    | { error?: { code?: string; message?: string; details?: ApiErrorDetail[] } }
     | null;
 
   if (!response.ok) {
@@ -75,6 +99,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
       // (ADR-007 §3.1 controllo 9). Riscriverlo qui lo renderebbe più preciso di
       // quanto il servizio intenda essere.
       payload?.error?.message ?? 'Operazione non riuscita.',
+      payload?.error?.details ?? [],
     );
   }
 
