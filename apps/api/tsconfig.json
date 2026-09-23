@@ -1,5 +1,12 @@
 {
+  "//": "Risoluzione «Bundler» invece di NodeNext, dal 2026-09-23. Il motivo sta fuori da questo programma: `@amoris/blocks` viene consumato a sorgente anche da apps/admin, che lo compila con Turbopack, e Turbopack non traduce './x.js' in './x.ts'. Gli specificatori interni del pacchetto sono quindi senza estensione, e NodeNext qui non li risolverebbe. Il servizio valida il documento a blocchi con quegli schemi (DR-079) e senza questo non compila. L'esecuzione non cambia: `dev` e `start` girano con tsx, che risolve entrambe le forme.",
   "extends": "@amoris/config/tsconfig/node.json",
-  "compilerOptions": { "noEmit": true },
-  "include": ["src/**/*.ts"]
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "Preserve",
+    "moduleResolution": "Bundler"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }

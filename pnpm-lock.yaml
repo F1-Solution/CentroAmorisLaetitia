@@ -117,6 +117,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@amoris/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@amoris/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

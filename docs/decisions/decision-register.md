@@ -626,3 +626,41 @@ nel Round 4.
 | **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
 | **Intestazioni di cache dei media** | Conseguenza di DR-074: la sostituzione sulla stessa chiave lascia le cache dei browser a servire il file vecchio | prima del deploy, con il reverse proxy di Fase 1F |
 | **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077: restano fuori dal controllo di eliminazione | prima della Fase 1E |
+
+---
+
+## 20. Round 15 — risposte del 2026-09-23, difetti trovati provando le schermate
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-078 | 2026-09-23 | Come i componenti di navigazione rendono i collegamenti, visto che un'ancora nuda ignora il percorso su cui l'area è pubblicata | **Opzione A — il componente riceve il collegamento**: i tre componenti accettano un componente-collegamento, con l'ancora come predefinito, e `apps/admin` passa quello di Next | B — indirizzi già prefissati da chi li scrive; C — `packages/ui` importa direttamente il collegamento di Next | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, `packages/ui`, `apps/admin` | sì | ADR-008 §3.2; `design-system.md` componenti 2, 3, 5 |
+| DR-079 | 2026-09-23 | Se il servizio debba validare il documento a blocchi, che fino a oggi accettava qualunque cosa | **Opzione A — si chiude adesso**: la validazione entra al confine con gli schemi di `packages/blocks`, e il comando di popolamento costruisce il suo documento passando dagli stessi schemi | B — correggere il solo comando di popolamento e lasciare il servizio permissivo | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | Fase 1D, `apps/api`, ADR-005 §3.1 | sì | criterio 1D-36; `BLOCK-MODEL.md` §1 |
+| DR-080 | 2026-09-23 | Come si rende compilabile `apps/api` con `packages/blocks`, che dalla `1D-W8b` non porta l'estensione negli import interni | **Opzione A — risoluzione «Bundler», come l'importer**: stessa scelta già presa e documentata per `apps/importer`. Il servizio gira con tsx sia in sviluppo sia con `start`, quindi oggi non cambia nulla | B — rimandare la validazione alla Fase 1F; C — validare nel servizio invece che nello schema della rotta, importando il pacchetto solo a runtime | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | `apps/api`, Fase 1F | sì | attua DR-079; `apps/importer/tsconfig.json`, nota del 2026-09-21 |
+| DR-081 | 2026-09-23 | Che fare della pagina sintetica già scritta a database con il documento non valido | **Opzione A — riscrivere quella riga**, sola e sul posto | B — ricreare il volume locale da capo; C — lasciarla non apribile | scelta dell'opzione raccomandata, senza motivazione dichiarata | Proprietario | database locale di sviluppo, dati sintetici | sì | DR-079 |
+
+### Note sulla portata delle quattro decisioni
+
+- **Tre difetti su quattro erano invisibili alle prove, e per la stessa ragione.** Il CORS, i collegamenti e la validazione dei blocchi si vedono solo dove c'è un browser e un'applicazione servita sotto un percorso: le prove del servizio lo chiamano in processo, quelle dei componenti li rendono isolati. La `1D-W10` prevede prove end-to-end su applicazioni avviate, ed è lì che questa classe di difetti si intercetta: fino ad allora vale la prova a mano.
+
+- **DR-080 sposta una conseguenza sulla Fase 1F, e va detto adesso.** Lo script di compilazione di `apps/api` continua a esistere ma il `dist` che produce porta import relativi senza estensione: Node non lo esegue così com'è. Oggi non lo usa nessuno, perché il servizio si avvia con tsx. Alla Fase 1F la scelta è fra un bundle e l'esecuzione con tsx, e non è una scelta rimandabile oltre.
+
+- **DR-079 rende più severo ciò che il servizio accetta, e qualcosa che passava prima ora viene respinto.** Due prove interne portavano blocchi incompleti — senza le quattro chiavi che `BLOCK-MODEL.md` §1 pretende — e sono state completate. Se l'importer producesse documenti incompleti, ora se ne accorgerebbe il servizio: è l'esito voluto, e la `1D-W11` lo verificherà sui conteggi veri.
+
+- **DR-081 riguarda dati sintetici su una macchina di sviluppo.** Nessun dato reale è stato toccato, e la riparazione si è rifiutata di procedere se la riga non fosse stata quella attesa: percorso `/pagina-di-prova/` e nessun identificativo di origine.
+
+### Decisioni rimaste aperte dopo il Round 15
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale. **Richiede un professionista** | prima della produzione |
+| **Impacchettamento del servizio** | Conseguenza di DR-080: bundle o esecuzione con tsx | Fase 1F, non oltre |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071 | prima dell'inizio della Fase 1E |
+| **Dossier di MI-06** | Attuazione di DR-073 | prima della Fase 1F |
+| **Conferma puntuale di `apply --confirm`** | Attuazione di DR-072 | alla wave `1D-W11` |
+| **Attuazione di DR-062** | Riordino delle fasi e misura della soglia rifatta | prima della wave `1D-W10` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori e ricerca insensibile alle maiuscole | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
+| **Intestazioni di cache dei media** | Conseguenza di DR-074 | prima del deploy, con il reverse proxy di Fase 1F |
+| **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077 | prima della Fase 1E |

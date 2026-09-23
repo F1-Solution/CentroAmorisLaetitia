@@ -77,6 +77,18 @@ export interface BuildOptions {
  *  3. il controllo anti-CSRF, che ha bisogno del token di sessione del passo 2;
  *  4. l'hook del registro delle operazioni, che vuole sapere chi ha agito.
  */
+/**
+ * Percorso del campo che non va, letto dall'errore che la libreria di
+ * validazione allega. Il tipo di quel campo non è dichiarato, quindi si
+ * verifica invece di darlo per buono: un percorso mancante vale quanto un
+ * percorso vuoto, e non deve far fallire la risposta d'errore.
+ */
+function pathOfZodIssue(issue: unknown): string {
+  if (typeof issue !== 'object' || issue === null) return '';
+  const path = (issue as { path?: unknown }).path;
+  return Array.isArray(path) ? path.join('.') : '';
+}
+
 export async function buildApp(config: Config, options: BuildOptions = {}) {
   const app = Fastify({
     logger: {
@@ -163,7 +175,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
           code: 'VALIDATION_FAILED',
           message: 'La richiesta non è valida.',
           details: caught.validation.map((issue) => ({
-            path: issue.instancePath || issue.params.issue.path.join('.'),
+            path: issue.instancePath || pathOfZodIssue(issue.params.issue),
             message: issue.message ?? 'valore non valido',
           })),
           requestId: request.id,

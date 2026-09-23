@@ -124,6 +124,7 @@ describe('eliminazione di un media citato (DR-077)', () => {
               type: 'image',
               id: 'b_c17a70000001',
               props: { mediaId: media.id, alt: 'Immagine inventata.' },
+              children: [],
             },
           ],
         },

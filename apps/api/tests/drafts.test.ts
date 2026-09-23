@@ -62,7 +62,20 @@ describe('la copia di lavoro non tocca il contenuto', () => {
       headers: signed.writeHeaders,
       payload: {
         title: 'Titolo soltanto nella copia',
-        blocks: { schema: 1, blocks: [{ type: 'rich_text' }] },
+        // Un blocco **completo**: dal 2026-09-23 il servizio valida il documento
+        // con gli schemi di `packages/blocks`, e un blocco a cui mancano le
+        // quattro chiavi di `BLOCK-MODEL.md` §1 viene respinto — che è il punto.
+        blocks: {
+          schema: 1,
+          blocks: [
+            {
+              type: 'rich_text',
+              id: 'b_d7af00000001',
+              props: { html: '<p>Solo nella copia di lavoro.</p>' },
+              children: [],
+            },
+          ],
+        },
         baseUpdatedAt: updatedAt,
       },
     });

@@ -1,3 +1,4 @@
+import { blockDocumentSchema } from '@amoris/blocks/model';
 import { z } from 'zod';
 
 /** Schemi del modulo `content`. Sorgente unica di validazione, tipi e OpenAPI. */
@@ -8,11 +9,30 @@ export const contentStatusSchema = z.enum(['draft', 'published', 'archived']);
 /**
  * Il documento a blocchi è validato dagli schemi di `packages/blocks`, che sono
  * la sola autorità su ADR-005 §3.1: qui non se ne riscrive una copia.
+ *
+ * **Fino al 2026-09-23 questa frase era un'intenzione, non un fatto** (DR-079).
+ * La forma dichiarata si fermava a «un numero e un elenco di cose», e nessuno
+ * guardava dentro le cose: un documento con proprietà inesistenti entrava a
+ * database e l'editor poi si rifiutava di aprirlo. L'unico posto che validava
+ * era l'editor, cioè dopo.
+ *
+ * La forma esterna resta questa, perché è quella che finisce nella specifica
+ * OpenAPI e che i 14 tipi ricorsivi renderebbero illeggibile. La validazione
+ * vera si aggiunge sopra, e i suoi errori arrivano al client con il percorso
+ * del blocco che non va.
  */
-export const blockDocument = z.object({
-  schema: z.number().int(),
-  blocks: z.array(z.unknown()),
-});
+export const blockDocument = z
+  .object({
+    schema: z.number().int(),
+    blocks: z.array(z.unknown()),
+  })
+  .superRefine((value, ctx) => {
+    const esito = blockDocumentSchema.safeParse(value);
+    if (esito.success) return;
+    for (const problema of esito.error.issues) {
+      ctx.addIssue({ code: 'custom', path: problema.path, message: problema.message });
+    }
+  });
 
 export const listQuery = z.object({
   type: contentTypeSchema.optional(),
