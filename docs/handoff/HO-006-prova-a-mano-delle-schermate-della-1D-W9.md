@@ -26,6 +26,8 @@ definizione non esiste.
 | Verifica | Esito |
 |---|---|
 | Il seme scrive su un database vuoto appena migrato | sì — eseguito su un database usa e getta, poi eliminato |
+| I comandi del §4 leggono da soli il `.env` della radice | sì — eseguiti tutti e cinque il 2026-09-23, dopo la correzione del difetto che li faceva fallire |
+| Il servizio si avvia e resta in ascolto | sì — avviato il 2026-09-23 su una porta libera, configurazione presa dal `.env` |
 | Rieseguirlo non duplica nulla | sì — si ferma con «si esegue una volta sola» |
 | Se fallisce a metà non lascia righe | sì — tutte le scritture stanno in una transazione |
 | Rifiuta un database con dentro un'importazione | sì — controlla `import_runs` e i contenuti con identificativo di origine |
@@ -38,15 +40,38 @@ definizione non esiste.
 ## 3. Prerequisiti
 
 1. Docker in esecuzione, con i servizi del progetto avviati.
-2. Un file `.env` alla radice, copiato da `.env.example`.
+2. Un file `.env` alla radice **completo**. I comandi lo leggono da soli, ma
+   solo se contiene tutto: il tuo, al 2026-09-23, è più vecchio di
+   `.env.example` e gli mancano otto righe, fra cui `IP_HASH_SALT` e
+   `CSRF_SECRET`, che il servizio pretende e che non hanno valore predefinito
+   perché sono segreti. Vedi il §3.1 qui sotto.
 3. Un database **vuoto**. Se il tuo contiene già qualcosa, il seme si rifiuta di
    scrivere: è voluto.
+
+### 3.1 Rimettere in pari il `.env`
+
+Il confronto lo fai con un comando, senza aprire i file:
+
+```bash
+comm -13 <(grep -oE '^[A-Z_]+=' .env | tr -d '=' | sort)          <(grep -oE '^[A-Z_]+=' .env.example | tr -d '=' | sort)
+```
+
+Stampa le chiavi che ci sono in `.env.example` e mancano nel tuo `.env`. Copia
+dall'esempio le righe corrispondenti: i valori che ci trovi vanno bene così come
+sono, sono di un ambiente usa e getta che vive sulla tua macchina.
+
+`SESSION_SECRET`, se ce l'hai, non serve più a nulla: puoi toglierla.
+
+**Il tuo `.env` non l'ho toccato**, e non lo farò: contiene valori tuoi e la sua
+modifica è una di quelle che richiedono la tua mano.
 
 ---
 
 ## 4. Comandi esatti
 
 Dalla radice del repository, uno per volta.
+
+Serve un `.env` alla radice: tutti i comandi qui sotto lo leggono da soli.
 
 ```bash
 # 1. Servizi (PostgreSQL, MinIO). Se sono già su, salta.
@@ -107,6 +132,8 @@ limita a media, menu, SEO, redirect e impostazioni.
 | Sintomo | Che cosa significa | Che cosa fare |
 |---|---|---|
 | «SEED_PASSWORD non è impostata» | la variabile manca o è più corta di 12 caratteri | riscrivi il comando con una parola più lunga |
+| «DATABASE_URL non è impostata» | manca il `.env` alla radice, oppure non contiene quella riga | copia `.env.example` in `.env`: i valori vanno bene così come sono |
+| «IP_HASH_SALT manca» o «CSRF_SECRET manca» | il `.env` è più vecchio di `.env.example` | esegui il confronto del §3.1 e aggiungi le righe mancanti |
 | «Ci sono già delle persone a database» | il seme è già stato eseguito | va bene così: passa ai due comandi `dev` |
 | «Questo database porta i segni di un'importazione» | c'è dentro il sito vero | **non forzare**: usa un database diverso, o `pnpm compose:reset` seguito da `pnpm db:migrate`, che **cancella** il volume locale |
 | Le immagini si vedono rotte | il seme scrive le righe dei media ma non carica i byte nell'archivio a oggetti | è atteso: carica un file vero dalla schermata Media per vedere un'anteprima |

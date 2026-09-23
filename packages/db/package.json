@@ -14,8 +14,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "generate": "drizzle-kit generate",
-    "migrate": "tsx scripts/migrate.ts",
-    "verify": "tsx scripts/verify-schema.ts",
+    "migrate": "tsx --env-file-if-exists=../../.env scripts/migrate.ts",
+    "verify": "tsx --env-file-if-exists=../../.env scripts/verify-schema.ts",
     "test": "vitest run"
   },
   "dependencies": {
