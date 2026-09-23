@@ -1,4 +1,5 @@
-import type { NavSectionGroup } from './types';
+import type { NavLinkComponent, NavSectionGroup } from './types';
+import { DefaultNavLink } from './NavLink';
 import './SectionNav.css';
 
 export interface SectionNavProps {
@@ -7,6 +8,12 @@ export interface SectionNavProps {
   /** Richiudibile con memoria della scelta (§6, componente 3): lo stato vive presso chi usa il componente. */
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /**
+ * Collegamento da usare per le voci. Predefinito: un'ancora normale, che **non
+ * conosce il prefisso** sotto cui l'applicazione è servita. `apps/admin` passa
+ * quello di Next, che lo conosce (vedi `NavLinkComponent`).
+ */
+  link?: NavLinkComponent;
 }
 
 /**
@@ -14,7 +21,7 @@ export interface SectionNavProps {
  * raggruppate sotto etichette in maiuscoletto. Una sezione con
  * `permitted: false` **non compare** (DR-057): non è mai resa disabilitata.
  */
-export function SectionNav({ groups, activeSectionId, collapsed = false, onToggleCollapsed }: SectionNavProps): React.JSX.Element {
+export function SectionNav({ groups, activeSectionId, collapsed = false, onToggleCollapsed, link: Link = DefaultNavLink }: SectionNavProps): React.JSX.Element {
   const visibleGroups = groups
     .map((group) => ({ ...group, sections: group.sections.filter((section) => section.permitted !== false) }))
     .filter((group) => group.sections.length > 0);
@@ -59,9 +66,9 @@ export function SectionNav({ groups, activeSectionId, collapsed = false, onToggl
                 .join(' ');
               return (
                 <li key={section.id}>
-                  <a href={section.href} className={classes} aria-current={isActive ? 'page' : undefined}>
+                  <Link href={section.href} className={classes} aria-current={isActive ? 'page' : undefined}>
                     {section.label}
-                  </a>
+                  </Link>
                 </li>
               );
             })}

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 /**
  * Tipi condivisi dal guscio applicativo — capitoli 7 e 8 di
@@ -9,6 +9,33 @@ import type { ReactNode } from 'react';
  * di un solo elemento: è la base per cui, ad esempio, `RoleSwitcher` non si
  * mostra come un commutatore vuoto (DR-050).
  */
+
+/**
+ * Come si rende un collegamento di navigazione.
+ *
+ * Esiste perché un'ancora normale **non conosce il prefisso** sotto cui
+ * l'applicazione è servita: l'area amministrativa vive sotto `/admin`
+ * (ADR-008 §3.2), e fino al 2026-09-23 ogni voce della navigazione puntava
+ * fuori dall'applicazione e rispondeva 404.
+ *
+ * Il pacchetto resta neutro rispetto al framework: il valore predefinito è
+ * un'ancora, e chi ha un componente che sa dei prefissi — `apps/admin` ha
+ * quello di Next — lo passa. In cambio si riottiene anche la navigazione senza
+ * ricaricare la pagina, che con un'ancora nuda si era persa.
+ */
+export interface NavLinkProps {
+  href: string;
+  className?: string | undefined;
+  'aria-current'?: 'page' | 'true' | undefined;
+  children?: ReactNode | undefined;
+}
+
+/**
+ * Le proprietà sono **esattamente quelle che la navigazione passa**, non tutte
+ * quelle di un'ancora: un contratto più stretto è quello che rende accettabile
+ * il collegamento di Next, che di suo ne dichiara altre.
+ */
+export type NavLinkComponent = ComponentType<NavLinkProps>;
 
 /** Un'area posseduta dalla persona (capitolo 7). Le aree non costruite non compaiono mai: non hanno voce qui. */
 export interface AreaSummary {

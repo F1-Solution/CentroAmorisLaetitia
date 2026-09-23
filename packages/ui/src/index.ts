@@ -69,6 +69,7 @@ export * from './markers/VisibilityPanel';
 
 // Guscio e navigazione — componenti 1-13 (1D-W7b)
 export * from './shell/types';
+export * from './shell/NavLink';
 export * from './shell/AppShell';
 export * from './shell/AreaNav';
 export * from './shell/SectionNav';

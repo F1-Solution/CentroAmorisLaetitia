@@ -183,16 +183,25 @@ try {
         {
           type: 'image',
           id: 'b_5e6d00000001',
+          /**
+           * Le proprietà sono **quelle che lo schema di `packages/blocks`
+           * dichiara**, e solo quelle: lo schema è `strict`. Al primo tentativo
+           * qui c'erano `linkHref`, `linkTarget` e `variant: 'full'` — due nomi
+           * inesistenti e un valore fuori formato — e il documento entrava lo
+           * stesso a database, perché il servizio non guarda dentro. L'editor
+           * poi si rifiutava di aprirlo, ed era l'unico a dirlo.
+           */
           props: {
             mediaId: citedMedia.id,
             src: null,
             alt: 'Un quadrato di un solo pixel, senza soggetto.',
             caption: null,
-            linkHref: null,
-            linkTarget: null,
-            variant: 'full',
+            linkUrl: null,
+            linkNewWindow: false,
+            variant: null,
             classes: [],
           },
+          children: [],
         },
       ],
     };

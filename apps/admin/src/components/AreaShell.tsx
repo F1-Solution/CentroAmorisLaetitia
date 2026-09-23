@@ -11,6 +11,7 @@ import {
   TopBar,
   UserMenu,
 } from '@amoris/ui';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -38,6 +39,11 @@ export interface AreaShellProps {
  *   posizione ovunque, e `UserMenu` gli sta **accanto**: cambiare veste e
  *   disconnettersi sono due gesti diversi;
  * - **un'area che non si possiede non compare**, né attiva né spenta (DR-057).
+ *
+ * I tre componenti di navigazione ricevono il **collegamento di Next**: senza,
+ * userebbero un'ancora normale, che non conosce il prefisso `/admin` sotto cui
+ * quest'area è servita, e ogni voce porterebbe fuori dall'applicazione. Fino al
+ * 2026-09-23 era così.
  *
  * Il commutatore commuta **vesti**, non ruoli: in Fase 1 il ruolo è uno solo e
  * ciò che si cambia è l'area, che è esattamente ciò che `ux-proposals.md` §4.3
@@ -93,7 +99,7 @@ export function AreaShell({
     <AppShell
       topBar={
         <TopBar
-          breadcrumbs={<Breadcrumbs items={breadcrumbs.map((item) => ({ ...item }))} />}
+          breadcrumbs={<Breadcrumbs link={Link} items={breadcrumbs.map((item) => ({ ...item }))} />}
           search={<DensityToggle />}
           roleSwitcher={
             <RoleSwitcher
@@ -120,6 +126,7 @@ export function AreaShell({
       }
       areaNav={
         <AreaNav
+          link={Link}
           areas={ownedAreas.map((owned) => ({
             id: owned,
             label: AREA_DEFINITIONS[owned].label,
@@ -131,6 +138,7 @@ export function AreaShell({
       }
       sectionNav={
         <SectionNav
+          link={Link}
           groups={definition.groups.map((group) => ({
             ...group,
             sections: group.sections.map((section) => ({ ...section })),

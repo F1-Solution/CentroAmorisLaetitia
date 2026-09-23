@@ -100,9 +100,21 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     await close();
   });
 
+  /**
+   * I metodi si dichiarano, e non è una formalità: la libreria, senza `methods`,
+   * ne ammette **tre** — `GET`, `HEAD`, `POST` — e il browser rifiuta ogni
+   * scrittura che non sia una creazione **prima di inviarla**. Fino al
+   * 2026-09-23 era così, e dall'interfaccia ogni salvataggio falliva con
+   * «non è stato possibile contattare il servizio», che era letteralmente vero.
+   *
+   * Le prove del servizio non potevano accorgersene: chiamano l'applicazione in
+   * processo, dove il CORS non entra in gioco. Ora c'è una prova che interroga
+   * il preflight, che è l'unico modo di vederlo senza un browser.
+   */
   await app.register(cors, {
     origin: config.CORS_ORIGINS.length > 0 ? config.CORS_ORIGINS : false,
     credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(cookie);
   await app.register(multipart, { limits: { fileSize: 64 * 1024 * 1024, files: 1 } });

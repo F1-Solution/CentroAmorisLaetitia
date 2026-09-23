@@ -1,4 +1,5 @@
-import type { AreaSummary } from './types';
+import type { AreaSummary, NavLinkComponent } from './types';
+import { DefaultNavLink } from './NavLink';
 import './AreaNav.css';
 
 export interface AreaNavProps {
@@ -10,10 +11,16 @@ export interface AreaNavProps {
    */
   areas: AreaSummary[];
   activeAreaId: string;
+  /**
+ * Collegamento da usare per le voci. Predefinito: un'ancora normale, che **non
+ * conosce il prefisso** sotto cui l'applicazione è servita. `apps/admin` passa
+ * quello di Next, che lo conosce (vedi `NavLinkComponent`).
+ */
+  link?: NavLinkComponent;
 }
 
 /** Componente 2: prima colonna, 56 px — le aree come icona con etichetta al passaggio e alla messa a fuoco. */
-export function AreaNav({ areas, activeAreaId }: AreaNavProps): React.JSX.Element {
+export function AreaNav({ areas, activeAreaId, link: Link = DefaultNavLink }: AreaNavProps): React.JSX.Element {
   return (
     <nav className="amoris-area-nav" aria-label="Aree">
       <ul className="amoris-area-nav__list">
@@ -24,12 +31,12 @@ export function AreaNav({ areas, activeAreaId }: AreaNavProps): React.JSX.Elemen
             .join(' ');
           return (
             <li key={area.id}>
-              <a href={area.href} className={itemClasses} aria-current={isActive ? 'true' : undefined}>
+              <Link href={area.href} className={itemClasses} aria-current={isActive ? 'true' : undefined}>
                 <span className="amoris-area-nav__icon" aria-hidden="true">
                   {area.icon}
                 </span>
                 <span className="amoris-area-nav__label">{area.label}</span>
-              </a>
+              </Link>
             </li>
           );
         })}

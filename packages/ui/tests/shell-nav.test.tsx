@@ -5,7 +5,7 @@ import { AreaNav } from '../src/shell/AreaNav.js';
 import { SectionNav } from '../src/shell/SectionNav.js';
 import { TopBar } from '../src/shell/TopBar.js';
 import { Breadcrumbs } from '../src/shell/Breadcrumbs.js';
-import type { AreaSummary, NavSectionGroup } from '../src/shell/types.js';
+import type { AreaSummary, NavLinkComponent, NavSectionGroup } from '../src/shell/types.js';
 
 const redazione: AreaSummary = { id: 'redazione', label: 'Redazione', icon: '📝', href: '/redazione' };
 const impostazioni: AreaSummary = { id: 'impostazioni', label: 'Impostazioni', icon: '⚙️', href: '/impostazioni' };
@@ -129,5 +129,64 @@ describe('AppShell — componente 1', () => {
     const content = document.getElementById('amoris-app-shell-content');
     expect(content).not.toBeNull();
     expect(content?.getAttribute('tabindex')).toBe('-1');
+  });
+});
+
+/**
+ * Difetto del 2026-09-23: le tre voci di navigazione rendevano un'ancora nuda,
+ * che non conosce il prefisso sotto cui l'applicazione è servita. L'area
+ * amministrativa vive sotto `/admin`, e ogni collegamento della colonna di
+ * sinistra portava fuori dall'applicazione, rispondendo 404.
+ *
+ * La prova non verifica il prefisso — quello lo mette il collegamento di Next,
+ * che qui non c'è — ma che **il collegamento passato venga davvero usato**. È il
+ * punto che era rotto: i componenti ignoravano qualunque cosa ricevessero.
+ */
+describe('la navigazione usa il collegamento che riceve', () => {
+  /** Finto collegamento consapevole del prefisso, come quello di Next. */
+  const ConPrefisso: NavLinkComponent = ({ href, children, ...resto }) => (
+    <a {...resto} href={`/admin${href}`} data-con-prefisso="sì">
+      {children}
+    </a>
+  );
+
+  it('AreaNav', () => {
+    render(<AreaNav areas={[redazione]} activeAreaId="redazione" link={ConPrefisso} />);
+    const voce = screen.getByRole('link', { name: /Redazione/ });
+    expect(voce.getAttribute('href')).toBe('/admin/redazione');
+    expect(voce.getAttribute('data-con-prefisso')).toBe('sì');
+  });
+
+  it('SectionNav', () => {
+    const gruppi: NavSectionGroup[] = [
+      {
+        id: 'contenuti',
+        label: 'CONTENUTI',
+        sections: [{ id: 'pagine', label: 'Pagine', href: '/redazione/pagine' }],
+      },
+    ];
+    render(<SectionNav groups={gruppi} activeSectionId="pagine" link={ConPrefisso} />);
+    expect(screen.getByRole('link', { name: 'Pagine' }).getAttribute('href')).toBe(
+      '/admin/redazione/pagine',
+    );
+  });
+
+  it('Breadcrumbs', () => {
+    render(
+      <Breadcrumbs
+        link={ConPrefisso}
+        items={[{ label: 'Redazione', href: '/redazione/pagine' }, { label: 'Media' }]}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Redazione' }).getAttribute('href')).toBe(
+      '/admin/redazione/pagine',
+    );
+  });
+
+  it('senza collegamento resta un’ancora nuda, che è il predefinito giusto per un pacchetto neutro', () => {
+    render(<AreaNav areas={[redazione]} activeAreaId="redazione" />);
+    const voce = screen.getByRole('link', { name: /Redazione/ });
+    expect(voce.getAttribute('href')).toBe('/redazione');
+    expect(voce.getAttribute('data-con-prefisso')).toBeNull();
   });
 });
