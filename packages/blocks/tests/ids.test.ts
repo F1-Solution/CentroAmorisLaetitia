@@ -14,8 +14,14 @@ describe('deriveBlockId (§4.1)', () => {
   });
 
   it('due chiavi diverse producono identificatori diversi', () => {
-    const a = deriveBlockId({ legacyContentId: 1, startOffset: 0, endOffset: 5, type: 'rich_text' }, () => false);
-    const b = deriveBlockId({ legacyContentId: 1, startOffset: 0, endOffset: 6, type: 'rich_text' }, () => false);
+    const a = deriveBlockId(
+      { legacyContentId: 1, startOffset: 0, endOffset: 5, type: 'rich_text' },
+      () => false,
+    );
+    const b = deriveBlockId(
+      { legacyContentId: 1, startOffset: 0, endOffset: 6, type: 'rich_text' },
+      () => false,
+    );
     expect(a).not.toBe(b);
   });
 

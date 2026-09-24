@@ -6,5 +6,11 @@ export interface SliderComponentProps {
 }
 
 export function Slider({ block }: SliderComponentProps) {
-  return <div className={blockClassName('slider', block.props.classes)} id={block.id} data-slider-id={block.props.sliderId} />;
+  return (
+    <div
+      className={blockClassName('slider', block.props.classes)}
+      id={block.id}
+      data-slider-id={block.props.sliderId}
+    />
+  );
 }

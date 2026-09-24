@@ -49,8 +49,12 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await Promise.allSettled([
-    s3.send(new DeleteObjectCommand({ Bucket: buckets.public, Key: `${testKeyPrefix}/pubblico.txt` })),
-    s3.send(new DeleteObjectCommand({ Bucket: buckets.private, Key: `${testKeyPrefix}/riservato.txt` })),
+    s3.send(
+      new DeleteObjectCommand({ Bucket: buckets.public, Key: `${testKeyPrefix}/pubblico.txt` }),
+    ),
+    s3.send(
+      new DeleteObjectCommand({ Bucket: buckets.private, Key: `${testKeyPrefix}/riservato.txt` }),
+    ),
   ]);
   s3.destroy();
   await rm(tmpDir, { recursive: true, force: true });
@@ -73,7 +77,9 @@ describe('ObjectStore — storage a oggetti vero', () => {
     expect(await object.Body?.transformToString()).toBe('contenuto di prova, dato sintetico');
 
     // Non è finito anche nel bucket pubblico.
-    await expect(s3.send(new GetObjectCommand({ Bucket: buckets.public, Key: key }))).rejects.toThrow();
+    await expect(
+      s3.send(new GetObjectCommand({ Bucket: buckets.public, Key: key })),
+    ).rejects.toThrow();
   });
 
   it(

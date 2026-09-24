@@ -20,12 +20,15 @@ describe('Button — componente 14', () => {
     expect(button).toHaveProperty('disabled', true);
   });
 
-  it.each(['primary', 'secondary', 'tertiary', 'destructive'] as const)('rende la variante %s', (variant) => {
-    render(<Button variant={variant}>Azione</Button>);
-    expect(screen.getByRole('button').className).toContain(`amoris-button--${variant}`);
-  });
+  it.each(['primary', 'secondary', 'tertiary', 'destructive'] as const)(
+    'rende la variante %s',
+    (variant) => {
+      render(<Button variant={variant}>Azione</Button>);
+      expect(screen.getByRole('button').className).toContain(`amoris-button--${variant}`);
+    },
+  );
 
-  it('DR-057: un\'azione non permessa non si mostra, non si mostra disabilitata', () => {
+  it("DR-057: un'azione non permessa non si mostra, non si mostra disabilitata", () => {
     const { container } = render(<Button permitted={false}>Elimina</Button>);
     expect(container.querySelector('button')).toBeNull();
     expect(screen.queryByText('Elimina')).toBeNull();

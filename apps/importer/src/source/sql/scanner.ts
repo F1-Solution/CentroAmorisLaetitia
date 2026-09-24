@@ -138,9 +138,12 @@ export function splitTopLevel(text: string): string[] {
 }
 
 /** Estrae il contenuto fra la prima `(` e la sua `)` corrispondente, a partire da `fromIndex`. */
-export function extractParenBody(text: string, fromIndex: number): { body: string; endIndex: number } {
+export function extractParenBody(
+  text: string,
+  fromIndex: number,
+): { body: string; endIndex: number } {
   let i = text.indexOf('(', fromIndex);
-  if (i === -1) throw new Error("nessuna parentesi aperta trovata dopo la posizione indicata");
+  if (i === -1) throw new Error('nessuna parentesi aperta trovata dopo la posizione indicata');
   const start = i + 1;
   let depth = 1;
   i = start;
@@ -258,7 +261,9 @@ export function parseValue(text: string, i: number): [value: SqlValue, next: num
     return [Number(raw), j];
   }
 
-  throw new Error(`valore non riconosciuto alla posizione ${j}: ${JSON.stringify(text.slice(j, j + 20))}`);
+  throw new Error(
+    `valore non riconosciuto alla posizione ${j}: ${JSON.stringify(text.slice(j, j + 20))}`,
+  );
 }
 
 function isWordChar(c: string | undefined): boolean {

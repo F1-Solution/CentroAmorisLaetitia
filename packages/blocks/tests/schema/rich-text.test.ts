@@ -12,7 +12,9 @@ describe('richTextPropsSchema', () => {
   });
 
   it('rifiuta html non sanificato (uno script dentro)', () => {
-    expect(() => richTextPropsSchema.parse({ html: '<p>ciao</p><script>alert(1)</script>' })).toThrow();
+    expect(() =>
+      richTextPropsSchema.parse({ html: '<p>ciao</p><script>alert(1)</script>' }),
+    ).toThrow();
   });
 
   it('rifiuta html con un attributo non ammesso ancora presente (non è un punto fisso)', () => {

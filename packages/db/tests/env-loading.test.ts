@@ -58,9 +58,7 @@ interface Manifest {
 }
 
 function scriptsOf(relativePath: string): Readonly<Record<string, string>> {
-  const manifest = JSON.parse(
-    readFileSync(path.join(root, relativePath), 'utf8'),
-  ) as Manifest;
+  const manifest = JSON.parse(readFileSync(path.join(root, relativePath), 'utf8')) as Manifest;
   return manifest.scripts ?? {};
 }
 
@@ -100,9 +98,7 @@ describe('nessuno script perde il caricamento del .env', () => {
       const pezzi = pezziDi(comando ?? '');
       expect(pezzi[0]).toBe('tsx');
 
-      const posizioneFlag = pezzi.findIndex((pezzo) =>
-        pezzo.startsWith('--env-file-if-exists='),
-      );
+      const posizioneFlag = pezzi.findIndex((pezzo) => pezzo.startsWith('--env-file-if-exists='));
       const sottocomandi = pezzi.filter((pezzo) => pezzo === 'watch');
       for (const sottocomando of sottocomandi) {
         expect(
@@ -111,9 +107,7 @@ describe('nessuno script perde il caricamento del .env', () => {
         ).toBeLessThan(posizioneFlag);
       }
 
-      expect(pezzi[pezzi.length - 1], 'l’ultimo argomento è il file da avviare').toMatch(
-        /\.ts$/,
-      );
+      expect(pezzi[pezzi.length - 1], 'l’ultimo argomento è il file da avviare').toMatch(/\.ts$/);
     });
   }
 

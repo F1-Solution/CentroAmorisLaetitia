@@ -20,7 +20,11 @@ import { checkSchemaVersion } from './checks/05-schema-version.js';
 import { checkStorageReachable } from './checks/06-storage-reachable.js';
 import { checkUploadsCount } from './checks/07-uploads-count.js';
 import { checkNoOpenRuns } from './checks/08-no-open-runs.js';
-import { EXPECTED_DUMP_FINGERPRINT, EXPECTED_TABLES, EXPECTED_UPLOADS_FILE_COUNT } from './constants.js';
+import {
+  EXPECTED_DUMP_FINGERPRINT,
+  EXPECTED_TABLES,
+  EXPECTED_UPLOADS_FILE_COUNT,
+} from './constants.js';
 import type { PreflightReport } from './types.js';
 
 export interface PreflightDependencies {

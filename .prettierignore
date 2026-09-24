@@ -14,3 +14,10 @@ dist/
 coverage/
 playwright-report/
 test-results/
+
+# Artefatti generati da uno strumento, non scritti da una persona: riformattarli
+# produce un diff enorme che non appartiene a nessuna modifica, e nel caso delle
+# migrazioni tocca file che Drizzle confronta per calcolare la successiva.
+packages/db/drizzle/
+apps/api/tests/openapi.snapshot.json
+tests/fixtures/block-corpus.json

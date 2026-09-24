@@ -51,9 +51,7 @@ export function BlockInspector({
 }: BlockInspectorProps): React.JSX.Element {
   if (!block) {
     return (
-      <p className="amoris-inspector__empty">
-        Scegliere un blocco nell’albero per modificarlo.
-      </p>
+      <p className="amoris-inspector__empty">Scegliere un blocco nell’albero per modificarlo.</p>
     );
   }
 
@@ -88,7 +86,9 @@ export function BlockInspector({
             value={block.props.alt}
             disabled={disabled}
             helpText="Che cosa mostra l’immagine, per chi non la vede."
-            onChange={(event) => onChange({ ...block, props: { ...block.props, alt: event.target.value } })}
+            onChange={(event) =>
+              onChange({ ...block, props: { ...block.props, alt: event.target.value } })
+            }
           />
           <TextField
             label="Titolo"
@@ -97,7 +97,10 @@ export function BlockInspector({
             onChange={(event) =>
               onChange({
                 ...block,
-                props: { ...block.props, title: event.target.value === '' ? null : event.target.value },
+                props: {
+                  ...block.props,
+                  title: event.target.value === '' ? null : event.target.value,
+                },
               })
             }
           />
@@ -108,13 +111,16 @@ export function BlockInspector({
             onChange={(event) =>
               onChange({
                 ...block,
-                props: { ...block.props, caption: event.target.value === '' ? null : event.target.value },
+                props: {
+                  ...block.props,
+                  caption: event.target.value === '' ? null : event.target.value,
+                },
               })
             }
           />
           <Alert variant="info" title="Il file dell’immagine si cambia dalla schermata dei media">
-            Qui si modifica ciò che accompagna l’immagine. Sostituire il file è la schermata dei media,
-            che non esiste ancora.
+            Qui si modifica ciò che accompagna l’immagine. Sostituire il file è la schermata dei
+            media, che non esiste ancora.
           </Alert>
         </div>
       );
@@ -147,8 +153,8 @@ export function BlockInspector({
             onChange={(structure) => onColumnStructureChange(block.id, structure)}
           />
           <p className="amoris-inspector__note">
-            Si possono scegliere solo le ripartizioni con lo stesso numero di colonne di questa riga:
-            aggiungere o togliere una colonna è fuori dal perimetro di questa fase.
+            Si possono scegliere solo le ripartizioni con lo stesso numero di colonne di questa
+            riga: aggiungere o togliere una colonna è fuori dal perimetro di questa fase.
           </p>
         </div>
       );

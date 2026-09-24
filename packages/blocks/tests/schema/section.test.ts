@@ -21,7 +21,9 @@ describe('sectionPropsSchema', () => {
   });
 
   it('rifiuta customWidth "default" con un valore', () => {
-    expect(() => sectionPropsSchema.parse({ customWidth: { mode: 'default', value: 10 } })).toThrow();
+    expect(() =>
+      sectionPropsSchema.parse({ customWidth: { mode: 'default', value: 10 } }),
+    ).toThrow();
   });
 
   it('rifiuta un colore fuori dalle due forme ammesse', () => {
@@ -30,9 +32,9 @@ describe('sectionPropsSchema', () => {
 
   it('accetta un colore esadecimale e uno rgba', () => {
     expect(sectionPropsSchema.parse({ backgroundColor: '#FFF' }).backgroundColor).toBe('#FFF');
-    expect(sectionPropsSchema.parse({ backgroundColor: 'rgba(0, 0, 0, 0.5)' }).backgroundColor).toBe(
-      'rgba(0, 0, 0, 0.5)',
-    );
+    expect(
+      sectionPropsSchema.parse({ backgroundColor: 'rgba(0, 0, 0, 0.5)' }).backgroundColor,
+    ).toBe('rgba(0, 0, 0, 0.5)');
   });
 
   it('rifiuta una classe fuori dal vocabolario chiuso (§7.2)', () => {

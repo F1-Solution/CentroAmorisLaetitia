@@ -18,7 +18,14 @@ function richText(id: string): BlockDocument['blocks'][number] {
   return {
     type: 'rich_text',
     id,
-    props: { html: '<p>x</p>', textAlign: null, backgroundLayout: null, border: null, padding: emptySpacing(), classes: [] },
+    props: {
+      html: '<p>x</p>',
+      textAlign: null,
+      backgroundLayout: null,
+      border: null,
+      padding: emptySpacing(),
+      classes: [],
+    },
     children: [],
   };
 }
@@ -51,7 +58,10 @@ function docWithBlocks(count: number, htmlCount: number, _seed: string): BlockDo
 describe('countReserveBlocks — soglia (ADR-005 §3.4, BLOCK-MODEL.md §8)', () => {
   it('sotto soglia: 1 html su 100 blocchi non contenitori, 1 contenuto su 108', () => {
     const doc = docWithBlocks(100, 1, 'a');
-    const documents: BlockDocument[] = [doc, ...Array.from({ length: 107 }, () => ({ schema: 1 as const, blocks: [] }))];
+    const documents: BlockDocument[] = [
+      doc,
+      ...Array.from({ length: 107 }, () => ({ schema: 1 as const, blocks: [] })),
+    ];
     const result = countReserveBlocks(documents);
     expect(result.nonContainerBlocks).toBe(100);
     expect(result.htmlBlocks).toBe(1);

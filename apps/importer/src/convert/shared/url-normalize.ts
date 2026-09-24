@@ -18,7 +18,8 @@ export interface UrlNormalizationResult {
   readonly count: number;
 }
 
-const SCHEME_RELATIVE_SITE_URL = /\/\/(www\.centroamorislaetitia\.it|centroamorislaetitia\.it)(\/[^"'\s)>]*)?/g;
+const SCHEME_RELATIVE_SITE_URL =
+  /\/\/(www\.centroamorislaetitia\.it|centroamorislaetitia\.it)(\/[^"'\s)>]*)?/g;
 
 /**
  * Sostituisce ogni occorrenza di `//<host-del-sito>/percorso` con `/percorso`
@@ -27,11 +28,14 @@ const SCHEME_RELATIVE_SITE_URL = /\/\/(www\.centroamorislaetitia\.it|centroamori
  */
 export function normalizeSameSiteUrls(html: string): UrlNormalizationResult {
   let count = 0;
-  const out = html.replace(SCHEME_RELATIVE_SITE_URL, (match, host: string, path: string | undefined) => {
-    void host;
-    count += 1;
-    return path ?? '/';
-  });
+  const out = html.replace(
+    SCHEME_RELATIVE_SITE_URL,
+    (match, host: string, path: string | undefined) => {
+      void host;
+      count += 1;
+      return path ?? '/';
+    },
+  );
   return { html: out, count };
 }
 

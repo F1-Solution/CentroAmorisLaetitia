@@ -13,18 +13,46 @@ interface BooleanConsistencyRule {
 }
 
 const BOOLEAN_RULES: readonly BooleanConsistencyRule[] = [
-  { blockType: 'section', className: 'is-fullwidth', test: (p) => (p as { fullWidth: boolean }).fullWidth },
-  { blockType: 'row', className: 'is-fullwidth', test: (p) => (p as { fullWidth: boolean }).fullWidth },
-  { blockType: 'section', className: 'has-parallax', test: (p) => (p as { parallax: boolean }).parallax },
-  { blockType: 'section', className: 'has-inner-shadow', test: (p) => (p as { innerShadow: boolean }).innerShadow },
+  {
+    blockType: 'section',
+    className: 'is-fullwidth',
+    test: (p) => (p as { fullWidth: boolean }).fullWidth,
+  },
+  {
+    blockType: 'row',
+    className: 'is-fullwidth',
+    test: (p) => (p as { fullWidth: boolean }).fullWidth,
+  },
+  {
+    blockType: 'section',
+    className: 'has-parallax',
+    test: (p) => (p as { parallax: boolean }).parallax,
+  },
+  {
+    blockType: 'section',
+    className: 'has-inner-shadow',
+    test: (p) => (p as { innerShadow: boolean }).innerShadow,
+  },
   {
     blockType: 'section',
     className: 'has-transparent-bg',
     test: (p) => (p as { transparentBackground: boolean }).transparentBackground,
   },
-  { blockType: 'image', className: 'center-on-mobile', test: (p) => (p as { centerOnMobile: boolean }).centerOnMobile },
-  { blockType: 'image', className: 'in-lightbox', test: (p) => (p as { lightbox: boolean }).lightbox },
-  { blockType: 'map', className: 'map-grayscale', test: (p) => (p as { grayscale: boolean }).grayscale },
+  {
+    blockType: 'image',
+    className: 'center-on-mobile',
+    test: (p) => (p as { centerOnMobile: boolean }).centerOnMobile,
+  },
+  {
+    blockType: 'image',
+    className: 'in-lightbox',
+    test: (p) => (p as { lightbox: boolean }).lightbox,
+  },
+  {
+    blockType: 'map',
+    className: 'map-grayscale',
+    test: (p) => (p as { grayscale: boolean }).grayscale,
+  },
 ];
 
 const RICH_TEXT_ALIGN_CLASSES: Readonly<Record<string, string>> = {

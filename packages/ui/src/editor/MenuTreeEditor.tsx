@@ -52,7 +52,18 @@ interface MenuListProps {
   disabled: boolean;
 }
 
-function MenuList({ nodes, depth, selectedId, onSelect, onMoveUp, onMoveDown, onIndent, onOutdent, onDelete, disabled }: MenuListProps): React.JSX.Element {
+function MenuList({
+  nodes,
+  depth,
+  selectedId,
+  onSelect,
+  onMoveUp,
+  onMoveDown,
+  onIndent,
+  onOutdent,
+  onDelete,
+  disabled,
+}: MenuListProps): React.JSX.Element {
   return (
     <ul className="amoris-menu-tree">
       {nodes.map((node, index) => {
@@ -62,9 +73,19 @@ function MenuList({ nodes, depth, selectedId, onSelect, onMoveUp, onMoveDown, on
         return (
           <li key={node.id}>
             <div
-              className={['amoris-menu-tree__row', node.id === selectedId ? 'amoris-menu-tree__row--selected' : ''].filter(Boolean).join(' ')}
+              className={[
+                'amoris-menu-tree__row',
+                node.id === selectedId ? 'amoris-menu-tree__row--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              <button type="button" className="amoris-focusable amoris-menu-tree__label" onClick={() => onSelect(node.id)} disabled={disabled}>
+              <button
+                type="button"
+                className="amoris-focusable amoris-menu-tree__label"
+                onClick={() => onSelect(node.id)}
+                disabled={disabled}
+              >
                 {node.label}
                 <span className="amoris-menu-tree__target">
                   {TARGET_PREFIX[node.linkType]}
@@ -72,11 +93,36 @@ function MenuList({ nodes, depth, selectedId, onSelect, onMoveUp, onMoveDown, on
                 </span>
               </button>
               <div className="amoris-menu-tree__actions">
-                <IconButton icon={<span aria-hidden="true">↑</span>} label={`Sposta su: ${node.label}`} onClick={() => onMoveUp(node.id)} disabled={disabled || isFirst} />
-                <IconButton icon={<span aria-hidden="true">↓</span>} label={`Sposta giù: ${node.label}`} onClick={() => onMoveDown(node.id)} disabled={disabled || isLast} />
-                <IconButton icon={<span aria-hidden="true">→</span>} label={`Annida: ${node.label}`} onClick={() => onIndent(node.id)} disabled={disabled || isFirst} />
-                <IconButton icon={<span aria-hidden="true">←</span>} label={`Riporta al livello superiore: ${node.label}`} onClick={() => onOutdent(node.id)} disabled={disabled || isRoot} />
-                <IconButton icon={<span aria-hidden="true">🗑</span>} label={`Elimina: ${node.label}`} onClick={() => onDelete(node.id)} disabled={disabled} />
+                <IconButton
+                  icon={<span aria-hidden="true">↑</span>}
+                  label={`Sposta su: ${node.label}`}
+                  onClick={() => onMoveUp(node.id)}
+                  disabled={disabled || isFirst}
+                />
+                <IconButton
+                  icon={<span aria-hidden="true">↓</span>}
+                  label={`Sposta giù: ${node.label}`}
+                  onClick={() => onMoveDown(node.id)}
+                  disabled={disabled || isLast}
+                />
+                <IconButton
+                  icon={<span aria-hidden="true">→</span>}
+                  label={`Annida: ${node.label}`}
+                  onClick={() => onIndent(node.id)}
+                  disabled={disabled || isFirst}
+                />
+                <IconButton
+                  icon={<span aria-hidden="true">←</span>}
+                  label={`Riporta al livello superiore: ${node.label}`}
+                  onClick={() => onOutdent(node.id)}
+                  disabled={disabled || isRoot}
+                />
+                <IconButton
+                  icon={<span aria-hidden="true">🗑</span>}
+                  label={`Elimina: ${node.label}`}
+                  onClick={() => onDelete(node.id)}
+                  disabled={disabled}
+                />
               </div>
             </div>
             {node.children && node.children.length > 0 ? (

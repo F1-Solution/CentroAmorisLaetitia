@@ -86,9 +86,9 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 
   if (response.status === 204) return undefined as T;
 
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string; details?: ApiErrorDetail[] } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { code?: string; message?: string; details?: ApiErrorDetail[] };
+  } | null;
 
   if (!response.ok) {
     throw new ApiError(

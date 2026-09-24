@@ -43,7 +43,14 @@ export function SeoPanel({
           disabled={disabled}
           {...(titleErrorText !== undefined ? { errorText: titleErrorText } : {})}
         />
-        <p className={['amoris-seo-panel__count', title.length > TITLE_MAX ? 'amoris-seo-panel__count--over' : ''].filter(Boolean).join(' ')}>
+        <p
+          className={[
+            'amoris-seo-panel__count',
+            title.length > TITLE_MAX ? 'amoris-seo-panel__count--over' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {title.length} / {TITLE_MAX} caratteri
         </p>
       </div>
@@ -56,7 +63,14 @@ export function SeoPanel({
           disabled={disabled}
           {...(descriptionErrorText !== undefined ? { errorText: descriptionErrorText } : {})}
         />
-        <p className={['amoris-seo-panel__count', description.length > DESCRIPTION_MAX ? 'amoris-seo-panel__count--over' : ''].filter(Boolean).join(' ')}>
+        <p
+          className={[
+            'amoris-seo-panel__count',
+            description.length > DESCRIPTION_MAX ? 'amoris-seo-panel__count--over' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {description.length} / {DESCRIPTION_MAX} caratteri
         </p>
       </div>
@@ -70,7 +84,9 @@ export function SeoPanel({
       <div className="amoris-seo-panel__preview" aria-label="Anteprima del risultato di ricerca">
         <p className="amoris-seo-panel__preview-url">{resultUrl}</p>
         <p className="amoris-seo-panel__preview-title">{title || 'Titolo non ancora impostato'}</p>
-        <p className="amoris-seo-panel__preview-description">{description || 'Descrizione non ancora impostata.'}</p>
+        <p className="amoris-seo-panel__preview-description">
+          {description || 'Descrizione non ancora impostata.'}
+        </p>
       </div>
     </div>
   );

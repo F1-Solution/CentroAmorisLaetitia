@@ -297,7 +297,13 @@ async function deleteEntityRows(
 ): Promise<number> {
   switch (entity) {
     case 'content':
-      return deleteLeavesFirst(tx, ids, schema.contents, schema.contents.id, schema.contents.parentId);
+      return deleteLeavesFirst(
+        tx,
+        ids,
+        schema.contents,
+        schema.contents.id,
+        schema.contents.parentId,
+      );
     case 'term':
       return deleteLeavesFirst(tx, ids, schema.terms, schema.terms.id, schema.terms.parentId);
     case 'media':

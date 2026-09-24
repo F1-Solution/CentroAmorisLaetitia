@@ -7,14 +7,28 @@ import { TopBar } from '../src/shell/TopBar.js';
 import { Breadcrumbs } from '../src/shell/Breadcrumbs.js';
 import type { AreaSummary, NavLinkComponent, NavSectionGroup } from '../src/shell/types.js';
 
-const redazione: AreaSummary = { id: 'redazione', label: 'Redazione', icon: '📝', href: '/redazione' };
-const impostazioni: AreaSummary = { id: 'impostazioni', label: 'Impostazioni', icon: '⚙️', href: '/impostazioni' };
+const redazione: AreaSummary = {
+  id: 'redazione',
+  label: 'Redazione',
+  icon: '📝',
+  href: '/redazione',
+};
+const impostazioni: AreaSummary = {
+  id: 'impostazioni',
+  label: 'Impostazioni',
+  icon: '⚙️',
+  href: '/impostazioni',
+};
 
 describe('AreaNav — componente 2', () => {
   it('stato R, S: rende solo le aree possedute e marca quella attiva', () => {
     render(<AreaNav areas={[redazione, impostazioni]} activeAreaId="redazione" />);
-    expect(screen.getByRole('link', { name: /Redazione/ }).getAttribute('aria-current')).toBe('true');
-    expect(screen.getByRole('link', { name: /Impostazioni/ }).getAttribute('aria-current')).toBeNull();
+    expect(screen.getByRole('link', { name: /Redazione/ }).getAttribute('aria-current')).toBe(
+      'true',
+    );
+    expect(
+      screen.getByRole('link', { name: /Impostazioni/ }).getAttribute('aria-current'),
+    ).toBeNull();
   });
 
   it('DR-055: le quattro aree non costruite non compaiono, perché non sono mai passate', () => {
@@ -53,10 +67,16 @@ describe('SectionNav — componente 3', () => {
     expect(screen.queryByText('Utenti')).toBeNull();
   });
 
-  it("stato V: nessun gruppo con sezioni permesse produce un messaggio esplicito, non una colonna vuota silenziosa", () => {
+  it('stato V: nessun gruppo con sezioni permesse produce un messaggio esplicito, non una colonna vuota silenziosa', () => {
     render(
       <SectionNav
-        groups={[{ id: 'g', label: 'G', sections: [{ id: 'x', label: 'X', href: '/x', permitted: false }] }]}
+        groups={[
+          {
+            id: 'g',
+            label: 'G',
+            sections: [{ id: 'x', label: 'X', href: '/x', permitted: false }],
+          },
+        ]}
         activeSectionId="x"
       />,
     );
@@ -65,7 +85,14 @@ describe('SectionNav — componente 3', () => {
 
   it("è richiudibile: nello stato richiuso mostra solo l'interruttore per riaprire", () => {
     const onToggle = vi.fn();
-    render(<SectionNav groups={groups} activeSectionId="pagine" collapsed onToggleCollapsed={onToggle} />);
+    render(
+      <SectionNav
+        groups={groups}
+        activeSectionId="pagine"
+        collapsed
+        onToggleCollapsed={onToggle}
+      />,
+    );
     fireEvent.click(screen.getByRole('button'));
     expect(onToggle).toHaveBeenCalledOnce();
     expect(screen.queryByRole('link', { name: 'Pagine' })).toBeNull();
@@ -84,7 +111,11 @@ describe('Breadcrumbs — componente 5', () => {
   it("l'ultimo elemento non è cliccabile ed è marcato aria-current", () => {
     render(
       <Breadcrumbs
-        items={[{ label: 'Redazione', href: '/redazione' }, { label: 'Pagine', href: '/pagine' }, { label: 'Chi siamo' }]}
+        items={[
+          { label: 'Redazione', href: '/redazione' },
+          { label: 'Pagine', href: '/pagine' },
+          { label: 'Chi siamo' },
+        ]}
       />,
     );
     expect(screen.getByRole('link', { name: 'Redazione' })).not.toBeNull();

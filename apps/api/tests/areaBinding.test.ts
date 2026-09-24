@@ -87,7 +87,11 @@ describe('finché la veste non è scelta, non si autorizza nulla', () => {
   it('senza area attiva nessuna rotta di dominio risponde', async () => {
     const signed = await signIn(harness, { area: null });
     for (const url of ['/contents', '/settings', '/media']) {
-      const risposta = await harness.app.inject({ method: 'GET', url, headers: { cookie: signed.cookie } });
+      const risposta = await harness.app.inject({
+        method: 'GET',
+        url,
+        headers: { cookie: signed.cookie },
+      });
       expect(risposta.statusCode, url).toBe(403);
     }
   });

@@ -239,7 +239,15 @@ export const mediaStage: Stage = {
 
         const tally = { created: 0, updated: 0, skipped: 0, errors: 0 };
         for (const variant of metadata.variants) {
-          const outcome = await importVariant(ctx, tx, row, variant, bucket, written.id, uploadedByPath);
+          const outcome = await importVariant(
+            ctx,
+            tx,
+            row,
+            variant,
+            bucket,
+            written.id,
+            uploadedByPath,
+          );
           tally[outcome] += 1;
         }
         variants.created += tally.created;

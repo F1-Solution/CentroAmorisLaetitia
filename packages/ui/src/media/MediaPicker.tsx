@@ -69,7 +69,11 @@ export function MediaPicker({
       {...(errorText !== undefined ? { errorText } : {})}
     >
       <div className="amoris-media-picker__search">
-        <TextField label="Cerca media" value={searchValue} onChange={(event) => onSearchChange(event.target.value)} />
+        <TextField
+          label="Cerca media"
+          value={searchValue}
+          onChange={(event) => onSearchChange(event.target.value)}
+        />
       </div>
 
       {loading ? (

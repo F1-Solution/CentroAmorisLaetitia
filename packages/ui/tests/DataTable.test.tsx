@@ -26,17 +26,35 @@ describe('DataTable — componente 16', () => {
   });
 
   it('stato V: vuoto', () => {
-    render(<DataTable columns={columns} rows={[]} getRowId={(r) => r.id} caption="Pagine" emptyText="Nessuna pagina." />);
+    render(
+      <DataTable
+        columns={columns}
+        rows={[]}
+        getRowId={(r) => r.id}
+        caption="Pagine"
+        emptyText="Nessuna pagina."
+      />,
+    );
     expect(screen.getByText('Nessuna pagina.')).toBeDefined();
   });
 
   it('stato L: caricamento', () => {
-    render(<DataTable columns={columns} rows={rows} getRowId={(r) => r.id} caption="Pagine" loading />);
+    render(
+      <DataTable columns={columns} rows={rows} getRowId={(r) => r.id} caption="Pagine" loading />,
+    );
     expect(screen.getByText('Caricamento in corso…')).toBeDefined();
   });
 
   it('stato E: errore', () => {
-    render(<DataTable columns={columns} rows={rows} getRowId={(r) => r.id} caption="Pagine" errorText="Impossibile caricare le pagine." />);
+    render(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        caption="Pagine"
+        errorText="Impossibile caricare le pagine."
+      />,
+    );
     expect(screen.getByRole('alert').textContent).toBe('Impossibile caricare le pagine.');
   });
 
@@ -61,8 +79,18 @@ describe('DataTable — componente 16', () => {
   it('ordinamento sulle intestazioni segnala la colonna via onSortChange', () => {
     const onSortChange = vi.fn();
     render(
-      <DataTable columns={columns} rows={rows} getRowId={(r) => r.id} caption="Pagine" onSortChange={onSortChange} sortKey="title" sortDirection="asc" />,
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        caption="Pagine"
+        onSortChange={onSortChange}
+        sortKey="title"
+        sortDirection="asc"
+      />,
     );
-    expect(screen.getByRole('columnheader', { name: /Titolo/ }).querySelector('[aria-sort="ascending"]')).toBeDefined();
+    expect(
+      screen.getByRole('columnheader', { name: /Titolo/ }).querySelector('[aria-sort="ascending"]'),
+    ).toBeDefined();
   });
 });

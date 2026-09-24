@@ -137,7 +137,8 @@ export function SeoTemplates(): React.JSX.Element {
           {
             key: 'robotsDirectives',
             header: 'Direttive robots',
-            render: (row) => (row.robotsDirectives.length > 0 ? row.robotsDirectives.join(', ') : '—'),
+            render: (row) =>
+              row.robotsDirectives.length > 0 ? row.robotsDirectives.join(', ') : '—',
           },
         ]}
       />
@@ -182,7 +183,12 @@ export function SeoTemplates(): React.JSX.Element {
           />
 
           <div className="amoris-seo__actions">
-            <Button variant="primary" permitted={canWrite} loading={busy} onClick={() => void save()}>
+            <Button
+              variant="primary"
+              permitted={canWrite}
+              loading={busy}
+              onClick={() => void save()}
+            >
               Salva il template
             </Button>
           </div>

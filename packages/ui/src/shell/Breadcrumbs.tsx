@@ -5,10 +5,10 @@ import './Breadcrumbs.css';
 export interface BreadcrumbsProps {
   items: BreadcrumbItem[];
   /**
- * Collegamento da usare per le voci. Predefinito: un'ancora normale, che **non
- * conosce il prefisso** sotto cui l'applicazione è servita. `apps/admin` passa
- * quello di Next, che lo conosce (vedi `NavLinkComponent`).
- */
+   * Collegamento da usare per le voci. Predefinito: un'ancora normale, che **non
+   * conosce il prefisso** sotto cui l'applicazione è servita. `apps/admin` passa
+   * quello di Next, che lo conosce (vedi `NavLinkComponent`).
+   */
   link?: NavLinkComponent;
 }
 
@@ -16,7 +16,10 @@ export interface BreadcrumbsProps {
  * Componente 5: percorso «Area / Sezione / Oggetto». L'ultimo elemento non è
  * cliccabile (§6) ed è marcato `aria-current="page"`.
  */
-export function Breadcrumbs({ items, link: Link = DefaultNavLink }: BreadcrumbsProps): React.JSX.Element {
+export function Breadcrumbs({
+  items,
+  link: Link = DefaultNavLink,
+}: BreadcrumbsProps): React.JSX.Element {
   return (
     <nav className="amoris-breadcrumbs" aria-label="Percorso">
       <ol className="amoris-breadcrumbs__list">

@@ -47,7 +47,9 @@ describe('schema dell’editor (ADR-006 §3.1)', () => {
   it('ammette gli elementi di testo dell’elenco chiuso', () => {
     expect(htmlOf('<p><strong>a</strong> <em>b</em> <u>c</u> <s>d</s></p>')).toContain('<strong>');
     expect(htmlOf('<ul><li><p>voce</p></li></ul>')).toContain('<ul>');
-    expect(htmlOf('<table><tbody><tr><td><p>cella</p></td></tr></tbody></table>')).toContain('<table>');
+    expect(htmlOf('<table><tbody><tr><td><p>cella</p></td></tr></tbody></table>')).toContain(
+      '<table>',
+    );
   });
 
   it('non aggiunge un paragrafo in coda a un documento che nessuno ha toccato', () => {

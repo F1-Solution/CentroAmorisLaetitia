@@ -17,16 +17,20 @@ function escapeHtml(value: string): string {
 // Evidenziazione minima e proprietaria — nessuna libreria di terze parti
 // (vincolo tecnico della wave). Opera sul testo già sanificato, quindi non
 // introduce mai frammenti non sfuggiti in `dangerouslySetInnerHTML`.
-const TOKEN_PATTERN = /(&lt;\/?[a-zA-Z][\w-]*|&gt;)|([a-zA-Z-]+)(?==)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g;
+const TOKEN_PATTERN =
+  /(&lt;\/?[a-zA-Z][\w-]*|&gt;)|([a-zA-Z-]+)(?==)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g;
 
 function highlightHtml(value: string): string {
   const escaped = escapeHtml(value);
-  return escaped.replace(TOKEN_PATTERN, (match, tag: string | undefined, attr: string | undefined, str: string | undefined) => {
-    if (tag) return `<span class="amoris-html-fallback__tag">${tag}</span>`;
-    if (attr) return `<span class="amoris-html-fallback__attr">${attr}</span>`;
-    if (str) return `<span class="amoris-html-fallback__string">${str}</span>`;
-    return match;
-  });
+  return escaped.replace(
+    TOKEN_PATTERN,
+    (match, tag: string | undefined, attr: string | undefined, str: string | undefined) => {
+      if (tag) return `<span class="amoris-html-fallback__tag">${tag}</span>`;
+      if (attr) return `<span class="amoris-html-fallback__attr">${attr}</span>`;
+      if (str) return `<span class="amoris-html-fallback__string">${str}</span>`;
+      return match;
+    },
+  );
 }
 
 /**
@@ -36,7 +40,12 @@ function highlightHtml(value: string): string {
  * L'avviso è **permanente**, non legato a uno stato: trattarlo come testo
  * ricco normalizzerebbe un frammento conservato per fedeltà.
  */
-export function HtmlFallbackEditor({ value, onChange, disabled = false, errorText }: HtmlFallbackEditorProps): React.JSX.Element {
+export function HtmlFallbackEditor({
+  value,
+  onChange,
+  disabled = false,
+  errorText,
+}: HtmlFallbackEditorProps): React.JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
   const hasError = Boolean(errorText);
@@ -53,7 +62,14 @@ export function HtmlFallbackEditor({ value, onChange, disabled = false, errorTex
       <Alert variant="warning" title="Blocco non convertito">
         Questo blocco non è stato convertito, modificarlo può alterare la resa.
       </Alert>
-      <div className={['amoris-html-fallback__editor', hasError ? 'amoris-html-fallback__editor--error' : ''].filter(Boolean).join(' ')}>
+      <div
+        className={[
+          'amoris-html-fallback__editor',
+          hasError ? 'amoris-html-fallback__editor--error' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <pre
           ref={highlightRef}
           aria-hidden="true"

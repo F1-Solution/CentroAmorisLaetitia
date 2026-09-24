@@ -26,7 +26,7 @@ describe('Alert — componente 30', () => {
     expect(screen.getByRole('status')).toBeDefined();
   });
 
-  it('mostra l\'azione di recupero quando presente', () => {
+  it("mostra l'azione di recupero quando presente", () => {
     render(
       <Alert variant="warning" title="Attenzione" action={<button>Riprova</button>}>
         Corpo
@@ -62,7 +62,7 @@ describe('SkipLink — componente 53', () => {
 });
 
 describe('Spinner — componente 52', () => {
-  it('richiede un testo accompagnatorio, non solo l\'animazione', () => {
+  it("richiede un testo accompagnatorio, non solo l'animazione", () => {
     render(<Spinner label="Caricamento articoli in corso" />);
     expect(screen.getByRole('status').textContent).toContain('Caricamento articoli in corso');
   });

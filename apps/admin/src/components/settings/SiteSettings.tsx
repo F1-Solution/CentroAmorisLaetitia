@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Alert,
-  Button,
-  CheckboxField,
-  PageHeader,
-  TextArea,
-  TextField,
-} from '@amoris/ui';
+import { Alert, Button, CheckboxField, PageHeader, TextArea, TextField } from '@amoris/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { useSession } from '../../lib/session';
@@ -81,11 +74,7 @@ function SettingRow({ setting, canWrite, onSaved }: RowProps): React.JSX.Element
     setError(null);
     setSaved(false);
     try {
-      const value = isBoolean
-        ? flag
-        : isNumber
-          ? Number(text)
-          : valueFrom(setting.value, text);
+      const value = isBoolean ? flag : isNumber ? Number(text) : valueFrom(setting.value, text);
       if (isNumber && Number.isNaN(value)) throw new Error('Il valore deve essere un numero.');
       await api(`/settings/${encodeURIComponent(setting.key)}`, { method: 'PUT', body: { value } });
       setSaved(true);

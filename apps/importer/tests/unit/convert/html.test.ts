@@ -4,11 +4,14 @@ import { detectContentFamily } from '../../../src/convert/family.js';
 
 describe('convertContent — famiglia HTML nudo', () => {
   it('un contenuto senza commenti wp: e senza shortcode Divi è HTML nudo', () => {
-    expect(detectContentFamily('<p>Solo un paragrafo, nessun costrutto riconosciuto.</p>')).toBe('html');
+    expect(detectContentFamily('<p>Solo un paragrafo, nessun costrutto riconosciuto.</p>')).toBe(
+      'html',
+    );
   });
 
   it('diventa un unico rich_text (ADR-005 §3.3 regola 3)', () => {
-    const html = '<p>Un contenuto <strong>semplice</strong>, con un <a href="/pagina">collegamento</a>.</p>';
+    const html =
+      '<p>Un contenuto <strong>semplice</strong>, con un <a href="/pagina">collegamento</a>.</p>';
     const result = convertContent({ legacyContentId: 200, postContent: html });
     expect(result.family).toBe('html');
     expect(result.document.blocks).toHaveLength(1);

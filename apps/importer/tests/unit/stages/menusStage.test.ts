@@ -13,12 +13,18 @@ import { fakeObjectStore } from '../_support/fakeStorage.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
 
-const WP_TERMS: readonly SqlRow[] = [{ term_id: 3, name: 'Menu principale', slug: 'menu-principale', term_group: 0 }];
+const WP_TERMS: readonly SqlRow[] = [
+  { term_id: 3, name: 'Menu principale', slug: 'menu-principale', term_group: 0 },
+];
 const WP_TERM_TAXONOMY: readonly SqlRow[] = [
   { term_taxonomy_id: 1, term_id: 3, taxonomy: 'nav_menu', description: '', parent: 0, count: 6 },
   // orfana: nessuna riga wp_terms corrispondente, si scarta come in terms/index.ts
@@ -29,11 +35,30 @@ function menuRelationship(objectId: number): SqlRow {
   return { object_id: objectId, term_taxonomy_id: 1, term_order: 0 };
 }
 
-const NAV_ITEM_IDS = { root: 500, child: 501, grandchild: 505, authenticated: 502, roles: 503, unresolved: 504 };
+const NAV_ITEM_IDS = {
+  root: 500,
+  child: 501,
+  grandchild: 505,
+  authenticated: 502,
+  roles: 503,
+  unresolved: 504,
+};
 
 const WP_POSTS: readonly SqlRow[] = [
-  { ID: NAV_ITEM_IDS.root, post_type: 'nav_menu_item', post_title: 'Chi siamo', menu_order: 1, post_status: 'publish' },
-  { ID: NAV_ITEM_IDS.child, post_type: 'nav_menu_item', post_title: 'Vecchia edizione', menu_order: 1, post_status: 'publish' },
+  {
+    ID: NAV_ITEM_IDS.root,
+    post_type: 'nav_menu_item',
+    post_title: 'Chi siamo',
+    menu_order: 1,
+    post_status: 'publish',
+  },
+  {
+    ID: NAV_ITEM_IDS.child,
+    post_type: 'nav_menu_item',
+    post_title: 'Vecchia edizione',
+    menu_order: 1,
+    post_status: 'publish',
+  },
   {
     ID: NAV_ITEM_IDS.grandchild,
     post_type: 'nav_menu_item',
@@ -41,8 +66,20 @@ const WP_POSTS: readonly SqlRow[] = [
     menu_order: 1,
     post_status: 'publish',
   },
-  { ID: NAV_ITEM_IDS.authenticated, post_type: 'nav_menu_item', post_title: 'Area riservata', menu_order: 2, post_status: 'publish' },
-  { ID: NAV_ITEM_IDS.roles, post_type: 'nav_menu_item', post_title: 'Vecchia pagina', menu_order: 3, post_status: 'publish' },
+  {
+    ID: NAV_ITEM_IDS.authenticated,
+    post_type: 'nav_menu_item',
+    post_title: 'Area riservata',
+    menu_order: 2,
+    post_status: 'publish',
+  },
+  {
+    ID: NAV_ITEM_IDS.roles,
+    post_type: 'nav_menu_item',
+    post_title: 'Vecchia pagina',
+    menu_order: 3,
+    post_status: 'publish',
+  },
   {
     ID: NAV_ITEM_IDS.unresolved,
     post_type: 'nav_menu_item',
@@ -108,9 +145,18 @@ function buildSource(extraPosts: readonly SqlRow[] = [], extraMeta: readonly Sql
 async function seedContentPage(db: Database): Promise<string> {
   const [content] = await db
     .insert(schema.contents)
-    .values({ type: 'page', status: 'draft', slug: 'chi-siamo', path: '/chi-siamo/', title: 'Chi siamo', legacyId: 100 })
+    .values({
+      type: 'page',
+      status: 'draft',
+      slug: 'chi-siamo',
+      path: '/chi-siamo/',
+      title: 'Chi siamo',
+      legacyId: 100,
+    })
     .returning({ id: schema.contents.id });
-  await db.insert(schema.importIdMap).values({ sourceTable: 'wp_posts', sourceId: 100, entity: 'content', entityId: content!.id });
+  await db
+    .insert(schema.importIdMap)
+    .values({ sourceTable: 'wp_posts', sourceId: 100, entity: 'content', entityId: content!.id });
   return content!.id;
 }
 
@@ -180,7 +226,10 @@ describe('fase menus', () => {
   it('il vincolo che vieta i ruoli fuori da `roles` fallisce quando deve', async () => {
     const fresh = await createTestDatabase('amoris_importer_menus_role_constraint');
     try {
-      await fresh.db.insert(schema.menus).values({ key: 'test', label: 'Test' }).returning({ id: schema.menus.id });
+      await fresh.db
+        .insert(schema.menus)
+        .values({ key: 'test', label: 'Test' })
+        .returning({ id: schema.menus.id });
       const [menu] = await fresh.db.select().from(schema.menus);
       await expect(
         fresh.db.insert(schema.menuItems).values({
@@ -218,9 +267,15 @@ describe('fase menus', () => {
     expect(after).toHaveLength(5);
     expect(new Set(after.map((i) => i.id))).toEqual(new Set(before.map((i) => i.id)));
 
-    const idMapMenu = await testDb.db.select().from(schema.importIdMap).where(eq(schema.importIdMap.entity, 'menu'));
+    const idMapMenu = await testDb.db
+      .select()
+      .from(schema.importIdMap)
+      .where(eq(schema.importIdMap.entity, 'menu'));
     expect(idMapMenu).toHaveLength(1);
-    const idMapItems = await testDb.db.select().from(schema.importIdMap).where(eq(schema.importIdMap.entity, 'menu_item'));
+    const idMapItems = await testDb.db
+      .select()
+      .from(schema.importIdMap)
+      .where(eq(schema.importIdMap.entity, 'menu_item'));
     expect(idMapItems).toHaveLength(5);
   });
 
@@ -229,7 +284,13 @@ describe('fase menus', () => {
     try {
       await seedContentPage(fresh.db);
       const brokenId = 600;
-      const brokenPost: SqlRow = { ID: brokenId, post_type: 'nav_menu_item', post_title: 'Rotta', menu_order: 5, post_status: 'publish' };
+      const brokenPost: SqlRow = {
+        ID: brokenId,
+        post_type: 'nav_menu_item',
+        post_title: 'Rotta',
+        menu_order: 5,
+        post_status: 'publish',
+      };
 
       const runId = await newApplyRunId(fresh.db);
       const issues = createIssueSink(fresh.db, 'apply', runId);
@@ -252,7 +313,9 @@ describe('fase menus', () => {
       expect(result.created).toBe(5);
       expect(result.errors).toBe(1);
 
-      const failure = issues.collected.find((i) => i.code === 'item-import-failed' && i.sourceId === brokenId);
+      const failure = issues.collected.find(
+        (i) => i.code === 'item-import-failed' && i.sourceId === brokenId,
+      );
       expect(failure).toBeDefined();
     } finally {
       await fresh.teardown();

@@ -77,7 +77,9 @@ export function SortableSiblings({ ids, children }: BlockTreeListRenderProps): R
 }
 
 export function SortableBlockRow({ id, children }: BlockTreeRowRenderProps): React.JSX.Element {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
 
   // `@dnd-kit/utilities` farebbe la stessa cosa in una riga, ma è un pacchetto
   // in più che nessuna decisione autorizza: DR-069 nomina `core` e `sortable`.
@@ -90,7 +92,9 @@ export function SortableBlockRow({ id, children }: BlockTreeRowRenderProps): Rea
     <li
       ref={setNodeRef}
       style={style}
-      className={['amoris-block-drag', isDragging ? 'amoris-block-drag--active' : ''].filter(Boolean).join(' ')}
+      className={['amoris-block-drag', isDragging ? 'amoris-block-drag--active' : '']
+        .filter(Boolean)
+        .join(' ')}
     >
       <button
         type="button"

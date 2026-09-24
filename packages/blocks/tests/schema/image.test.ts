@@ -12,7 +12,9 @@ describe('imagePropsSchema', () => {
   });
 
   it('accetta un caso valido con solo src', () => {
-    expect(imagePropsSchema.parse({ src: '/media/2026/09/foto.jpg' }).src).toBe('/media/2026/09/foto.jpg');
+    expect(imagePropsSchema.parse({ src: '/media/2026/09/foto.jpg' }).src).toBe(
+      '/media/2026/09/foto.jpg',
+    );
   });
 
   it('rifiuta quando sia mediaId sia src sono nulli', () => {

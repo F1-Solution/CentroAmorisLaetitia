@@ -13,7 +13,11 @@ import { fakeObjectStore } from '../_support/fakeStorage.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
@@ -40,9 +44,27 @@ const AIOSEO_ROWS: readonly SqlRow[] = [
     robots_nofollow: '1',
   },
   // nessuna sovrascrittura: si scarta, non produce una riga content_seo vuota
-  { id: 3, post_id: 102, title: '', description: '', canonical_url: '', robots_default: '1', robots_noindex: '0', robots_nofollow: '0' },
+  {
+    id: 3,
+    post_id: 102,
+    title: '',
+    description: '',
+    canonical_url: '',
+    robots_default: '1',
+    robots_noindex: '0',
+    robots_nofollow: '0',
+  },
   // riferimento non risolvibile: nessun contenuto con questo legacyId
-  { id: 4, post_id: 999999, title: 'Fantasma', description: '', canonical_url: '', robots_default: '1', robots_noindex: '0', robots_nofollow: '0' },
+  {
+    id: 4,
+    post_id: 999999,
+    title: 'Fantasma',
+    description: '',
+    canonical_url: '',
+    robots_default: '1',
+    robots_noindex: '0',
+    robots_nofollow: '0',
+  },
 ];
 
 function buildSource(rows: readonly SqlRow[] = AIOSEO_ROWS) {
@@ -54,7 +76,12 @@ async function seedContent(db: Database, legacyId: number, slug: string): Promis
     .insert(schema.contents)
     .values({ type: 'page', status: 'draft', slug, path: `/${slug}/`, title: slug, legacyId })
     .returning({ id: schema.contents.id });
-  await db.insert(schema.importIdMap).values({ sourceTable: 'wp_posts', sourceId: legacyId, entity: 'content', entityId: content!.id });
+  await db.insert(schema.importIdMap).values({
+    sourceTable: 'wp_posts',
+    sourceId: legacyId,
+    entity: 'content',
+    entityId: content!.id,
+  });
   return content!.id;
 }
 

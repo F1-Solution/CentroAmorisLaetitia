@@ -19,7 +19,13 @@ describe('SeoPanel — componente 47', () => {
 
   it('conta i caratteri del titolo', () => {
     render(
-      <SeoPanel title="Chi siamo" onTitleChange={vi.fn()} description="" onDescriptionChange={vi.fn()} resultUrl="https://example.it" />,
+      <SeoPanel
+        title="Chi siamo"
+        onTitleChange={vi.fn()}
+        description=""
+        onDescriptionChange={vi.fn()}
+        resultUrl="https://example.it"
+      />,
     );
     expect(screen.getByText('9 / 60 caratteri')).toBeDefined();
   });
@@ -40,7 +46,14 @@ describe('SeoPanel — componente 47', () => {
 
   it('stato D: disabilitato', () => {
     render(
-      <SeoPanel title="" onTitleChange={vi.fn()} description="" onDescriptionChange={vi.fn()} resultUrl="https://example.it" disabled />,
+      <SeoPanel
+        title=""
+        onTitleChange={vi.fn()}
+        description=""
+        onDescriptionChange={vi.fn()}
+        resultUrl="https://example.it"
+        disabled
+      />,
     );
     expect(screen.getByLabelText('Titolo SEO')).toHaveProperty('disabled', true);
   });

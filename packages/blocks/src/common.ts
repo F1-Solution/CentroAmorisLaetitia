@@ -23,9 +23,11 @@ export type CssLength = z.infer<typeof CssLength>;
  * Colore esadecimale o `rgb()`/`rgba()`, conservato nella forma della sorgente:
  * non si normalizza (§2.4, arbitrario e dichiarato).
  */
-export const ColorValue = z.string().regex(
-  /^(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/,
-);
+export const ColorValue = z
+  .string()
+  .regex(
+    /^(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/,
+  );
 export type ColorValue = z.infer<typeof ColorValue>;
 
 export const Box = z

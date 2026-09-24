@@ -45,7 +45,9 @@ export default function AccessoPage(): React.JSX.Element {
       router.replace(only ? AREA_DEFINITIONS[next.activeArea!].href : '/scelta-area');
     } catch (caught) {
       setError(
-        caught instanceof ApiError ? caught.fullMessage : 'Non è stato possibile contattare il servizio.',
+        caught instanceof ApiError
+          ? caught.fullMessage
+          : 'Non è stato possibile contattare il servizio.',
       );
       setBusy(false);
     }

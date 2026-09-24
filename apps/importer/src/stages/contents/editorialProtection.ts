@@ -21,7 +21,12 @@ export async function lastSuccessfulRunFinishedAt(tx: Tx): Promise<Date | null> 
   const [row] = await tx
     .select({ finishedAt: schema.importRuns.finishedAt })
     .from(schema.importRuns)
-    .where(and(isNotNull(schema.importRuns.finishedAt), inArray(schema.importRuns.outcome, ['success', 'partial'])))
+    .where(
+      and(
+        isNotNull(schema.importRuns.finishedAt),
+        inArray(schema.importRuns.outcome, ['success', 'partial']),
+      ),
+    )
     .orderBy(desc(schema.importRuns.finishedAt))
     .limit(1);
   return row?.finishedAt ?? null;
@@ -33,12 +38,21 @@ export async function lastSuccessfulRunFinishedAt(tx: Tx): Promise<Date | null> 
  * ancora (prima creazione): in quel caso non può esserci stata una modifica
  * redazionale successiva a un'esecuzione che non lo conosceva.
  */
-export async function hasEditorialWorkSince(tx: Tx, contentId: string | null, since: Date | null): Promise<boolean> {
+export async function hasEditorialWorkSince(
+  tx: Tx,
+  contentId: string | null,
+  since: Date | null,
+): Promise<boolean> {
   if (contentId === null || since === null) return false;
   const [row] = await tx
     .select({ id: schema.contentRevisions.id })
     .from(schema.contentRevisions)
-    .where(and(eq(schema.contentRevisions.contentId, contentId), gt(schema.contentRevisions.createdAt, since)))
+    .where(
+      and(
+        eq(schema.contentRevisions.contentId, contentId),
+        gt(schema.contentRevisions.createdAt, since),
+      ),
+    )
     .limit(1);
   return row !== undefined;
 }

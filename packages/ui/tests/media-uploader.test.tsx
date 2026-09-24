@@ -15,13 +15,25 @@ describe('MediaUploader — componente 39', () => {
         onFilesSelected={vi.fn()}
       />,
     );
-    expect(screen.getByRole('progressbar', { name: 'Avanzamento di locandina.pdf' }).getAttribute('aria-valuenow')).toBe('40');
+    expect(
+      screen
+        .getByRole('progressbar', { name: 'Avanzamento di locandina.pdf' })
+        .getAttribute('aria-valuenow'),
+    ).toBe('40');
   });
 
   it('stato E: errore per file', () => {
     render(
       <MediaUploader
-        files={[{ id: '1', name: 'locandina.pdf', progress: 0, status: 'error', errorText: 'File troppo grande.' }]}
+        files={[
+          {
+            id: '1',
+            name: 'locandina.pdf',
+            progress: 0,
+            status: 'error',
+            errorText: 'File troppo grande.',
+          },
+        ]}
         onFilesSelected={vi.fn()}
       />,
     );

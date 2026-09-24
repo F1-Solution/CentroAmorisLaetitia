@@ -120,7 +120,9 @@ export interface PasteOutcome {
 function describe(issues: readonly SanitizeIssue[]): string {
   const names = new Set(
     issues.map((issue) =>
-      issue.attribute ? `attributo ${issue.attribute} su ${issue.element}` : `elemento ${issue.element}`,
+      issue.attribute
+        ? `attributo ${issue.attribute} su ${issue.element}`
+        : `elemento ${issue.element}`,
     ),
   );
   return [...names].join(', ');

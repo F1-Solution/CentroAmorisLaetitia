@@ -41,7 +41,12 @@ export function SelectField({
   const hasError = Boolean(errorText);
   const isEmpty = options.length === 0;
 
-  const classes = ['amoris-focusable', 'amoris-field-input', hasError ? 'amoris-field-input--error' : '', className]
+  const classes = [
+    'amoris-focusable',
+    'amoris-field-input',
+    hasError ? 'amoris-field-input--error' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -58,7 +63,10 @@ export function SelectField({
           className={classes}
           disabled={disabled}
           aria-invalid={hasError || undefined}
-          aria-describedby={[helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') ||
+            undefined
+          }
           {...rest}
         >
           {options.map((option) => (

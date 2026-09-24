@@ -22,13 +22,19 @@ function cssValueFor(varName: string, inDarkBlock: boolean): string | null {
 }
 
 describe('sincronia fra tokens.ts e tokens.css', () => {
-  it.each(Object.entries(lightColorTokens))('chiaro: --amoris-%s vale come in tokens.ts', (name, hex) => {
-    expect(cssValueFor(name, false)).toBe(hex.toUpperCase());
-  });
+  it.each(Object.entries(lightColorTokens))(
+    'chiaro: --amoris-%s vale come in tokens.ts',
+    (name, hex) => {
+      expect(cssValueFor(name, false)).toBe(hex.toUpperCase());
+    },
+  );
 
-  it.each(Object.entries(darkColorTokens))('scuro: --amoris-%s vale come in tokens.ts', (name, hex) => {
-    expect(cssValueFor(name, true)).toBe(hex.toUpperCase());
-  });
+  it.each(Object.entries(darkColorTokens))(
+    'scuro: --amoris-%s vale come in tokens.ts',
+    (name, hex) => {
+      expect(cssValueFor(name, true)).toBe(hex.toUpperCase());
+    },
+  );
 
   it('nessun valore esadecimale compare fuori da tokens.css (§2.3 punto 5)', () => {
     const srcDir = join(import.meta.dirname, '../src');
@@ -43,7 +49,13 @@ describe('sincronia fra tokens.ts e tokens.css', () => {
     }
 
     const offenders = walk(srcDir)
-      .filter((file) => (file.endsWith('.ts') || file.endsWith('.tsx') || file.endsWith('.css')) && !file.endsWith('tokens.css') && !file.endsWith('tokens.ts') && !file.endsWith('contrast-pairs.ts'))
+      .filter(
+        (file) =>
+          (file.endsWith('.ts') || file.endsWith('.tsx') || file.endsWith('.css')) &&
+          !file.endsWith('tokens.css') &&
+          !file.endsWith('tokens.ts') &&
+          !file.endsWith('contrast-pairs.ts'),
+      )
       .filter((file) => hexPattern.test(readFileSync(file, 'utf8')));
 
     expect(offenders).toEqual([]);

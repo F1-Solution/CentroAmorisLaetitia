@@ -29,12 +29,16 @@ describe('PreviewPane — componente 40', () => {
         <p>Contenuto</p>
       </PreviewPane>,
     );
-    expect(screen.getByText('Aggiornamento dell\'anteprima in corso…')).toBeDefined();
+    expect(screen.getByText("Aggiornamento dell'anteprima in corso…")).toBeDefined();
   });
 
   it('stato E: errore', () => {
     render(
-      <PreviewPane viewport="desktop" onViewportChange={vi.fn()} errorText="Non è stato possibile generare l'anteprima.">
+      <PreviewPane
+        viewport="desktop"
+        onViewportChange={vi.fn()}
+        errorText="Non è stato possibile generare l'anteprima."
+      >
         <p>Contenuto</p>
       </PreviewPane>,
     );

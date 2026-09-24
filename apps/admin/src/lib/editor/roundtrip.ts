@@ -69,9 +69,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
   if (leftKeys.length !== rightKeys.length) return false;
-  return leftKeys.every(
-    (key) => Object.hasOwn(right, key) && deepEqual(left[key], right[key]),
-  );
+  return leftKeys.every((key) => Object.hasOwn(right, key) && deepEqual(left[key], right[key]));
 }
 
 export type OpenOutcome =

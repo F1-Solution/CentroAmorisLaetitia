@@ -14,7 +14,10 @@ describe('preflight — controllo 3: chiavi meta classificate', () => {
   });
 
   it('fallisce su una chiave meta sconosciuta comparsa in una sorgente sintetica alterata', () => {
-    const result = checkMetaKeysClassified([...CLASSIFIED_POSTMETA_IMPORTED.slice(0, 2), '_una_chiave_mai_vista']);
+    const result = checkMetaKeysClassified([
+      ...CLASSIFIED_POSTMETA_IMPORTED.slice(0, 2),
+      '_una_chiave_mai_vista',
+    ]);
     expect(result.ok).toBe(false);
     expect(result.detail?.unclassifiedKeys).toEqual(['_una_chiave_mai_vista']);
   });

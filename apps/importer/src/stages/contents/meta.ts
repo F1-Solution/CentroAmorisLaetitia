@@ -50,7 +50,9 @@ export function parseStickyPostIds(optionValue: string | undefined): ReadonlySet
   }
 }
 
-export function buildPostMetaIndex(rows: readonly SqlRow[]): ReadonlyMap<number, Map<string, string>> {
+export function buildPostMetaIndex(
+  rows: readonly SqlRow[],
+): ReadonlyMap<number, Map<string, string>> {
   const byPost = new Map<number, Map<string, string>>();
   for (const row of rows) {
     const postId = row['post_id'];

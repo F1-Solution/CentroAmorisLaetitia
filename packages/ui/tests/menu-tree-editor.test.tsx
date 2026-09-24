@@ -27,7 +27,15 @@ describe('MenuTreeEditor — componente 46', () => {
 
   it('stato V: menu vuoto', () => {
     render(
-      <MenuTreeEditor items={[]} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} onIndent={vi.fn()} onOutdent={vi.fn()} onDelete={vi.fn()} />,
+      <MenuTreeEditor
+        items={[]}
+        onSelect={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onIndent={vi.fn()}
+        onOutdent={vi.fn()}
+        onDelete={vi.fn()}
+      />,
     );
     expect(screen.getByText('Il menu non contiene ancora voci.')).toBeDefined();
   });
@@ -35,7 +43,15 @@ describe('MenuTreeEditor — componente 46', () => {
   it('annida con un comando esplicito, non con il trascinamento', () => {
     const onIndent = vi.fn();
     render(
-      <MenuTreeEditor items={items} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} onIndent={onIndent} onOutdent={vi.fn()} onDelete={vi.fn()} />,
+      <MenuTreeEditor
+        items={items}
+        onSelect={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onIndent={onIndent}
+        onOutdent={vi.fn()}
+        onDelete={vi.fn()}
+      />,
     );
     const indentButton = screen.getByRole('button', { name: 'Annida: Contatti' });
     expect(indentButton.closest('[draggable="true"]')).toBeNull();
@@ -45,15 +61,37 @@ describe('MenuTreeEditor — componente 46', () => {
 
   it('la prima voce di primo livello non può annidarsi né uscire di livello', () => {
     render(
-      <MenuTreeEditor items={items} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} onIndent={vi.fn()} onOutdent={vi.fn()} onDelete={vi.fn()} />,
+      <MenuTreeEditor
+        items={items}
+        onSelect={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onIndent={vi.fn()}
+        onOutdent={vi.fn()}
+        onDelete={vi.fn()}
+      />,
     );
-    expect(screen.getByRole('button', { name: 'Annida: Chi siamo' })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('button', { name: 'Riporta al livello superiore: Chi siamo' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Annida: Chi siamo' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Riporta al livello superiore: Chi siamo' }),
+    ).toHaveProperty('disabled', true);
   });
 
   it('stato E: errore', () => {
     render(
-      <MenuTreeEditor items={items} onSelect={vi.fn()} onMoveUp={vi.fn()} onMoveDown={vi.fn()} onIndent={vi.fn()} onOutdent={vi.fn()} onDelete={vi.fn()} errorText="Impossibile caricare il menu." />,
+      <MenuTreeEditor
+        items={items}
+        onSelect={vi.fn()}
+        onMoveUp={vi.fn()}
+        onMoveDown={vi.fn()}
+        onIndent={vi.fn()}
+        onOutdent={vi.fn()}
+        onDelete={vi.fn()}
+        errorText="Impossibile caricare il menu."
+      />,
     );
     expect(screen.getByRole('alert').textContent).toBe('Impossibile caricare il menu.');
   });

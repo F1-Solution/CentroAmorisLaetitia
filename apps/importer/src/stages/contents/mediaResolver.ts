@@ -35,7 +35,9 @@ export type MediaLookup = (relativePath: string) => string | null;
 export async function buildMediaLookup(tx: Tx): Promise<MediaLookup> {
   const byRelativePath = new Map<string, string>();
 
-  const originals = await tx.select({ id: schema.media.id, storageKey: schema.media.storageKey }).from(schema.media);
+  const originals = await tx
+    .select({ id: schema.media.id, storageKey: schema.media.storageKey })
+    .from(schema.media);
   for (const row of originals) {
     byRelativePath.set(row.storageKey, row.id);
   }

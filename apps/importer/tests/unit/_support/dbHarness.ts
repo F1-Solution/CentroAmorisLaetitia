@@ -17,7 +17,8 @@ const migrationsFolder = path.join(
   'drizzle',
 );
 
-const baseUrl = process.env.DATABASE_URL ?? 'postgres://amoris:sviluppo-locale@localhost:5432/amoris';
+const baseUrl =
+  process.env.DATABASE_URL ?? 'postgres://amoris:sviluppo-locale@localhost:5432/amoris';
 
 function urlForDatabase(name: string): string {
   const parsed = new URL(baseUrl);

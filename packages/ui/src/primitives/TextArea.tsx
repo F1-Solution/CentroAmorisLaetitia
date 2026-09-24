@@ -23,7 +23,12 @@ export function TextArea({
   const errorId = `${id}-error`;
   const hasError = Boolean(errorText);
 
-  const classes = ['amoris-focusable', 'amoris-field-input', hasError ? 'amoris-field-input--error' : '', className]
+  const classes = [
+    'amoris-focusable',
+    'amoris-field-input',
+    hasError ? 'amoris-field-input--error' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -38,7 +43,10 @@ export function TextArea({
         disabled={disabled}
         rows={rows}
         aria-invalid={hasError || undefined}
-        aria-describedby={[helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') || undefined}
+        aria-describedby={
+          [helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') ||
+          undefined
+        }
         {...rest}
       />
       {helpText ? (

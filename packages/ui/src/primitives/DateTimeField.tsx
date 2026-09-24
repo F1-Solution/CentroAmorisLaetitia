@@ -3,8 +3,10 @@ import type { InputHTMLAttributes } from 'react';
 import './fields.css';
 import './DateTimeField.css';
 
-export interface DateTimeFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type' | 'value' | 'onChange'> {
+export interface DateTimeFieldProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'id' | 'type' | 'value' | 'onChange'
+> {
   label: string;
   /** Formato `input[type=datetime-local]`: `AAAA-MM-GGTHH:mm`. */
   value: string;
@@ -56,7 +58,10 @@ export function DateTimeField({
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
         aria-invalid={hasError || undefined}
-        aria-describedby={[helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') || undefined}
+        aria-describedby={
+          [helpText ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') ||
+          undefined
+        }
         {...rest}
       />
       {helpText ? (

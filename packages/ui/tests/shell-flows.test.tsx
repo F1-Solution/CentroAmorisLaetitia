@@ -6,8 +6,20 @@ import { CommandSearch } from '../src/shell/CommandSearch.js';
 import { PageHeader } from '../src/shell/PageHeader.js';
 import type { AreaSummary, CommandResult } from '../src/shell/types.js';
 
-const redazione: AreaSummary = { id: 'redazione', label: 'Redazione', icon: '📝', href: '/redazione', openCount: 3 };
-const impostazioni: AreaSummary = { id: 'impostazioni', label: 'Impostazioni', icon: '⚙️', href: '/impostazioni', openCount: 0 };
+const redazione: AreaSummary = {
+  id: 'redazione',
+  label: 'Redazione',
+  icon: '📝',
+  href: '/redazione',
+  openCount: 3,
+};
+const impostazioni: AreaSummary = {
+  id: 'impostazioni',
+  label: 'Impostazioni',
+  icon: '⚙️',
+  href: '/impostazioni',
+  openCount: 0,
+};
 
 describe('AreaChoiceScreen — componente 10, §7.4 punto 1', () => {
   it('con una sola area non chiede una scelta finta: non rende nulla', () => {
@@ -40,7 +52,9 @@ describe('CrossAreaHandoff — componente 11', () => {
     const onConfirm = vi.fn();
     const onDismiss = vi.fn();
     render(<CrossAreaHandoff areaLabel="Segreteria" onConfirm={onConfirm} onDismiss={onDismiss} />);
-    expect(screen.getByText(/Questo dato sta in/).textContent).toBe('Questo dato sta in Segreteria. Vuoi passare?');
+    expect(screen.getByText(/Questo dato sta in/).textContent).toBe(
+      'Questo dato sta in Segreteria. Vuoi passare?',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Passa a Segreteria' }));
     expect(onConfirm).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Resta qui' }));
@@ -55,7 +69,15 @@ describe('CommandSearch — componente 12, DR-054', () => {
   ];
 
   it('è raggiungibile da tastiera con Ctrl+K', () => {
-    render(<CommandSearch activeAreaLabel="Redazione" query="" onQueryChange={vi.fn()} results={[]} onSelect={vi.fn()} />);
+    render(
+      <CommandSearch
+        activeAreaLabel="Redazione"
+        query=""
+        onQueryChange={vi.fn()}
+        results={[]}
+        onSelect={vi.fn()}
+      />,
+    );
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(screen.getByRole('dialog', { name: 'Ricerca in Redazione' })).not.toBeNull();
@@ -63,7 +85,13 @@ describe('CommandSearch — componente 12, DR-054', () => {
 
   it('annuncia i risultati alle tecnologie assistive con una regione dinamica', () => {
     render(
-      <CommandSearch activeAreaLabel="Redazione" query="chi" onQueryChange={vi.fn()} results={results} onSelect={vi.fn()} />,
+      <CommandSearch
+        activeAreaLabel="Redazione"
+        query="chi"
+        onQueryChange={vi.fn()}
+        results={results}
+        onSelect={vi.fn()}
+      />,
     );
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(screen.getByRole('status').textContent).toBe('2 risultati trovati');
@@ -71,7 +99,13 @@ describe('CommandSearch — componente 12, DR-054', () => {
 
   it("DR-054: mostra solo i risultati ricevuti, mai altro: la ricerca non raggiunge nulla fuori dall'ambiente attivo", () => {
     render(
-      <CommandSearch activeAreaLabel="Redazione" query="chi" onQueryChange={vi.fn()} results={results} onSelect={vi.fn()} />,
+      <CommandSearch
+        activeAreaLabel="Redazione"
+        query="chi"
+        onQueryChange={vi.fn()}
+        results={results}
+        onSelect={vi.fn()}
+      />,
     );
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(screen.getAllByRole('button', { name: /Chi siamo|Contatti/ })).toHaveLength(2);
@@ -79,7 +113,15 @@ describe('CommandSearch — componente 12, DR-054', () => {
   });
 
   it('Esc chiude la ricerca e restituisce il fuoco', () => {
-    render(<CommandSearch activeAreaLabel="Redazione" query="" onQueryChange={vi.fn()} results={[]} onSelect={vi.fn()} />);
+    render(
+      <CommandSearch
+        activeAreaLabel="Redazione"
+        query=""
+        onQueryChange={vi.fn()}
+        results={[]}
+        onSelect={vi.fn()}
+      />,
+    );
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -88,7 +130,13 @@ describe('CommandSearch — componente 12, DR-054', () => {
   it('la selezione di un risultato chiama onSelect e chiude la ricerca', () => {
     const onSelect = vi.fn();
     render(
-      <CommandSearch activeAreaLabel="Redazione" query="chi" onQueryChange={vi.fn()} results={results} onSelect={onSelect} />,
+      <CommandSearch
+        activeAreaLabel="Redazione"
+        query="chi"
+        onQueryChange={vi.fn()}
+        results={results}
+        onSelect={onSelect}
+      />,
     );
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     fireEvent.click(screen.getByRole('button', { name: /Chi siamo/ }));
@@ -99,7 +147,13 @@ describe('CommandSearch — componente 12, DR-054', () => {
 
 describe('PageHeader — componente 13', () => {
   it('stato R: titolo, riga di riepilogo, azione principale a destra', () => {
-    render(<PageHeader title="Pagine" summary="12 pagine pubblicate" action={<button type="button">Nuova pagina</button>} />);
+    render(
+      <PageHeader
+        title="Pagine"
+        summary="12 pagine pubblicate"
+        action={<button type="button">Nuova pagina</button>}
+      />,
+    );
     expect(screen.getByRole('heading', { name: 'Pagine' })).not.toBeNull();
     expect(screen.getByText('12 pagine pubblicate')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Nuova pagina' })).not.toBeNull();

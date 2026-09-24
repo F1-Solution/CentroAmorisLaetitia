@@ -159,7 +159,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
         { name: 'menu', description: 'Voci di navigazione' },
         { name: 'seo', description: 'Template globali e sovrascritture' },
         { name: 'redirect', description: 'Reindirizzamenti, che sono dati' },
-      { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
+        { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
         { name: 'impostazioni', description: 'Impostazioni globali del sito' },
       ],
     },

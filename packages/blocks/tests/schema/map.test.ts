@@ -3,7 +3,11 @@ import { mapPropsSchema } from '../../src/schema/map.js';
 
 describe('mapPropsSchema', () => {
   it('accetta un caso valido, con lat/lng come stringhe', () => {
-    const parsed = mapPropsSchema.parse({ address: 'Via Roma 1', lat: '45.4642', lng: '9.1900000000000004' });
+    const parsed = mapPropsSchema.parse({
+      address: 'Via Roma 1',
+      lat: '45.4642',
+      lng: '9.1900000000000004',
+    });
     expect(parsed.lat).toBe('45.4642');
     expect(parsed.lng).toBe('9.1900000000000004');
     expect(typeof parsed.lat).toBe('string');

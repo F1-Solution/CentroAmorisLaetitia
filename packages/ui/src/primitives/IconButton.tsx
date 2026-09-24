@@ -23,7 +23,14 @@ export function IconButton({
   const classes = ['amoris-focusable', 'amoris-icon-button', className].filter(Boolean).join(' ');
 
   return (
-    <button type="button" className={classes} aria-label={label} title={label} disabled={disabled} {...rest}>
+    <button
+      type="button"
+      className={classes}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      {...rest}
+    >
       <span aria-hidden="true">{icon}</span>
     </button>
   );

@@ -36,7 +36,11 @@ export async function finishRun(
 ): Promise<void> {
   await db
     .update(schema.importRuns)
-    .set({ finishedAt: new Date(), outcome, summary: summary as unknown as Record<string, unknown> })
+    .set({
+      finishedAt: new Date(),
+      outcome,
+      summary: summary as unknown as Record<string, unknown>,
+    })
     .where(eq(schema.importRuns.id, runId));
 }
 

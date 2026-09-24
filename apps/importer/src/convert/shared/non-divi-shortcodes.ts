@@ -10,7 +10,12 @@
  * shortcode incontrato fuori dai moduli `et_pb_*`): stessa destinazione, sia
  * che compaia avvolto in un blocco Gutenberg sia che compaia nudo dentro Divi.
  */
-import { docBlockPropsSchema, htmlPropsSchema, postListPropsSchema, type BlockNode } from './blocks.js';
+import {
+  docBlockPropsSchema,
+  htmlPropsSchema,
+  postListPropsSchema,
+  type BlockNode,
+} from './blocks.js';
 import type { ConvertContext } from './context.js';
 import { buildRichTextOrFallback } from './rich-text.js';
 import type { ParsedShortcode } from '../divi/shortcodes.js';
@@ -45,16 +50,31 @@ export function convertNonDiviShortcode(
     // contenuto letterale dello shortcode come testo, cosi' nulla si perde;
     // se risultasse, alla verifica visiva della Fase 1E, che non produce
     // nulla, si eliminerà a quel punto, con quel dato alla mano.
-    const built = buildRichTextOrFallback(ctx, shortcode.raw, { start: shortcode.start, end: shortcode.end });
+    const built = buildRichTextOrFallback(ctx, shortcode.raw, {
+      start: shortcode.start,
+      end: shortcode.end,
+    });
     return { block: built ?? null };
   }
 
   ctx.push({ severity: 'warning', code: 'unknown-shortcode', detail: tag });
-  const built = buildRichTextOrFallback(ctx, shortcode.raw, { start: shortcode.start, end: shortcode.end });
+  const built = buildRichTextOrFallback(ctx, shortcode.raw, {
+    start: shortcode.start,
+    end: shortcode.end,
+  });
   return { block: built ?? null };
 }
 
-const KNOWN_CATPOSTS_PARAMS = new Set(['category', 'cat', 'limit', 'number', 'thumb', 'date', 'excerpt', 'order']);
+const KNOWN_CATPOSTS_PARAMS = new Set([
+  'category',
+  'cat',
+  'limit',
+  'number',
+  'thumb',
+  'date',
+  'excerpt',
+  'order',
+]);
 
 function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNode {
   for (const key of Object.keys(shortcode.attrs)) {
@@ -64,7 +84,8 @@ function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNo
   }
 
   const rawLimit = shortcode.attrs.limit ?? shortcode.attrs.number;
-  const limit = rawLimit && /^\d+$/.test(rawLimit) ? Math.min(Math.max(Number(rawLimit), 1), 50) : null;
+  const limit =
+    rawLimit && /^\d+$/.test(rawLimit) ? Math.min(Math.max(Number(rawLimit), 1), 50) : null;
 
   // Nessun risolutore verso `terms` in questa wave: la categoria indicata
   // nello shortcode si registrerà come `termIds` quando la fase `terms`
@@ -91,10 +112,15 @@ function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNo
 
 function buildDocument(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNode | null {
   const legacyRef = shortcode.attrs.id ?? shortcode.attrs.ID;
-  const documentId = legacyRef && ctx.resolvers.resolveDocument ? ctx.resolvers.resolveDocument(legacyRef) : null;
+  const documentId =
+    legacyRef && ctx.resolvers.resolveDocument ? ctx.resolvers.resolveDocument(legacyRef) : null;
 
   if (documentId === null) {
-    ctx.push({ severity: 'warning', code: 'unresolved-document-reference', detail: legacyRef ?? '(assente)' });
+    ctx.push({
+      severity: 'warning',
+      code: 'unresolved-document-reference',
+      detail: legacyRef ?? '(assente)',
+    });
     return {
       type: 'html',
       id: ctx.allocateId('html', shortcode.start, shortcode.end),

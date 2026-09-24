@@ -28,7 +28,10 @@ const OK_REORDERED_CASES: readonly [string, string][] = [
     '<p><a href="https://esempio.it" rel="noopener" target="_blank">link</a></p>',
   ],
   ['<p><a href="mailto:a@b.it">scrivi</a></p>', '<p><a href="mailto:a@b.it">scrivi</a></p>'],
-  ['<p><a href="/pagina-interna/">interno</a></p>', '<p><a href="/pagina-interna/">interno</a></p>'],
+  [
+    '<p><a href="/pagina-interna/">interno</a></p>',
+    '<p><a href="/pagina-interna/">interno</a></p>',
+  ],
   ['<p><a href="#ancora">ancora</a></p>', '<p><a href="#ancora">ancora</a></p>'],
 ];
 
@@ -89,7 +92,9 @@ describe('sanitizeRichText — rimozione di ciò che non è ammesso (§5.4)', ()
     expect(outcome.ok).toBe(true);
     if (outcome.ok) {
       expect(outcome.html).toBe('<p>prima</p><p>dopo</p>');
-      expect(outcome.issues.some((i) => i.severity === 'error' && i.element === 'script')).toBe(true);
+      expect(outcome.issues.some((i) => i.severity === 'error' && i.element === 'script')).toBe(
+        true,
+      );
     }
   });
 
@@ -106,7 +111,9 @@ describe('sanitizeRichText — rimozione di ciò che non è ammesso (§5.4)', ()
     expect(outcome.ok).toBe(true);
     if (outcome.ok) {
       expect(outcome.html).toBe('<p>ciao</p>');
-      expect(outcome.issues.some((i) => i.severity === 'error' && i.attribute === 'onclick')).toBe(true);
+      expect(outcome.issues.some((i) => i.severity === 'error' && i.attribute === 'onclick')).toBe(
+        true,
+      );
     }
   });
 
@@ -123,7 +130,9 @@ describe('sanitizeRichText — rimozione di ciò che non è ammesso (§5.4)', ()
     expect(outcome.ok).toBe(true);
     if (outcome.ok) {
       expect(outcome.html).toBe('<a>x</a>');
-      expect(outcome.issues.some((i) => i.severity === 'error' && i.attribute === 'href')).toBe(true);
+      expect(outcome.issues.some((i) => i.severity === 'error' && i.attribute === 'href')).toBe(
+        true,
+      );
     }
   });
 
@@ -153,7 +162,7 @@ describe('sanitizeRichText — rimozione di ciò che non è ammesso (§5.4)', ()
 });
 
 describe('sanitizeRichText — elemento non ammesso e innocuo (§5.4, quarta riga)', () => {
-  it('non sanifica nulla: fa fallire il tutto e riporta l\'elemento', () => {
+  it("non sanifica nulla: fa fallire il tutto e riporta l'elemento", () => {
     const outcome = sanitizeRichText('<center>testo centrato</center>');
     expect(outcome.ok).toBe(false);
     if (!outcome.ok) {

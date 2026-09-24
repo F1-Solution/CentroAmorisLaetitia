@@ -156,7 +156,7 @@ describe('orchestratore', () => {
     expect(utenti).toEqual([]);
   });
 
-  it("una sola IdMap per esecuzione: una fase vede gli identificatori della precedente (§6.1)", async () => {
+  it('una sola IdMap per esecuzione: una fase vede gli identificatori della precedente (§6.1)', async () => {
     let trovato: string | null = 'non-eseguita';
     const stages = [
       fakeStage('users', ['preflight'], async (ctx) => {
@@ -181,7 +181,7 @@ describe('orchestratore', () => {
     expect(trovato).not.toBe('non-eseguita');
   });
 
-  it("in plan una fase vede le righe della precedente, e alla fine non resta nulla", async () => {
+  it('in plan una fase vede le righe della precedente, e alla fine non resta nulla', async () => {
     let vistiDallaSeconda = -1;
     const stages = [
       fakeStage('terms', ['preflight'], async (ctx) => {

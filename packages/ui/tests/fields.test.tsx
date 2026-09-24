@@ -38,7 +38,9 @@ describe('TextArea — componente 22', () => {
 
 describe('CheckboxField — componente 24', () => {
   it('rende lo stato indeterminato', () => {
-    render(<CheckboxField label="Seleziona tutte" indeterminate onChange={() => {}} checked={false} />);
+    render(
+      <CheckboxField label="Seleziona tutte" indeterminate onChange={() => {}} checked={false} />,
+    );
     const input = screen.getByLabelText('Seleziona tutte') as HTMLInputElement;
     expect(input.indeterminate).toBe(true);
   });

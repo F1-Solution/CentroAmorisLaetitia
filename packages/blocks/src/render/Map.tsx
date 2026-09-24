@@ -9,7 +9,12 @@ export interface MapComponentProps {
 export function Map({ block }: MapComponentProps) {
   const { address, pins } = block.props;
   return (
-    <div className={blockClassName('map', block.props.classes)} id={block.id} data-lat={block.props.lat} data-lng={block.props.lng}>
+    <div
+      className={blockClassName('map', block.props.classes)}
+      id={block.id}
+      data-lat={block.props.lat}
+      data-lng={block.props.lng}
+    >
       <p>{address}</p>
       {pins.length > 0 ? (
         <ul>

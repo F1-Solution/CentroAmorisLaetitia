@@ -36,7 +36,11 @@ import { convertContent } from '../../convert/index.js';
 import type { SqlRow } from '../../source/sql/types.js';
 import { buildMediaLookup, createMediaResolver } from './mediaResolver.js';
 import { buildPostMetaIndex, deriveShowTitle, parseStickyPostIds } from './meta.js';
-import { hasEditorialWorkSince, isForced, lastSuccessfulRunFinishedAt } from './editorialProtection.js';
+import {
+  hasEditorialWorkSince,
+  isForced,
+  lastSuccessfulRunFinishedAt,
+} from './editorialProtection.js';
 
 interface SourceContent {
   readonly id: number;
@@ -135,8 +139,12 @@ export const contentsStage: Stage = {
       ctx.source.rows('wp_options'),
     ]);
     const postMetaIndex = buildPostMetaIndex(postMetaRows as readonly SqlRow[]);
-    const stickyOption = (optionRows as readonly SqlRow[]).find((r) => asString(r['option_name']) === 'sticky_posts');
-    const stickyIds = parseStickyPostIds(stickyOption ? asString(stickyOption['option_value']) : undefined);
+    const stickyOption = (optionRows as readonly SqlRow[]).find(
+      (r) => asString(r['option_name']) === 'sticky_posts',
+    );
+    const stickyIds = parseStickyPostIds(
+      stickyOption ? asString(stickyOption['option_value']) : undefined,
+    );
 
     // Letta una sola volta, prima del ciclo: è la stessa per ogni elemento di
     // questa esecuzione (`editorialProtection.ts`).

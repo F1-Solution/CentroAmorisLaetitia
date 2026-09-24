@@ -16,6 +16,11 @@ export function checkTablesPresent(
     message: ok
       ? `tutte le ${expectedTables.length} tabelle attese sono presenti`
       : 'la sorgente è cambiata: il mapping va rivisto',
-    detail: { missing, unexpected, expectedCount: expectedTables.length, actualCount: actualTables.length },
+    detail: {
+      missing,
+      unexpected,
+      expectedCount: expectedTables.length,
+      actualCount: actualTables.length,
+    },
   };
 }

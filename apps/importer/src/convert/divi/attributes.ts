@@ -42,7 +42,10 @@ export function parseDiviBox(value: string | undefined): Box | null {
   return { top: t ?? null, right: r ?? null, bottom: b ?? null, left: l ?? null };
 }
 
-export function parseDiviSpacing(attrs: Readonly<Record<string, string>>, baseKey: string): Spacing {
+export function parseDiviSpacing(
+  attrs: Readonly<Record<string, string>>,
+  baseKey: string,
+): Spacing {
   const base = parseDiviBox(attrs[baseKey]);
   const tablet = parseDiviBox(attrs[`${baseKey}_tablet`]);
   const phone = parseDiviBox(attrs[`${baseKey}_phone`]);
@@ -98,6 +101,10 @@ export function reportUnknownDiviAttributes(
     if (known.has(name) || isDiscardedDiviAttribute(name)) {
       continue;
     }
-    ctx.push({ severity: 'warning', code: 'unknown-divi-attribute', detail: `${moduleTag}.${name}` });
+    ctx.push({
+      severity: 'warning',
+      code: 'unknown-divi-attribute',
+      detail: `${moduleTag}.${name}`,
+    });
   }
 }

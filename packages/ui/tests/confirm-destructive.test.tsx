@@ -14,7 +14,10 @@ describe('ConfirmDestructive — componente 34', () => {
         objectName="Chi siamo"
       />,
     );
-    expect(screen.getByRole('button', { name: 'Elimina definitivamente' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Elimina definitivamente' })).toHaveProperty(
+      'disabled',
+      true,
+    );
   });
 
   it('un testo parziale o diverso non sblocca la conferma', () => {
@@ -28,8 +31,13 @@ describe('ConfirmDestructive — componente 34', () => {
         objectName="Chi siamo"
       />,
     );
-    fireEvent.change(screen.getByLabelText('Digita «Chi siamo» per confermare'), { target: { value: 'Chi sia' } });
-    expect(screen.getByRole('button', { name: 'Elimina definitivamente' })).toHaveProperty('disabled', true);
+    fireEvent.change(screen.getByLabelText('Digita «Chi siamo» per confermare'), {
+      target: { value: 'Chi sia' },
+    });
+    expect(screen.getByRole('button', { name: 'Elimina definitivamente' })).toHaveProperty(
+      'disabled',
+      true,
+    );
   });
 
   it('la corrispondenza esatta sblocca la conferma, che richiama onConfirm', () => {
@@ -44,7 +52,9 @@ describe('ConfirmDestructive — componente 34', () => {
         objectName="Chi siamo"
       />,
     );
-    fireEvent.change(screen.getByLabelText('Digita «Chi siamo» per confermare'), { target: { value: 'Chi siamo' } });
+    fireEvent.change(screen.getByLabelText('Digita «Chi siamo» per confermare'), {
+      target: { value: 'Chi siamo' },
+    });
     const confirmButton = screen.getByRole('button', { name: 'Elimina definitivamente' });
     expect(confirmButton).toHaveProperty('disabled', false);
     fireEvent.click(confirmButton);

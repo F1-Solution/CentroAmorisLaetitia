@@ -68,7 +68,13 @@ export function parseAttachmentMetadata(raw: string | null | undefined): Attachm
       // Una voce incompleta non si inventa: si scarta e basta (nessuna
       // dimensione derivata da questa voce entra in `media_variants`).
       if (!file || variantWidth === null || variantHeight === null || !mimeType) continue;
-      variants.push({ sizeName: String(sizeName), file, width: variantWidth, height: variantHeight, mimeType });
+      variants.push({
+        sizeName: String(sizeName),
+        file,
+        width: variantWidth,
+        height: variantHeight,
+        mimeType,
+      });
     }
   }
 

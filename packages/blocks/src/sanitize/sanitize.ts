@@ -62,7 +62,11 @@ export function sanitizeRichText(html: string): SanitizeOutcome {
   return { ok: true, html: out, issues };
 }
 
-function processChildren(nodes: Tree.ChildNode[], issues: SanitizeIssue[], fallback: FallbackFlag): string {
+function processChildren(
+  nodes: Tree.ChildNode[],
+  issues: SanitizeIssue[],
+  fallback: FallbackFlag,
+): string {
   const parts: string[] = [];
   for (const node of nodes) {
     if (fallback.hit) {
@@ -76,7 +80,11 @@ function processChildren(nodes: Tree.ChildNode[], issues: SanitizeIssue[], fallb
   return parts.join('');
 }
 
-function processNode(node: Tree.ChildNode, issues: SanitizeIssue[], fallback: FallbackFlag): string | null {
+function processNode(
+  node: Tree.ChildNode,
+  issues: SanitizeIssue[],
+  fallback: FallbackFlag,
+): string | null {
   if (isTextNode(node)) {
     return escapeText(node.value);
   }
@@ -128,7 +136,7 @@ function processNode(node: Tree.ChildNode, issues: SanitizeIssue[], fallback: Fa
         severity: 'info',
         element: tag,
         attribute: name,
-        message: "residuo di un incollaggio senza effetto, rimosso (ADR-005 §1.3)",
+        message: 'residuo di un incollaggio senza effetto, rimosso (ADR-005 §1.3)',
       });
       continue;
     }

@@ -18,7 +18,10 @@ export interface AlertProps {
  */
 export function Alert({ variant, title, children, action }: AlertProps): React.JSX.Element {
   return (
-    <div className={`amoris-alert amoris-alert--${variant}`} role={variant === 'error' ? 'alert' : 'status'}>
+    <div
+      className={`amoris-alert amoris-alert--${variant}`}
+      role={variant === 'error' ? 'alert' : 'status'}
+    >
       <p className="amoris-alert__title">{title}</p>
       <div className="amoris-alert__body">{children}</div>
       {action ? <div className="amoris-alert__action">{action}</div> : null}

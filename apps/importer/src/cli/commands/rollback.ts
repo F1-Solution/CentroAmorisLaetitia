@@ -49,18 +49,20 @@ export async function runRollback(runtime: Runtime, args: ParsedArgs): Promise<n
   if (plan.editorialWorkAfter.length > 0) {
     console.error(
       `\nRIFIUTATO. ${plan.editorialWorkAfter.length} contenuti sono stati modificati da un redattore ` +
-        "dopo questa esecuzione, e annullarla cancellerebbe quel lavoro (`importer-spec.md` §9).",
+        'dopo questa esecuzione, e annullarla cancellerebbe quel lavoro (`importer-spec.md` §9).',
     );
     for (const contentId of plan.editorialWorkAfter) console.error(`  ${contentId}`);
     console.error(
-      '\nNon esiste un\'opzione per forzare. Per riportare il database a uno stato precedente ' +
+      "\nNon esiste un'opzione per forzare. Per riportare il database a uno stato precedente " +
         'resta il ripristino del backup, che `importer-spec.md` §9 indica come la strada più sicura.',
     );
     return 1;
   }
 
   if (plan.toDelete.length === 0 && plan.updatedNotRestored.length === 0) {
-    console.error('\nQuesta esecuzione non ha creato né aggiornato alcuna entità: niente da annullare.');
+    console.error(
+      '\nQuesta esecuzione non ha creato né aggiornato alcuna entità: niente da annullare.',
+    );
     return 0;
   }
 

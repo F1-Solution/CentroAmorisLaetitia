@@ -45,10 +45,12 @@ describe('DensityToggle — componente 49', () => {
         <DensityToggle />
       </DensityProvider>,
     );
-    expect(screen.getByRole('switch', { name: 'Densità' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('switch', { name: 'Densità' }).getAttribute('aria-checked')).toBe(
+      'true',
+    );
   });
 
-  it('avvisa onDensityChange, punto d\'innesto per la persistenza con l\'account', () => {
+  it("avvisa onDensityChange, punto d'innesto per la persistenza con l'account", () => {
     let saved: string | null = null;
     render(
       <DensityProvider onDensityChange={(next) => (saved = next)}>

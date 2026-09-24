@@ -14,7 +14,11 @@ import { fakeObjectStore } from '../_support/fakeStorage.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
@@ -97,7 +101,13 @@ async function seedMediaAndTerm(db: Database): Promise<{ mediaId: string; termId
 
   const [term] = await db
     .insert(schema.terms)
-    .values({ taxonomy: 'category', slug: 'notizie', name: 'Notizie', path: '/category/notizie/', legacyId: 10 })
+    .values({
+      taxonomy: 'category',
+      slug: 'notizie',
+      name: 'Notizie',
+      path: '/category/notizie/',
+      legacyId: 10,
+    })
     .returning({ id: schema.terms.id });
   await db.insert(schema.importIdMap).values({
     sourceTable: 'wp_terms',
@@ -194,7 +204,9 @@ describe('fase relations', () => {
     });
     expect(result.errors).toBe(0);
 
-    const parent = (await testDb.db.select().from(schema.contents).where(eq(schema.contents.slug, 'genitore')))[0]!;
+    const parent = (
+      await testDb.db.select().from(schema.contents).where(eq(schema.contents.slug, 'genitore'))
+    )[0]!;
     const contentTerms = await testDb.db
       .select()
       .from(schema.contentTerms)
@@ -248,7 +260,9 @@ describe('fase relations', () => {
       // tabella, non solo per quelle appena importate da `contents`).
       expect(result.updated).toBe(3);
 
-      const failure = issues.collected.find((i) => i.code === 'item-import-failed' && i.sourceId === 301);
+      const failure = issues.collected.find(
+        (i) => i.code === 'item-import-failed' && i.sourceId === 301,
+      );
       expect(failure).toBeDefined();
     } finally {
       await fresh.teardown();

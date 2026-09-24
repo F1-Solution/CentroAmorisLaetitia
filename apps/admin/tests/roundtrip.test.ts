@@ -1,11 +1,6 @@
 import { blockDocumentSchema, serializeBlockDocument } from '@amoris/blocks';
 import { describe, expect, it } from 'vitest';
-import {
-  deepEqual,
-  isUnchanged,
-  openContent,
-  savePayloadOf,
-} from '../src/lib/editor/roundtrip';
+import { deepEqual, isUnchanged, openContent, savePayloadOf } from '../src/lib/editor/roundtrip';
 import { moveBlockBy, removeBlock } from '../src/lib/editor/tree';
 import { syntheticContent, syntheticDocument } from './fixtures';
 
@@ -86,7 +81,10 @@ describe('andata e ritorno sul contenuto (criterio 1D-36)', () => {
   });
 
   it('un documento non valido non si apre: aprirlo significherebbe riscriverlo', () => {
-    const broken = { ...syntheticContent, blocks: { schema: 1, blocks: [{ type: 'inesistente' }] } };
+    const broken = {
+      ...syntheticContent,
+      blocks: { schema: 1, blocks: [{ type: 'inesistente' }] },
+    };
     const outcome = openContent(broken);
     expect(outcome.ok).toBe(false);
   });

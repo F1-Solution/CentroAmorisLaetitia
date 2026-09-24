@@ -82,7 +82,7 @@ describe('tokenizzatore del dump SQL — ogni sequenza di escape del §3.6', () 
     const dump = parseDump(
       [
         'CREATE TABLE `wp_prova` (\n  `id` bigint,\n  `v` text,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB;',
-        "INSERT INTO `wp_prova` (`id`,`v`) VALUES (1,0x48656C6C6F);",
+        'INSERT INTO `wp_prova` (`id`,`v`) VALUES (1,0x48656C6C6F);',
       ].join('\n\n'),
     );
     const rows = dump.rows.get('wp_prova')!;

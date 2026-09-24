@@ -11,7 +11,9 @@ describe('RichTextToolbar — componente 44', () => {
 
   it('stato S: marca i comandi attivi nel punto corrente', () => {
     render(<RichTextToolbar onCommand={vi.fn()} activeCommands={['bold']} />);
-    expect(screen.getByRole('button', { name: 'Grassetto' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Grassetto' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
   });
 
   it('stato A: richiama il comando', () => {
@@ -22,7 +24,12 @@ describe('RichTextToolbar — componente 44', () => {
   });
 
   it('un incollaggio non ammesso è rifiutato con avviso visibile, mai in silenzio', () => {
-    render(<RichTextToolbar onCommand={vi.fn()} pasteRejectedText="Lo stile in linea è stato rimosso." />);
+    render(
+      <RichTextToolbar
+        onCommand={vi.fn()}
+        pasteRejectedText="Lo stile in linea è stato rimosso."
+      />,
+    );
     expect(screen.getByText('Incollaggio non ammesso')).toBeDefined();
     expect(screen.getByText('Lo stile in linea è stato rimosso.')).toBeDefined();
   });

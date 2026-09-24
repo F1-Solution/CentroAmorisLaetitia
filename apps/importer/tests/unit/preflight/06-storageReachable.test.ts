@@ -3,7 +3,10 @@ import { checkStorageReachable } from '../../../src/preflight/checks/06-storage-
 
 describe('preflight — controllo 6: storage a oggetti raggiungibile', () => {
   it('passa quando entrambi i bucket rispondono', async () => {
-    const result = await checkStorageReachable({ probe: async () => true }, ['media-public', 'media-private']);
+    const result = await checkStorageReachable({ probe: async () => true }, [
+      'media-public',
+      'media-private',
+    ]);
     expect(result.ok).toBe(true);
   });
 

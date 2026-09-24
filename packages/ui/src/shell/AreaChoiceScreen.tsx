@@ -20,7 +20,12 @@ export interface AreaChoiceScreenProps {
  * una scelta finta nemmeno quella: è un errore di provisioning, mostrato con
  * `Alert`, non con una griglia vuota.
  */
-export function AreaChoiceScreen({ areas, onChoose, loading = false, errorText }: AreaChoiceScreenProps): React.JSX.Element | null {
+export function AreaChoiceScreen({
+  areas,
+  onChoose,
+  loading = false,
+  errorText,
+}: AreaChoiceScreenProps): React.JSX.Element | null {
   // Una sola area: nessuna scelta da fare, il componente non si rende. Zero
   // aree, invece, non è una scelta finta: è un errore di provisioning, e
   // resta da mostrare con `errorText` (sotto), non da nascondere allo stesso modo.
@@ -50,7 +55,9 @@ export function AreaChoiceScreen({ areas, onChoose, loading = false, errorText }
                 </span>
                 <span className="amoris-area-choice-screen__label">{area.label}</span>
                 {typeof area.openCount === 'number' ? (
-                  <span className="amoris-area-choice-screen__count">{area.openCount} elementi aperti</span>
+                  <span className="amoris-area-choice-screen__count">
+                    {area.openCount} elementi aperti
+                  </span>
                 ) : null}
               </button>
             </div>

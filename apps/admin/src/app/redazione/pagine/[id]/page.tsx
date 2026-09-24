@@ -11,6 +11,11 @@ export default function PaginaEditorPage({
 }): React.JSX.Element {
   const { id } = use(params);
   return (
-    <ContentEditor contentId={id} sectionId="pagine" listHref="/redazione/pagine" listLabel="Pagine" />
+    <ContentEditor
+      contentId={id}
+      sectionId="pagine"
+      listHref="/redazione/pagine"
+      listLabel="Pagine"
+    />
   );
 }

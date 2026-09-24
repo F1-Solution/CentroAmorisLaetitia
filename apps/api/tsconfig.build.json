@@ -8,7 +8,5 @@
     "module": "Preserve",
     "moduleResolution": "Bundler"
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

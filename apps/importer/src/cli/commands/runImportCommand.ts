@@ -114,7 +114,7 @@ export async function runImportCommand(
   if (mode === 'plan') {
     console.error(
       '\nQuesta era una prova: la transazione è stata annullata e nel database non è rimasto nulla. ' +
-        "Per eseguire davvero: importer apply --confirm.",
+        'Per eseguire davvero: importer apply --confirm.',
     );
   }
 

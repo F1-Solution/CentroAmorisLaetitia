@@ -52,7 +52,9 @@ describe('blockDocumentSchema — contenimento (§3.15)', () => {
   it('accetta un documento valido: section > row > column > rich_text', () => {
     const doc = {
       schema: 1,
-      blocks: [section([row('1_2,1_2', [column('1_2', [makeRichText('<p>ciao</p>')]), column('1_2')])])],
+      blocks: [
+        section([row('1_2,1_2', [column('1_2', [makeRichText('<p>ciao</p>')]), column('1_2')])]),
+      ],
     };
     expect(blockDocumentSchema.parse(doc).blocks).toHaveLength(1);
   });
@@ -73,7 +75,10 @@ describe('blockDocumentSchema — contenimento (§3.15)', () => {
   });
 
   it('rifiuta una row dentro una column (annidamento non ammesso)', () => {
-    const doc = { schema: 1, blocks: [section([row('1_1', [column('1_1', [row('1_1', [column('1_1')])])])])] };
+    const doc = {
+      schema: 1,
+      blocks: [section([row('1_1', [column('1_1', [row('1_1', [column('1_1')])])])])],
+    };
     expect(() => blockDocumentSchema.parse(doc)).toThrow();
   });
 

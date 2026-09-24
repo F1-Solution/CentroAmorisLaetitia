@@ -1,9 +1,20 @@
 'use client';
 
-import { Alert, Button, Dialog, RichTextToolbar, TextField, type RichTextCommand } from '@amoris/ui';
+import {
+  Alert,
+  Button,
+  Dialog,
+  RichTextToolbar,
+  TextField,
+  type RichTextCommand,
+} from '@amoris/ui';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { useEffect, useRef, useState } from 'react';
-import { analysePastedHtml, normaliseEditorHtml, richTextExtensions } from '../../lib/editor/richtext';
+import {
+  analysePastedHtml,
+  normaliseEditorHtml,
+  richTextExtensions,
+} from '../../lib/editor/richtext';
 import './RichTextEditor.css';
 
 /** Tutti i comandi della barra, per spegnerla per intero quando non si può scrivere. */
@@ -50,7 +61,11 @@ export interface RichTextEditorProps {
  * modifica, e modificarlo lo riscriverebbe nella forma che l'editor sa
  * produrre. Silenzio qui significherebbe perdere fedeltà senza accorgersene.
  */
-export function RichTextEditor({ value, onChange, disabled = false }: RichTextEditorProps): React.JSX.Element {
+export function RichTextEditor({
+  value,
+  onChange,
+  disabled = false,
+}: RichTextEditorProps): React.JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [representationWarning, setRepresentationWarning] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);

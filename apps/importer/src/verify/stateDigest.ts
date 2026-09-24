@@ -110,7 +110,10 @@ export interface DigestDifference {
  * mai le righe: un messaggio di errore che elencasse le righe divergenti
  * conterrebbe dati personali (§8.3).
  */
-export function diffStateDigests(before: StateDigest, after: StateDigest): readonly DigestDifference[] {
+export function diffStateDigests(
+  before: StateDigest,
+  after: StateDigest,
+): readonly DigestDifference[] {
   const byTable = new Map<string, { before?: TableDigest; after?: TableDigest }>();
   for (const item of before) byTable.set(item.table, { before: item });
   for (const item of after) {
@@ -119,7 +122,8 @@ export function diffStateDigests(before: StateDigest, after: StateDigest): reado
 
   const differences: DigestDifference[] = [];
   for (const [table, pair] of byTable) {
-    if (pair.before?.digest === pair.after?.digest && pair.before?.rows === pair.after?.rows) continue;
+    if (pair.before?.digest === pair.after?.digest && pair.before?.rows === pair.after?.rows)
+      continue;
     differences.push({ table, before: pair.before ?? null, after: pair.after ?? null });
   }
   return differences;

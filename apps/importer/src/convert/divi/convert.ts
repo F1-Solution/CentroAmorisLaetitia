@@ -132,13 +132,19 @@ function convertSection(node: ParsedShortcode, ctx: ConvertContext) {
     if (isValidColor(backgroundColorRaw)) {
       backgroundColor = backgroundColorRaw;
     } else {
-      ctx.push({ severity: 'warning', code: 'invalid-attribute-value', detail: 'et_pb_section.background_color' });
+      ctx.push({
+        severity: 'warning',
+        code: 'invalid-attribute-value',
+        detail: 'et_pb_section.background_color',
+      });
     }
   }
 
   const useCustomWidth = diviBool(node.attrs.use_custom_width);
   const widthPx = node.attrs.custom_width_px ? Number.parseFloat(node.attrs.custom_width_px) : null;
-  const widthPercent = node.attrs.custom_width_percent ? Number.parseFloat(node.attrs.custom_width_percent) : null;
+  const widthPercent = node.attrs.custom_width_percent
+    ? Number.parseFloat(node.attrs.custom_width_percent)
+    : null;
   let customWidth = defaultCustomWidth;
   if (useCustomWidth) {
     if (widthPx !== null && Number.isFinite(widthPx) && widthPx > 0) {
@@ -213,7 +219,11 @@ function convertRow(node: ParsedShortcode, ctx: ConvertContext) {
     if (isValidColor(backgroundColorRaw)) {
       backgroundColor = backgroundColorRaw;
     } else {
-      ctx.push({ severity: 'warning', code: 'invalid-attribute-value', detail: 'et_pb_row.background_color' });
+      ctx.push({
+        severity: 'warning',
+        code: 'invalid-attribute-value',
+        detail: 'et_pb_row.background_color',
+      });
     }
   }
 
@@ -278,17 +288,25 @@ function convertColumn(node: ParsedShortcode, ctx: ConvertContext): ColumnBlock 
 function convertText(node: ParsedShortcode, ctx: ConvertContext) {
   const textAlignRaw = node.attrs.text_orientation;
   const textAlign =
-    textAlignRaw === 'left' || textAlignRaw === 'center' || textAlignRaw === 'right' || textAlignRaw === 'justify'
+    textAlignRaw === 'left' ||
+    textAlignRaw === 'center' ||
+    textAlignRaw === 'right' ||
+    textAlignRaw === 'justify'
       ? textAlignRaw
       : null;
 
   const backgroundLayoutRaw = node.attrs.background_layout;
-  const backgroundLayout = backgroundLayoutRaw === 'light' || backgroundLayoutRaw === 'dark' ? backgroundLayoutRaw : null;
+  const backgroundLayout =
+    backgroundLayoutRaw === 'light' || backgroundLayoutRaw === 'dark' ? backgroundLayoutRaw : null;
 
   const borderWidth =
-    node.attrs.border_width !== undefined && isValidCssLength(node.attrs.border_width) ? node.attrs.border_width : '1px';
+    node.attrs.border_width !== undefined && isValidCssLength(node.attrs.border_width)
+      ? node.attrs.border_width
+      : '1px';
   const border =
-    diviBool(node.attrs.use_border_color) && node.attrs.border_color && isValidColor(node.attrs.border_color)
+    diviBool(node.attrs.use_border_color) &&
+    node.attrs.border_color &&
+    isValidColor(node.attrs.border_color)
       ? { color: node.attrs.border_color, width: borderWidth, style: 'solid' as const }
       : null;
 
@@ -307,22 +325,33 @@ function convertText(node: ParsedShortcode, ctx: ConvertContext) {
     ]),
   );
 
-  return buildRichTextOrFallback(ctx, node.content, { start: node.start, end: node.end }, {
-    textAlign,
-    backgroundLayout,
-    border,
-    padding: parseDiviSpacing(node.attrs, 'custom_padding'),
-  });
+  return buildRichTextOrFallback(
+    ctx,
+    node.content,
+    { start: node.start, end: node.end },
+    {
+      textAlign,
+      backgroundLayout,
+      border,
+      padding: parseDiviSpacing(node.attrs, 'custom_padding'),
+    },
+  );
 }
 
 function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
   const rawSrc = node.attrs.src;
-  const { value: src, normalized } = rawSrc ? normalizeSameSiteUrlValue(rawSrc) : { value: undefined, normalized: false };
+  const { value: src, normalized } = rawSrc
+    ? normalizeSameSiteUrlValue(rawSrc)
+    : { value: undefined, normalized: false };
   if (normalized) {
     ctx.push({ severity: 'info', code: 'same-site-url-normalized', detail: 'et_pb_image.src' });
   }
   if (!src) {
-    ctx.push({ severity: 'warning', code: 'unresolved-media-reference', detail: 'et_pb_image.src' });
+    ctx.push({
+      severity: 'warning',
+      code: 'unresolved-media-reference',
+      detail: 'et_pb_image.src',
+    });
   }
 
   const mediaId = src && ctx.resolvers.resolveMedia ? ctx.resolvers.resolveMedia(src) : null;
@@ -333,7 +362,9 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
       : null;
   const alignTabletRaw = node.attrs.align_tablet;
   const alignTablet =
-    alignTabletRaw === 'left' || alignTabletRaw === 'center' || alignTabletRaw === 'right' ? alignTabletRaw : null;
+    alignTabletRaw === 'left' || alignTabletRaw === 'center' || alignTabletRaw === 'right'
+      ? alignTabletRaw
+      : null;
 
   const forceFullWidth = diviBool(node.attrs.force_fullwidth);
   const lightbox = diviBool(node.attrs.show_in_lightbox);
@@ -342,7 +373,10 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
 
   const hasAnimation = node.attrs.animation !== undefined && node.attrs.animation !== 'off';
   const animation = hasAnimation
-    ? { style: node.attrs.animation_style ?? node.attrs.animation ?? 'fade', direction: node.attrs.animation_direction ?? null }
+    ? {
+        style: node.attrs.animation_style ?? node.attrs.animation ?? 'fade',
+        direction: node.attrs.animation_direction ?? null,
+      }
     : null;
 
   reportUnknownDiviAttributes(
@@ -392,12 +426,18 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
 function convertVideo(node: ParsedShortcode, ctx: ConvertContext) {
   const rawSrc = node.attrs.src ?? '';
   const { value: src, normalized: srcNormalized } = normalizeSameSiteUrlValue(rawSrc);
-  const { value: posterSrc, normalized: posterNormalized } = normalizeSameSiteUrlValue(node.attrs.image_src ?? '');
+  const { value: posterSrc, normalized: posterNormalized } = normalizeSameSiteUrlValue(
+    node.attrs.image_src ?? '',
+  );
   if (srcNormalized) {
     ctx.push({ severity: 'info', code: 'same-site-url-normalized', detail: 'et_pb_video.src' });
   }
   if (posterNormalized) {
-    ctx.push({ severity: 'info', code: 'same-site-url-normalized', detail: 'et_pb_video.image_src' });
+    ctx.push({
+      severity: 'info',
+      code: 'same-site-url-normalized',
+      detail: 'et_pb_video.image_src',
+    });
   }
 
   reportUnknownDiviAttributes(ctx, 'et_pb_video', node.attrs, new Set(['src', 'image_src']));
@@ -421,12 +461,16 @@ function convertVideo(node: ParsedShortcode, ctx: ConvertContext) {
 function convertMap(node: ParsedShortcode, ctx: ConvertContext) {
   const grayscale = diviBool(node.attrs.use_grayscale_filter);
   const zoomRaw = node.attrs.zoom_level ? Number.parseInt(node.attrs.zoom_level, 10) : null;
-  const zoom = zoomRaw !== null && Number.isInteger(zoomRaw) && zoomRaw >= 1 && zoomRaw <= 21 ? zoomRaw : null;
+  const zoom =
+    zoomRaw !== null && Number.isInteger(zoomRaw) && zoomRaw >= 1 && zoomRaw <= 21 ? zoomRaw : null;
   const grayscaleAmountRaw = node.attrs.grayscale_filter_amount
     ? Number.parseFloat(node.attrs.grayscale_filter_amount)
     : null;
   const grayscaleAmount =
-    grayscaleAmountRaw !== null && Number.isFinite(grayscaleAmountRaw) && grayscaleAmountRaw >= 0 && grayscaleAmountRaw <= 100
+    grayscaleAmountRaw !== null &&
+    Number.isFinite(grayscaleAmountRaw) &&
+    grayscaleAmountRaw >= 0 &&
+    grayscaleAmountRaw <= 100
       ? grayscaleAmountRaw
       : null;
 
@@ -488,7 +532,11 @@ function convertContactForm(node: ParsedShortcode, ctx: ConvertContext) {
   );
 
   if (formId === null) {
-    ctx.push({ severity: 'warning', code: 'unresolved-form-reference', detail: 'et_pb_contact_form' });
+    ctx.push({
+      severity: 'warning',
+      code: 'unresolved-form-reference',
+      detail: 'et_pb_contact_form',
+    });
     const fallback = buildHtmlFallbackBlock(ctx, {
       html: node.raw,
       reason: 'divi_unmapped_module',

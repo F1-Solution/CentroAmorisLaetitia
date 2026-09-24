@@ -80,7 +80,9 @@ async function loadFeaturedAttachmentIds(ctx: StageContext): Promise<ReadonlyMap
 }
 
 /** Solo `taxonomy = 'category'` (`terms/index.ts`): le altre non producono `terms`. */
-async function loadCategoryRelations(ctx: StageContext): Promise<ReadonlyMap<number, readonly CategoryRelation[]>> {
+async function loadCategoryRelations(
+  ctx: StageContext,
+): Promise<ReadonlyMap<number, readonly CategoryRelation[]>> {
   const [relationshipRows, taxonomyRows] = await Promise.all([
     ctx.source.rows('wp_term_relationships'),
     ctx.source.rows('wp_term_taxonomy'),

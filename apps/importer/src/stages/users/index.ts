@@ -112,7 +112,12 @@ export const usersStage: Stage = {
           })
           .onConflictDoUpdate({
             target: schema.users.id,
-            set: { email: user.email, fullName: fullNameOf(user), legacyId: user.id, updatedAt: new Date() },
+            set: {
+              email: user.email,
+              fullName: fullNameOf(user),
+              legacyId: user.id,
+              updatedAt: new Date(),
+            },
           })
           .returning({ id: schema.users.id });
 
@@ -140,7 +145,10 @@ export const usersStage: Stage = {
           ? interpretCapabilities(user.capabilitiesSerialized)
           : { mapsToEditor: false, capabilityNames: [] };
 
-        await tx.insert(schema.userRoles).values({ userId: written.id, roleId }).onConflictDoNothing();
+        await tx
+          .insert(schema.userRoles)
+          .values({ userId: written.id, roleId })
+          .onConflictDoNothing();
 
         if (!capabilities.mapsToEditor) {
           await ctx.issues.record({

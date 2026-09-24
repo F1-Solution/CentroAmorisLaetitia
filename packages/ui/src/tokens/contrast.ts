@@ -22,9 +22,7 @@ export function relativeLuminance(hex: string): number {
   const [r, g, b] = hexToRgb(hex);
   // Destrutturare il risultato di `map` darebbe tre valori possibilmente
   // indefiniti sotto `noUncheckedIndexedAccess`: qui la terna e' sempre di tre.
-  return (
-    0.2126 * channelToLinear(r) + 0.7152 * channelToLinear(g) + 0.0722 * channelToLinear(b)
-  );
+  return 0.2126 * channelToLinear(r) + 0.7152 * channelToLinear(g) + 0.0722 * channelToLinear(b);
 }
 
 /** Rapporto di contrasto WCAG 2.2 fra due colori esadecimali, arrotondato a due cifre. */

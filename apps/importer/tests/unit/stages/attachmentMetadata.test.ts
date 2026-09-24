@@ -29,7 +29,8 @@ describe('parseAttachmentMetadata', () => {
   });
 
   it('scarta una voce di dimensione incompleta invece di inventare i campi mancanti', () => {
-    const raw = 'a:2:{s:5:"width";i:100;s:5:"sizes";a:1:{s:9:"thumbnail";a:1:{s:4:"file";s:5:"x.jpg";}}}';
+    const raw =
+      'a:2:{s:5:"width";i:100;s:5:"sizes";a:1:{s:9:"thumbnail";a:1:{s:4:"file";s:5:"x.jpg";}}}';
     const parsed = parseAttachmentMetadata(raw);
     expect(parsed.variants).toHaveLength(0);
   });

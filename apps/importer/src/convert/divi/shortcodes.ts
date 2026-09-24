@@ -122,7 +122,13 @@ export function parseShortcodes(text: string): ParsedShortcode[] {
     }
 
     if (token.kind === 'open') {
-      stack.push({ tag: token.tag, attrs: token.attrs, start: token.start, children: [], contentParts: [] });
+      stack.push({
+        tag: token.tag,
+        attrs: token.attrs,
+        start: token.start,
+        children: [],
+        contentParts: [],
+      });
       continue;
     }
 

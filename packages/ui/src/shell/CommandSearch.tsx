@@ -77,7 +77,11 @@ export function CommandSearch({
 
   if (!open) {
     return (
-      <button type="button" className="amoris-focusable amoris-command-search__trigger" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="amoris-focusable amoris-command-search__trigger"
+        onClick={() => setOpen(true)}
+      >
         Cerca <kbd>Ctrl</kbd>+<kbd>K</kbd>
       </button>
     );
@@ -135,7 +139,9 @@ export function CommandSearch({
                 }}
               >
                 <span>{result.label}</span>
-                {result.group ? <span className="amoris-command-search__group">{result.group}</span> : null}
+                {result.group ? (
+                  <span className="amoris-command-search__group">{result.group}</span>
+                ) : null}
               </button>
             </li>
           ))}

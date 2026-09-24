@@ -95,7 +95,7 @@ describe('fotografia strutturale dello stato', () => {
     expect((await tableDigest(database.db, 'terms')).digest).toBe(prima.digest);
   });
 
-  it('il registro dell\'importazione resta fuori dalla fotografia', async () => {
+  it("il registro dell'importazione resta fuori dalla fotografia", async () => {
     const tabelle = await domainTables(database.db);
     expect(tabelle).not.toContain('import_runs');
     expect(tabelle).not.toContain('import_issues');

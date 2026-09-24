@@ -33,7 +33,7 @@ describe('BulkActionBar — componente 18', () => {
     expect(screen.getByRole('button', { name: 'Elimina' }).getAttribute('aria-busy')).toBe('true');
   });
 
-  it('DR-057: un\'azione non permessa non si mostra', () => {
+  it("DR-057: un'azione non permessa non si mostra", () => {
     render(
       <BulkActionBar
         selectedCount={1}

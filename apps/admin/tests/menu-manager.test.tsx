@@ -92,11 +92,13 @@ describe('menu di navigazione', () => {
     items = [voce('v1', 'Prima voce', 0), voce('v2', 'Seconda voce', 1)];
     apiMock.mockReset();
     apiMock.mockImplementation((path: string, options?: { method?: string }) => {
-      if (path === '/menus') return Promise.resolve([{ id: 'menu1', key: 'principale', label: 'Menu principale' }]);
+      if (path === '/menus')
+        return Promise.resolve([{ id: 'menu1', key: 'principale', label: 'Menu principale' }]);
       if (path.startsWith('/contents')) {
         return Promise.resolve({ items: [{ id: 'c1', title: 'Pagina inventata' }] });
       }
-      if (path === '/terms') return Promise.resolve([{ id: 't1', name: 'Avvisi', taxonomy: 'category' }]);
+      if (path === '/terms')
+        return Promise.resolve([{ id: 't1', name: 'Avvisi', taxonomy: 'category' }]);
       if (path === '/roles') {
         return Promise.resolve([
           { key: 'redazione', label: 'Redazione' },
@@ -137,10 +139,11 @@ describe('menu di navigazione', () => {
     await user.click(screen.getByRole('button', { name: 'Sposta su: Seconda voce' }));
 
     await waitFor(() => expect(writes().length).toBe(2));
-    expect(writes().map((write) => write.path).sort()).toEqual([
-      '/menu-items/v1',
-      '/menu-items/v2',
-    ]);
+    expect(
+      writes()
+        .map((write) => write.path)
+        .sort(),
+    ).toEqual(['/menu-items/v1', '/menu-items/v2']);
   });
 
   it('aggiunge una voce che punta a un contenuto', async () => {

@@ -14,7 +14,11 @@ import type { Database } from '@amoris/db';
 
 /** Vedi `settingsStage.test.ts`: `import_id_map.run_id` è vincolato a `import_runs`. */
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 /**

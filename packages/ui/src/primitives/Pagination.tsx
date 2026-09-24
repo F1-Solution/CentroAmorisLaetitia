@@ -57,7 +57,9 @@ export function Pagination({
   return (
     <nav className="amoris-pagination" aria-label="Impaginazione">
       <p className="amoris-pagination__summary">
-        {isEmpty ? 'Nessun elemento.' : `${totalItems} elementi, pagina ${currentPage} di ${pageCount}.`}
+        {isEmpty
+          ? 'Nessun elemento.'
+          : `${totalItems} elementi, pagina ${currentPage} di ${pageCount}.`}
       </p>
       {!isEmpty ? (
         <div className="amoris-pagination__pages">

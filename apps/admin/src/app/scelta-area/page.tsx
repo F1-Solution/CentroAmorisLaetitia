@@ -50,7 +50,9 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
       router.replace(AREA_DEFINITIONS[vestment.area].href);
     } catch (caught) {
       setError(
-        caught instanceof ApiError ? caught.fullMessage : 'Non è stato possibile contattare il servizio.',
+        caught instanceof ApiError
+          ? caught.fullMessage
+          : 'Non è stato possibile contattare il servizio.',
       );
       setBusy(false);
     }

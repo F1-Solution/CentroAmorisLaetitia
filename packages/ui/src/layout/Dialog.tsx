@@ -22,7 +22,13 @@ export interface DialogProps {
  * aveva alcuna via d'uscita apparente. §9.6 vieta che una cosa necessaria abbia
  * un solo veicolo; Esc resta, sono due strade per la stessa azione.
  */
-export function Dialog({ open, onClose, title, children, loading = false }: DialogProps): React.JSX.Element | null {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  children,
+  loading = false,
+}: DialogProps): React.JSX.Element | null {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -87,11 +93,7 @@ export function Dialog({ open, onClose, title, children, loading = false }: Dial
           <h2 id="amoris-dialog-title" className="amoris-dialog__title">
             {title}
           </h2>
-          <IconButton
-            icon={<span aria-hidden="true">✕</span>}
-            label="Chiudi"
-            onClick={onClose}
-          />
+          <IconButton icon={<span aria-hidden="true">✕</span>} label="Chiudi" onClick={onClose} />
         </div>
         <div className="amoris-dialog__body">{children}</div>
       </div>

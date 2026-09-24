@@ -105,7 +105,10 @@ export const breakpoints = {
 export type DensityName = 'comfortable' | 'compact';
 
 /** Le due densità — §5.1. `comfortable` (comoda) è la predefinita (DR-054). */
-export const densityTokens: Record<DensityName, { rowHeight: string; controlHeight: string; fieldGapY: string; cellGapX: string }> = {
+export const densityTokens: Record<
+  DensityName,
+  { rowHeight: string; controlHeight: string; fieldGapY: string; cellGapX: string }
+> = {
   comfortable: {
     rowHeight: '2.75rem', // 44px
     controlHeight: '2.5rem', // 40px

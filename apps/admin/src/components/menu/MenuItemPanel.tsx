@@ -150,11 +150,7 @@ export function MenuItemPanel({
         onChange={(event) => setCssClasses(event.target.value)}
       />
 
-      <FieldGroup
-        title="Visibilità"
-        description={chosen?.note ?? ''}
-        disabled={!canWrite || busy}
-      >
+      <FieldGroup title="Visibilità" description={chosen?.note ?? ''} disabled={!canWrite || busy}>
         <RadioGroup
           legend="Chi vede questa voce"
           value={visibility}

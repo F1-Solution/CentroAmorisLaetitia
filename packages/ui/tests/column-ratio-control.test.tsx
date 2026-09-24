@@ -10,8 +10,12 @@ const options = [
 describe('ColumnRatioControl — componente 43', () => {
   it('stato S: marca la ripartizione corrente', () => {
     render(<ColumnRatioControl value="1_2,1_2" options={options} onChange={vi.fn()} />);
-    expect(screen.getByRole('radio', { name: '1/2 + 1/2' }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('radio', { name: '1/3 + 2/3' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('radio', { name: '1/2 + 1/2' }).getAttribute('aria-checked')).toBe(
+      'true',
+    );
+    expect(screen.getByRole('radio', { name: '1/3 + 2/3' }).getAttribute('aria-checked')).toBe(
+      'false',
+    );
   });
 
   it('cambia la ripartizione', () => {

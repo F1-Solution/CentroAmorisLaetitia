@@ -37,7 +37,7 @@ export function renderReportText(report: ImportReport): string {
       `CONTENUTI NON SOVRASCRITTI — modificati dopo l'ultima esecuzione riuscita (${report.skippedForEditorialWork.length})`,
     );
     for (const item of report.skippedForEditorialWork) lines.push(`  ${item.contentId}`);
-    lines.push("  per sovrascriverne uno: --force-content <id>, un contenuto per volta");
+    lines.push('  per sovrascriverne uno: --force-content <id>, un contenuto per volta');
   }
 
   lines.push('─'.repeat(60));

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { IconButton } from '../src/primitives/IconButton.js';
 
 describe('IconButton — componente 15', () => {
-  it('richiede un\'etichetta accessibile testuale', () => {
+  it("richiede un'etichetta accessibile testuale", () => {
     render(<IconButton icon={<span>×</span>} label="Chiudi il pannello" />);
     expect(screen.getByRole('button', { name: 'Chiudi il pannello' })).toBeDefined();
   });

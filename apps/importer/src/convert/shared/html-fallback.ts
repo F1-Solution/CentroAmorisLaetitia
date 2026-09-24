@@ -6,7 +6,12 @@
  * Anche qui si rimuove sempre ciò che è pericoloso (§3.14.2): la fedeltà si
  * conserva, il pericolo no.
  */
-import { htmlPropsSchema, stripDangerousMarkup, type HtmlBlockReason, type HtmlProps } from './blocks.js';
+import {
+  htmlPropsSchema,
+  stripDangerousMarkup,
+  type HtmlBlockReason,
+  type HtmlProps,
+} from './blocks.js';
 import type { ConvertContext } from './context.js';
 
 export interface HtmlFallbackInput {
@@ -30,7 +35,10 @@ export interface BuiltHtmlBlock {
  * del pericoloso, non resta nulla: un blocco di riserva vuoto violerebbe
  * `htmlPropsSchema` (`html` non vuoto) e non rappresenterebbe comunque nulla.
  */
-export function buildHtmlFallbackBlock(ctx: ConvertContext, input: HtmlFallbackInput): BuiltHtmlBlock | null {
+export function buildHtmlFallbackBlock(
+  ctx: ConvertContext,
+  input: HtmlFallbackInput,
+): BuiltHtmlBlock | null {
   const stripped = stripDangerousMarkup(input.html);
   for (const issue of stripped.issues) {
     ctx.push({

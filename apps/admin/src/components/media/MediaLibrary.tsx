@@ -253,10 +253,7 @@ export function MediaLibrary(): React.JSX.Element {
       sectionId="media"
       breadcrumbs={[{ label: 'Redazione', href: '/redazione/pagine' }, { label: 'Media' }]}
     >
-      <PageHeader
-        title="Media"
-        summary="Immagini, documenti e file del sito pubblico."
-      />
+      <PageHeader title="Media" summary="Immagini, documenti e file del sito pubblico." />
 
       {canWrite ? (
         <section className="amoris-media-library__upload" aria-label="Carica nuovi media">
@@ -315,9 +312,7 @@ export function MediaLibrary(): React.JSX.Element {
             key: 'altText',
             header: 'Testo alternativo',
             render: (row) =>
-              row.altText ?? (
-                <span className="amoris-media-library__missing">Non indicato</span>
-              ),
+              row.altText ?? <span className="amoris-media-library__missing">Non indicato</span>,
           },
           { key: 'mimeType', header: 'Tipo', render: (row) => row.mimeType },
           {

@@ -57,7 +57,10 @@ export interface ConvertIssue {
 }
 
 /** Elenco mutabile usato durante una conversione; il chiamante lo consuma a fine conversione. */
-export function createIssueSink(): { readonly issues: ConvertIssue[]; push: (issue: ConvertIssue) => void } {
+export function createIssueSink(): {
+  readonly issues: ConvertIssue[];
+  push: (issue: ConvertIssue) => void;
+} {
   const issues: ConvertIssue[] = [];
   return {
     issues,

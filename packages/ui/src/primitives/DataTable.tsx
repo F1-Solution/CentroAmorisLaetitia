@@ -65,7 +65,9 @@ export function DataTable<Row>({
 
   function toggleOne(id: string) {
     if (!onSelectedIdsChange) return;
-    onSelectedIdsChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+    onSelectedIdsChange(
+      selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id],
+    );
   }
 
   if (errorText) {
@@ -106,16 +108,24 @@ export function DataTable<Row>({
           {columns.map((column) => {
             const isSorted = sortKey === column.key;
             return (
-              <th key={column.key} scope="col" className={column.numeric ? 'amoris-datatable__col--numeric' : undefined}>
+              <th
+                key={column.key}
+                scope="col"
+                className={column.numeric ? 'amoris-datatable__col--numeric' : undefined}
+              >
                 {column.sortable ? (
                   <button
                     type="button"
                     className="amoris-focusable amoris-datatable__sort"
                     onClick={() => onSortChange?.(column.key)}
-                    aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    aria-sort={
+                      isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'
+                    }
                   >
                     {column.header}
-                    {isSorted ? <span aria-hidden="true">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span> : null}
+                    {isSorted ? (
+                      <span aria-hidden="true">{sortDirection === 'asc' ? ' ▲' : ' ▼'}</span>
+                    ) : null}
                   </button>
                 ) : (
                   column.header
@@ -130,14 +140,25 @@ export function DataTable<Row>({
           const id = getRowId(row);
           const isSelected = selected.includes(id);
           return (
-            <tr key={id} className={isSelected ? 'amoris-datatable__row--selected' : undefined} aria-selected={selectable ? isSelected : undefined}>
+            <tr
+              key={id}
+              className={isSelected ? 'amoris-datatable__row--selected' : undefined}
+              aria-selected={selectable ? isSelected : undefined}
+            >
               {selectable ? (
                 <td className="amoris-datatable__select-col">
-                  <CheckboxField label={`Seleziona riga`} checked={isSelected} onChange={() => toggleOne(id)} />
+                  <CheckboxField
+                    label={`Seleziona riga`}
+                    checked={isSelected}
+                    onChange={() => toggleOne(id)}
+                  />
                 </td>
               ) : null}
               {columns.map((column) => (
-                <td key={column.key} className={column.numeric ? 'amoris-datatable__col--numeric' : undefined}>
+                <td
+                  key={column.key}
+                  className={column.numeric ? 'amoris-datatable__col--numeric' : undefined}
+                >
                   {column.render(row)}
                 </td>
               ))}

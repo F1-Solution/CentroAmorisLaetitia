@@ -17,7 +17,12 @@ export interface ColumnRatioControlProps {
  * Componente 43: cambia la ripartizione delle colonne di una riga. È l'unica
  * modifica di impaginazione ammessa in Fase 1 (ADR-006 §3.2).
  */
-export function ColumnRatioControl({ value, options, onChange, disabled = false }: ColumnRatioControlProps): React.JSX.Element {
+export function ColumnRatioControl({
+  value,
+  options,
+  onChange,
+  disabled = false,
+}: ColumnRatioControlProps): React.JSX.Element {
   return (
     <div className="amoris-column-ratio" role="radiogroup" aria-label="Ripartizione delle colonne">
       {options.map((option) => (

@@ -27,15 +27,25 @@ export function VisibilityPanel({
   const isRestricted = value === 'restricted';
 
   return (
-    <div className={`amoris-visibility-panel ${isRestricted ? 'amoris-visibility-panel--restricted' : ''}`}>
+    <div
+      className={`amoris-visibility-panel ${isRestricted ? 'amoris-visibility-panel--restricted' : ''}`}
+    >
       <RadioGroup
         legend="Visibilità"
         value={value}
         onChange={(next) => !disabled && onChange(next as Visibility)}
         {...(errorText !== undefined ? { errorText } : {})}
         options={[
-          { value: 'public', label: 'Visibile a tutta l\'area', ...(disabled !== undefined ? { disabled } : {}) },
-          { value: 'restricted', label: 'Riservato', ...(disabled !== undefined ? { disabled } : {}) },
+          {
+            value: 'public',
+            label: "Visibile a tutta l'area",
+            ...(disabled !== undefined ? { disabled } : {}),
+          },
+          {
+            value: 'restricted',
+            label: 'Riservato',
+            ...(disabled !== undefined ? { disabled } : {}),
+          },
         ]}
       />
       <p className="amoris-visibility-panel__note">{visibleToText}</p>

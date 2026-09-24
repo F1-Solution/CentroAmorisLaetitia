@@ -74,7 +74,12 @@ export function Tabs({ tabs, activeKey, onChange, children }: TabsProps): React.
           );
         })}
       </div>
-      <div className="amoris-tabs__panel" role="tabpanel" id={`${baseId}-panel-${activeKey}`} aria-labelledby={`${baseId}-tab-${activeKey}`}>
+      <div
+        className="amoris-tabs__panel"
+        role="tabpanel"
+        id={`${baseId}-panel-${activeKey}`}
+        aria-labelledby={`${baseId}-tab-${activeKey}`}
+      >
         {children}
       </div>
     </div>

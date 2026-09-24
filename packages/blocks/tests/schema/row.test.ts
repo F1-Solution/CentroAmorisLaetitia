@@ -19,7 +19,9 @@ describe('rowPropsSchema', () => {
   });
 
   it('accetta una columnStructure a più segmenti', () => {
-    expect(rowPropsSchema.parse({ columnStructure: '1_3,1_3,1_3' }).columnStructure).toBe('1_3,1_3,1_3');
+    expect(rowPropsSchema.parse({ columnStructure: '1_3,1_3,1_3' }).columnStructure).toBe(
+      '1_3,1_3,1_3',
+    );
   });
 
   it('rifiuta una chiave sconosciuta', () => {

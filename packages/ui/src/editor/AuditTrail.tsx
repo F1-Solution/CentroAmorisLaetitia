@@ -25,7 +25,12 @@ export interface AuditTrailProps {
  * esteso di area, scritto in frasi compiute e non in righe tecniche. Ogni riga
  * porta il ruolo con cui l'azione è stata compiuta.
  */
-export function AuditTrail({ entries, loading = false, emptyText = 'Nessuna operazione registrata.', variant = 'full' }: AuditTrailProps): React.JSX.Element {
+export function AuditTrail({
+  entries,
+  loading = false,
+  emptyText = 'Nessuna operazione registrata.',
+  variant = 'full',
+}: AuditTrailProps): React.JSX.Element {
   if (loading) {
     return (
       <div className="amoris-audit-trail__status">

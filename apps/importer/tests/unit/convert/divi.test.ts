@@ -77,11 +77,14 @@ describe('convertContent — famiglia Divi', () => {
   it('un attributo Divi sconosciuto produce una riga import_issues e non finisce in stile in linea', () => {
     const result = convertContent({ legacyContentId: 103, postContent: unknownAttributeSample });
     const unknownAttr = result.issues.find(
-      (i) => i.code === 'unknown-divi-attribute' && i.detail === 'et_pb_text.un_attributo_mai_visto',
+      (i) =>
+        i.code === 'unknown-divi-attribute' && i.detail === 'et_pb_text.un_attributo_mai_visto',
     );
     expect(unknownAttr).toBeDefined();
 
-    const styleIssue = result.issues.find((i) => i.code === 'sanitize-removed' && i.detail === 'p.style');
+    const styleIssue = result.issues.find(
+      (i) => i.code === 'sanitize-removed' && i.detail === 'p.style',
+    );
     expect(styleIssue).toBeDefined();
 
     const section = result.document.blocks[0]!;
@@ -180,14 +183,18 @@ describe('convertContent — famiglia Divi', () => {
     const image = section.children[0]!.children[0]!.children[0]!;
     if (image.type !== 'image') throw new Error('atteso image');
     expect(image.props.src).toBe('/wp-content/uploads/2026/09/relativa.jpg');
-    expect(result.issues.some((i) => i.code === 'same-site-url-normalized' && i.detail === 'et_pb_image.src')).toBe(
-      true,
-    );
+    expect(
+      result.issues.some(
+        (i) => i.code === 'same-site-url-normalized' && i.detail === 'et_pb_image.src',
+      ),
+    ).toBe(true);
   });
 
   it('uno shortcode sconosciuto produce una riga unknown-shortcode e diventa rich_text', () => {
     const result = convertContent({ legacyContentId: 112, postContent: unknownShortcodeSample });
-    expect(result.issues.some((i) => i.code === 'unknown-shortcode' && i.detail === 'mistero')).toBe(true);
+    expect(
+      result.issues.some((i) => i.code === 'unknown-shortcode' && i.detail === 'mistero'),
+    ).toBe(true);
     const section = result.document.blocks[0]!;
     if (section.type !== 'section') throw new Error('atteso section');
     const converted = section.children[0]!.children[0]!.children[0]!;

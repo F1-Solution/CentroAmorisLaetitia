@@ -7,7 +7,11 @@ import type { RefObject } from 'react';
  * modale — a differenza di `Dialog`/`SidePanel` non intrappolano il fuoco, ma
  * devono comunque chiudersi in modo prevedibile.
  */
-export function useOutsideDismiss(containerRef: RefObject<HTMLElement | null>, open: boolean, onDismiss: () => void): void {
+export function useOutsideDismiss(
+  containerRef: RefObject<HTMLElement | null>,
+  open: boolean,
+  onDismiss: () => void,
+): void {
   useEffect(() => {
     if (!open) return undefined;
 

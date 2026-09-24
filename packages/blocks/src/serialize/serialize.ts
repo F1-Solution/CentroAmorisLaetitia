@@ -51,23 +51,54 @@ export function serializeBlock(node: BlockNode): string {
   // legame fra `node.type` e la forma di `props` che l'unione discriminata dà.
   switch (node.type) {
     case 'section':
-      return wrapBlock('section', 'section', node.id, node.props.classes, {}, serializeBlocks(node.children));
+      return wrapBlock(
+        'section',
+        'section',
+        node.id,
+        node.props.classes,
+        {},
+        serializeBlocks(node.children),
+      );
     case 'row':
-      return wrapBlock('div', 'row', node.id, node.props.classes, {}, serializeBlocks(node.children));
+      return wrapBlock(
+        'div',
+        'row',
+        node.id,
+        node.props.classes,
+        {},
+        serializeBlocks(node.children),
+      );
     case 'column':
-      return wrapBlock('div', 'column', node.id, node.props.classes, {}, serializeBlocks(node.children));
+      return wrapBlock(
+        'div',
+        'column',
+        node.id,
+        node.props.classes,
+        {},
+        serializeBlocks(node.children),
+      );
     case 'media_text': {
       // Il §6.2 parla di "mediaId o src", ma lo schema di `media_text` (§3.6)
       // ha solo `mediaId`: non esiste un campo `src` distinto su questo tipo.
       const img = node.props.mediaId !== null ? '<img>' : '';
-      return wrapBlock('div', 'media-text', node.id, node.props.classes, {}, img + serializeBlocks(node.children));
+      return wrapBlock(
+        'div',
+        'media-text',
+        node.id,
+        node.props.classes,
+        {},
+        img + serializeBlocks(node.children),
+      );
     }
     case 'rich_text':
       // Non sanifica: `props.html` è già un punto fisso, copiato così com'è (regola 11).
       return wrapBlock('div', 'text', node.id, node.props.classes, {}, node.props.html);
     case 'image': {
       const img = `<img alt="${escapeAttributeValue(node.props.alt)}">`;
-      const caption = node.props.caption !== null ? `<figcaption>${escapeText(node.props.caption)}</figcaption>` : '';
+      const caption =
+        node.props.caption !== null
+          ? `<figcaption>${escapeText(node.props.caption)}</figcaption>`
+          : '';
       return wrapBlock('figure', 'image', node.id, node.props.classes, {}, img + caption);
     }
     case 'video':

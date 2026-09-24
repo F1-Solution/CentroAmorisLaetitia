@@ -33,7 +33,11 @@ export function PreviewPane({
   return (
     <div className="amoris-preview-pane">
       <div className="amoris-preview-pane__toolbar">
-        <div className="amoris-preview-pane__viewport" role="group" aria-label="Formato dell'anteprima">
+        <div
+          className="amoris-preview-pane__viewport"
+          role="group"
+          aria-label="Formato dell'anteprima"
+        >
           <button
             type="button"
             className="amoris-focusable amoris-preview-pane__viewport-button"
@@ -51,7 +55,13 @@ export function PreviewPane({
             Telefono
           </button>
         </div>
-        {onRefresh ? <IconButton icon={<span aria-hidden="true">⟳</span>} label="Aggiorna l'anteprima" onClick={onRefresh} /> : null}
+        {onRefresh ? (
+          <IconButton
+            icon={<span aria-hidden="true">⟳</span>}
+            label="Aggiorna l'anteprima"
+            onClick={onRefresh}
+          />
+        ) : null}
       </div>
 
       {errorText ? (

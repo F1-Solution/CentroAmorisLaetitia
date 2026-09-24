@@ -24,7 +24,7 @@ describe('Dialog — componente 32', () => {
     expect(container.textContent).toBe('');
   });
 
-  it('Esc chiude la finestra e il fuoco torna all\'elemento che l\'ha aperta', () => {
+  it("Esc chiude la finestra e il fuoco torna all'elemento che l'ha aperta", () => {
     function Wrapper() {
       const [open, setOpen] = useState(true);
       return (
@@ -54,7 +54,12 @@ describe('SidePanel — componente 33', () => {
 
   it('stato E: errore mostrato nel pannello', () => {
     render(
-      <SidePanel open onClose={() => {}} title="Dettaglio media" errorText="Impossibile caricare il media.">
+      <SidePanel
+        open
+        onClose={() => {}}
+        title="Dettaglio media"
+        errorText="Impossibile caricare il media."
+      >
         <p>Anteprima</p>
       </SidePanel>,
     );
@@ -77,7 +82,12 @@ describe('Toast — componente 31', () => {
   it('errore: role alert, non si autochiude', () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();
-    render(<Toast toast={{ id: '1', variant: 'error', message: 'Salvataggio non riuscito.' }} onDismiss={onDismiss} />);
+    render(
+      <Toast
+        toast={{ id: '1', variant: 'error', message: 'Salvataggio non riuscito.' }}
+        onDismiss={onDismiss}
+      />,
+    );
     expect(screen.getByRole('alert').textContent).toContain('Salvataggio non riuscito.');
     vi.advanceTimersByTime(10000);
     expect(onDismiss).not.toHaveBeenCalled();
@@ -87,7 +97,9 @@ describe('Toast — componente 31', () => {
   it('successo: role status, si chiude da sola dopo 6 secondi', () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();
-    render(<Toast toast={{ id: '2', variant: 'success', message: 'Salvato.' }} onDismiss={onDismiss} />);
+    render(
+      <Toast toast={{ id: '2', variant: 'success', message: 'Salvato.' }} onDismiss={onDismiss} />,
+    );
     expect(screen.getByRole('status').textContent).toContain('Salvato.');
     vi.advanceTimersByTime(6000);
     expect(onDismiss).toHaveBeenCalledWith('2');

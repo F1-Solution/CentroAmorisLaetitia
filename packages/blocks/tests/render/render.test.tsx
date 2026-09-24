@@ -121,7 +121,7 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
     expect(container.querySelector('img')?.getAttribute('alt')).toBe('descrizione');
   });
 
-  it('MediaText rende l\'immagine solo se c\'è mediaId', () => {
+  it("MediaText rende l'immagine solo se c'è mediaId", () => {
     const { container } = render(
       <MediaText
         block={{
@@ -150,7 +150,13 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
         block={{
           type: 'video',
           id: testBlockId(),
-          props: { src: 'https://youtu.be/abc', provider: 'youtube', posterMediaId: null, posterSrc: null, classes: [] },
+          props: {
+            src: 'https://youtu.be/abc',
+            provider: 'youtube',
+            posterMediaId: null,
+            posterSrc: null,
+            classes: [],
+          },
           children: [],
         }}
       />,
@@ -158,7 +164,7 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
     expect(container.querySelector('.blk-video')?.getAttribute('data-provider')).toBe('youtube');
   });
 
-  it('Map rende l\'indirizzo come testo', () => {
+  it("Map rende l'indirizzo come testo", () => {
     const { getByText } = render(
       <Map
         block={{
@@ -185,7 +191,14 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
 
   it('Separator rende un <hr>', () => {
     const { container } = render(
-      <Separator block={{ type: 'separator', id: testBlockId(), props: { style: 'default', classes: [] }, children: [] }} />,
+      <Separator
+        block={{
+          type: 'separator',
+          id: testBlockId(),
+          props: { style: 'default', classes: [] },
+          children: [],
+        }}
+      />,
     );
     expect(container.querySelector('hr')).not.toBeNull();
   });
@@ -196,7 +209,13 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
         block={{
           type: 'form',
           id: testBlockId(),
-          props: { formId: uuid, origin: 'wpforms', showTitle: false, showDescription: false, classes: [] },
+          props: {
+            formId: uuid,
+            origin: 'wpforms',
+            showTitle: false,
+            showDescription: false,
+            classes: [],
+          },
           children: [],
         }}
       />,
@@ -242,18 +261,30 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
 
   it('Slider rende un contenitore con il riferimento', () => {
     const { container } = render(
-      <Slider block={{ type: 'slider', id: testBlockId(), props: { sliderId: uuid, classes: [] }, children: [] }} />,
+      <Slider
+        block={{
+          type: 'slider',
+          id: testBlockId(),
+          props: { sliderId: uuid, classes: [] },
+          children: [],
+        }}
+      />,
     );
     expect(container.querySelector('.blk-slider')?.getAttribute('data-slider-id')).toBe(uuid);
   });
 
-  it('ReserveHtmlBlock inietta il markup di riserva così com\'è', () => {
+  it("ReserveHtmlBlock inietta il markup di riserva così com'è", () => {
     const { container } = render(
       <ReserveHtmlBlock
         block={{
           type: 'html',
           id: testBlockId(),
-          props: { html: '<center>vecchio</center>', reason: 'divi_unmapped_markup', detail: null, classes: [] },
+          props: {
+            html: '<center>vecchio</center>',
+            reason: 'divi_unmapped_markup',
+            detail: null,
+            classes: [],
+          },
           children: [],
         }}
       />,
@@ -262,8 +293,8 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
   });
 });
 
-describe('BlocksDocument — resa dell\'intero documento', () => {
-  it('rende tutti i blocchi di primo livello nell\'ordine dato', () => {
+describe("BlocksDocument — resa dell'intero documento", () => {
+  it("rende tutti i blocchi di primo livello nell'ordine dato", () => {
     const doc: BlockDocument = {
       schema: 1,
       blocks: [makeRichText('<p>Uno</p>'), makeRichText('<p>Due</p>')],

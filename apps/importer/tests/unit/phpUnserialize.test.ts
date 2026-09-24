@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { phpUnserialize, phpValueToJson, PhpUnserializeError } from '../../src/source/php/unserialize.js';
+import {
+  phpUnserialize,
+  phpValueToJson,
+  PhpUnserializeError,
+} from '../../src/source/php/unserialize.js';
 
 describe('lettore del formato serializzato di PHP', () => {
   it('legge N; come null', () => {
@@ -42,9 +46,7 @@ describe('lettore del formato serializzato di PHP', () => {
   });
 
   it('legge un array annidato', () => {
-    const value = phpUnserialize(
-      'a:1:{s:5:"width";a:2:{s:4:"unit";s:2:"px";s:5:"value";i:10;}}',
-    );
+    const value = phpUnserialize('a:1:{s:5:"width";a:2:{s:4:"unit";s:2:"px";s:5:"value";i:10;}}');
     expect(phpValueToJson(value)).toEqual({ width: { unit: 'px', value: 10 } });
   });
 

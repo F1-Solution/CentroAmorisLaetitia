@@ -20,7 +20,10 @@ export function parseTagAttributes(tagInner: string): Record<string, string> {
   return attrs;
 }
 
-export function findFirstTag(html: string, tagName: string): { attrs: Record<string, string>; index: number } | null {
+export function findFirstTag(
+  html: string,
+  tagName: string,
+): { attrs: Record<string, string>; index: number } | null {
   const re = new RegExp(`<${tagName}\\b([^>]*)>`, 'i');
   const match = re.exec(html);
   if (!match) return null;

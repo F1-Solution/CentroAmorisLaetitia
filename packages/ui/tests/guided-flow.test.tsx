@@ -9,24 +9,58 @@ const steps = [
 
 describe('GuidedFlow — componente 54', () => {
   it('stato R: rende il passo corrente e i numeri', () => {
-    render(<GuidedFlow steps={steps} currentStepIndex={0} onBack={vi.fn()} onNext={vi.fn()} onFinish={vi.fn()} />);
+    render(
+      <GuidedFlow
+        steps={steps}
+        currentStepIndex={0}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onFinish={vi.fn()}
+      />,
+    );
     expect(screen.getByText('Passo 1')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Indietro' })).toHaveProperty('disabled', true);
   });
 
   it('sull\'ultimo passo mostra "Concludi" invece di "Avanti"', () => {
-    render(<GuidedFlow steps={steps} currentStepIndex={1} onBack={vi.fn()} onNext={vi.fn()} onFinish={vi.fn()} />);
+    render(
+      <GuidedFlow
+        steps={steps}
+        currentStepIndex={1}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onFinish={vi.fn()}
+      />,
+    );
     expect(screen.getByRole('button', { name: 'Concludi' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Avanti' })).toBeNull();
   });
 
   it('stato E: errore', () => {
-    render(<GuidedFlow steps={steps} currentStepIndex={0} onBack={vi.fn()} onNext={vi.fn()} onFinish={vi.fn()} errorText="Impossibile continuare." />);
+    render(
+      <GuidedFlow
+        steps={steps}
+        currentStepIndex={0}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onFinish={vi.fn()}
+        errorText="Impossibile continuare."
+      />,
+    );
     expect(screen.getByText('Impossibile continuare.')).toBeDefined();
   });
 
   it('stato L: avanti in caricamento', () => {
-    render(<GuidedFlow steps={steps} currentStepIndex={0} onBack={vi.fn()} onNext={vi.fn()} onFinish={vi.fn()} loading />);
+    render(
+      <GuidedFlow
+        steps={steps}
+        currentStepIndex={0}
+        onBack={vi.fn()}
+        onNext={vi.fn()}
+        onFinish={vi.fn()}
+        loading
+      />,
+    );
     expect(screen.getByRole('button', { name: 'Avanti' }).getAttribute('aria-busy')).toBe('true');
   });
 });

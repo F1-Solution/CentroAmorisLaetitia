@@ -48,7 +48,7 @@ describe('serializeBlock — involucro per tipo (§6.2)', () => {
     expect(out).toBe(`<div class="blk blk-row is-fullwidth" id="${id}"></div>`);
   });
 
-  it('rich_text: props.html copiato così com\'è, nessuna doppia sanificazione (regola 11)', () => {
+  it("rich_text: props.html copiato così com'è, nessuna doppia sanificazione (regola 11)", () => {
     const html = '<p>Ciao &amp; benvenuto</p>';
     const node = makeRichText(html);
     expect(serializeBlock(node)).toBe(`<div class="blk blk-text" id="${node.id}">${html}</div>`);
@@ -78,7 +78,9 @@ describe('serializeBlock — involucro per tipo (§6.2)', () => {
       },
       children: [],
     });
-    expect(withoutCaption).toBe(`<figure class="blk blk-image" id="${id}"><img alt="una foto"></figure>`);
+    expect(withoutCaption).toBe(
+      `<figure class="blk blk-image" id="${id}"><img alt="una foto"></figure>`,
+    );
   });
 
   it('image: con didascalia', () => {
@@ -105,7 +107,9 @@ describe('serializeBlock — involucro per tipo (§6.2)', () => {
       },
       children: [],
     });
-    expect(out).toBe(`<figure class="blk blk-image" id="${id}"><img alt=""><figcaption>una didascalia</figcaption></figure>`);
+    expect(out).toBe(
+      `<figure class="blk blk-image" id="${id}"><img alt=""><figcaption>una didascalia</figcaption></figure>`,
+    );
   });
 
   it('separator: elemento vuoto, senza barra finale né chiusura (regola 8)', () => {
@@ -124,7 +128,13 @@ describe('serializeBlock — involucro per tipo (§6.2)', () => {
     const out = serializeBlock({
       type: 'form',
       id,
-      props: { formId: uuid, origin: 'wpforms', showTitle: false, showDescription: false, classes: [] },
+      props: {
+        formId: uuid,
+        origin: 'wpforms',
+        showTitle: false,
+        showDescription: false,
+        classes: [],
+      },
       children: [],
     });
     expect(out).toBe(`<div class="blk blk-form" id="${id}"></div>`);
@@ -166,12 +176,17 @@ describe('serializeBlock — involucro per tipo (§6.2)', () => {
     expect(out).toBe(`<div class="blk blk-document" id="${id}">Scarica il modulo</div>`);
   });
 
-  it('html: props.html copiato così com\'è, come rich_text', () => {
+  it("html: props.html copiato così com'è, come rich_text", () => {
     const id = testBlockId();
     const out = serializeBlock({
       type: 'html',
       id,
-      props: { html: '<center>vecchio</center>', reason: 'divi_unmapped_markup', detail: null, classes: [] },
+      props: {
+        html: '<center>vecchio</center>',
+        reason: 'divi_unmapped_markup',
+        detail: null,
+        classes: [],
+      },
       children: [],
     });
     expect(out).toBe(`<div class="blk blk-raw" id="${id}"><center>vecchio</center></div>`);
@@ -184,7 +199,12 @@ describe('serializeBlock — escaping (§6.3, regole 5, 6, 7)', () => {
     const out = serializeBlock({
       type: 'document',
       id,
-      props: { documentId: uuid, label: 'Tom & Jerry <ok> "virgolette"', display: 'link', classes: [] },
+      props: {
+        documentId: uuid,
+        label: 'Tom & Jerry <ok> "virgolette"',
+        display: 'link',
+        classes: [],
+      },
       children: [],
     });
     expect(out).toContain('Tom &amp; Jerry &lt;ok&gt; "virgolette"');
@@ -235,7 +255,11 @@ describe('serializeBlock — ordine degli attributi (§6.3, regola 3)', () => {
     const out = serializeBlock({
       type: 'column',
       id,
-      props: { width: '1_2', padding: { base: null, tablet: null, phone: null }, classes: ['align-center'] },
+      props: {
+        width: '1_2',
+        padding: { base: null, tablet: null, phone: null },
+        classes: ['align-center'],
+      },
       children: [],
     });
     const classIndex = out.indexOf('class=');
@@ -282,7 +306,11 @@ describe('determinismo (§6.4)', () => {
                 {
                   type: 'column',
                   id: testBlockId(),
-                  props: { width: '1_1', padding: { base: null, tablet: null, phone: null }, classes: [] },
+                  props: {
+                    width: '1_1',
+                    padding: { base: null, tablet: null, phone: null },
+                    classes: [],
+                  },
                   children: [makeRichText('<p>Contenuto <strong>di prova</strong></p>')],
                 },
               ],

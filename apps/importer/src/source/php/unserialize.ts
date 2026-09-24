@@ -31,7 +31,10 @@ export function phpUnserialize(input: string): PhpValue {
   const [value, next] = parseValue(bytes, 0);
   const trailing = bytes.subarray(next).toString('utf8').trim();
   if (trailing.length > 0) {
-    throw new PhpUnserializeError(`testo in eccesso dopo il valore letto: ${JSON.stringify(trailing.slice(0, 40))}`, next);
+    throw new PhpUnserializeError(
+      `testo in eccesso dopo il valore letto: ${JSON.stringify(trailing.slice(0, 40))}`,
+      next,
+    );
   }
   return value;
 }
@@ -100,7 +103,10 @@ function parseValue(bytes: Buffer, offset: number): [PhpValue, number] {
 function indexOfByte(bytes: Buffer, byte: number, from: number): number {
   const index = bytes.indexOf(byte, from);
   if (index === -1) {
-    throw new PhpUnserializeError(`carattere atteso '${String.fromCharCode(byte)}' non trovato`, from);
+    throw new PhpUnserializeError(
+      `carattere atteso '${String.fromCharCode(byte)}' non trovato`,
+      from,
+    );
   }
   return index;
 }
@@ -108,7 +114,10 @@ function indexOfByte(bytes: Buffer, byte: number, from: number): number {
 function expect(bytes: Buffer, offset: number, char: string): void {
   const actual = String.fromCharCode(bytes[offset] ?? 0);
   if (actual !== char) {
-    throw new PhpUnserializeError(`atteso '${char}' alla posizione ${offset}, trovato '${actual}'`, offset);
+    throw new PhpUnserializeError(
+      `atteso '${char}' alla posizione ${offset}, trovato '${actual}'`,
+      offset,
+    );
   }
 }
 

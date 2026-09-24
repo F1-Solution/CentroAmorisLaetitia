@@ -9,7 +9,10 @@ export function testBlockId(): string {
   return `b_${counter.toString(16).padStart(12, '0')}`;
 }
 
-export function makeRichText(html: string, overrides: Record<string, unknown> = {}): Extract<BlockNode, { type: 'rich_text' }> {
+export function makeRichText(
+  html: string,
+  overrides: Record<string, unknown> = {},
+): Extract<BlockNode, { type: 'rich_text' }> {
   return {
     type: 'rich_text',
     id: testBlockId(),

@@ -22,29 +22,29 @@
 
 :root {
   /* Colore — tema chiaro, §2.1 */
-  --amoris-bg-app: #F4F6F9;
-  --amoris-bg-surface: #FFFFFF;
-  --amoris-surface-hover: #EEF2F7;
-  --amoris-surface-selected: #E3EDF7;
-  --amoris-text-primary: #17212E;
-  --amoris-text-secondary: #4E5A6B;
-  --amoris-border: #D7DDE5;
-  --amoris-border-strong: #7E8A99;
-  --amoris-accent: #14538F;
-  --amoris-on-accent: #FFFFFF;
-  --amoris-accent-hover: #0F3F6D;
-  --amoris-focus-ring: #0A6FD1;
-  --amoris-success: #15693F;
-  --amoris-warning: #8A5200;
-  --amoris-danger: #A3201A;
-  --amoris-restricted: #6D28A8;
-  --amoris-restricted-surface: #F2E9FB;
-  --amoris-restricted-ink: #4B1C75;
+  --amoris-bg-app: #f4f6f9;
+  --amoris-bg-surface: #ffffff;
+  --amoris-surface-hover: #eef2f7;
+  --amoris-surface-selected: #e3edf7;
+  --amoris-text-primary: #17212e;
+  --amoris-text-secondary: #4e5a6b;
+  --amoris-border: #d7dde5;
+  --amoris-border-strong: #7e8a99;
+  --amoris-accent: #14538f;
+  --amoris-on-accent: #ffffff;
+  --amoris-accent-hover: #0f3f6d;
+  --amoris-focus-ring: #0a6fd1;
+  --amoris-success: #15693f;
+  --amoris-warning: #8a5200;
+  --amoris-danger: #a3201a;
+  --amoris-restricted: #6d28a8;
+  --amoris-restricted-surface: #f2e9fb;
+  --amoris-restricted-ink: #4b1c75;
 
   /* Fisso, non toccato dal tema scuro: `TopBar` è sempre chiara (DR-018, §6
      componente 4). Stesso valore di --amoris-bg-surface in tema chiaro, ma
      dichiarato qui perché non deve seguire :root[data-theme='dark']. */
-  --amoris-top-bar-bg-fixed-light: #FFFFFF;
+  --amoris-top-bar-bg-fixed-light: #ffffff;
 
   /* Tipografia — §3, un solo carattere (§3.1) */
   --amoris-font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -97,24 +97,24 @@
 
 /* Tema scuro — §2.2. Definito, non ancora verificato (§2.4, §9.7 punto 5). */
 :root[data-theme='dark'] {
-  --amoris-bg-app: #0F151C;
-  --amoris-bg-surface: #19212B;
-  --amoris-surface-hover: #202A36;
-  --amoris-surface-selected: #23303F;
-  --amoris-text-primary: #E7ECF2;
-  --amoris-text-secondary: #A2AFBF;
-  --amoris-border: #2E3945;
-  --amoris-border-strong: #6C7A8A;
-  --amoris-accent: #7FB6F0;
-  --amoris-on-accent: #0F151C;
-  --amoris-accent-hover: #A6CCF5;
-  --amoris-focus-ring: #7FB6F0;
-  --amoris-success: #5FD39A;
-  --amoris-warning: #E2A33A;
-  --amoris-danger: #F08076;
-  --amoris-restricted: #C39BF0;
-  --amoris-restricted-surface: #2B1F3D;
-  --amoris-restricted-ink: #D9C2F7;
+  --amoris-bg-app: #0f151c;
+  --amoris-bg-surface: #19212b;
+  --amoris-surface-hover: #202a36;
+  --amoris-surface-selected: #23303f;
+  --amoris-text-primary: #e7ecf2;
+  --amoris-text-secondary: #a2afbf;
+  --amoris-border: #2e3945;
+  --amoris-border-strong: #6c7a8a;
+  --amoris-accent: #7fb6f0;
+  --amoris-on-accent: #0f151c;
+  --amoris-accent-hover: #a6ccf5;
+  --amoris-focus-ring: #7fb6f0;
+  --amoris-success: #5fd39a;
+  --amoris-warning: #e2a33a;
+  --amoris-danger: #f08076;
+  --amoris-restricted: #c39bf0;
+  --amoris-restricted-surface: #2b1f3d;
+  --amoris-restricted-ink: #d9c2f7;
 
   color-scheme: dark;
 }
@@ -159,8 +159,8 @@ body {
    sono gli stessi di :root e restano dichiarati solo in questo file (§2.3
    punto 5). */
 .amoris-top-bar {
-  --amoris-bg-surface: #FFFFFF;
-  --amoris-text-primary: #17212E;
-  --amoris-text-secondary: #4E5A6B;
-  --amoris-border: #D7DDE5;
+  --amoris-bg-surface: #ffffff;
+  --amoris-text-primary: #17212e;
+  --amoris-text-secondary: #4e5a6b;
+  --amoris-border: #d7dde5;
 }

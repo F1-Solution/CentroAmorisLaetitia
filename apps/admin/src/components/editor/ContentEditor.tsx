@@ -151,7 +151,9 @@ export function ContentEditor({
       }
     } catch (caught) {
       setLoadError(
-        caught instanceof ApiError ? caught.fullMessage : 'Non è stato possibile contattare il servizio.',
+        caught instanceof ApiError
+          ? caught.fullMessage
+          : 'Non è stato possibile contattare il servizio.',
       );
     }
   }, [contentId]);
@@ -225,7 +227,9 @@ export function ContentEditor({
         });
       }
       if (publish !== null) {
-        await api(`/contents/${contentId}/${publish ? 'publish' : 'unpublish'}`, { method: 'POST' });
+        await api(`/contents/${contentId}/${publish ? 'publish' : 'unpublish'}`, {
+          method: 'POST',
+        });
       }
       // Riversata nel contenuto, la copia di lavoro non ha più ragione di
       // esistere: è uno dei tre casi di eliminazione dichiarati (DR-068).
@@ -316,7 +320,11 @@ export function ContentEditor({
         {...(canPublish && content?.status === 'published'
           ? {
               action: (
-                <Button variant="secondary" onClick={() => void writeToContent(false)} disabled={busy}>
+                <Button
+                  variant="secondary"
+                  onClick={() => void writeToContent(false)}
+                  disabled={busy}
+                >
                   Ritira
                 </Button>
               ),
@@ -360,11 +368,7 @@ export function ContentEditor({
           onChange={setTab}
         >
           {tab === 'seo' ? (
-            <ContentSeoPanel
-              contentId={contentId}
-              path={content?.path ?? ''}
-              disabled={readOnly}
-            />
+            <ContentSeoPanel contentId={contentId} path={content?.path ?? ''} disabled={readOnly} />
           ) : null}
         </Tabs>
       ) : null}
@@ -383,8 +387,12 @@ export function ContentEditor({
                 blocks={toTreeNodes(state.document.blocks)}
                 {...(selectedId ? { selectedId } : {})}
                 onSelect={setSelectedId}
-                onMoveUp={(id) => mutate({ ...state, document: moveBlockBy(state.document, id, -1) })}
-                onMoveDown={(id) => mutate({ ...state, document: moveBlockBy(state.document, id, 1) })}
+                onMoveUp={(id) =>
+                  mutate({ ...state, document: moveBlockBy(state.document, id, -1) })
+                }
+                onMoveDown={(id) =>
+                  mutate({ ...state, document: moveBlockBy(state.document, id, 1) })
+                }
                 onDelete={(id) => {
                   mutate({ ...state, document: removeBlock(state.document, id) });
                   if (id === selectedId) setSelectedId(undefined);

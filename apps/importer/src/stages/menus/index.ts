@@ -135,7 +135,10 @@ async function loadMenuRow(ctx: StageContext): Promise<MenuRow | null> {
   ]);
   const termsById = new Map<number, { slug: string; name: string }>();
   for (const row of termsRows as readonly SqlRow[]) {
-    termsById.set(asNumber(row['term_id']), { slug: asString(row['slug']), name: asString(row['name']) });
+    termsById.set(asNumber(row['term_id']), {
+      slug: asString(row['slug']),
+      name: asString(row['name']),
+    });
   }
   for (const row of taxonomyRows as readonly SqlRow[]) {
     if (asString(row['taxonomy']) !== 'nav_menu') continue;
@@ -152,7 +155,10 @@ async function loadMenuRow(ctx: StageContext): Promise<MenuRow | null> {
  * deve produrre effetti collaterali. Le anomalie si contano una sola volta,
  * dentro `run()` (`computeVisibility` e la risoluzione di `kind`).
  */
-async function loadMenuItemRows(ctx: StageContext, menuTermId: number): Promise<readonly MenuItemRow[]> {
+async function loadMenuItemRows(
+  ctx: StageContext,
+  menuTermId: number,
+): Promise<readonly MenuItemRow[]> {
   const [postRows, metaRows, relationRows, taxonomyRows] = await Promise.all([
     ctx.source.rows('wp_posts'),
     ctx.source.rows('wp_postmeta'),
@@ -241,7 +247,12 @@ export const menusStage: Stage = {
     const existingMenuId = await ctx.ids.find(ctx.tx, 'wp_terms', menuRow.termId, 'menu');
     const [writtenMenu] = await ctx.tx
       .insert(schema.menus)
-      .values({ id: existingMenuId ?? undefined, key: menuRow.slug, label: menuRow.name, legacyId: menuRow.termId })
+      .values({
+        id: existingMenuId ?? undefined,
+        key: menuRow.slug,
+        label: menuRow.name,
+        legacyId: menuRow.termId,
+      })
       .onConflictDoUpdate({
         target: schema.menus.id,
         set: { key: menuRow.slug, label: menuRow.name, legacyId: menuRow.termId },
@@ -312,10 +323,15 @@ export const menusStage: Stage = {
           // misurata sulla sorgente reale: fatto nuovo, si segnala come
           // errore strutturale invece di essere interpretato alla cieca
           // (principio 5, `importer-spec.md` §2).
-          throw new Error(`combinazione menu item non classificata: ${row.itemType}/${row.objectName}`);
+          throw new Error(
+            `combinazione menu item non classificata: ${row.itemType}/${row.objectName}`,
+          );
         }
 
-        const { result: visibility, unclassified } = computeVisibility(row.rawRoles, row.rawDisplayMode);
+        const { result: visibility, unclassified } = computeVisibility(
+          row.rawRoles,
+          row.rawDisplayMode,
+        );
         if (unclassified) {
           await ctx.issues.record({
             severity: 'warning',
@@ -328,7 +344,9 @@ export const menusStage: Stage = {
         }
 
         const parentId =
-          row.parentLegacyId === 0 ? null : await ctx.ids.find(tx, 'wp_posts', row.parentLegacyId, 'menu_item');
+          row.parentLegacyId === 0
+            ? null
+            : await ctx.ids.find(tx, 'wp_posts', row.parentLegacyId, 'menu_item');
 
         const existingId = await ctx.ids.find(tx, 'wp_posts', row.legacyId, 'menu_item');
         const [written] = await tx

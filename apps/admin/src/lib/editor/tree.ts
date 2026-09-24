@@ -48,13 +48,19 @@ export const UNCREATABLE_REASON =
   'Immagine, video, mappa, modulo, documento e presentazione rimandano a qualcosa che già esiste: si potranno inserire quando la schermata dei media e quella dei moduli esisteranno. I blocchi di questi tipi già presenti nella pagina si modificano normalmente.';
 
 /** Che cosa si può inserire dentro `parentId`. `null` è la radice del documento. */
-export function allowedChildTypes(doc: BlockDocument, parentId: string | null): readonly BlockType[] {
+export function allowedChildTypes(
+  doc: BlockDocument,
+  parentId: string | null,
+): readonly BlockType[] {
   if (parentId === null) return ROOT_ALLOWED_TYPES;
   const parent = findBlock(doc.blocks, parentId);
   return parent ? ALLOWED_CHILDREN[parent.type] : [];
 }
 
-export function creatableChildTypes(doc: BlockDocument, parentId: string | null): readonly BlockType[] {
+export function creatableChildTypes(
+  doc: BlockDocument,
+  parentId: string | null,
+): readonly BlockType[] {
   const allowed = allowedChildTypes(doc, parentId);
   return CREATABLE_TYPES.filter((type) => allowed.includes(type));
 }
@@ -206,7 +212,11 @@ export function insertBlock(
 }
 
 /** Cambia la ripartizione delle colonne di una riga (ADR-006 §3.2, ultima riga). */
-export function setColumnStructure(doc: BlockDocument, rowId: string, structure: string): BlockDocument {
+export function setColumnStructure(
+  doc: BlockDocument,
+  rowId: string,
+  structure: string,
+): BlockDocument {
   const row = findBlock(doc.blocks, rowId);
   if (!row || row.type !== 'row') return doc;
 
@@ -221,7 +231,10 @@ export function setColumnStructure(doc: BlockDocument, rowId: string, structure:
     props: { ...row.props, columnStructure: structure },
     children: row.children.map((child, index) =>
       child.type === 'column'
-        ? ({ ...child, props: { ...child.props, width: widths[index] ?? child.props.width } } as ModelBlock)
+        ? ({
+            ...child,
+            props: { ...child.props, width: widths[index] ?? child.props.width },
+          } as ModelBlock)
         : child,
     ),
   };

@@ -188,16 +188,18 @@ export async function rolesHeldBy(db: Database, userId: string): Promise<readonl
     byRole.set(row.roleId, entry);
   }
 
-  return [...byRole.entries()]
-    .map(([roleId, entry]) => ({
-      roleId,
-      key: entry.key,
-      label: entry.label,
-      areas: [...entry.areas].sort(),
-    }))
-    // Ordine stabile: la schermata di scelta non deve cambiare disposizione a
-    // ogni accesso, altrimenti si sbaglia veste per abitudine.
-    .sort((a, b) => a.key.localeCompare(b.key));
+  return (
+    [...byRole.entries()]
+      .map(([roleId, entry]) => ({
+        roleId,
+        key: entry.key,
+        label: entry.label,
+        areas: [...entry.areas].sort(),
+      }))
+      // Ordine stabile: la schermata di scelta non deve cambiare disposizione a
+      // ogni accesso, altrimenti si sbaglia veste per abitudine.
+      .sort((a, b) => a.key.localeCompare(b.key))
+  );
 }
 
 /**

@@ -14,7 +14,11 @@ import { fakeObjectStore } from '../_support/fakeStorage.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
@@ -74,7 +78,11 @@ const BASE_POSTS: readonly SqlRow[] = [
   },
 ];
 
-function buildContentsSource(posts: readonly SqlRow[] = BASE_POSTS, postmeta: readonly SqlRow[] = [], options: readonly SqlRow[] = []) {
+function buildContentsSource(
+  posts: readonly SqlRow[] = BASE_POSTS,
+  postmeta: readonly SqlRow[] = [],
+  options: readonly SqlRow[] = [],
+) {
   return fakeSourceReader({ wp_posts: posts, wp_postmeta: postmeta, wp_options: options });
 }
 

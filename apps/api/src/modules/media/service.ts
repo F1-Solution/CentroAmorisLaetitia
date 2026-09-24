@@ -214,7 +214,9 @@ export async function remove(db: Database, store: ObjectStore, id: string): Prom
   if (used.length > 0) {
     const titles = used.map((row) => row.title).join(', ');
     throw Object.assign(
-      new Error(`Il media è citato da questi contenuti e non si elimina finché lo citano: ${titles}.`),
+      new Error(
+        `Il media è citato da questi contenuti e non si elimina finché lo citano: ${titles}.`,
+      ),
       { statusCode: 409 },
     );
   }

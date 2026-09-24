@@ -25,7 +25,11 @@ export interface MediaUploaderProps {
  * vincolo di prodotto riguarda il riordino dei blocchi (`BlockTreeEditor`),
  * non il caricamento di file, che è un'interazione diversa e comune nel web.
  */
-export function MediaUploader({ files, onFilesSelected, disabled = false }: MediaUploaderProps): React.JSX.Element {
+export function MediaUploader({
+  files,
+  onFilesSelected,
+  disabled = false,
+}: MediaUploaderProps): React.JSX.Element {
   const [isOver, setIsOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +43,10 @@ export function MediaUploader({ files, onFilesSelected, disabled = false }: Medi
   return (
     <div>
       <div
-        className={['amoris-media-uploader__dropzone', isOver ? 'amoris-media-uploader__dropzone--over' : '']
+        className={[
+          'amoris-media-uploader__dropzone',
+          isOver ? 'amoris-media-uploader__dropzone--over' : '',
+        ]
           .filter(Boolean)
           .join(' ')}
         onDragOver={(event) => {
@@ -61,7 +68,8 @@ export function MediaUploader({ files, onFilesSelected, disabled = false }: Medi
           className="amoris-media-uploader__input"
           disabled={disabled}
           onChange={(event) => {
-            if (event.target.files && event.target.files.length > 0) onFilesSelected(event.target.files);
+            if (event.target.files && event.target.files.length > 0)
+              onFilesSelected(event.target.files);
             event.target.value = '';
           }}
         />
@@ -88,7 +96,10 @@ export function MediaUploader({ files, onFilesSelected, disabled = false }: Medi
                 aria-valuemax={100}
                 aria-label={`Avanzamento di ${file.name}`}
               >
-                <div className="amoris-media-uploader__progress-fill" style={{ width: `${file.progress}%` }} />
+                <div
+                  className="amoris-media-uploader__progress-fill"
+                  style={{ width: `${file.progress}%` }}
+                />
               </div>
               {file.status === 'error' && file.errorText ? (
                 <p className="amoris-media-uploader__file-error" role="alert">

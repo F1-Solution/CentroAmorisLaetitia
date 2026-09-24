@@ -36,7 +36,12 @@ export function Toast({ toast, onDismiss }: ToastProps): React.JSX.Element {
       aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
     >
       <span className="amoris-toast__message">{toast.message}</span>
-      <button type="button" className="amoris-focusable amoris-toast__dismiss" aria-label="Chiudi l'avviso" onClick={() => onDismiss(toast.id)}>
+      <button
+        type="button"
+        className="amoris-focusable amoris-toast__dismiss"
+        aria-label="Chiudi l'avviso"
+        onClick={() => onDismiss(toast.id)}
+      >
         ×
       </button>
     </div>

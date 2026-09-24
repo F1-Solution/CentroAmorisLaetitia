@@ -18,9 +18,7 @@ export function interpretCapabilities(serialized: string): CapabilitiesResult {
   if (!(value instanceof Map)) {
     return { mapsToEditor: false, capabilityNames: [] };
   }
-  const names = [...value.entries()]
-    .filter(([, v]) => v === true)
-    .map(([k]) => String(k));
+  const names = [...value.entries()].filter(([, v]) => v === true).map(([k]) => String(k));
   return {
     mapsToEditor: names.some((name) => KNOWN_EDITOR_CAPABILITIES.includes(name)),
     capabilityNames: names,

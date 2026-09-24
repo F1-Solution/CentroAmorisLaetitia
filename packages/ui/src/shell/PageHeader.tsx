@@ -11,7 +11,12 @@ export interface PageHeaderProps {
 }
 
 /** Componente 13: intestazione di schermata — titolo, riepilogo, azione principale a destra. */
-export function PageHeader({ title, summary, action, loading = false }: PageHeaderProps): React.JSX.Element {
+export function PageHeader({
+  title,
+  summary,
+  action,
+  loading = false,
+}: PageHeaderProps): React.JSX.Element {
   return (
     <header className="amoris-page-header" aria-busy={loading || undefined}>
       <div className="amoris-page-header__text">

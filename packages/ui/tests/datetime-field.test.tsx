@@ -12,7 +12,12 @@ describe('DateTimeField — componente 26', () => {
 
   it('stato E: mostra il messaggio di errore', () => {
     render(
-      <DateTimeField label="Pubblica il" value="" onChange={vi.fn()} errorText="Data non valida." />,
+      <DateTimeField
+        label="Pubblica il"
+        value=""
+        onChange={vi.fn()}
+        errorText="Data non valida."
+      />,
     );
     expect(screen.getByRole('alert').textContent).toBe('Data non valida.');
   });

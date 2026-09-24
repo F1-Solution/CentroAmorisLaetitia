@@ -9,7 +9,12 @@ export interface EmptyStateProps {
 }
 
 /** Componente 20: titolo, una frase, azione di creazione, collegamento alla guida. Mai solo un disegno. */
-export function EmptyState({ title, description, action, helpLink }: EmptyStateProps): React.JSX.Element {
+export function EmptyState({
+  title,
+  description,
+  action,
+  helpLink,
+}: EmptyStateProps): React.JSX.Element {
   return (
     <div className="amoris-empty-state">
       <p className="amoris-empty-state__title">{title}</p>

@@ -21,7 +21,13 @@ export interface RoleSwitcherProps {
  * comunque visibile una pastiglia statica con lo stesso aspetto, perché
  * l'ambiente attivo deve restare leggibile ovunque (§8.3 punto 1).
  */
-export function RoleSwitcher({ roles, activeRoleId, onChange, disabled = false, loading = false }: RoleSwitcherProps): React.JSX.Element | null {
+export function RoleSwitcher({
+  roles,
+  activeRoleId,
+  onChange,
+  disabled = false,
+  loading = false,
+}: RoleSwitcherProps): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +36,10 @@ export function RoleSwitcher({ roles, activeRoleId, onChange, disabled = false, 
   const activeRole = roles.find((role) => role.id === activeRoleId) ?? roles[0];
   if (!activeRole) return null;
 
-  const pillClasses = ['amoris-role-switcher__pill', activeRole.elevated ? 'amoris-role-switcher__pill--elevated' : '']
+  const pillClasses = [
+    'amoris-role-switcher__pill',
+    activeRole.elevated ? 'amoris-role-switcher__pill--elevated' : '',
+  ]
     .filter(Boolean)
     .join(' ');
 

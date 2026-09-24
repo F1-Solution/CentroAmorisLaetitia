@@ -14,6 +14,10 @@ export function checkSchemaVersion(
     message: ok
       ? `lo schema ha applicato tutte le ${expectedMigrationTags.length} migrazioni attese`
       : 'disallineamento fra codice e database: mancano migrazioni',
-    detail: { missing, appliedCount: appliedMigrationTags.length, expectedCount: expectedMigrationTags.length },
+    detail: {
+      missing,
+      appliedCount: appliedMigrationTags.length,
+      expectedCount: expectedMigrationTags.length,
+    },
   };
 }

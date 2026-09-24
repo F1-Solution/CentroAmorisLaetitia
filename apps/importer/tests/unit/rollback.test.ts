@@ -15,11 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { schema, type Database } from '@amoris/db';
-import {
-  applyRollback,
-  canProceed,
-  planRollback,
-} from '../../src/rollback/index.js';
+import { applyRollback, canProceed, planRollback } from '../../src/rollback/index.js';
 import { createRun, finishRun } from '../../src/persistence/importRuns.js';
 import { createIdMap } from '../../src/persistence/idMap.js';
 import { buildStubReport } from '../../src/report/build.js';
@@ -154,7 +150,7 @@ async function simulaEsecuzione(
 }
 
 describe('rollback', () => {
-  it("riporta il database allo stato precedente, dimostrato con la fotografia (§14 punto 8)", async () => {
+  it('riporta il database allo stato precedente, dimostrato con la fotografia (§14 punto 8)', async () => {
     const db = database.db;
     const prima = await stateDigest(db);
 
@@ -215,7 +211,7 @@ describe('rollback', () => {
     expect(rimasto).toBeDefined();
   });
 
-  it("elenca ciò che ha aggiornato senza ripristinarlo, e non lo cancella (§7.1)", async () => {
+  it('elenca ciò che ha aggiornato senza ripristinarlo, e non lo cancella (§7.1)', async () => {
     const db = database.db;
 
     // Prima esecuzione: crea.

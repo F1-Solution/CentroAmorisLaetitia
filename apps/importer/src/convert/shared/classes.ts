@@ -27,7 +27,10 @@ export function rowClasses(props: { fullWidth: boolean }): AllowedClass[] {
   return classes;
 }
 
-export function imageClasses(props: { centerOnMobile: boolean; lightbox: boolean }): AllowedClass[] {
+export function imageClasses(props: {
+  centerOnMobile: boolean;
+  lightbox: boolean;
+}): AllowedClass[] {
   const classes: AllowedClass[] = [];
   if (props.centerOnMobile) classes.push('center-on-mobile');
   if (props.lightbox) classes.push('in-lightbox');

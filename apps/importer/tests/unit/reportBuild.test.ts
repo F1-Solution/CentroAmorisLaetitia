@@ -17,7 +17,9 @@ import type { VerificationCheck } from '../../src/report/types.js';
 
 const OPTIONS = { runId: 'run-1', mode: 'plan' as const, importerVersion: '0.1.0' };
 
-function results(entries: readonly [StageName, StageResult][]): ReadonlyMap<StageName, StageResult> {
+function results(
+  entries: readonly [StageName, StageResult][],
+): ReadonlyMap<StageName, StageResult> {
   return new Map(entries);
 }
 
@@ -75,7 +77,7 @@ describe('costruzione del rapporto', () => {
     expect(contents.updated).toBe(0);
   });
 
-  it("il confronto dei conteggi non si fa qui: lo fa verify (§8.1, ultima riga)", () => {
+  it('il confronto dei conteggi non si fa qui: lo fa verify (§8.1, ultima riga)', () => {
     const report = buildReport(OPTIONS, {
       // 106 invece dei 108 attesi: la colonna ATTESI lo mostra, ma l'esito non
       // si decide su questa tabella. È `verify` a misurare i volumi veri e a
@@ -144,9 +146,7 @@ describe('costruzione del rapporto', () => {
           'verify',
           {
             ...counters(0),
-            checks: [
-              { check: 'media-missing', value: 3, expected: 0, ok: false, executed: true },
-            ],
+            checks: [{ check: 'media-missing', value: 3, expected: 0, ok: false, executed: true }],
           },
         ],
       ]),
@@ -177,7 +177,7 @@ describe('costruzione del rapporto', () => {
     expect(renderReportText(report)).toContain('NON ESEGUITA');
   });
 
-  it('una fase fallita rende failed l\'intera esecuzione', () => {
+  it("una fase fallita rende failed l'intera esecuzione", () => {
     const report = buildReport(OPTIONS, {
       results: results([['contents', counters(108)]]),
       issues: [],
@@ -186,12 +186,15 @@ describe('costruzione del rapporto', () => {
     expect(report.outcome).toBe('failed');
   });
 
-  it("i contenuti protetti compaiono in testa al rapporto, prima della tabella (§6.3 punto 3)", () => {
+  it('i contenuti protetti compaiono in testa al rapporto, prima della tabella (§6.3 punto 3)', () => {
     const report = buildReport(OPTIONS, {
       results: results([
         [
           'contents',
-          { ...counters(107, 0, 1), skippedForEditorialWork: ['11111111-2222-3333-4444-555555555555'] },
+          {
+            ...counters(107, 0, 1),
+            skippedForEditorialWork: ['11111111-2222-3333-4444-555555555555'],
+          },
         ],
       ]),
       issues: [],

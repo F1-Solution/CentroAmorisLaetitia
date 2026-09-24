@@ -10,7 +10,10 @@ export async function checkStorageReachable(
   buckets: readonly string[],
 ): Promise<CheckResult> {
   const results = await Promise.all(
-    buckets.map(async (bucket) => ({ bucket, reachable: await probe.probe(bucket).catch(() => false) })),
+    buckets.map(async (bucket) => ({
+      bucket,
+      reachable: await probe.probe(bucket).catch(() => false),
+    })),
   );
   const unreachable = results.filter((r) => !r.reachable).map((r) => r.bucket);
   const ok = unreachable.length === 0;

@@ -27,7 +27,9 @@ function jsonbValue(value: unknown) {
   return value === null ? sql`'null'::jsonb` : value;
 }
 
-async function loadOptionValues(ctx: StageContext): Promise<ReadonlyMap<string, { value: string; optionId: number }>> {
+async function loadOptionValues(
+  ctx: StageContext,
+): Promise<ReadonlyMap<string, { value: string; optionId: number }>> {
   const rows = await ctx.source.rows('wp_options');
   const byName = new Map<string, { value: string; optionId: number }>();
   for (const row of rows as readonly SqlRow[]) {
@@ -43,7 +45,9 @@ async function loadOptionValues(ctx: StageContext): Promise<ReadonlyMap<string, 
   return byName;
 }
 
-function defaultSourceKey(definition: SettingsDefinition & { source: { kind: 'default' } }): ItemKey {
+function defaultSourceKey(
+  definition: SettingsDefinition & { source: { kind: 'default' } },
+): ItemKey {
   return { sourceTable: 'settings', sourceId: definition.source.syntheticId };
 }
 

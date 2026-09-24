@@ -33,7 +33,10 @@ function computeKey(input: StableIdSourceInput, attempt: number): string {
  * ricalcolare su `chiave + "#N"` (§4.2): il chiamante tiene l'insieme degli
  * identificatori già assegnati nel documento corrente.
  */
-export function deriveBlockId(input: StableIdSourceInput, isTaken: (id: string) => boolean): string {
+export function deriveBlockId(
+  input: StableIdSourceInput,
+  isTaken: (id: string) => boolean,
+): string {
   let attempt = 1;
   for (;;) {
     const key = computeKey(input, attempt);

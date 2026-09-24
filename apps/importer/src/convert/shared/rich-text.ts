@@ -7,7 +7,12 @@
  * sito stesso (`shared/url-normalize.ts`): il sanificatore li rifiuta, e senza
  * questo passaggio si perderebbero immagini e collegamenti.
  */
-import { richTextPropsSchema, sanitizeRichText, type Spacing, type RichTextProps } from './blocks.js';
+import {
+  richTextPropsSchema,
+  sanitizeRichText,
+  type Spacing,
+  type RichTextProps,
+} from './blocks.js';
 import type { ConvertContext } from './context.js';
 import { buildHtmlFallbackBlock, type BuiltHtmlBlock } from './html-fallback.js';
 import { normalizeSameSiteUrls } from './url-normalize.js';
@@ -53,7 +58,11 @@ export function buildRichTextOrFallback(
 
   for (const issue of outcome.issues) {
     if (issue.attribute === 'style') {
-      ctx.push({ severity: issue.severity, code: 'sanitize-removed', detail: `${issue.element}.style` });
+      ctx.push({
+        severity: issue.severity,
+        code: 'sanitize-removed',
+        detail: `${issue.element}.style`,
+      });
       continue;
     }
     ctx.push({

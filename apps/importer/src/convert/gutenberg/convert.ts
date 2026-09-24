@@ -31,7 +31,10 @@ export function convertGutenbergContent(text: string, ctx: ConvertContext): Bloc
   return convertSiblings(parseGutenbergBlocks(text), ctx);
 }
 
-function convertSiblings(blocks: readonly ParsedGutenbergBlock[], ctx: ConvertContext): BlockNode[] {
+function convertSiblings(
+  blocks: readonly ParsedGutenbergBlock[],
+  ctx: ConvertContext,
+): BlockNode[] {
   const out: BlockNode[] = [];
   let i = 0;
   while (i < blocks.length) {
@@ -61,11 +64,17 @@ function convertSiblings(blocks: readonly ParsedGutenbergBlock[], ctx: ConvertCo
   return out;
 }
 
-function convertSingleBlock(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNode | BlockNode[] | null {
+function convertSingleBlock(
+  block: ParsedGutenbergBlock,
+  ctx: ConvertContext,
+): BlockNode | BlockNode[] | null {
   switch (block.blockName) {
     case 'list':
     case 'heading':
-      return buildRichTextOrFallback(ctx, block.innerHtml, { start: block.start, end: block.end }) as BlockNode | null;
+      return buildRichTextOrFallback(ctx, block.innerHtml, {
+        start: block.start,
+        end: block.end,
+      }) as BlockNode | null;
     case 'image':
       return convertImage(block, ctx);
     case 'columns':
@@ -109,7 +118,9 @@ function convertSingleBlock(block: ParsedGutenbergBlock, ctx: ConvertContext): B
 function convertImage(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNode | null {
   const img = findFirstTag(block.innerHtml, 'img');
   const rawSrc = img?.attrs.src;
-  const { value: src, normalized } = rawSrc ? normalizeSameSiteUrlValue(rawSrc) : { value: undefined, normalized: false };
+  const { value: src, normalized } = rawSrc
+    ? normalizeSameSiteUrlValue(rawSrc)
+    : { value: undefined, normalized: false };
   if (normalized) {
     ctx.push({ severity: 'info', code: 'same-site-url-normalized', detail: 'wp:image.src' });
   }
@@ -210,10 +221,15 @@ function convertMediaText(block: ParsedGutenbergBlock, ctx: ConvertContext): Blo
   const mediaPosition = block.attrs.mediaPosition === 'right' ? 'right' : 'left';
   const verticalAlignmentRaw = block.attrs.verticalAlignment;
   const verticalAlignment =
-    verticalAlignmentRaw === 'top' || verticalAlignmentRaw === 'bottom' ? verticalAlignmentRaw : 'center';
+    verticalAlignmentRaw === 'top' || verticalAlignmentRaw === 'bottom'
+      ? verticalAlignmentRaw
+      : 'center';
   const mediaWidthRaw = block.attrs.mediaWidth;
   const mediaWidthPercent =
-    typeof mediaWidthRaw === 'number' && Number.isInteger(mediaWidthRaw) && mediaWidthRaw >= 1 && mediaWidthRaw <= 99
+    typeof mediaWidthRaw === 'number' &&
+    Number.isInteger(mediaWidthRaw) &&
+    mediaWidthRaw >= 1 &&
+    mediaWidthRaw <= 99
       ? mediaWidthRaw
       : null;
 
@@ -243,7 +259,11 @@ function convertMediaText(block: ParsedGutenbergBlock, ctx: ConvertContext): Blo
 
 function convertSeparator(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNode {
   const className = typeof block.attrs.className === 'string' ? block.attrs.className : '';
-  const style = className.includes('is-style-wide') ? 'wide' : className.includes('is-style-dots') ? 'dots' : 'default';
+  const style = className.includes('is-style-wide')
+    ? 'wide'
+    : className.includes('is-style-dots')
+      ? 'dots'
+      : 'default';
 
   const props = separatorPropsSchema.parse({ style, classes: [] });
 
@@ -261,7 +281,11 @@ function convertFormSelector(block: ParsedGutenbergBlock, ctx: ConvertContext): 
   const formId = ctx.resolvers.resolveForm ? ctx.resolvers.resolveForm(legacyRef) : null;
 
   if (formId === null) {
-    ctx.push({ severity: 'warning', code: 'unresolved-form-reference', detail: 'wpforms/form-selector' });
+    ctx.push({
+      severity: 'warning',
+      code: 'unresolved-form-reference',
+      detail: 'wpforms/form-selector',
+    });
     const fallback = buildHtmlFallbackBlock(ctx, {
       html: `<div>[wpforms id="${String(legacyId ?? '')}"]</div>`,
       reason: 'divi_unmapped_module',
@@ -303,7 +327,10 @@ function convertShortcodeBlock(block: ParsedGutenbergBlock, ctx: ConvertContext)
   const raw = block.innerHtml.trim();
   const match = /^\[([a-zA-Z][a-zA-Z0-9_]*)/.exec(raw);
   if (!match) {
-    return buildRichTextOrFallback(ctx, block.innerHtml, { start: block.start, end: block.end }) as BlockNode | null;
+    return buildRichTextOrFallback(ctx, block.innerHtml, {
+      start: block.start,
+      end: block.end,
+    }) as BlockNode | null;
   }
 
   const shortcode: ParsedShortcode = {

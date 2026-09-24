@@ -63,7 +63,12 @@ export function ConfirmDestructive({
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Annulla
         </Button>
-        <Button variant="destructive" onClick={onConfirm} disabled={!matches || loading} loading={loading}>
+        <Button
+          variant="destructive"
+          onClick={onConfirm}
+          disabled={!matches || loading}
+          loading={loading}
+        >
           {confirmLabel}
         </Button>
       </div>

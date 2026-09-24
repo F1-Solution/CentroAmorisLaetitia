@@ -2,7 +2,10 @@ import { useEffect, useId, useRef } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import './choice.css';
 
-export interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> {
+export interface CheckboxFieldProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'id' | 'type'
+> {
   label: string;
   /** Stato indeterminato, per la casella di intestazione di una tabella. */
   indeterminate?: boolean;
@@ -28,7 +31,9 @@ export function CheckboxField({
         id={id}
         ref={ref}
         type="checkbox"
-        className={['amoris-focusable', 'amoris-choice__input', className].filter(Boolean).join(' ')}
+        className={['amoris-focusable', 'amoris-choice__input', className]
+          .filter(Boolean)
+          .join(' ')}
         {...rest}
       />
       <span className="amoris-choice__label">{label}</span>

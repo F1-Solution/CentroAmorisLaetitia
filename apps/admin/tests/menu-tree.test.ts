@@ -43,9 +43,7 @@ const annidato: Voce[] = [
 const etichette = (nodes: ReturnType<typeof buildTree<Voce>>): string =>
   nodes
     .map((node) =>
-      node.children.length > 0
-        ? `${node.item.id}(${etichette([...node.children])})`
-        : node.item.id,
+      node.children.length > 0 ? `${node.item.id}(${etichette([...node.children])})` : node.item.id,
     )
     .join(' ');
 

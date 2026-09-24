@@ -9,11 +9,18 @@ import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
 import { createTestDatabase, type TestDatabase } from '../_support/dbHarness.js';
 import { fakeObjectStore } from '../_support/fakeStorage.js';
-import { createMediaSourceFixture, serializedAttachmentMetadata } from '../_support/mediaFixtures.js';
+import {
+  createMediaSourceFixture,
+  serializedAttachmentMetadata,
+} from '../_support/mediaFixtures.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
-  return createRun(db, { isDryRun: false, sourceLabel: 'BackupDB-2026-09-13', importerVersion: '0.0.0-test' });
+  return createRun(db, {
+    isDryRun: false,
+    sourceLabel: 'BackupDB-2026-09-13',
+    importerVersion: '0.0.0-test',
+  });
 }
 
 const OPTIONS = { only: null, forceContentIds: [], verbose: false } as const;
@@ -58,7 +65,12 @@ function buildOneAttachmentRows(options: {
         variantMimeType: 'image/jpeg',
       }),
     },
-    { meta_id: id * 10 + 3, post_id: id, meta_key: '_wp_attachment_image_alt', meta_value: 'testo alternativo di prova' },
+    {
+      meta_id: id * 10 + 3,
+      post_id: id,
+      meta_key: '_wp_attachment_image_alt',
+      meta_value: 'testo alternativo di prova',
+    },
   ];
   return { wp_posts, wp_postmeta };
 }
@@ -84,7 +96,10 @@ describe('fase media', () => {
     );
     try {
       await fixture.writeUploadedFile('2020/05/foto-prova.jpg', 'contenuto della foto di prova');
-      await fixture.writeUploadedFile('2020/05/foto-prova-150x150.jpg', 'contenuto della miniatura');
+      await fixture.writeUploadedFile(
+        '2020/05/foto-prova-150x150.jpg',
+        'contenuto della miniatura',
+      );
 
       const runId = await newApplyRunId(testDb.db);
       const issues = createIssueSink(testDb.db, 'apply', runId);
@@ -110,7 +125,10 @@ describe('fase media', () => {
         ['2020/05/foto-prova-150x150.jpg', '2020/05/foto-prova.jpg'].sort(),
       );
 
-      const [media] = await testDb.db.select().from(schema.media).where(eq(schema.media.legacyId, 501));
+      const [media] = await testDb.db
+        .select()
+        .from(schema.media)
+        .where(eq(schema.media.legacyId, 501));
       expect(media).toBeDefined();
       expect(media?.storageKey).toBe('2020/05/foto-prova.jpg');
       expect(media?.publicPath).toBe('/media/2020/05/foto-prova.jpg');
@@ -280,7 +298,10 @@ describe('fase media', () => {
       expect(failure?.sourceId).toBe(531);
 
       // La riga preesistente non è stata toccata dal savepoint annullato.
-      const [preexisting] = await testDb.db.select().from(schema.media).where(eq(schema.media.legacyId, 999999));
+      const [preexisting] = await testDb.db
+        .select()
+        .from(schema.media)
+        .where(eq(schema.media.legacyId, 999999));
       expect(preexisting?.publicPath).toBe('/media/2020/05/foto-fallisce.jpg');
 
       await testDb.db.delete(schema.media).where(eq(schema.media.legacyId, 999999));
@@ -331,7 +352,9 @@ describe('fase media', () => {
 
       expect(result.created).toBe(1);
       expect(result.errors).toBe(1);
-      const failure = issues.collected.find((i) => i.code === 'item-import-failed' && i.sourceId === 542);
+      const failure = issues.collected.find(
+        (i) => i.code === 'item-import-failed' && i.sourceId === 542,
+      );
       expect(failure).toBeDefined();
     } finally {
       await fixture.teardown();
@@ -366,7 +389,10 @@ describe('fase media', () => {
       const warning = issues.collected.find((i) => i.severity === 'warning' && i.sourceId === 551);
       expect(warning).toBeDefined();
 
-      const [media] = await testDb.db.select().from(schema.media).where(eq(schema.media.legacyId, 551));
+      const [media] = await testDb.db
+        .select()
+        .from(schema.media)
+        .where(eq(schema.media.legacyId, 551));
       const variants = await testDb.db
         .select()
         .from(schema.mediaVariants)

@@ -14,8 +14,12 @@ describe('Tabs — componente 50', () => {
         <p>Contenuto</p>
       </Tabs>,
     );
-    expect(screen.getByRole('tab', { name: 'Generale' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: 'Avanzate' }).getAttribute('aria-selected')).toBe('false');
+    expect(screen.getByRole('tab', { name: 'Generale' }).getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: 'Avanzate' }).getAttribute('aria-selected')).toBe(
+      'false',
+    );
   });
 
   it('cambia scheda al clic', () => {

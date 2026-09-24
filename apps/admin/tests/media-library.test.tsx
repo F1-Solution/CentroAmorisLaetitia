@@ -102,7 +102,8 @@ describe('archivio dei media', () => {
     uploadMock.mockReset();
     apiMock.mockImplementation((path: string, options?: { method?: string }) => {
       if (path.startsWith('/media?')) return Promise.resolve(listResponse());
-      if (options?.method === 'PATCH') return Promise.resolve({ ...immagine, altText: 'Un albero.' });
+      if (options?.method === 'PATCH')
+        return Promise.resolve({ ...immagine, altText: 'Un albero.' });
       if (options?.method === 'DELETE') return Promise.resolve(undefined);
       return Promise.resolve({});
     });

@@ -48,9 +48,9 @@ export async function uploadFile<T>(
     ...(options.signal ? { signal: options.signal } : {}),
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { code?: string; message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+  } | null;
 
   if (!response.ok) {
     throw new ApiError(

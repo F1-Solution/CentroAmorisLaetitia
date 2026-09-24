@@ -36,7 +36,13 @@ describe('Pagination — componente 19', () => {
   it('elementi per pagina: cambia con il selettore', () => {
     const onPageSizeChange = vi.fn();
     render(
-      <Pagination page={1} totalItems={30} pageSize={10} onPageChange={vi.fn()} onPageSizeChange={onPageSizeChange} />,
+      <Pagination
+        page={1}
+        totalItems={30}
+        pageSize={10}
+        onPageChange={vi.fn()}
+        onPageSizeChange={onPageSizeChange}
+      />,
     );
     expect(screen.getByLabelText('Elementi per pagina')).toBeDefined();
   });

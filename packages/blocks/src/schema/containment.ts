@@ -25,7 +25,9 @@ export function validateContainment(
     }
 
     if (node.type === 'row') {
-      const columnWidths = node.children.filter((c) => c.type === 'column').map((c) => c.props.width);
+      const columnWidths = node.children
+        .filter((c) => c.type === 'column')
+        .map((c) => c.props.width);
       const expected = columnWidths.join(',');
       if (node.props.columnStructure !== expected) {
         ctx.addIssue({

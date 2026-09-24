@@ -49,7 +49,12 @@ export function GuidedFlow({
         {steps.map((s, index) => (
           <li
             key={s.key}
-            className={['amoris-guided-flow__step', index === safeIndex ? 'amoris-guided-flow__step--current' : ''].filter(Boolean).join(' ')}
+            className={[
+              'amoris-guided-flow__step',
+              index === safeIndex ? 'amoris-guided-flow__step--current' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             aria-current={index === safeIndex ? 'step' : undefined}
           >
             <span className="amoris-guided-flow__step-number">{index + 1}</span>

@@ -3,11 +3,7 @@ import type { Database } from '@amoris/db';
 import { schema } from '@amoris/db';
 import type { ReportIssue } from '../report/types.js';
 
-export async function recordIssue(
-  db: Database,
-  runId: string,
-  issue: ReportIssue,
-): Promise<void> {
+export async function recordIssue(db: Database, runId: string, issue: ReportIssue): Promise<void> {
   await db.insert(schema.importIssues).values({
     runId,
     severity: issue.severity,

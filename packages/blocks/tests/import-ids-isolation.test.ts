@@ -63,20 +63,28 @@ async function reachableFrom(entry: string): Promise<Map<string, string>> {
 }
 
 describe('il punto d’ingresso del pacchetto è utilizzabile in un browser', () => {
-  it('da `index.ts` non si raggiunge alcun modulo interno di Node', { timeout: 30_000 }, async () => {
-    const reachable = await graph();
-    const offenders = [...reachable.entries()]
-      .filter(([, source]) => [...source.matchAll(NODE_BUILTIN)].length > 0)
-      .map(([file]) => path.relative(src, file));
+  it(
+    'da `index.ts` non si raggiunge alcun modulo interno di Node',
+    { timeout: 30_000 },
+    async () => {
+      const reachable = await graph();
+      const offenders = [...reachable.entries()]
+        .filter(([, source]) => [...source.matchAll(NODE_BUILTIN)].length > 0)
+        .map(([file]) => path.relative(src, file));
 
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 
-  it('`import-ids.ts` non è raggiungibile dal punto d’ingresso, ed è il solo a usare node:crypto', { timeout: 30_000 }, async () => {
-    const reachable = await graph();
-    expect([...reachable.keys()]).not.toContain(path.join(src, 'import-ids.ts'));
+  it(
+    '`import-ids.ts` non è raggiungibile dal punto d’ingresso, ed è il solo a usare node:crypto',
+    { timeout: 30_000 },
+    async () => {
+      const reachable = await graph();
+      expect([...reachable.keys()]).not.toContain(path.join(src, 'import-ids.ts'));
 
-    const importIds = await readFile(path.join(src, 'import-ids.ts'), 'utf8');
-    expect(importIds).toContain("from 'node:crypto'");
-  });
+      const importIds = await readFile(path.join(src, 'import-ids.ts'), 'utf8');
+      expect(importIds).toContain("from 'node:crypto'");
+    },
+  );
 });

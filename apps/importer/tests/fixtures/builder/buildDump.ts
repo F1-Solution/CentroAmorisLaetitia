@@ -38,7 +38,8 @@ const DEFAULT_POSTS: readonly SyntheticPostRow[] = [
     ID: 1,
     post_author: 1,
     post_title: "L'arte del colloquio",
-    post_content: "Un testo con l''apostrofo raddoppiato, una \\barra\\, un a-capo\ne un accento città, ed emoji 🎉.",
+    post_content:
+      "Un testo con l''apostrofo raddoppiato, una \\barra\\, un a-capo\ne un accento città, ed emoji 🎉.",
     post_excerpt: 'Estratto di prova',
     post_status: 'publish',
     post_name: 'arte-del-colloquio',

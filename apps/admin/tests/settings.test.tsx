@@ -53,9 +53,7 @@ vi.mock('../src/lib/session', async () => {
   };
 });
 
-const { SiteSettings, textOf, valueFrom } = await import(
-  '../src/components/settings/SiteSettings'
-);
+const { SiteSettings, textOf, valueFrom } = await import('../src/components/settings/SiteSettings');
 
 const impostazioni = [
   {

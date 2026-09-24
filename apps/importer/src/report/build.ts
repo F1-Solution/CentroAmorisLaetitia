@@ -97,8 +97,7 @@ export function buildReport(options: BuildReportOptions, input: ReportInput): Im
   });
 
   const conversion = firstDefined(input.results, (r) => r.conversion) ?? EMPTY_CONVERSION;
-  const checks: readonly VerificationCheck[] =
-    firstDefined(input.results, (r) => r.checks) ?? [];
+  const checks: readonly VerificationCheck[] = firstDefined(input.results, (r) => r.checks) ?? [];
   const skippedForEditorialWork = (
     firstDefined(input.results, (r) => r.skippedForEditorialWork) ?? []
   ).map((contentId) => ({ contentId }));

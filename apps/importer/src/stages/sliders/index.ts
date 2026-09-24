@@ -73,7 +73,13 @@ interface ParsedSlide {
 }
 
 /** Chiavi di comportamento tenute da `params` dello slider; il resto descrive la libreria. */
-const SLIDER_BEHAVIOR_KEYS: readonly string[] = ['general', 'nav', 'parallax', 'scrolleffects', 'scrolltimeline'];
+const SLIDER_BEHAVIOR_KEYS: readonly string[] = [
+  'general',
+  'nav',
+  'parallax',
+  'scrolleffects',
+  'scrolltimeline',
+];
 /** Idem per la singola slide. */
 const SLIDE_BEHAVIOR_KEYS: readonly string[] = ['timeline', 'panzoom', 'slideChange'];
 
@@ -91,7 +97,10 @@ function parseJson(raw: string): unknown {
   return JSON.parse(raw); // lascia propagare: chi chiama isola l'errore per elemento
 }
 
-function pickKeys(source: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+function pickKeys(
+  source: Record<string, unknown>,
+  keys: readonly string[],
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of keys) {
     if (key in source) out[key] = source[key];
@@ -108,7 +117,9 @@ function extractUploadsRelativePath(url: string): string | null {
 }
 
 /** Il primo layer di contenuto (non zona) — vedi il commento di testa. */
-function firstContentLayer(layers: unknown): { readonly type: string; readonly text: string | null } | null {
+function firstContentLayer(
+  layers: unknown,
+): { readonly type: string; readonly text: string | null } | null {
   if (layers === null || typeof layers !== 'object' || Array.isArray(layers)) return null;
   for (const value of Object.values(layers as Record<string, unknown>)) {
     if (value === null || typeof value !== 'object') continue;
@@ -127,7 +138,8 @@ async function loadSliderRows(ctx: StageContext): Promise<readonly SourceSliderR
     let params: Record<string, unknown> = {};
     try {
       const parsed = paramsRaw ? parseJson(paramsRaw) : {};
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) params = parsed as Record<string, unknown>;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+        params = parsed as Record<string, unknown>;
     } catch {
       params = {}; // errore isolato più sotto, nel ciclo per elemento
     }
@@ -179,7 +191,9 @@ function parseSlide(row: SourceSlideRow): ParsedSlide {
 }
 
 /** `_wp_attached_file` -> id numerico dell'allegato, per risolvere `bg.image` a un `media`. */
-async function loadAttachmentIdByRelativePath(ctx: StageContext): Promise<ReadonlyMap<string, number>> {
+async function loadAttachmentIdByRelativePath(
+  ctx: StageContext,
+): Promise<ReadonlyMap<string, number>> {
   const rows = await ctx.source.rows('wp_postmeta');
   const byPath = new Map<string, number>();
   for (const row of rows as readonly SqlRow[]) {
@@ -235,10 +249,22 @@ export const slidersStage: Stage = {
           const existingId = await ctx.ids.find(tx, 'wp_revslider_sliders', row.legacyId, 'slider');
           const [written] = await tx
             .insert(schema.sliders)
-            .values({ id: existingId ?? undefined, key: row.key, title: row.title, settings: row.settings, legacyId: row.legacyId })
+            .values({
+              id: existingId ?? undefined,
+              key: row.key,
+              title: row.title,
+              settings: row.settings,
+              legacyId: row.legacyId,
+            })
             .onConflictDoUpdate({
               target: schema.sliders.id,
-              set: { key: row.key, title: row.title, settings: row.settings, legacyId: row.legacyId, updatedAt: new Date() },
+              set: {
+                key: row.key,
+                title: row.title,
+                settings: row.settings,
+                legacyId: row.legacyId,
+                updatedAt: new Date(),
+              },
             })
             .returning({ id: schema.sliders.id });
           if (!written) throw new Error('inserimento di sliders non ha restituito una riga');
@@ -266,7 +292,9 @@ export const slidersStage: Stage = {
         let mediaId: string | null = null;
         if (parsed.backgroundImagePath) {
           const attachmentLegacyId = attachmentIdByPath.get(parsed.backgroundImagePath);
-          mediaId = attachmentLegacyId ? await ctx.ids.find(tx, 'wp_posts', attachmentLegacyId, 'media') : null;
+          mediaId = attachmentLegacyId
+            ? await ctx.ids.find(tx, 'wp_posts', attachmentLegacyId, 'media')
+            : null;
           if (!mediaId) {
             await ctx.issues.record({
               severity: 'warning',
@@ -279,7 +307,12 @@ export const slidersStage: Stage = {
           }
         }
 
-        const existingId = await ctx.ids.find(tx, 'wp_revslider_slides', row.legacyId, 'slider_slide');
+        const existingId = await ctx.ids.find(
+          tx,
+          'wp_revslider_slides',
+          row.legacyId,
+          'slider_slide',
+        );
         const [written] = await tx
           .insert(schema.sliderSlides)
           .values({

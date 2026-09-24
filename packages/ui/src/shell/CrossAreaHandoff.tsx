@@ -15,7 +15,12 @@ export interface CrossAreaHandoffProps {
  * (§8.2 punto 5): per questo la conferma è un gesto esplicito con `Button`, non
  * un collegamento che naviga da solo.
  */
-export function CrossAreaHandoff({ areaLabel, onConfirm, onDismiss, loading = false }: CrossAreaHandoffProps): React.JSX.Element {
+export function CrossAreaHandoff({
+  areaLabel,
+  onConfirm,
+  onDismiss,
+  loading = false,
+}: CrossAreaHandoffProps): React.JSX.Element {
   return (
     <div className="amoris-cross-area-handoff" role="status">
       <p className="amoris-cross-area-handoff__text">

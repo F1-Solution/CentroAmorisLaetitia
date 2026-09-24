@@ -4,7 +4,13 @@ import './Tooltip.css';
 
 export interface TooltipProps {
   content: string;
-  children: ReactElement<{ 'aria-describedby'?: string; onFocus?: () => void; onBlur?: () => void; onMouseEnter?: () => void; onMouseLeave?: () => void }>;
+  children: ReactElement<{
+    'aria-describedby'?: string;
+    onFocus?: () => void;
+    onBlur?: () => void;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
+  }>;
 }
 
 /**

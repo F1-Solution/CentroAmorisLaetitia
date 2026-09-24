@@ -9,7 +9,13 @@ import type { RoleOption } from '../src/shell/types.js';
 describe('UserMenu — componente 6', () => {
   it('stato R, A: apre il menu con nome, dati account e disconnessione, separato dal ruolo', () => {
     const onSignOut = vi.fn();
-    render(<UserMenu name="Maria Rossi" email="maria.rossi@centroamorislaetitia.it" onSignOut={onSignOut} />);
+    render(
+      <UserMenu
+        name="Maria Rossi"
+        email="maria.rossi@centroamorislaetitia.it"
+        onSignOut={onSignOut}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Maria Rossi' }));
     expect(screen.getByText('maria.rossi@centroamorislaetitia.it')).not.toBeNull();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Disconnetti' }));
@@ -18,10 +24,17 @@ describe('UserMenu — componente 6', () => {
 });
 
 describe('RoleSwitcher — componente 7, DR-050', () => {
-  const singleRole: RoleOption[] = [{ id: 'editor', label: 'Redazione', description: 'Vedi solo i contenuti di Redazione.' }];
+  const singleRole: RoleOption[] = [
+    { id: 'editor', label: 'Redazione', description: 'Vedi solo i contenuti di Redazione.' },
+  ];
   const twoRoles: RoleOption[] = [
     { id: 'editor', label: 'Redazione', description: 'Vedi solo i contenuti di Redazione.' },
-    { id: 'admin', label: 'Impostazioni', description: 'Vedi persone, permessi e registro.', elevated: true },
+    {
+      id: 'admin',
+      label: 'Impostazioni',
+      description: 'Vedi persone, permessi e registro.',
+      elevated: true,
+    },
   ];
 
   it('con un solo ruolo non si mostra come un commutatore: nessuna freccia, nessun menu apribile', () => {
@@ -39,7 +52,9 @@ describe('RoleSwitcher — componente 7, DR-050', () => {
 
   it('sceglie il ruolo attivo con onChange', () => {
     const onChange = vi.fn();
-    const first = render(<RoleSwitcher roles={twoRoles} activeRoleId="editor" onChange={onChange} />);
+    const first = render(
+      <RoleSwitcher roles={twoRoles} activeRoleId="editor" onChange={onChange} />,
+    );
     fireEvent.click(screen.getByRole('button', { name: /Redazione/ }));
     fireEvent.click(screen.getByRole('menuitemradio', { name: /Impostazioni/ }));
     expect(onChange).toHaveBeenCalledWith('admin');
@@ -48,11 +63,15 @@ describe('RoleSwitcher — componente 7, DR-050', () => {
 
   it('i ruoli con poteri estesi mostrano la pastiglia con bordo 2 px', () => {
     render(<RoleSwitcher roles={twoRoles} activeRoleId="admin" onChange={vi.fn()} />);
-    expect(screen.getByText('Impostazioni').className).toContain('amoris-role-switcher__pill--elevated');
+    expect(screen.getByText('Impostazioni').className).toContain(
+      'amoris-role-switcher__pill--elevated',
+    );
   });
 
   it('stato D, L: disabilitato e in caricamento non apre il menu al clic', () => {
-    render(<RoleSwitcher roles={twoRoles} activeRoleId="editor" onChange={vi.fn()} disabled loading />);
+    render(
+      <RoleSwitcher roles={twoRoles} activeRoleId="editor" onChange={vi.fn()} disabled loading />,
+    );
     const trigger = screen.getByRole('button', { name: /Redazione/ }) as HTMLButtonElement;
     expect(trigger.disabled).toBe(true);
     expect(trigger.getAttribute('aria-busy')).toBe('true');
@@ -74,7 +93,9 @@ describe('ContextChangeNotice — componente 9', () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();
     render(<ContextChangeNotice roleLabel="Impostazioni" visible onDismiss={onDismiss} />);
-    expect(screen.getByRole('status').textContent).toContain('Stai ora lavorando come Impostazioni');
+    expect(screen.getByRole('status').textContent).toContain(
+      'Stai ora lavorando come Impostazioni',
+    );
     vi.advanceTimersByTime(4000);
     expect(onDismiss).toHaveBeenCalledOnce();
     vi.useRealTimers();

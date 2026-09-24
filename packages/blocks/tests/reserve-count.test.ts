@@ -3,7 +3,14 @@ import { countReserveBlocks } from '../src/reserve-count.js';
 import type { BlockDocument } from '../src/schema/document.js';
 import { testBlockId, makeRichText } from './helpers.js';
 
-function htmlBlock(reason: 'wp_html_block' | 'divi_unmapped_module' | 'divi_unmapped_markup' | 'shortcode_unknown' | 'manual') {
+function htmlBlock(
+  reason:
+    | 'wp_html_block'
+    | 'divi_unmapped_module'
+    | 'divi_unmapped_markup'
+    | 'shortcode_unknown'
+    | 'manual',
+) {
   return {
     type: 'html' as const,
     id: testBlockId(),

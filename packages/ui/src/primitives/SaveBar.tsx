@@ -30,7 +30,12 @@ export function SaveBar({
 
   return (
     <div className="amoris-save-bar" aria-busy={saving || undefined}>
-      <p className={['amoris-save-bar__status', hasError ? 'amoris-save-bar__status--error' : ''].filter(Boolean).join(' ')} role={hasError ? 'alert' : undefined}>
+      <p
+        className={['amoris-save-bar__status', hasError ? 'amoris-save-bar__status--error' : '']
+          .filter(Boolean)
+          .join(' ')}
+        role={hasError ? 'alert' : undefined}
+      >
         {hasError ? errorText : statusText}
       </p>
       <div className="amoris-save-bar__actions">
