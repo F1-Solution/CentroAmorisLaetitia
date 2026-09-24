@@ -664,3 +664,77 @@ nel Round 4.
 | **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
 | **Intestazioni di cache dei media** | Conseguenza di DR-074 | prima del deploy, con il reverse proxy di Fase 1F |
 | **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077 | prima della Fase 1E |
+
+---
+
+## 21. Attuazioni del 2026-09-24 — wave `1D-W10`
+
+Questa sezione **non registra decisioni nuove**: registra l'attuazione di una
+decisione già approvata e l'esito delle misure che ne dipendevano. Le decisioni
+si prendono nei round, non nelle wave.
+
+### Chiuse
+
+| Voce aperta | Come è stata chiusa |
+|---|---|
+| **Attuazione di DR-062** — riordino delle fasi e misura della soglia rifatta, «prima della wave `1D-W10`» | **Fatta.** `documents`, `sliders` e `forms` sono diventate le fasi 5, 6 e 7, davanti a `contents`, in `stages/registry.ts` e in `importer-spec.md` §4, che porta una revisione datata. La fase `contents` costruisce i tre risolutori mancanti (`contents/entityResolvers.ts`). La soglia è stata **rimisurata sulla sorgente reale**: **8 blocchi di riserva su 305, cioè 2,62 %, su 5 contenuti** — dentro entrambe le soglie di ADR-005 §3.4, che l'ordine vecchio superava con 31 / 305 e 27 contenuti. Dettaglio e scostamento dalla stima in `IMPORTER-DESIGN.md` §11.20 |
+
+### Quello che la misura ha detto, e che non era previsto
+
+- **Restano 8 blocchi di riserva, non i 7 stimati.** La differenza è una sola
+  cosa e non è un difetto: dei 24 moduli form che l'ordine vecchio non
+  risolveva, 23 sono blocchi `wp:wpforms/form-selector` e ora si risolvono; il
+  ventiquattresimo è l'unico `et_pb_contact_form` della sorgente, che **non ha
+  una riga sorgente propria** e quindi nessuna entità `forms` a cui puntare.
+  Resta un blocco di riserva finché ADR-010 non decida di costruirgli un form
+  proprio. La stima lo aveva contato fra i risolvibili.
+
+### Difetti trovati eseguendo, e corretti nella wave
+
+- **Il seme sintetico scriveva un contenuto non canonico.** `seedSintetico.ts`
+  inseriva i blocchi senza passarli dallo schema e senza derivare `contentHtml`
+  e `contentText`. Conseguenza osservabile: aprire la pagina seminata e premere
+  «Salva» la **riscriveva**, e il criterio 1D-36 risultava violato da un
+  difetto del seme. L'hanno trovato le prove nel browser. Corretto: il
+  documento passa da `blockDocumentSchema` e l'HTML si deriva dai blocchi.
+- **`format:check` era già rosso su `main`**, e non su un file solo: il
+  controllo di formattazione della CI falliva su oltre duecento file, mai
+  passati da Prettier da quando il monorepo esiste. Corretto eseguendo
+  `pnpm format` sull'intero repository. È una modifica grande e **solo di
+  andata a capo**: nessuna riga di logica cambia.
+
+  Due conseguenze, che vanno dette perché non sono cosmetiche:
+
+  1. **Gli artefatti generati sono usciti da Prettier.** `packages/db/drizzle/`,
+     `apps/api/tests/openapi.snapshot.json` e `tests/fixtures/block-corpus.json`
+     sono scritti da uno strumento, non da una persona: riformattarli produce
+     un diff enorme che non appartiene a nessuna modifica, e nel caso delle
+     migrazioni tocca file che Drizzle confronta per calcolare la successiva.
+     Sono stati aggiunti a `.prettierignore` e riportati alla forma che lo
+     strumento produce.
+  2. **Il conteggio delle righe di ADR-007 §6 è cambiato di due.**
+     `auth/sessions.ts` passa da 188 a 190 righe eseguibili perché due righe
+     lunghe sono andate a capo: il nucleo sale da 437 a **439** e il totale da
+     859 a **861**. La lettura non cambia — il nucleo resta sotto la soglia di
+     500 fissata da DR-070, il totale resta sopra e la deroga di DR-066 resta
+     necessaria — ma la dichiarazione in `apps/api/tests/auth-line-count.json`
+     è stata aggiornata, perché è il file che rende il conteggio verificabile.
+
+### Decisioni rimaste aperte dopo la wave `1D-W10`
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale. **Richiede un professionista** | prima della produzione |
+| **Impacchettamento del servizio** | Conseguenza di DR-080: bundle o esecuzione con tsx | Fase 1F, non oltre |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071 | prima dell'inizio della Fase 1E |
+| **Dossier di MI-06** | Attuazione di DR-073 | prima della Fase 1F |
+| **Conferma puntuale di `apply --confirm`** | Attuazione di DR-072 | alla wave `1D-W11` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori e ricerca insensibile alle maiuscole | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
+| **Intestazioni di cache dei media** | Conseguenza di DR-074 | prima del deploy, con il reverse proxy di Fase 1F |
+| **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077 | prima della Fase 1E |
+| **Soglia di copertura vincolante** | La copertura è misurata (85,67 % istruzioni, 78,72 % diramazioni, 77,37 % funzioni) ma **nessuna soglia è applicata**, perché `pnpm test:coverage` non gira in CI. Se la si vuole vincolante va deciso dove misurarla e a quale numero | prima della chiusura della Fase 1D |
+| **Un form proprio per `et_pb_contact_form`** | L'unico modulo di contatto di Divi resta un blocco di riserva perché non ha un'entità sorgente. Si costruisce o si accetta | prima della Fase 1E |
+| ~~**Attuazione di DR-062**~~ | ~~Riordino delle fasi e misura della soglia rifatta~~ — **chiusa il 2026-09-24 dalla wave `1D-W10`** | — |

@@ -1,7 +1,7 @@
 /**
- * Fase 5 `contents` (`importer-spec.md` §4): produce `contents` con i blocchi
+ * Fase 8 `contents` (`importer-spec.md` §4, numerazione rifatta da DR-062): produce `contents` con i blocchi
  * convertiti. Non scrive `contents.parentId`, `contents.path` né
- * `contents.featuredMediaId`: sono la fase 6 `relations`
+ * `contents.featuredMediaId`: sono la fase 9 `relations`
  * (`importer-spec.md` §4, riga `relations`). `path` è comunque `NOT NULL` e
  * unico nello schema (`packages/db/src/schema/content.ts`): questa fase
  * scrive un valore **provvisorio**, `/<slug>/`, che `relations` sovrascrive
@@ -13,14 +13,13 @@
  * bozza. L'`auto-draft` si scarta (§2, riga `post`): non è un contenuto, è un
  * contenitore vuoto creato dall'editor.
  *
- * La conversione a blocchi passa da `convert/index.ts` (`1D-W3`), con un solo
- * risolutore reale disponibile in questa wave: `resolveMedia`, perché `media`
- * (fase 3) è già stata eseguita. `resolveForm`, `resolveDocument` e
- * `resolveSlider` restano assenti: le fasi che li producono (`forms`,
- * `documents`, `sliders`) sono fuori dal perimetro di questa wave
- * (`1D-W4d`/`1D-W5`). Ogni riferimento a un form diventa quindi un blocco
- * `html` di riserva — è un artefatto di questa wave, non un difetto della
- * conversione, e va riportato separatamente (`BLOCK-MODEL.md` §10.4).
+ * La conversione a blocchi passa da `convert/index.ts` (`1D-W3`) con **tutti e
+ * quattro** i risolutori: `resolveMedia`, e dal 2026-09-24 anche
+ * `resolveDocument`, `resolveSlider` e `resolveForm`. Li rende possibili
+ * **DR-062**, che ha spostato `documents`, `sliders` e `forms` prima di questa
+ * fase: finché giravano dopo, ogni riferimento a un modulo form diventava un
+ * blocco `html` di riserva e la soglia di ADR-005 §3.4 misurava l'ordine delle
+ * fasi invece della qualità della conversione (`BLOCK-MODEL.md` §10.4).
  */
 import { schema } from '@amoris/db';
 import {
@@ -35,6 +34,11 @@ import { forEachItem } from '../../persistence/forEachItem.js';
 import { convertContent } from '../../convert/index.js';
 import type { SqlRow } from '../../source/sql/types.js';
 import { buildMediaLookup, createMediaResolver } from './mediaResolver.js';
+import {
+  buildDocumentResolver,
+  buildFormResolver,
+  buildSliderResolver,
+} from './entityResolvers.js';
 import { buildPostMetaIndex, deriveShowTitle, parseStickyPostIds } from './meta.js';
 import {
   hasEditorialWorkSince,
@@ -122,7 +126,9 @@ function provisionalPath(slug: string, legacyId: number): string {
 
 export const contentsStage: Stage = {
   name: 'contents',
-  dependsOn: ['media', 'terms'],
+  // DR-062: `documents`, `sliders` e `forms` vengono prima, e i loro risolutori
+  // devono esistere quando il convertitore incontra il riferimento.
+  dependsOn: ['media', 'terms', 'documents', 'sliders', 'forms'],
 
   async expected(ctx: StageContext) {
     return (await loadSourceContents(ctx)).length;
@@ -133,6 +139,11 @@ export const contentsStage: Stage = {
 
     const mediaLookup = await buildMediaLookup(ctx.tx);
     const resolveMedia = createMediaResolver(mediaLookup);
+    const [resolveDocument, resolveSlider, resolveForm] = await Promise.all([
+      buildDocumentResolver(ctx.tx),
+      buildSliderResolver(ctx.tx),
+      buildFormResolver(ctx.tx),
+    ]);
 
     const [postMetaRows, optionRows] = await Promise.all([
       ctx.source.rows('wp_postmeta'),
@@ -183,7 +194,7 @@ export const contentsStage: Stage = {
         const { document, family } = convertContent({
           legacyContentId: row.id,
           postContent: row.content,
-          resolvers: { resolveMedia },
+          resolvers: { resolveMedia, resolveDocument, resolveSlider, resolveForm },
         });
         const contentHtml = serializeBlockDocument(document);
         const contentText = extractContentText(contentHtml);

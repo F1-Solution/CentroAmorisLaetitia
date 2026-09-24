@@ -1161,3 +1161,44 @@ indipendente del §10.4 di `BLOCK-MODEL.md`.
 Cambiare l'ordine obbligato è una modifica a `importer-spec.md` §4, un documento
 approvato in Fase 1B, e l'ordine è la cosa che quel paragrafo dichiara non essere «una
 preferenza». **Non si decide di iniziativa.** La decisione è dell'utente.
+
+### 11.20 La soglia, rimisurata con l'ordine di DR-062 — `1D-W10`
+
+Il §11.19 aveva lasciato la soglia «né rispettata né superata» in attesa del
+riordino delle fasi. DR-062 lo ha approvato, la `1D-W10` lo ha attuato, e la
+misura è stata rifatta sulla sorgente reale con l'ordine nuovo.
+
+| Misura | Blocchi di riserva | Percentuale | Contenuti | Soglia ADR-005 §3.4 |
+|---|---|---|---|---|
+| `1D-W5c`, ordine vecchio | 31 / 305 | 10,16 % | 27 / 108 | superata |
+| `1D-W10`, **ordine di DR-062** | **8 / 305** | **2,62 %** | **5** / 108 | **rispettata** |
+
+I blocchi di riserva rimasti, per motivo: `wp_html_block` 6,
+`divi_unmapped_module` 1, `divi_unmapped_markup` 1.
+
+**Il numero non coincide con la stima, e la differenza si spiega.** Il §11.19
+prevedeva 7 blocchi su 4 contenuti, cioè 2,30 %. Ne restano 8 su 5. La
+differenza è **una sola cosa**, ed è strutturale: dei 24 moduli form che
+l'ordine vecchio non risolveva, 23 sono blocchi `wp:wpforms/form-selector` e si
+risolvono adesso, mentre il ventiquattresimo è l'unico `et_pb_contact_form`
+della sorgente (`divi-shortcode-strategy.md` §2). Un modulo di contatto di Divi
+**non ha una riga sorgente propria**: non è un `wp_posts`, quindi la fase
+`forms` non crea alcuna entità a cui puntare. Resta un blocco di riserva, e
+resterà tale finché ADR-010 non decida di costruirgli un `forms` proprio. La
+stima del §11.19 lo aveva contato fra i risolvibili: era la stima a essere
+ottimista di uno, non la misura a essere peggiorata.
+
+**Che cosa questa misura chiude.** La soglia di ADR-005 §3.4 è rispettata su
+entrambi i criteri — percentuale e contenuti toccati — e il punto 6 del §7 di
+`PLAN.md`, che prevedeva di fermarsi e chiedere se la soglia fosse stata
+superata, non scatta.
+
+La misura si rifà con:
+
+```
+pnpm --filter @amoris/importer exec vitest run --config vitest.real.config.ts tests/real/roundTripReal.real.test.ts
+```
+
+Non gira in CI: legge `source-private/` (DR-010). In CI gira l'equivalente
+sintetico, `tests/unit/syntheticSubset.test.ts`, che prova l'ordine nuovo su un
+riferimento a modulo inventato.

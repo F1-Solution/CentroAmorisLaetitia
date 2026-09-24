@@ -22,6 +22,11 @@
  *
  *     SEED_PASSWORD=... pnpm db:seed
  */
+import {
+  blockDocumentSchema,
+  extractContentText,
+  serializeBlockDocument,
+} from '@amoris/blocks/model';
 import { createDatabase, schema } from '@amoris/db';
 import { count, isNotNull, sql } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
@@ -206,6 +211,18 @@ try {
       ],
     };
 
+    /**
+     * Il documento passa dallo **schema** e l'HTML si **deriva dai blocchi**.
+     * Due cose, un motivo solo: un contenuto a cui manchino le proprietà
+     * predefinite, o il cui HTML non corrisponda ai propri blocchi, non è in
+     * forma canonica. Aprirlo nell'editor e premere «Salva» lo riscriverebbe,
+     * e il criterio 1D-36 risulterebbe violato da un difetto del seme invece
+     * che da un difetto del prodotto. Trovato dalle prove end-to-end della
+     * wave `1D-W10`.
+     */
+    const pageDocument = blockDocumentSchema.parse(pageBlocks);
+    const pageHtml = serializeBlockDocument(pageDocument);
+
     const contents = await tx
       .insert(schema.contents)
       .values([
@@ -215,7 +232,9 @@ try {
           slug: 'pagina-di-prova',
           path: '/pagina-di-prova/',
           title: 'Pagina di prova',
-          blocks: pageBlocks,
+          blocks: pageDocument,
+          contentHtml: pageHtml,
+          contentText: extractContentText(pageHtml),
           publishedAt: new Date(),
           authorId: person.id,
         },

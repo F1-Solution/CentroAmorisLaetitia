@@ -1,0 +1,638 @@
+{
+  "generatedBy": "tests/fixtures/build-block-corpus.ts",
+  "entries": [
+    {
+      "name": "contenitori annidati",
+      "slug": "corpus-contenitori",
+      "why": "sezione, riga, colonna, testo: la catena che ogni contenuto importato produce",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "section",
+            "id": "b_000000000009",
+            "props": {
+              "fullWidth": false,
+              "transparentBackground": false,
+              "backgroundColor": null,
+              "backgroundMediaId": null,
+              "parallax": false,
+              "innerShadow": false,
+              "customWidth": {
+                "mode": "default",
+                "value": null
+              },
+              "padding": {
+                "base": null,
+                "tablet": null,
+                "phone": null
+              },
+              "classes": []
+            },
+            "children": [
+              {
+                "type": "row",
+                "id": "b_000000000005",
+                "props": {
+                  "columnStructure": "1_2,1_2",
+                  "fullWidth": false,
+                  "customWidth": {
+                    "mode": "default",
+                    "value": null
+                  },
+                  "gutter": {
+                    "custom": false,
+                    "width": null
+                  },
+                  "backgroundColor": null,
+                  "backgroundMediaId": null,
+                  "padding": {
+                    "base": null,
+                    "tablet": null,
+                    "phone": null
+                  },
+                  "classes": []
+                },
+                "children": [
+                  {
+                    "type": "column",
+                    "id": "b_000000000002",
+                    "props": {
+                      "width": "1_2",
+                      "padding": {
+                        "base": null,
+                        "tablet": null,
+                        "phone": null
+                      },
+                      "classes": []
+                    },
+                    "children": [
+                      {
+                        "type": "rich_text",
+                        "id": "b_000000000001",
+                        "props": {
+                          "html": "<p>Colonna di sinistra.</p>",
+                          "textAlign": null,
+                          "backgroundLayout": null,
+                          "border": null,
+                          "padding": {
+                            "base": null,
+                            "tablet": null,
+                            "phone": null
+                          },
+                          "classes": []
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "column",
+                    "id": "b_000000000004",
+                    "props": {
+                      "width": "1_2",
+                      "padding": {
+                        "base": null,
+                        "tablet": null,
+                        "phone": null
+                      },
+                      "classes": []
+                    },
+                    "children": [
+                      {
+                        "type": "rich_text",
+                        "id": "b_000000000003",
+                        "props": {
+                          "html": "<p>Colonna di destra.</p>",
+                          "textAlign": null,
+                          "backgroundLayout": null,
+                          "border": null,
+                          "padding": {
+                            "base": null,
+                            "tablet": null,
+                            "phone": null
+                          },
+                          "classes": []
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "row",
+                "id": "b_000000000008",
+                "props": {
+                  "columnStructure": "4_4",
+                  "fullWidth": false,
+                  "customWidth": {
+                    "mode": "default",
+                    "value": null
+                  },
+                  "gutter": {
+                    "custom": false,
+                    "width": null
+                  },
+                  "backgroundColor": null,
+                  "backgroundMediaId": null,
+                  "padding": {
+                    "base": null,
+                    "tablet": null,
+                    "phone": null
+                  },
+                  "classes": []
+                },
+                "children": [
+                  {
+                    "type": "column",
+                    "id": "b_000000000007",
+                    "props": {
+                      "width": "4_4",
+                      "padding": {
+                        "base": null,
+                        "tablet": null,
+                        "phone": null
+                      },
+                      "classes": []
+                    },
+                    "children": [
+                      {
+                        "type": "separator",
+                        "id": "b_000000000006",
+                        "props": {
+                          "style": "wide",
+                          "classes": []
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "testo ricco con quello che rompe una serializzazione",
+      "slug": "corpus-testo-ricco",
+      "why": "entità, accenti, emoji a quattro byte, elementi vuoti, attributi da ordinare",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "rich_text",
+            "id": "b_00000000000a",
+            "props": {
+              "html": "<p>Virgolette \"dritte\", &amp; commerciale, &lt;minore&gt;, accenti perché città, emoji 🎉.</p><p>Un <strong>grassetto</strong> con <em>corsivo</em> e un <a href=\"https://esempio.invalid/pagina\" rel=\"noopener\" target=\"_blank\">collegamento</a>.</p><ul><li>Primo</li><li>Secondo</li></ul><p>Interruzione<br>di riga.</p>",
+              "textAlign": "justify",
+              "backgroundLayout": null,
+              "border": null,
+              "padding": {
+                "base": null,
+                "tablet": null,
+                "phone": null
+              },
+              "classes": [
+                "align-justify"
+              ]
+            },
+            "children": []
+          },
+          {
+            "type": "rich_text",
+            "id": "b_00000000000b",
+            "props": {
+              "html": "<h2>Titolo di sezione</h2><p>Un secondo paragrafo.</p>",
+              "textAlign": null,
+              "backgroundLayout": "dark",
+              "border": null,
+              "padding": {
+                "base": null,
+                "tablet": null,
+                "phone": null
+              },
+              "classes": [
+                "text-dark"
+              ]
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "immagine",
+      "slug": "corpus-immagine",
+      "why": "riferimento a un media, e classi dichiarate coerenti con le proprietà",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "image",
+            "id": "b_00000000000c",
+            "props": {
+              "mediaId": "11111111-1111-4111-8111-111111111111",
+              "src": null,
+              "variant": "800x600",
+              "alt": "Fotografia di prova",
+              "title": null,
+              "caption": "Didascalia con & entità",
+              "linkUrl": null,
+              "linkNewWindow": false,
+              "align": "center",
+              "alignTablet": null,
+              "forceFullWidth": false,
+              "lightbox": true,
+              "centerOnMobile": true,
+              "animation": null,
+              "classes": [
+                "center-on-mobile",
+                "in-lightbox"
+              ]
+            },
+            "children": []
+          },
+          {
+            "type": "image",
+            "id": "b_00000000000d",
+            "props": {
+              "mediaId": null,
+              "src": "/media/2026/01/senza-media-id.png",
+              "variant": null,
+              "alt": "",
+              "title": null,
+              "caption": null,
+              "linkUrl": null,
+              "linkNewWindow": false,
+              "align": null,
+              "alignTablet": null,
+              "forceFullWidth": false,
+              "lightbox": false,
+              "centerOnMobile": false,
+              "animation": null,
+              "classes": []
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "media e testo",
+      "slug": "corpus-media-testo",
+      "why": "il contenitore che è anche blocco di contenuto",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "media_text",
+            "id": "b_000000000010",
+            "props": {
+              "mediaId": "22222222-2222-4222-8222-222222222222",
+              "mediaAlt": "Illustrazione",
+              "mediaVariant": null,
+              "mediaPosition": "right",
+              "mediaWidthPercent": 40,
+              "verticalAlignment": "top",
+              "linkUrl": null,
+              "classes": []
+            },
+            "children": [
+              {
+                "type": "rich_text",
+                "id": "b_00000000000e",
+                "props": {
+                  "html": "<p>Testo accanto al media.</p>",
+                  "textAlign": null,
+                  "backgroundLayout": null,
+                  "border": null,
+                  "padding": {
+                    "base": null,
+                    "tablet": null,
+                    "phone": null
+                  },
+                  "classes": []
+                },
+                "children": []
+              },
+              {
+                "type": "separator",
+                "id": "b_00000000000f",
+                "props": {
+                  "style": "default",
+                  "classes": []
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "video",
+      "slug": "corpus-video",
+      "why": "due fornitori e il poster, nelle due forme",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "video",
+            "id": "b_000000000011",
+            "props": {
+              "src": "https://www.youtube.com/watch?v=esempio",
+              "provider": "youtube",
+              "posterMediaId": "11111111-1111-4111-8111-111111111111",
+              "posterSrc": null,
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "video",
+            "id": "b_000000000012",
+            "props": {
+              "src": "/media/2026/01/filmato.mp4",
+              "provider": "file",
+              "posterMediaId": null,
+              "posterSrc": "/media/2026/01/poster.jpg",
+              "classes": []
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "mappa",
+      "slug": "corpus-mappa",
+      "why": "coordinate come stringhe, segnaposto, classe in scala di grigi",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "map",
+            "id": "b_000000000013",
+            "props": {
+              "address": "Via di Prova 1, Città di Esempio",
+              "lat": "43.123456",
+              "lng": "-12.654321",
+              "zoom": 14,
+              "mouseWheel": false,
+              "mobileDragging": false,
+              "grayscale": true,
+              "grayscaleAmount": 80,
+              "pins": [
+                {
+                  "title": "Sede",
+                  "lat": "43.123456",
+                  "lng": "-12.654321",
+                  "html": "<p>Ingresso principale</p>"
+                }
+              ],
+              "classes": [
+                "map-grayscale"
+              ]
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "separatori",
+      "slug": "corpus-separatori",
+      "why": "i tre stili",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "separator",
+            "id": "b_000000000014",
+            "props": {
+              "style": "default",
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "separator",
+            "id": "b_000000000015",
+            "props": {
+              "style": "wide",
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "separator",
+            "id": "b_000000000016",
+            "props": {
+              "style": "dots",
+              "classes": []
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "modulo, elenco, documento, carosello",
+      "slug": "corpus-riferimenti",
+      "why": "i quattro blocchi che puntano a un altra entità",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "form",
+            "id": "b_000000000017",
+            "props": {
+              "formId": "33333333-3333-4333-8333-333333333333",
+              "origin": "wpforms",
+              "showTitle": true,
+              "showDescription": false,
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "post_list",
+            "id": "b_000000000018",
+            "props": {
+              "termIds": [
+                "66666666-6666-4666-8666-666666666666"
+              ],
+              "limit": 5,
+              "showThumbnail": true,
+              "showDate": true,
+              "showExcerpt": true,
+              "order": "title_asc",
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "document",
+            "id": "b_000000000019",
+            "props": {
+              "documentId": "44444444-4444-4444-8444-444444444444",
+              "label": "Scarica il modulo",
+              "display": "button",
+              "classes": []
+            },
+            "children": []
+          },
+          {
+            "type": "slider",
+            "id": "b_00000000001a",
+            "props": {
+              "sliderId": "55555555-5555-4555-8555-555555555555",
+              "classes": []
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocco di riserva",
+      "slug": "corpus-riserva",
+      "why": "il markup che non passa dal sanificatore resta tale e quale",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "html",
+            "id": "b_00000000001b",
+            "props": {
+              "html": "<div class=\"legacy-widget\" data-x=\"1\"><span>Frammento conservato</span></div>",
+              "reason": "divi_unmapped_module",
+              "detail": "et_pb_sconosciuto",
+              "classes": []
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "sezione a piena larghezza",
+      "slug": "corpus-sezione-piena",
+      "why": "le proprietà booleane e le classi che devono concordare",
+      "document": {
+        "schema": 1,
+        "blocks": [
+          {
+            "type": "section",
+            "id": "b_00000000001f",
+            "props": {
+              "fullWidth": true,
+              "transparentBackground": true,
+              "backgroundColor": "rgba(12, 34, 56, 0.5)",
+              "backgroundMediaId": null,
+              "parallax": true,
+              "innerShadow": true,
+              "customWidth": {
+                "mode": "percent",
+                "value": 80
+              },
+              "padding": {
+                "base": {
+                  "top": "10px",
+                  "right": null,
+                  "bottom": "2rem",
+                  "left": null
+                },
+                "tablet": null,
+                "phone": {
+                  "top": "0px",
+                  "right": "0px",
+                  "bottom": "0px",
+                  "left": "0px"
+                }
+              },
+              "classes": [
+                "has-inner-shadow",
+                "has-parallax",
+                "has-transparent-bg",
+                "is-fullwidth"
+              ]
+            },
+            "children": [
+              {
+                "type": "row",
+                "id": "b_00000000001e",
+                "props": {
+                  "columnStructure": "4_4",
+                  "fullWidth": false,
+                  "customWidth": {
+                    "mode": "default",
+                    "value": null
+                  },
+                  "gutter": {
+                    "custom": false,
+                    "width": null
+                  },
+                  "backgroundColor": null,
+                  "backgroundMediaId": null,
+                  "padding": {
+                    "base": null,
+                    "tablet": null,
+                    "phone": null
+                  },
+                  "classes": []
+                },
+                "children": [
+                  {
+                    "type": "column",
+                    "id": "b_00000000001d",
+                    "props": {
+                      "width": "4_4",
+                      "padding": {
+                        "base": null,
+                        "tablet": null,
+                        "phone": null
+                      },
+                      "classes": []
+                    },
+                    "children": [
+                      {
+                        "type": "rich_text",
+                        "id": "b_00000000001c",
+                        "props": {
+                          "html": "<p>Contenuto.</p>",
+                          "textAlign": null,
+                          "backgroundLayout": null,
+                          "border": null,
+                          "padding": {
+                            "base": null,
+                            "tablet": null,
+                            "phone": null
+                          },
+                          "classes": []
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "documento vuoto",
+      "slug": "corpus-vuoto",
+      "why": "il caso limite: nessun blocco, e deve restare nessun blocco",
+      "document": {
+        "schema": 1,
+        "blocks": []
+      }
+    }
+  ]
+}

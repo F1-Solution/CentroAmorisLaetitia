@@ -3,6 +3,11 @@
 # Principio: la CI esegue **gli stessi comandi** della macchina di sviluppo, con la
 # stessa versione di Node. Una CI che verifica cose diverse da quelle che si
 # verificano in locale produce due verità, e prima o poi si crede a quella sbagliata.
+#
+# **La CI esegue solo le suite sintetiche** (DR-010, wave `1D-W10`). Le prove che
+# leggono `source-private/` vivono in configurazioni separate — `tests/real/**`
+# per l'importer — e nessun comando di questo flusso le raggiunge: la sorgente
+# reale non entra in Git e non deve entrare in un registro di esecuzione.
 name: Verifica
 
 on:
@@ -46,6 +51,20 @@ jobs:
     env:
       DATABASE_URL: postgres://amoris:sviluppo-locale@localhost:5432/amoris
       NODE_ENV: test
+      # Valori **sintetici**, validi solo dentro questa esecuzione usa e getta:
+      # la stessa natura dei segnaposto di `.env.example`, che è in Git per lo
+      # stesso motivo. In produzione se ne generano di nuovi e non si scrivono
+      # in alcun documento (ADR-009 §4.3).
+      IP_HASH_SALT: '0000000000000000000000000000000000000000000000000000000000000000'
+      CSRF_SECRET: '1111111111111111111111111111111111111111111111111111111111111111'
+      # Archivio a oggetti delle prove end-to-end: stessi valori di
+      # `.env.example`, con cui l'ambiente locale già gira.
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: amoris-dev
+      S3_SECRET_KEY: sviluppo-locale
+      S3_BUCKET_PUBLIC: media-public
+      S3_BUCKET_PRIVATE: media-private
 
     steps:
       - uses: actions/checkout@v5
@@ -83,6 +102,16 @@ jobs:
 
       - name: Browser per le prove end-to-end
         run: pnpm exec playwright install --with-deps chromium
+
+      # I flussi del CMS caricano un file davvero: senza archivio a oggetti la
+      # prova del criterio 1D-31 non esisterebbe. Si avvia con la **stessa**
+      # definizione dell'ambiente locale, non con una copia scritta qui.
+      - name: Archivio a oggetti
+        env:
+          COMPOSE: docker compose -f infra/compose/docker-compose.yml --env-file .env.example
+        run: |
+          $COMPOSE up -d objects objects-init
+          $COMPOSE wait objects-init
 
       - name: Prove end-to-end
         run: pnpm test:e2e

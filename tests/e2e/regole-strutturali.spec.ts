@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-const ADMIN = 'http://127.0.0.1:3001';
+import { ADMIN_URL as ADMIN } from './support/ambiente';
 
 /**
  * Le quattro regole di ADR-008 §3.3 che si possono verificare a servizio acceso.

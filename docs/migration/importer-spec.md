@@ -58,6 +58,16 @@ obbligatorie di `CLAUDE.md`: una scrittura su dati reali non parte per inerzia.
 L'ordine non è una preferenza: ogni fase dipende dagli identificatori prodotta dalla
 precedente.
 
+> **Revisione del 2026-09-24 — DR-062.** `documents`, `sliders` e `forms` erano le
+> fasi 9, 10 e 11 e sono diventate 5, 6 e 7, davanti a `contents`. Il motivo è
+> misurato: il convertitore dei contenuti risolve i riferimenti a documenti e
+> moduli form chiedendo l'identificativo all'entità già creata, e con quelle fasi
+> in coda i riferimenti non erano risolvibili — 24 blocchi di riserva su 31
+> erano moduli form privi di risolutore, non conversioni fallite. Nessuna
+> dipendenza dichiarata viene violata: `documents` dipende da `media` e `terms`,
+> `sliders` da `media`, `forms` dal solo `preflight`, e nessuna delle tre da
+> `contents`. La tabella qui sotto è quella nuova.
+
 | # | Fase | Produce | Dipende da |
 |---|---|---|---|
 | 0 | `preflight` | verifiche preliminari, §5 | — |
@@ -65,17 +75,17 @@ precedente.
 | 2 | `users` | `users`, `roles`, `permissions` | 0 |
 | 3 | `media` | `media`, `media_variants`, oggetti nel bucket | 2 |
 | 4 | `terms` | `terms` | 0 |
-| 5 | `contents` | `contents` con blocchi convertiti | 3, 4 |
-| 6 | `relations` | `content_terms`, `contents.featured_media_id`, `contents.parent_id`, `contents.path` | 5 |
-| 7 | `menus` | `menus`, `menu_items` | 5, 4 |
-| 8 | `seo` | `content_seo`, `term_seo` | 5 |
-| 9 | `documents` | `documents`, `document_terms` | 3, 4 |
-| 10 | `sliders` | `sliders`, `slider_slides` | 3 |
-| 11 | `forms` | `forms`, `form_notifications` | 0 |
-| 12 | `submissions` | `form_submissions` | 11 |
+| 5 | `documents` | `documents`, `document_terms` | 3, 4 |
+| 6 | `sliders` | `sliders`, `slider_slides` | 3 |
+| 7 | `forms` | `forms`, `form_notifications` | 0 |
+| 8 | `contents` | `contents` con blocchi convertiti | 3, 4, 5, 6, 7 |
+| 9 | `relations` | `content_terms`, `contents.featured_media_id`, `contents.parent_id`, `contents.path` | 8 |
+| 10 | `menus` | `menus`, `menu_items` | 8, 4 |
+| 11 | `seo` | `content_seo`, `term_seo` | 8 |
+| 12 | `submissions` | `form_submissions` | 7 |
 | 13 | `legacy` | `legacy_email_log`, `legacy_download_stats` | 0 |
-| 14 | `redirects` | `redirects` — 180 righe | 5, 3, 9 |
-| 15 | `rewrite` | riscrittura dei riferimenti ai media nei blocchi | 5, 3 |
+| 14 | `redirects` | `redirects` — 180 righe | 8, 3, 5 |
+| 15 | `rewrite` | riscrittura dei riferimenti ai media nei blocchi | 8, 3 |
 | 16 | `verify` | rapporto finale, §8 | tutte |
 
 ### 4.1 Perché `rewrite` è una fase a sé

@@ -17,13 +17,13 @@ export type StageName =
   | 'users'
   | 'media'
   | 'terms'
+  | 'documents'
+  | 'sliders'
+  | 'forms'
   | 'contents'
   | 'relations'
   | 'menus'
   | 'seo'
-  | 'documents'
-  | 'sliders'
-  | 'forms'
   | 'submissions'
   | 'legacy'
   | 'redirects'
@@ -92,13 +92,13 @@ export const STAGE_INTRODUCED_IN_WAVE: Readonly<Record<StageName, string>> = {
   users: '1D-W4',
   media: '1D-W4',
   terms: '1D-W4',
+  documents: '1D-W4',
+  sliders: '1D-W4',
+  forms: '1D-W5',
   contents: '1D-W4',
   relations: '1D-W4',
   menus: '1D-W4',
   seo: '1D-W4',
-  documents: '1D-W4',
-  sliders: '1D-W4',
-  forms: '1D-W5',
   submissions: '1D-W5',
   legacy: '1D-W5',
   redirects: '1D-W5',
@@ -113,13 +113,15 @@ export const STAGE_DEPENDS_ON: Readonly<Record<StageName, readonly StageName[]>>
   users: ['preflight'],
   media: ['users'],
   terms: ['preflight'],
-  contents: ['media', 'terms'],
-  relations: ['contents'],
-  menus: ['contents', 'terms'],
-  seo: ['contents'],
   documents: ['media', 'terms'],
   sliders: ['media'],
   forms: ['preflight'],
+  // DR-062: le tre fasi qui sopra vengono prima perché il convertitore dei
+  // contenuti risolve i loro identificatori (`contents/entityResolvers.ts`).
+  contents: ['media', 'terms', 'documents', 'sliders', 'forms'],
+  relations: ['contents'],
+  menus: ['contents', 'terms'],
+  seo: ['contents'],
   submissions: ['forms'],
   legacy: ['preflight'],
   redirects: ['contents', 'media', 'documents'],
@@ -129,13 +131,13 @@ export const STAGE_DEPENDS_ON: Readonly<Record<StageName, readonly StageName[]>>
     'users',
     'media',
     'terms',
+    'documents',
+    'sliders',
+    'forms',
     'contents',
     'relations',
     'menus',
     'seo',
-    'documents',
-    'sliders',
-    'forms',
     'submissions',
     'legacy',
     'redirects',
@@ -162,13 +164,13 @@ export const STAGE_REPORT_ROW: Readonly<Record<StageName, ReportRowName | null>>
   users: 'users',
   media: 'media',
   terms: 'terms',
+  documents: 'documents',
+  sliders: 'slider_slides',
+  forms: 'forms',
   contents: 'contents',
   relations: null,
   menus: 'menu_items',
   seo: null,
-  documents: 'documents',
-  sliders: 'slider_slides',
-  forms: 'forms',
   submissions: 'form_submissions',
   legacy: null,
   redirects: 'redirects',
