@@ -738,3 +738,78 @@ si prendono nei round, non nelle wave.
 | **Soglia di copertura vincolante** | La copertura è misurata (85,67 % istruzioni, 78,72 % diramazioni, 77,37 % funzioni) ma **nessuna soglia è applicata**, perché `pnpm test:coverage` non gira in CI. Se la si vuole vincolante va deciso dove misurarla e a quale numero | prima della chiusura della Fase 1D |
 | **Un form proprio per `et_pb_contact_form`** | L'unico modulo di contatto di Divi resta un blocco di riserva perché non ha un'entità sorgente. Si costruisce o si accetta | prima della Fase 1E |
 | ~~**Attuazione di DR-062**~~ | ~~Riordino delle fasi e misura della soglia rifatta~~ — **chiusa il 2026-09-24 dalla wave `1D-W10`** | — |
+
+---
+
+## 22. Round 16 — risposta del 2026-09-24, trascinamento nel menu
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-082 | 2026-09-24 | Come si sposta una voce di menu, che oggi si muove solo con i bottoni «Sposta su», «Sposta giù», «Indenta» e «Sporgi» | **Trascinamento, con due esiti distinti durante il movimento**: l'interfaccia distingue il rilascio che annida la voce **dentro** quella di arrivo, facendone un sottolivello, da quello che la colloca **accanto**, allo stesso livello. I bottoni restano | Trascinamento di solo riordino, com'è quello dei blocchi di DR-069, che non sa annidare; nessun trascinamento, soli bottoni, com'è oggi | «Per il menu ho deciso di aggiungere anche lo spostamento col drag and drop. Durante il movimento va distinto il lasciare un blocco "dentro" (sottolivello) o "accanto" (stesso livello)» | Proprietario | Fase 1D, `apps/admin`, `packages/ui`, criterio 1D-32 | sì | DR-069; `design-system.md` §9.3; `apps/admin/src/lib/menu/tree.ts` |
+
+### Note sulla portata di DR-082
+
+- **DR-082 riapre una wave già chiusa, e il piano va corretto invece che smentito in silenzio.** Il menu è stato rilasciato dalla `1D-W9`, che `PROGRESS.md` dà per completa il 2026-09-22. La decisione non si attua modificando una wave chiusa: richiede una wave nuova, e la collocazione nella sequenza **non è decisa** — vedi la tabella delle voci aperte. È la quinta volta nella fase che una decisione registrata allarga il perimetro di `PLAN.md` §2.
+
+- **Il percorso da tastiera non è facoltativo, e non è un ripiego.** `design-system.md` §9.3 chiede che ogni operazione sia raggiungibile da tastiera: i quattro bottoni restano, ed è da essi che passano annidamento e sporgenza per chi non usa il puntatore. Vale il precedente di DR-069, dove il trascinamento dei blocchi convive con «Sposta su» e «Sposta giù».
+
+- **Nessuna delle funzioni di spostamento che esistono oggi esprime la mossa richiesta.** `moveUp`, `moveDown`, `indent` e `outdent` muovono una voce **di un passo** rispetto a sé stessa; il trascinamento la porta in un punto arbitrario dell'albero. Serve un'operazione pura nuova — voce presa, voce di arrivo, e quale dei due esiti — con la rinumerazione fra fratelli che il modulo già impone e il rifiuto del caso che romperebbe l'albero: una voce non si può lasciare dentro il proprio sottoalbero.
+
+- **DR-082 non dice come i due esiti si mostrino a schermo, e la differenza è tutta lì.** Un trascinamento che non fa vedere prima del rilascio se la voce finirà dentro o accanto non è quello che la decisione chiede. Il come — zona di rilascio divisa, rientro dell'indicatore, o altro — è materia della wave e va provato a schermo, non dichiarato.
+
+- **Il trascinamento dei blocchi resta com'è, se non si decide altro.** DR-069 ha dato ai blocchi un riordino piatto. Se i due alberi debbano comportarsi allo stesso modo è una domanda aperta che questa decisione non chiude.
+
+### Decisioni rimaste aperte dopo il Round 16
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** | Verifica privacy e legale. **Richiede un professionista** | prima della produzione |
+| **Impacchettamento del servizio** | Conseguenza di DR-080: bundle o esecuzione con tsx | Fase 1F, non oltre |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071 | prima dell'inizio della Fase 1E |
+| **Dossier di MI-06** | Attuazione di DR-073 | prima della Fase 1F |
+| **Conferma puntuale di `apply --confirm`** | Attuazione di DR-072 | alla wave `1D-W11` |
+| **Attuazione di DR-063, DR-064, DR-065** | Percorsi provvisori e ricerca insensibile alle maiuscole | prima della wave `1D-W11` |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | Estensione della verifica di `importer-spec.md` §6.3 | prima della wave `1D-W11` |
+| **Collocazione della wave di DR-082** | Il trascinamento nel menu è deciso; **quando** si faccia, no. Non ha dipendenze dall'import e non blocca la `1D-W11` | prima della chiusura della Fase 1D |
+| **Resa dei due esiti del trascinamento** | Come si veda, prima del rilascio, se la voce finisce dentro o accanto | alla wave di DR-082 |
+| **Allineamento del trascinamento dei blocchi** | Se l'albero dei blocchi di DR-069 debba adottare la stessa mossa a due esiti o restare un riordino piatto | prima della chiusura della Fase 1D |
+| **Intestazioni di cache dei media** | Conseguenza di DR-074 | prima del deploy, con il reverse proxy di Fase 1F |
+| **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077 | prima della Fase 1E |
+| **Soglia di copertura vincolante** | Misurata, ma nessuna soglia applicata: `pnpm test:coverage` non gira in CI | prima della chiusura della Fase 1D |
+| **Un form proprio per `et_pb_contact_form`** | L'unico modulo di contatto di Divi resta un blocco di riserva | prima della Fase 1E |
+
+---
+
+## 23. Round 17 — risposte del 2026-09-30, menu, blocchi e database vuoto
+
+Con lo stesso messaggio l'utente **approva il piano della wave `1D-W11`**
+(`.planning/phases/1D/W11-PLAN.md`) e dichiara chiuso HO-007 con esito «tutti i
+test passati». L'approvazione del piano **non** è la conferma di DR-072: quella
+si dà sui conteggi veri di `plan`, alla `1D-W11b`.
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-083 | 2026-09-30 | Quando si fa la wave che attua DR-082 | **Dopo la `1D-W11`**, prima dell'audit della `1D-W12` | Prima della `1D-W11`; in parallelo | «wave del menu dopo la 1D-W11» | Proprietario | Fase 1D, sequenza delle wave | sì | DR-082; `PLAN.md` §2 |
+| DR-084 | 2026-09-30 | Come si vede, prima del rilascio, se la voce trascinata finisce dentro o accanto | **Zona di rilascio divisa e rientro dell'indicatore, insieme**: la voce di arrivo si divide in fasce — sopra e sotto per «accanto», centro per «dentro» — e l'indicatore di inserimento si sposta a destra quando l'esito è «dentro» | Una sola delle due rese | «Zona di rilascio divisa e rientro dell'indicatore» | Proprietario | Fase 1D, wave di DR-082, `packages/ui`, `apps/admin` | sì | DR-082; `design-system.md` §9.3 |
+| DR-085 | 2026-09-30 | Se l'albero dei blocchi di DR-069 adotta la stessa mossa a due esiti | **Sì, si allinea**: il trascinamento dei blocchi distingue anch'esso «dentro» e «accanto», con la resa di DR-084 | Lasciare ai blocchi il riordino piatto | «trascinamento dei blocchi allineato alla stessa mossa» | Proprietario | Fase 1D, wave di DR-082, editor dell'albero dei blocchi | sì | DR-069, DR-082, `BLOCK-MODEL.md` |
+| DR-086 | 2026-09-30 | Come si ottiene lo schema vuoto su cui misurare i conteggi della `1D-W11b` | **Si ricrea il solo database `amoris` da psql**, lasciando in piedi i volumi e gli altri database | Ricreare il volume con `pnpm compose:reset` | «database svuotato ricreando il solo database amoris da psql» | Proprietario | database locale di sviluppo, `1D-W11b` | no — i dati sintetici si ricreano con `pnpm db:seed` | `W11-PLAN.md` §4 |
+
+### Note sulla portata del Round 17
+
+- **DR-086 sceglie la strada, non autorizza il comando.** La cancellazione del
+  database `amoris` resta un'azione a conferma obbligatoria: si mostra il
+  comando esatto e si chiede, all'inizio della `1D-W11b`.
+- **DR-085 allarga la wave di DR-082 dal solo menu ai blocchi.** Non tutti i
+  blocchi possono contenere figli: la mossa «dentro» va rifiutata dove
+  `BLOCK-MODEL.md` non ammette figli, e il rifiuto va mostrato durante il
+  movimento, non dopo il rilascio.
+
+### Chiuse dal Round 17
+
+| Voce aperta | Come è stata chiusa |
+|---|---|
+| **Collocazione della wave di DR-082** | DR-083 |
+| **Resa dei due esiti del trascinamento** | DR-084 |
+| **Allineamento del trascinamento dei blocchi** | DR-085 |
