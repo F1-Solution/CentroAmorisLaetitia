@@ -27,7 +27,7 @@ export const EXPECTED_COUNTS: Readonly<Record<ReportRowName, number | null>> = {
   form_submissions: 425,
   documents: 8,
   slider_slides: 12,
-  redirects: 180,
+  redirects: 181, // DR-065: 170 pagine allegato, non 169
 };
 
 /** In quale wave ciascuna riga del rapporto diventa vera, secondo `PLAN.md` §1. */

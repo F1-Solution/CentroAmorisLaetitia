@@ -1,6 +1,6 @@
 /**
  * Fase 14 `redirects` (`importer-spec.md` §4, §6.2): produce `redirects` —
- * 180 righe attese (`wp-to-postgres-mapping.md` §3.2).
+ * 181 righe attese (`wp-to-postgres-mapping.md` §3.2, rivisto per DR-065).
  *
  * Le righe che questa fase scrive hanno sempre `origin = 'migration'` e
  * vengono **ricalcolate** a ogni riesecuzione: quelle di `origin = 'manual'`

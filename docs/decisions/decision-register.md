@@ -813,3 +813,56 @@ si dà sui conteggi veri di `plan`, alla `1D-W11b`.
 | **Collocazione della wave di DR-082** | DR-083 |
 | **Resa dei due esiti del trascinamento** | DR-084 |
 | **Allineamento del trascinamento dei blocchi** | DR-085 |
+
+---
+
+## 24. Attuazioni del 2026-09-30 — wave `1D-W11a`
+
+Questa sezione **non registra decisioni nuove**: registra l'attuazione di
+decisioni già approvate. Dettaglio in `IMPORTER-DESIGN.md` §11.21.
+
+### Chiuse
+
+| Voce aperta | Come è stata chiusa |
+|---|---|
+| **Attuazione di DR-063, DR-064, DR-065** | **Fatta.** I due contenuti anomali nascono bozza con percorso provvisorio, la pagina conserva l'indirizzo; il file dell'allegato si cerca senza distinguere maiuscole e minuscole e si archivia con la chiave del database. Misurato sulla sorgente reale in sola lettura: `relations` 108 aggiornati e 0 errori, `media` 0 errori |
+| **Protezione del lavoro redazionale sulle copie di lavoro** | **Fatta.** Una copia di lavoro più recente dell'ultima esecuzione riuscita protegge il contenuto nella fase `contents`, nella fase `relations` e nell'annullamento |
+
+### Conseguenza dichiarata
+
+- **`redirects` atteso passa da 180 a 181.** Con DR-065 l'allegato 341 si
+  importa e la sua pagina allegato, presente in `url-matrix.csv`, produce il
+  redirect. Corretti `database-schema.md` §6, `wp-to-postgres-mapping.md` §3.2
+  e `W11-PLAN.md` §4.
+
+### Rilievo che richiede una decisione
+
+- **La protezione del contenuto pubblicato non scatta mai per il lavoro fatto
+  nell'area di gestione.** Il criterio di `importer-spec.md` §6.3 legge
+  `content_revisions`, ma il servizio non vi scrive mai; e dopo il salvataggio
+  o la pubblicazione la copia di lavoro viene eliminata. Non tocca la prima
+  esecuzione della `1D-W11`, su un database vuoto; tocca ogni riesecuzione dopo
+  che un redattore ha lavorato, a partire dal delta finale della Fase 1F.
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **Traccia del lavoro redazionale pubblicato** | Come l'importer riconosce un contenuto modificato e pubblicato dall'area di gestione | prima di qualunque riesecuzione dell'import dopo l'uso del CMS, e comunque prima della Fase 1F |
+
+---
+
+## 25. Round 18 — risposta del 2026-09-30, traccia del lavoro redazionale pubblicato
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-087 | 2026-09-30 | Come l'importer riconosce un contenuto modificato e pubblicato dall'area di gestione, visto che il servizio non scrive in `content_revisions` | **Opzione A — `contents.updated_at`**: un contenuto con `updated_at` successivo alla fine dell'ultima esecuzione riuscita è protetto, come quello con una revisione o una copia di lavoro recente. Si tocca solo `apps/importer` | B — il servizio scrive `content_revisions` a ogni salvataggio e pubblicazione; C — entrambe | «Decisione 1 = A» | Proprietario | Fase 1D, `apps/importer`, `importer-spec.md` §6.3 | sì | registro §24, `IMPORTER-DESIGN.md` §11.21 |
+
+### Note sulla portata di DR-087
+
+- **La decisione non è ancora attuata.** Non tocca la `1D-W11b` né la `1D-W11c`, che partono da un database vuoto; va attuata prima di qualunque riesecuzione dopo l'uso del CMS.
+- **L'errore possibile va nella direzione sicura.** Anche una scrittura non redazionale che aggiorni `updated_at` — per esempio il ritiro di un contenuto — lo protegge: il contenuto viene saltato con un avviso, e `--force-content` resta la via per sovrascriverlo.
+
+### Decisioni rimaste aperte dopo il Round 18
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **Attuazione di DR-087** | Protezione su `contents.updated_at` in `contents`, `relations` e `rollback` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |

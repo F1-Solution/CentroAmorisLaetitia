@@ -175,7 +175,7 @@ un tema aperto** (MI-06), non una dimenticanza.
 | `media_variants` | circa 1.376 |
 | `terms` | **4** (2 `category` + 1 `wpdmcategory` + 1 `cuar_private_file_category` — DR-061) |
 | `menu_items` | **64** |
-| `redirects` | **180** (169 allegati + 4 documenti + 6 slug storici + 1 con carattere jolly) |
+| `redirects` | **181** (170 allegati + 4 documenti + 6 slug storici + 1 con carattere jolly). Rivisto il 2026-09-30: era 180 perché l'allegato 341 non si ritrovava, e DR-065 lo recupera |
 | `forms` | 25 |
 | `form_notifications` | 39 |
 | `form_submissions` | **425** |

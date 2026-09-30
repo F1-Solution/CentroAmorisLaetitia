@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
@@ -398,6 +399,67 @@ describe('fase media', () => {
         .from(schema.mediaVariants)
         .where(eq(schema.mediaVariants.mediaId, media!.id));
       expect(variants).toHaveLength(0);
+    } finally {
+      await fixture.teardown();
+    }
+  });
+
+  it('DR-065: trova il file che differisce per maiuscole e lo archivia con la chiave del database, originale e misure derivate', async () => {
+    const rows = buildOneAttachmentRows({
+      id: 561,
+      attachedFile: '2020/05/foto-maiuscole.jpg',
+      variantFile: 'foto-maiuscole-150x150.jpg',
+    });
+    const fixture = await createMediaSourceFixture(rows);
+    try {
+      // Sul disco i nomi hanno maiuscole diverse da quelle che il database cerca.
+      await fixture.writeUploadedFile('2020/05/Foto-Maiuscole.JPG', 'contenuto');
+      await fixture.writeUploadedFile('2020/05/Foto-Maiuscole-150x150.JPG', 'miniatura');
+
+      const runId = await newApplyRunId(testDb.db);
+      const issues = createIssueSink(testDb.db, 'apply', runId);
+      const storage = fakeObjectStore();
+      const result = await runStage(mediaStage, {
+        db: testDb.db,
+        source: fixture.source,
+        storage,
+        runId,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+
+      expect(result.created).toBe(1);
+      expect(result.errors).toBe(0);
+
+      // La chiave non si rinomina (ADR-004 §3.1): è quella del database, e il
+      // file letto è quello che c'è davvero sul disco.
+      expect(storage.puts.map((p) => p.key).sort()).toEqual(
+        ['2020/05/foto-maiuscole-150x150.jpg', '2020/05/foto-maiuscole.jpg'].sort(),
+      );
+      expect(storage.puts.map((p) => path.basename(p.absoluteFilePath)).sort()).toEqual(
+        ['Foto-Maiuscole-150x150.JPG', 'Foto-Maiuscole.JPG'].sort(),
+      );
+
+      const [media] = await testDb.db
+        .select()
+        .from(schema.media)
+        .where(eq(schema.media.legacyId, 561));
+      expect(media?.storageKey).toBe('2020/05/foto-maiuscole.jpg');
+      expect(media?.publicPath).toBe('/media/2020/05/foto-maiuscole.jpg');
+      expect(media?.fileName).toBe('foto-maiuscole.jpg');
+      const variants = await testDb.db
+        .select()
+        .from(schema.mediaVariants)
+        .where(eq(schema.mediaVariants.mediaId, media!.id));
+      expect(variants.map((v) => v.publicPath)).toEqual([
+        '/media/2020/05/foto-maiuscole-150x150.jpg',
+      ]);
+
+      // La differenza si dichiara: un avviso per l'originale e uno per la misura derivata.
+      const mismatches = issues.collected.filter((i) => i.code === 'source-file-case-mismatch');
+      expect(mismatches.map((i) => i.detail).sort()).toEqual(['original', 'variant']);
+      expect(mismatches.every((i) => i.severity === 'warning' && i.sourceId === 561)).toBe(true);
     } finally {
       await fixture.teardown();
     }

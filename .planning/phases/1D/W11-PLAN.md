@@ -114,7 +114,7 @@ Poi, nell'ordine:
 | `media_variants` | circa 1.376 |
 | `terms` | 4 |
 | `menu_items` | 64 |
-| `redirects` | 180 |
+| `redirects` | 181 — era 180; vedi la nota sotto |
 | `forms` | 25 |
 | `form_notifications` | 39 |
 | `form_submissions` | 425 |
@@ -123,6 +123,11 @@ Poi, nell'ordine:
 | `users` | 1 |
 | `seo_templates` | circa 7 |
 | `content_seo` | 2 |
+
+**Nota del 2026-09-30, `1D-W11a`.** L'atteso di `redirects` passa da 180 a 181
+come conseguenza aritmetica di DR-065: l'allegato 341 ora si importa, e la sua
+pagina allegato — che `url-matrix.csv` elenca e che oggi risponde 301 — produce
+il suo redirect. `media` a 178 contava già quell'allegato; `redirects` no.
 
 Più le due soglie di ADR-005 §3.4 sui blocchi di riserva, che la `1D-W10` ha
 misurato a 8 su 305 — 2,62 % su 5 contenuti — e che l'esecuzione vera deve

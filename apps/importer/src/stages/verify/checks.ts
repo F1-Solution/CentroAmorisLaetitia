@@ -16,7 +16,7 @@ import { and, eq, isNotNull } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { StageContext } from '../context.js';
 import type { CheckName, VerificationCheck } from '../../report/types.js';
-import { checksumFile } from '../../source/files/uploads.js';
+import { checksumFile, createUploadIndex } from '../../source/files/uploads.js';
 import { hasUploadsReference } from '../rewrite/urlRewrite.js';
 import { isClassifiedPostmetaKey } from '../../preflight/constants.js';
 import type { SqlRow } from '../../source/sql/types.js';
@@ -100,10 +100,17 @@ export async function checkChecksumMismatches(ctx: StageContext): Promise<Verifi
     .from(schema.media)
     .where(eq(schema.media.isPrivate, false));
 
+  // DR-065: la chiave archiviata può differire per maiuscole dal nome su disco.
+  const uploads = createUploadIndex(await ctx.source.uploadedFiles());
   let mismatches = 0;
   for (const row of rows) {
     try {
-      const hex = await checksumFile(path.join(ctx.source.uploadsPath, row.storageKey));
+      const lookup = uploads.find(row.storageKey);
+      if (lookup.kind !== 'exact' && lookup.kind !== 'case-insensitive') {
+        mismatches += 1;
+        continue;
+      }
+      const hex = await checksumFile(path.join(ctx.source.uploadsPath, lookup.file.relativePath));
       if (!Buffer.from(hex, 'hex').equals(row.checksum)) mismatches += 1;
     } catch {
       // File non trovato o non leggibile: è comunque un checksum che non

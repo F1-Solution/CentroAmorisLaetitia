@@ -31,7 +31,12 @@ import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
-import { checksumFile, type UploadedFile } from '../../source/files/uploads.js';
+import {
+  checksumFile,
+  createUploadIndex,
+  type UploadedFile,
+  type UploadIndex,
+} from '../../source/files/uploads.js';
 import { parseAttachmentMetadata, type AttachmentVariant } from './attachmentMetadata.js';
 
 interface SourceAttachment {
@@ -113,7 +118,7 @@ export const mediaStage: Stage = {
   async run(ctx: StageContext): Promise<StageResult> {
     const attachments = await loadSourceAttachments(ctx);
     const uploaded = await ctx.source.uploadedFiles();
-    const uploadedByPath = new Map<string, UploadedFile>(uploaded.map((f) => [f.relativePath, f]));
+    const uploads = createUploadIndex(uploaded);
 
     // `media_variants` è una riga a sé del rapporto (`importer-spec.md`
     // §8.1) pur essendo prodotta da questa fase: si conta qui, perché dopo
@@ -135,14 +140,14 @@ export const mediaStage: Stage = {
         if (!row.attachedFile) {
           throw new Error('allegato sorgente senza _wp_attached_file');
         }
-        const original = uploadedByPath.get(row.attachedFile);
-        if (!original) {
-          // Il file non esiste sotto `uploads/`, o sta in una delle cartelle
-          // escluse (`source/files/uploads.ts`) — in entrambi i casi non è
-          // recuperabile qui: `uploads.real.test.ts` copre il conteggio, non
-          // il singolo file.
-          throw new Error(`file sorgente non trovato: ${row.attachedFile}`);
-        }
+        // Il file non esiste sotto `uploads/`, o sta in una delle cartelle
+        // escluse (`source/files/uploads.ts`) — in entrambi i casi non è
+        // recuperabile qui: `uploads.real.test.ts` copre il conteggio, non
+        // il singolo file.
+        const original = await findSourceFile(ctx, uploads, row, row.attachedFile, 'original');
+        if (!original) throw new Error(`file sorgente non trovato: ${row.attachedFile}`);
+        // DR-065: la chiave resta quella del database, il file letto è quello su disco.
+        const originalAbsolutePath = path.join(ctx.source.uploadsPath, original.relativePath);
 
         // Nessun allegato di questa sorgente è riservato — vedi il commento
         // in testa al modulo. Il campo resta qui, e a `false`, perché lo
@@ -152,7 +157,7 @@ export const mediaStage: Stage = {
 
         const storageKey = row.attachedFile;
         const publicPath = `/media/${row.attachedFile}`;
-        const checksumHex = await checksumFile(path.join(ctx.source.uploadsPath, row.attachedFile));
+        const checksumHex = await checksumFile(originalAbsolutePath);
         const checksum = Buffer.from(checksumHex, 'hex');
 
         const existingId = await ctx.ids.find(tx, 'wp_posts', row.id, 'media');
@@ -172,7 +177,7 @@ export const mediaStage: Stage = {
           await ctx.storage.put(
             bucket,
             storageKey,
-            path.join(ctx.source.uploadsPath, row.attachedFile),
+            originalAbsolutePath,
             row.mimeType,
             original.sizeBytes,
           );
@@ -239,15 +244,7 @@ export const mediaStage: Stage = {
 
         const tally = { created: 0, updated: 0, skipped: 0, errors: 0 };
         for (const variant of metadata.variants) {
-          const outcome = await importVariant(
-            ctx,
-            tx,
-            row,
-            variant,
-            bucket,
-            written.id,
-            uploadedByPath,
-          );
+          const outcome = await importVariant(ctx, tx, row, variant, bucket, written.id, uploads);
           tally[outcome] += 1;
         }
         variants.created += tally.created;
@@ -287,11 +284,11 @@ async function importVariant(
   variant: AttachmentVariant,
   bucket: 'public' | 'private',
   mediaId: string,
-  uploadedByPath: ReadonlyMap<string, UploadedFile>,
+  uploads: UploadIndex,
 ): Promise<'created' | 'updated' | 'skipped'> {
   if (!row.attachedFile) return 'skipped';
   const relativePath = siblingRelativePath(row.attachedFile, variant.file);
-  const uploadedVariant = uploadedByPath.get(relativePath);
+  const uploadedVariant = await findSourceFile(ctx, uploads, row, relativePath, 'variant');
   if (!uploadedVariant) {
     await ctx.issues.record({
       severity: 'warning',
@@ -305,7 +302,8 @@ async function importVariant(
   }
 
   const publicPath = `/media/${relativePath}`;
-  const checksumHex = await checksumFile(path.join(ctx.source.uploadsPath, relativePath));
+  const variantAbsolutePath = path.join(ctx.source.uploadsPath, uploadedVariant.relativePath);
+  const checksumHex = await checksumFile(variantAbsolutePath);
   const checksum = Buffer.from(checksumHex, 'hex');
 
   const [existingVariant] = await tx
@@ -318,7 +316,7 @@ async function importVariant(
     await ctx.storage.put(
       bucket,
       relativePath,
-      path.join(ctx.source.uploadsPath, relativePath),
+      variantAbsolutePath,
       variant.mimeType,
       uploadedVariant.sizeBytes,
     );
@@ -348,4 +346,30 @@ async function importVariant(
     });
 
   return existingVariant ? 'updated' : 'created';
+}
+
+/**
+ * Il file sotto `uploads/` per un nome del database (DR-065). Un file trovato
+ * solo ignorando maiuscole e minuscole produce un avviso; due candidati
+ * equivalenti valgono come file mancante.
+ */
+async function findSourceFile(
+  ctx: StageContext,
+  uploads: UploadIndex,
+  row: SourceAttachment,
+  relativePath: string,
+  which: 'original' | 'variant',
+): Promise<UploadedFile | null> {
+  const lookup = uploads.find(relativePath);
+  if (lookup.kind === 'case-insensitive') {
+    await ctx.issues.record({
+      severity: 'warning',
+      stage: 'media',
+      code: 'source-file-case-mismatch',
+      sourceTable: 'wp_posts',
+      sourceId: row.id,
+      detail: which,
+    });
+  }
+  return lookup.kind === 'exact' || lookup.kind === 'case-insensitive' ? lookup.file : null;
 }

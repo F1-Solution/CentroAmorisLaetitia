@@ -153,11 +153,11 @@ Composto risalendo `post_parent` fino alla radice, con la struttura di permalink
 `/%postname%/`. Verificato: i **107 percorsi reali** rispettano il vincolo di forma
 dello schema.
 
-### 3.2 `redirects` — 180 righe attese
+### 3.2 `redirects` — 181 righe attese
 
 | Origine | Regole | Tipo | Fonte |
 |---|---|---|---|
-| Pagine allegato → file | **169** | `exact` | DR-034, `url-matrix.csv` |
+| Pagine allegato → file | **170** — erano 169 prima di DR-065, che recupera l'allegato 341 (2026-09-30) | `exact` | DR-034, `url-matrix.csv` |
 | `wpdmpro` → `/download/<slug>/` | **4** | `exact` | 1A §8 |
 | `/wp-content/uploads/` → `/media/` | **1** | `prefix` | ADR-004 §3.4 |
 | **Slug storici → contenuto attuale** | **6** | `exact` | `_wp_old_slug`, §3.3 |
@@ -435,7 +435,7 @@ Controlli eseguibili in Fase 1D, non affermazioni:
 3. **Volumi:** i conteggi attesi di `database-schema.md` §6 coincidono.
 4. **Media:** il numero di oggetti nello storage coincide con i file della sorgente
    meno le cartelle escluse; ogni file ha il checksum verificato.
-5. **Redirect:** 180 righe, di cui 6 verificate una per una contro l'istanza di
+5. **Redirect:** 181 righe, di cui 6 verificate una per una contro l'istanza di
    riferimento.
 6. **SEO:** `seo-rendered-baseline.csv` confrontato con l'output del nuovo sito su
    tutti e 117 gli URL.

@@ -155,6 +155,8 @@ Tre protezioni:
 1. `contents` ha una traccia dell'ultima modifica redazionale. Se un contenuto è
    stato modificato **dopo** l'ultima esecuzione riuscita, l'importer **non lo
    sovrascrive**: registra un `import_issues` di gravità `warning` e prosegue.
+   Dal 2026-09-30 la traccia comprende anche la copia di lavoro di DR-068, e la
+   protezione vale anche per la fase `relations` e per `rollback`.
 2. `--force-content <id>` sovrascrive comunque, un contenuto per volta, esplicitamente.
 3. Il rapporto elenca in testa i contenuti saltati per questo motivo.
 

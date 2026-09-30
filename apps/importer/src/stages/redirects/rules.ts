@@ -66,8 +66,8 @@ async function loadMediaPublicPathsByLegacyId(
 
 /**
  * Famiglia 1 — pagine allegato → file (`wp-to-postgres-mapping.md` §3.2):
- * 169 righe attese su 170 allegati, perché una non trova una riga `media`
- * risolta (§11.7, misurato). Il percorso sorgente segue la stessa regola di
+ * 170 righe attese, una per allegato: dal 2026-09-30 anche l'allegato di
+ * §11.7 ha la sua riga `media` (DR-065). Il percorso sorgente segue la stessa regola di
  * `relations/paths.ts`: genitore risolto più lo slug dell'allegato.
  */
 async function buildAttachmentPageCandidates(ctx: StageContext): Promise<RedirectCandidate[]> {

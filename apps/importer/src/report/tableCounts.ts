@@ -27,7 +27,7 @@ export const EXPECTED_TABLE_COUNTS: Readonly<Record<TableCountRowName, number>> 
   media: 178,
   terms: 4,
   menu_items: 64,
-  redirects: 180,
+  redirects: 181, // DR-065: 170 pagine allegato, non 169
   forms: 25,
   form_notifications: 39,
   form_submissions: 425,

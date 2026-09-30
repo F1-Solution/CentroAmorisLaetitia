@@ -8,6 +8,10 @@
  * > `created_at` successivo a `import_runs.finished_at` dell'ultima
  * > esecuzione con esito `success` o `partial`.
  *
+ * Dal 2026-09-30 vale anche una copia di lavoro (`content_drafts`, DR-068) con
+ * `updated_at` successivo alla stessa ora: il salvataggio automatico
+ * dell'editor scrive solo lì.
+ *
  * Nessuna modifica allo schema approvato in Fase 1B: si legge
  * `content_revisions`, che esiste già e che l'importer non scrive mai
  * (`importer-spec.md` §6.2, ultima riga).
@@ -33,8 +37,8 @@ export async function lastSuccessfulRunFinishedAt(tx: Tx): Promise<Date | null> 
 }
 
 /**
- * Vero se `contentId` ha almeno una riga di cronologia redazionale più
- * recente di `since`. `contentId` è `null` quando il contenuto non esiste
+ * Vero se `contentId` ha almeno una riga di cronologia redazionale, o una
+ * copia di lavoro, più recente di `since`. `contentId` è `null` quando il contenuto non esiste
  * ancora (prima creazione): in quel caso non può esserci stata una modifica
  * redazionale successiva a un'esecuzione che non lo conosceva.
  */
@@ -44,7 +48,7 @@ export async function hasEditorialWorkSince(
   since: Date | null,
 ): Promise<boolean> {
   if (contentId === null || since === null) return false;
-  const [row] = await tx
+  const [revision] = await tx
     .select({ id: schema.contentRevisions.id })
     .from(schema.contentRevisions)
     .where(
@@ -54,7 +58,15 @@ export async function hasEditorialWorkSince(
       ),
     )
     .limit(1);
-  return row !== undefined;
+  if (revision) return true;
+  const [draft] = await tx
+    .select({ id: schema.contentDrafts.id })
+    .from(schema.contentDrafts)
+    .where(
+      and(eq(schema.contentDrafts.contentId, contentId), gt(schema.contentDrafts.updatedAt, since)),
+    )
+    .limit(1);
+  return draft !== undefined;
 }
 
 /** `--force-content <id>`: un contenuto per volta, mai un `--force-all` (`importer-spec.md` §6.3 punto 2). */

@@ -184,21 +184,27 @@ async function laterRunInIdMap(
 }
 
 /**
- * I contenuti con una riga di cronologia redazionale successiva alla fine
- * dell'esecuzione. Stessa traccia della protezione in avanti
- * (`stages/contents/editorialProtection.ts`): `content_revisions`, che
- * l'importer non scrive mai.
+ * I contenuti con una riga di cronologia redazionale, o una copia di lavoro,
+ * successiva alla fine dell'esecuzione. Stessa traccia della protezione in
+ * avanti (`stages/contents/editorialProtection.ts`); la copia conta anche
+ * perché lo schema la cancella insieme al contenuto.
  */
 async function contentsEditedAfter(
   db: Database,
   finishedAt: Date | null,
 ): Promise<readonly string[]> {
   if (finishedAt === null) return [];
-  const rows = await db
-    .selectDistinct({ contentId: schema.contentRevisions.contentId })
-    .from(schema.contentRevisions)
-    .where(gt(schema.contentRevisions.createdAt, finishedAt));
-  return rows.map((row) => row.contentId);
+  const [revisions, drafts] = await Promise.all([
+    db
+      .selectDistinct({ contentId: schema.contentRevisions.contentId })
+      .from(schema.contentRevisions)
+      .where(gt(schema.contentRevisions.createdAt, finishedAt)),
+    db
+      .selectDistinct({ contentId: schema.contentDrafts.contentId })
+      .from(schema.contentDrafts)
+      .where(gt(schema.contentDrafts.updatedAt, finishedAt)),
+  ]);
+  return [...new Set([...revisions, ...drafts].map((row) => row.contentId))];
 }
 
 export interface RollbackResult {

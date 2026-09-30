@@ -5,6 +5,7 @@ import type { Tx } from '../../../src/persistence/tx.js';
 import type { SourceReader } from '../../../src/source/index.js';
 import { verifyStage } from '../../../src/stages/verify/index.js';
 import {
+  checkChecksumMismatches,
   checkContentsWithoutPath,
   checkFilesVsExpected,
   checkMenuItemsDangling,
@@ -20,6 +21,8 @@ import { createRun } from '../../../src/persistence/importRuns.js';
 import { createTestDatabase, type TestDatabase } from '../_support/dbHarness.js';
 import { fakeSourceReader } from '../_support/fakeSource.js';
 import { fakeObjectStore } from '../_support/fakeStorage.js';
+import { createMediaSourceFixture } from '../_support/mediaFixtures.js';
+import { checksumFile } from '../../../src/source/files/uploads.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
 
 async function newApplyRunId(db: Database): Promise<string> {
@@ -153,6 +156,36 @@ describe('verifiche singole', () => {
     const termsRow = results.find((r) => r.table === 'terms')!;
     expect(termsRow.expected).toBe(4);
     expect(termsRow.ok).toBe(termsRow.value === 4);
+  });
+});
+
+describe('verifica dei checksum', () => {
+  it('DR-065: ritrova il file che sul disco ha maiuscole diverse dalla chiave archiviata', async () => {
+    const fresh = await createTestDatabase('amoris_importer_verify_checksum_case');
+    const fixture = await createMediaSourceFixture({});
+    try {
+      await fixture.writeUploadedFile('2020/05/Foto-Verifica.JPG', 'contenuto');
+      const hex = await checksumFile(`${fixture.uploadsPath}/2020/05/Foto-Verifica.JPG`);
+      await fresh.db.insert(schema.media).values({
+        storageKey: '2020/05/foto-verifica.jpg',
+        publicPath: '/media/2020/05/foto-verifica.jpg',
+        fileName: 'foto-verifica.jpg',
+        mimeType: 'image/jpeg',
+        byteSize: 9,
+        checksum: Buffer.from(hex, 'hex'),
+        isPrivate: false,
+        uploadedAt: new Date(),
+      });
+
+      const result = await fresh.db.transaction((tx) =>
+        checkChecksumMismatches(ctxFor(tx, fixture.source)),
+      );
+      expect(result.value).toBe(0);
+      expect(result.ok).toBe(true);
+    } finally {
+      await fixture.teardown();
+      await fresh.teardown();
+    }
   });
 });
 

@@ -72,6 +72,37 @@ async function walk(dir: string, relativeDir: string, out: UploadedFile[]): Prom
   }
 }
 
+export type UploadLookup =
+  | { readonly kind: 'exact' | 'case-insensitive'; readonly file: UploadedFile }
+  | { readonly kind: 'ambiguous' }
+  | { readonly kind: 'missing' };
+
+export interface UploadIndex {
+  find(relativePath: string): UploadLookup;
+}
+
+/**
+ * DR-065: se il nome esatto manca, si accetta l'unico file che differisce solo
+ * per maiuscole e minuscole. Fra due candidati non si sceglie.
+ */
+export function createUploadIndex(files: readonly UploadedFile[]): UploadIndex {
+  const exact = new Map(files.map((f) => [f.relativePath, f]));
+  const byLowerCase = new Map<string, UploadedFile[]>();
+  for (const file of files) {
+    const key = file.relativePath.toLowerCase();
+    byLowerCase.set(key, [...(byLowerCase.get(key) ?? []), file]);
+  }
+  return {
+    find(relativePath) {
+      const found = exact.get(relativePath);
+      if (found) return { kind: 'exact', file: found };
+      const candidates = byLowerCase.get(relativePath.toLowerCase()) ?? [];
+      if (candidates.length === 1) return { kind: 'case-insensitive', file: candidates[0]! };
+      return candidates.length > 1 ? { kind: 'ambiguous' } : { kind: 'missing' };
+    },
+  };
+}
+
 /** Calcola il checksum SHA-256 di un file, in streaming: non lo carica intero in memoria. */
 export function checksumFile(absolutePath: string): Promise<string> {
   return new Promise((resolve, reject) => {

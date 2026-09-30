@@ -23,6 +23,40 @@ async function newApplyRunId(db: Database): Promise<string> {
 
 const OPTIONS = { only: null, forceContentIds: [] as readonly string[], verbose: false };
 
+/** Chiude un'esecuzione come riuscita: è l'ora di fine che la protezione redazionale legge. */
+async function finishSuccessfulRun(db: Database, runId: string): Promise<void> {
+  await finishRun(db, runId, 'success', {
+    runId,
+    mode: 'apply',
+    importerVersion: '0.0.0-test',
+    sourceLabel: 'BackupDB-2026-09-13',
+    stages: [],
+    conversion: {
+      gutenberg: 0,
+      divi: 0,
+      html: 1,
+      blocksTotal: 1,
+      blocksNonContainer: 1,
+      fallbackBlocks: 0,
+      fallbackPercent: 0,
+      fallbackByReason: {
+        wp_html_block: 0,
+        divi_unmapped_module: 0,
+        divi_unmapped_markup: 0,
+        shortcode_unknown: 0,
+        manual: 0,
+      },
+      contentsWithFallback: 0,
+      thresholdPercentOk: true,
+      thresholdContentsOk: true,
+    },
+    checks: [],
+    skippedForEditorialWork: [],
+    issues: [],
+    outcome: 'success',
+  });
+}
+
 const BASE_POSTS: readonly SqlRow[] = [
   {
     ID: 100,
@@ -191,7 +225,7 @@ describe('fase contents', () => {
       ];
 
       // Un'altra riga occupa già il percorso provvisorio `/pagina-rotta-200/`
-      // (slug + legacyId, `contents/index.ts` `provisionalPath`):
+      // (slug + legacyId, `relations/paths.ts` `provisionalPath`):
       // l'inserimento di questo contenuto violerà il vincolo di unicità su
       // `path` — lo stesso genere di anomalia sintetica usato in
       // `mediaStage.test.ts`.
@@ -330,6 +364,138 @@ describe('fase contents', () => {
       });
       expect(result3.updated).toBe(1);
       expect(result3.skipped).toBe(0);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('la protezione vale anche per la copia di lavoro (DR-068): una bozza salvata dopo l’ultima esecuzione riuscita non si perde', async () => {
+    const fresh = await createTestDatabase('amoris_importer_contents_drafts');
+    try {
+      const firstPosts: SqlRow[] = [BASE_POSTS[0]!];
+      const runId1 = await newApplyRunId(fresh.db);
+      await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(firstPosts),
+        runId: runId1,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId1),
+        options: OPTIONS,
+      });
+      await finishSuccessfulRun(fresh.db, runId1);
+
+      const [imported] = await fresh.db
+        .select({ id: schema.contents.id, updatedAt: schema.contents.updatedAt })
+        .from(schema.contents)
+        .where(eq(schema.contents.slug, 'chi-siamo'));
+
+      // Il salvataggio automatico dell'editor scrive solo la copia di lavoro,
+      // mai `content_revisions`: la sola traccia del lavoro è la copia stessa.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const [redattore] = await fresh.db
+        .insert(schema.users)
+        .values({ email: 'redattore@example.test', fullName: 'Redattore di prova' })
+        .returning({ id: schema.users.id });
+      await fresh.db.insert(schema.contentDrafts).values({
+        contentId: imported!.id,
+        authorId: redattore!.id,
+        title: 'Chi siamo, bozza in corso',
+        blocks: { schema: 1, blocks: [] },
+        baseUpdatedAt: imported!.updatedAt,
+      });
+
+      const runId2 = await newApplyRunId(fresh.db);
+      const issues2 = createIssueSink(fresh.db, 'apply', runId2);
+      const result2 = await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(firstPosts),
+        runId: runId2,
+        mode: 'apply',
+        issues: issues2,
+        options: OPTIONS,
+      });
+
+      expect(result2.skipped).toBe(1);
+      expect(result2.updated).toBe(0);
+      expect(result2.skippedForEditorialWork).toEqual([imported!.id]);
+      const protectionIssue = issues2.collected.find((i) => i.code === 'editorial-work-protected');
+      expect(protectionIssue?.sourceId).toBe(100);
+
+      // Il contenuto non è stato toccato: la copia resta pubblicabile, perché
+      // il servizio confronta `baseUpdatedAt` con `contents.updated_at`.
+      const [untouched] = await fresh.db
+        .select({ updatedAt: schema.contents.updatedAt })
+        .from(schema.contents)
+        .where(eq(schema.contents.id, imported!.id));
+      expect(untouched?.updatedAt.getTime()).toBe(imported!.updatedAt.getTime());
+
+      // Una copia **più vecchia** dell'ultima esecuzione riuscita non protegge.
+      await finishSuccessfulRun(fresh.db, runId2);
+      const runId3 = await newApplyRunId(fresh.db);
+      const result3 = await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(firstPosts),
+        runId: runId3,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId3),
+        options: OPTIONS,
+      });
+      expect(result3.updated).toBe(1);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('`--force-content` sovrascrive anche un contenuto protetto dalla copia di lavoro', async () => {
+    const fresh = await createTestDatabase('amoris_importer_contents_drafts_force');
+    try {
+      const firstPosts: SqlRow[] = [BASE_POSTS[0]!];
+      const runId1 = await newApplyRunId(fresh.db);
+      await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(firstPosts),
+        runId: runId1,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId1),
+        options: OPTIONS,
+      });
+      await finishSuccessfulRun(fresh.db, runId1);
+
+      const [imported] = await fresh.db
+        .select({ id: schema.contents.id, updatedAt: schema.contents.updatedAt })
+        .from(schema.contents)
+        .where(eq(schema.contents.slug, 'chi-siamo'));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const [redattore] = await fresh.db
+        .insert(schema.users)
+        .values({ email: 'redattore@example.test', fullName: 'Redattore di prova' })
+        .returning({ id: schema.users.id });
+      await fresh.db.insert(schema.contentDrafts).values({
+        contentId: imported!.id,
+        authorId: redattore!.id,
+        title: 'Chi siamo, bozza in corso',
+        blocks: { schema: 1, blocks: [] },
+        baseUpdatedAt: imported!.updatedAt,
+      });
+
+      const runId2 = await newApplyRunId(fresh.db);
+      const issues2 = createIssueSink(fresh.db, 'apply', runId2);
+      const result2 = await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(firstPosts),
+        runId: runId2,
+        mode: 'apply',
+        issues: issues2,
+        options: { only: null, forceContentIds: [imported!.id], verbose: false },
+      });
+      expect(result2.updated).toBe(1);
+      expect(result2.skipped).toBe(0);
+      expect(issues2.collected.some((i) => i.code === 'editorial-work-protected')).toBe(false);
     } finally {
       await fresh.teardown();
     }

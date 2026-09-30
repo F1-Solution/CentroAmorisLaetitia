@@ -4,9 +4,10 @@
  * `contents.featuredMediaId`: sono la fase 9 `relations`
  * (`importer-spec.md` §4, riga `relations`). `path` è comunque `NOT NULL` e
  * unico nello schema (`packages/db/src/schema/content.ts`): questa fase
- * scrive un valore **provvisorio**, `/<slug>/`, che `relations` sovrascrive
- * con il percorso vero appena calcolato risalendo la gerarchia
- * (`wp-to-postgres-mapping.md` §3.1).
+ * scrive un valore **provvisorio**, `/<slug>-<legacyId>/` (`relations/paths.ts`),
+ * che `relations` sovrascrive con il percorso vero appena calcolato risalendo
+ * la gerarchia (`wp-to-postgres-mapping.md` §3.1), tranne che per i contenuti
+ * di DR-063 e DR-064, che restano bozze al percorso provvisorio.
  *
  * Sorgente: `wp_posts` con `post_type` in `('page', 'post')`
  * (`wp-to-postgres-mapping.md` §2): 78 pagine, 29 articoli pubblicati e 1
@@ -45,6 +46,7 @@ import {
   isForced,
   lastSuccessfulRunFinishedAt,
 } from './editorialProtection.js';
+import { provisionalPath, resolveTreePaths } from '../relations/paths.js';
 
 interface SourceContent {
   readonly id: number;
@@ -57,6 +59,7 @@ interface SourceContent {
   readonly authorLegacyId: number | null;
   readonly postDate: string;
   readonly position: number;
+  readonly parentLegacyId: number;
 }
 
 function asString(value: SqlRow[string] | undefined): string {
@@ -100,28 +103,27 @@ async function loadSourceContents(ctx: StageContext): Promise<readonly SourceCon
       authorLegacyId: asNumber(row['post_author']),
       postDate: asString(row['post_date']),
       position: asNumber(row['menu_order']) ?? 0,
+      parentLegacyId: asNumber(row['post_parent']) ?? 0,
     });
   }
   return result;
 }
 
 /**
- * Percorso provvisorio: `relations` (fase 6) lo sostituisce con quello vero,
- * calcolato risalendo la gerarchia (`wp-to-postgres-mapping.md` §3.1). Qui
- * serve solo un valore che soddisfi i vincoli dello schema (`NOT NULL`,
- * unico, forma) fino a quel momento.
- *
- * **Include sempre `legacyId`**, misurato necessario sulla sorgente reale:
- * due contenuti — un `post` e un altro con lo stesso `post_name` — condividono
- * lo stesso slug (WordPress non impone unicità dello slug fra `page` e `post`
- * come tipi diversi), e uno slug vuoto (una bozza di lavoro mai salvata con
- * uno slug) produrrebbe `//`, che non rispetta `contents_path_shape`.
- * `legacyId` è unico per costruzione: elimina entrambi i casi senza inventare
- * un percorso che assomigli a quello vero, che è compito di `relations`.
+ * I contenuti che resteranno al percorso provvisorio (DR-063, DR-064), letti
+ * dalla sorgente con lo stesso calcolo di `relations`: nascono già bozza, così
+ * non sono pubblicati nemmeno se `relations` poi fallisse su di loro.
  */
-function provisionalPath(slug: string, legacyId: number): string {
-  const base = slug || 'senza-slug';
-  return `/${base}-${legacyId}/`;
+function provisionalLegacyIds(rows: readonly SourceContent[]): ReadonlySet<number> {
+  const resolved = resolveTreePaths(
+    rows.map((row) => ({
+      legacyId: row.id,
+      type: row.type,
+      slug: row.slug,
+      parentLegacyId: row.parentLegacyId,
+    })),
+  );
+  return new Set([...resolved].filter(([, entry]) => entry.provisional).map(([id]) => id));
 }
 
 export const contentsStage: Stage = {
@@ -136,6 +138,7 @@ export const contentsStage: Stage = {
 
   async run(ctx: StageContext): Promise<StageResult> {
     const rows = await loadSourceContents(ctx);
+    const provisional = provisionalLegacyIds(rows);
 
     const mediaLookup = await buildMediaLookup(ctx.tx);
     const resolveMedia = createMediaResolver(mediaLookup);
@@ -208,7 +211,7 @@ export const contentsStage: Stage = {
         const authorEntityId = row.authorLegacyId
           ? await ctx.ids.find(tx, 'wp_users', row.authorLegacyId, 'user')
           : null;
-        const status = row.status === 'publish' ? 'published' : 'draft';
+        const status = row.status === 'publish' && !provisional.has(row.id) ? 'published' : 'draft';
         const publishedAt = status === 'published' ? parseTimestamp(row.postDate) : null;
 
         const [written] = await tx

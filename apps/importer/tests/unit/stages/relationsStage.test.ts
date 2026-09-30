@@ -307,3 +307,218 @@ describe('fase relations', () => {
     }
   });
 });
+
+/**
+ * DR-063 e DR-064 sulla catena `contents` → `relations`. Dati sintetici con la
+ * **forma** dei due casi reali: un articolo pubblicato che condivide lo slug
+ * con una pagina pubblicata, e una bozza senza slug.
+ */
+const ANOMALOUS_POSTS: readonly SqlRow[] = [
+  {
+    ID: 328,
+    post_author: 0,
+    post_title: 'Pagina omonima',
+    post_content: '<p>La pagina che conserva l’indirizzo.</p>',
+    post_excerpt: '',
+    post_status: 'publish',
+    post_name: 'omonimo',
+    post_type: 'page',
+    post_date: '2020-03-01 09:00:00',
+    post_parent: 0,
+    menu_order: 0,
+  },
+  {
+    ID: 332,
+    post_author: 0,
+    post_title: 'Articolo omonimo',
+    post_content: '<p>L’articolo con lo stesso slug.</p>',
+    post_excerpt: '',
+    post_status: 'publish',
+    post_name: 'omonimo',
+    post_type: 'post',
+    post_date: '2020-03-02 09:00:00',
+    post_parent: 0,
+    menu_order: 0,
+  },
+  {
+    ID: 1781,
+    post_author: 0,
+    post_title: '',
+    post_content: '',
+    post_excerpt: '',
+    post_status: 'draft',
+    post_name: '',
+    post_type: 'post',
+    post_date: '2020-03-03 09:00:00',
+    post_parent: 0,
+    menu_order: 0,
+  },
+];
+
+function buildAnomalousSource() {
+  return fakeSourceReader({
+    wp_posts: ANOMALOUS_POSTS,
+    wp_postmeta: [],
+    wp_term_relationships: [],
+    wp_term_taxonomy: [],
+  });
+}
+
+describe('fase relations — contenuti anomali della sorgente (DR-063, DR-064)', () => {
+  it('le due anomalie diventano bozze con percorso provvisorio, senza errori e senza togliere l’indirizzo alla pagina', async () => {
+    const fresh = await createTestDatabase('amoris_importer_relations_anomalies');
+    try {
+      const runId1 = await newApplyRunId(fresh.db);
+      const contentsResult = await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildAnomalousSource(),
+        runId: runId1,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId1),
+        options: OPTIONS,
+      });
+      expect(contentsResult.errors).toBe(0);
+
+      // Già dopo `contents` l'articolo omonimo non è pubblicato: se
+      // `relations` fallisse, non resterebbe in linea a un indirizzo inventato.
+      const afterContents = await fresh.db.select().from(schema.contents);
+      expect(afterContents.find((r) => r.legacyId === 332)?.status).toBe('draft');
+      expect(afterContents.find((r) => r.legacyId === 328)?.status).toBe('published');
+
+      const runId2 = await newApplyRunId(fresh.db);
+      const issues = createIssueSink(fresh.db, 'apply', runId2);
+      const result = await runStage(relationsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildAnomalousSource(),
+        runId: runId2,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+
+      expect(result.errors).toBe(0);
+      expect(result.updated).toBe(3);
+
+      const rows = await fresh.db.select().from(schema.contents);
+      const page = rows.find((r) => r.legacyId === 328)!;
+      const post = rows.find((r) => r.legacyId === 332)!;
+      const draft = rows.find((r) => r.legacyId === 1781)!;
+
+      expect(page.path).toBe('/omonimo/');
+      expect(page.status).toBe('published');
+      expect(post.path).toBe('/omonimo-332/');
+      expect(post.status).toBe('draft');
+      expect(draft.path).toBe('/senza-slug-1781/');
+      expect(draft.status).toBe('draft');
+      expect(new Set(rows.map((r) => r.path)).size).toBe(rows.length);
+
+      const provisional = issues.collected.filter((i) => i.code === 'content-path-provisional');
+      expect(provisional.map((i) => [i.sourceId, i.detail]).sort()).toEqual([
+        [1781, 'empty-slug'],
+        [332, 'path-collision'],
+      ]);
+      expect(provisional.every((i) => i.severity === 'warning')).toBe(true);
+
+      // Rieseguire non cambia l'esito: stessa pagina, stesse bozze.
+      const runId3 = await newApplyRunId(fresh.db);
+      await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildAnomalousSource(),
+        runId: runId3,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId3),
+        options: OPTIONS,
+      });
+      const again = await runStage(relationsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildAnomalousSource(),
+        runId: runId3,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId3),
+        options: OPTIONS,
+      });
+      expect(again.errors).toBe(0);
+      const rowsAgain = await fresh.db.select().from(schema.contents);
+      expect(rowsAgain.map((r) => [r.legacyId, r.path, r.status]).sort()).toEqual(
+        rows.map((r) => [r.legacyId, r.path, r.status]).sort(),
+      );
+    } finally {
+      await fresh.teardown();
+    }
+  });
+});
+
+describe('fase relations — protezione del lavoro redazionale', () => {
+  it('non tocca un contenuto che la fase contents ha protetto per una copia di lavoro recente', async () => {
+    const fresh = await createTestDatabase('amoris_importer_relations_protected');
+    try {
+      await seedMediaAndTerm(fresh.db);
+      const runId1 = await newApplyRunId(fresh.db);
+      await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildSource(),
+        runId: runId1,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId1),
+        options: OPTIONS,
+      });
+      await runStage(relationsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildSource(),
+        runId: runId1,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId1),
+        options: OPTIONS,
+      });
+      await fresh.db
+        .update(schema.importRuns)
+        .set({ finishedAt: new Date(), outcome: 'success' })
+        .where(eq(schema.importRuns.id, runId1));
+
+      const [parent] = await fresh.db
+        .select()
+        .from(schema.contents)
+        .where(eq(schema.contents.legacyId, 300));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      const [redattore] = await fresh.db
+        .insert(schema.users)
+        .values({ email: 'redattore@example.test', fullName: 'Redattore di prova' })
+        .returning({ id: schema.users.id });
+      await fresh.db.insert(schema.contentDrafts).values({
+        contentId: parent!.id,
+        authorId: redattore!.id,
+        title: 'Bozza in corso',
+        blocks: { schema: 1, blocks: [] },
+        baseUpdatedAt: parent!.updatedAt,
+      });
+
+      const runId2 = await newApplyRunId(fresh.db);
+      const result = await runStage(relationsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildSource(),
+        runId: runId2,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId2),
+        options: OPTIONS,
+      });
+
+      expect(result.skipped).toBe(1);
+      expect(result.updated).toBe(2);
+      const [after] = await fresh.db
+        .select({ updatedAt: schema.contents.updatedAt })
+        .from(schema.contents)
+        .where(eq(schema.contents.id, parent!.id));
+      // `updated_at` immutato: la copia di lavoro resta pubblicabile.
+      expect(after?.updatedAt.getTime()).toBe(parent!.updatedAt.getTime());
+    } finally {
+      await fresh.teardown();
+    }
+  });
+});

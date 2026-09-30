@@ -83,6 +83,8 @@ export type IssueCode =
   | 'unknown-shortcode'
   | 'unknown-attribute'
   | 'editorial-work-protected'
+  | 'content-path-provisional'
+  | 'source-file-case-mismatch'
   | 'stage-not-implemented'
   | 'item-import-failed'
   | 'unclassified-capabilities'

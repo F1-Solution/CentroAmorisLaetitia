@@ -1202,3 +1202,47 @@ pnpm --filter @amoris/importer exec vitest run --config vitest.real.config.ts te
 Non gira in CI: legge `source-private/` (DR-010). In CI gira l'equivalente
 sintetico, `tests/unit/syntheticSubset.test.ts`, che prova l'ordine nuovo su un
 riferimento a modulo inventato.
+
+### 11.21 Le quattro attuazioni dovute prima dell'import reale — `1D-W11a`
+
+| Decisione | Come è attuata |
+|---|---|
+| **DR-063** | `relations/paths.ts` assegna i percorsi in ordine di profondità, pagine prima degli articoli, più vecchi prima. Un percorso già assegnato fa ricevere al secondo contenuto il percorso provvisorio `/<slug>-<legacyId>/`; il contenuto resta bozza. Nessun identificatore è scritto nel codice: la regola vale per ogni collisione |
+| **DR-064** | Uno slug vuoto riceve `/senza-slug-<legacyId>/` e resta bozza |
+| **DR-065** | `createUploadIndex` cerca il nome esatto e, se manca, l'unico file che differisce per maiuscole e minuscole; fra due candidati non sceglie. La chiave d'archivio, `publicPath` e `fileName` restano quelli del database; si legge il file che c'è sul disco. Vale per originale e misure derivate, e per la verifica dei checksum |
+| **Copie di lavoro** | `hasEditorialWorkSince` e il piano di `rollback` guardano anche `content_drafts.updated_at` |
+
+Le due anomalie dei contenuti nascono bozza già nella fase `contents`, che fa lo
+stesso calcolo sulla sorgente: se `relations` fallisse su di loro, non
+resterebbero pubblicate a un indirizzo inventato. Ciascuna produce un avviso
+`content-path-provisional`; il file ritrovato ignorando le maiuscole produce un
+avviso `source-file-case-mismatch`.
+
+**Misurato sulla sorgente reale**, in sola lettura e su database usa e getta:
+`relations` passa da 106 aggiornati e 2 errori a **108 e 0**; `media` da 1
+errore a **0**; i due `apply` di fila restano identici.
+
+**Due conseguenze che non erano scritte.**
+
+1. **I redirect attesi diventano 181.** L'allegato 341 ora si importa, e la sua
+   pagina allegato — presente in `url-matrix.csv`, oggi 301 verso il file —
+   produce il suo redirect. `database-schema.md` §6 contava già l'allegato in
+   `media` (178) ma non in `redirects` (180). Atteso corretto in codice e nei
+   documenti, con la data.
+2. **`relations` ora rispetta la protezione.** Prima riscriveva percorso,
+   genitore, immagine in evidenza e termini anche dei contenuti che `contents`
+   aveva saltato, e ne aggiornava `updated_at`: una copia di lavoro aperta su
+   quel contenuto non si sarebbe più potuta pubblicare, perché il servizio
+   confronta `base_updated_at` con `updated_at`. Il percorso attuale di un
+   contenuto protetto è riservato **prima** del calcolo delle collisioni:
+   altrimenti un contenuto più vecchio con lo stesso slug, comparso dopo, lo
+   riceverebbe mentre il protetto lo occupa ancora.
+
+**Rilievo aperto, non attuato.** Il servizio non scrive mai in
+`content_revisions`: né la modifica né la pubblicazione di un contenuto lasciano
+una riga di cronologia. Il criterio del §6.3 di `importer-spec.md` per il
+contenuto pubblicato quindi **non scatta mai** per una modifica fatta
+dall'area di gestione e poi pubblicata, una volta che la copia di lavoro è
+stata consumata dalla pubblicazione. Correggerlo tocca `apps/api` o cambia il
+criterio: è una decisione, non un'attuazione.
+

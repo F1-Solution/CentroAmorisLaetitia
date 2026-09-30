@@ -316,6 +316,48 @@ describe('rollback', () => {
     expect(canProceed(await planRollback(db, secondoRun))).toBe(true);
   });
 
+  it("rifiuta di procedere se un redattore ha una copia di lavoro salvata dopo l'esecuzione (DR-068)", async () => {
+    const db = database.db;
+    const runId = await newRun(db);
+    const { padreId } = await simulaEsecuzione(db, runId, 7);
+    await closeRun(db, runId);
+
+    // Annullare cancellerebbe il contenuto, e con lui la copia di lavoro, che
+    // lo schema elimina a cascata: il lavoro del redattore andrebbe perso
+    // senza che nessuna riga di cronologia lo abbia mai registrato.
+    const [redattore] = await db
+      .insert(schema.users)
+      .values({ email: 'redattore-rollback@example.test', fullName: 'Redattore di prova' })
+      .returning({ id: schema.users.id });
+    const [copia] = await db
+      .insert(schema.contentDrafts)
+      .values({
+        contentId: padreId,
+        authorId: redattore!.id,
+        title: 'Bozza in corso',
+        blocks: { schema: 1, blocks: [] },
+        baseUpdatedAt: new Date(),
+        updatedAt: new Date(Date.now() + 60_000),
+      })
+      .returning({ id: schema.contentDrafts.id });
+
+    try {
+      const plan = await planRollback(db, runId);
+      expect(canProceed(plan)).toBe(false);
+      expect(plan.editorialWorkAfter).toContain(padreId);
+      await expect(applyRollback(db, plan)).rejects.toThrow();
+
+      const [ancora] = await db
+        .select({ id: schema.contentDrafts.id })
+        .from(schema.contentDrafts)
+        .where(eq(schema.contentDrafts.id, copia!.id));
+      expect(ancora).toBeDefined();
+    } finally {
+      // Le prove seguenti condividono il database: la copia non deve bloccarle.
+      await db.delete(schema.contentDrafts).where(eq(schema.contentDrafts.id, copia!.id));
+    }
+  });
+
   it("su un'esecuzione che non esiste non fa nulla e lo dice", async () => {
     const plan = await planRollback(database.db, randomUUID());
     expect(plan.runExists).toBe(false);

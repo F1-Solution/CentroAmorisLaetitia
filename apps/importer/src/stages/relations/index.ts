@@ -11,6 +11,10 @@
  * dei termini in un solo elemento del ciclo (`forEachItem`), cosi' un errore
  * su un contenuto isola tutte e quattro le sue relazioni insieme, non una per
  * una.
+ *
+ * Un contenuto che la fase `contents` ha protetto per lavoro redazionale non
+ * si tocca nemmeno qui: riscriverne `updated_at` renderebbe impubblicabile la
+ * copia di lavoro del redattore (DR-068).
  */
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
@@ -19,12 +23,18 @@ import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
 import { resolvePaths, type PathNode } from './paths.js';
+import {
+  hasEditorialWorkSince,
+  isForced,
+  lastSuccessfulRunFinishedAt,
+} from '../contents/editorialProtection.js';
 
 interface ContentRow {
   readonly dbId: string;
   readonly legacyId: number;
   readonly type: 'page' | 'post';
   readonly slug: string;
+  readonly path: string;
 }
 
 interface CategoryRelation {
@@ -49,11 +59,18 @@ async function loadContentRows(ctx: StageContext): Promise<readonly ContentRow[]
       legacyId: schema.contents.legacyId,
       type: schema.contents.type,
       slug: schema.contents.slug,
+      path: schema.contents.path,
     })
     .from(schema.contents);
   return rows
     .filter((r): r is typeof r & { legacyId: number } => r.legacyId !== null)
-    .map((r) => ({ dbId: r.id, legacyId: r.legacyId, type: r.type, slug: r.slug }));
+    .map((r) => ({
+      dbId: r.id,
+      legacyId: r.legacyId,
+      type: r.type,
+      slug: r.slug,
+      path: r.path,
+    }));
 }
 
 async function loadParentLegacyIds(ctx: StageContext): Promise<ReadonlyMap<number, number>> {
@@ -128,7 +145,17 @@ export const relationsStage: Stage = {
       slug: row.slug,
       parentLegacyId: parentLegacyIds.get(row.legacyId) ?? 0,
     }));
-    const resolvedPaths = resolvePaths(pathNodes);
+    const lastSuccessAt = await lastSuccessfulRunFinishedAt(ctx.tx);
+    // I contenuti protetti non si riscrivono: il loro percorso attuale resta
+    // occupato, e il calcolo delle collisioni deve saperlo prima di cominciare.
+    const protectedPaths = new Map<number, string>();
+    for (const row of contentRows) {
+      const forced = isForced(ctx.options.forceContentIds, row.dbId, row.legacyId);
+      if (!forced && (await hasEditorialWorkSince(ctx.tx, row.dbId, lastSuccessAt))) {
+        protectedPaths.set(row.legacyId, row.path);
+      }
+    }
+    const resolvedPaths = resolvePaths(pathNodes, protectedPaths);
 
     return forEachItem(
       ctx.tx,
@@ -137,6 +164,21 @@ export const relationsStage: Stage = {
       async (row, tx) => {
         const resolved = resolvedPaths.get(row.legacyId);
         if (!resolved) throw new Error('percorso non calcolato per un contenuto noto');
+
+        // L'avviso l'ha già scritto la fase `contents`, che ha saltato lo stesso contenuto.
+        if (protectedPaths.has(row.legacyId)) return 'skipped';
+
+        if (resolved.provisional) {
+          // DR-063, DR-064: percorso provvisorio e bozza, mai un indirizzo pubblico inventato.
+          await ctx.issues.record({
+            severity: 'warning',
+            stage: 'relations',
+            code: 'content-path-provisional',
+            sourceTable: 'wp_posts',
+            sourceId: row.legacyId,
+            detail: resolved.provisional,
+          });
+        }
 
         const featuredAttachmentLegacyId = featuredAttachmentIds.get(row.legacyId);
         const featuredMediaId = featuredAttachmentLegacyId
@@ -162,6 +204,7 @@ export const relationsStage: Stage = {
           .set({
             parentId: resolved.parentDbId,
             path: resolved.path,
+            ...(resolved.provisional ? { status: 'draft' as const } : {}),
             featuredMediaId: featuredMediaId ?? null,
             updatedAt: new Date(),
           })
