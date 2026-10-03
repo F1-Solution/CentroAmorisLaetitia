@@ -77,3 +77,7 @@ PHASE:1D WAVE:1D-W8b STATUS:complete TS:2026-09-21T22:26:45Z
 PHASE:1D WAVE:1D-W9 STATUS:complete TS:2026-09-22T06:17:38Z
 PHASE:1D WAVE:1D-W10 STATUS:complete TS:2026-09-24T19:48:47Z
 PHASE:1D WAVE:1D-W11a STATUS:complete TS:2026-09-30T09:10:47Z
+<!-- 1D-W11a-bis: correzione attuata e verificata con prove mirate, NON committata; il secondo plan da ancora partial per la verifica del bucket non eseguibile (D17) e pnpm test ha 2 prove fallite per scarto d orologio del container (D18). -->
+PHASE:1D WAVE:1D-W11a-bis STATUS:failed TS:2026-10-03T15:16:53Z
+<!-- 1D-W11a-bis completata dopo DR-089: orologio riallineato, pnpm test verde. L esito partial residuo e affidato alla 1D-W11d (DR-088, DR-090). -->
+PHASE:1D WAVE:1D-W11a-bis STATUS:complete TS:2026-10-03T16:24:21Z

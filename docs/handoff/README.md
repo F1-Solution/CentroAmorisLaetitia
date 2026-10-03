@@ -15,6 +15,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-005 | [Protezione con password della pagina di diagnostica](HO-005-protezione-con-password-della-pagina-di-diagnostica.md) | 1C | ✅ **chiuso** 2026-09-15 — DR-049 |
 | HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — seme sintetico e sei schermate da guardare |
 | HO-007 | [Eseguire a mano le suite della `1D-W10`](HO-007-eseguire-le-suite-della-1D-W10.md) | 1D | ✅ **chiuso** 2026-09-30 — tutti i test passati |
+| HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ⏳ **aperto** — correzione committata; DR-088 e DR-090 da attuare nella `1D-W11d`, poi la conferma di DR-072 |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

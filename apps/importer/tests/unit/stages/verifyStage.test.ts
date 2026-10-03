@@ -4,6 +4,8 @@ import type { Database } from '@amoris/db';
 import type { Tx } from '../../../src/persistence/tx.js';
 import type { SourceReader } from '../../../src/source/index.js';
 import { verifyStage } from '../../../src/stages/verify/index.js';
+import { contentsStage } from '../../../src/stages/contents/index.js';
+import { relationsStage } from '../../../src/stages/relations/index.js';
 import {
   checkChecksumMismatches,
   checkContentsWithoutPath,
@@ -24,6 +26,7 @@ import { fakeObjectStore } from '../_support/fakeStorage.js';
 import { createMediaSourceFixture } from '../_support/mediaFixtures.js';
 import { checksumFile } from '../../../src/source/files/uploads.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
+import { eq } from 'drizzle-orm';
 
 async function newApplyRunId(db: Database): Promise<string> {
   return createRun(db, {
@@ -156,6 +159,92 @@ describe('verifiche singole', () => {
     const termsRow = results.find((r) => r.table === 'terms')!;
     expect(termsRow.expected).toBe(4);
     expect(termsRow.ok).toBe(termsRow.value === 4);
+  });
+});
+
+/**
+ * DR-063 e DR-064 fino alla verifica: un articolo che condivide lo slug con
+ * una pagina e una bozza senza slug, dati sintetici con la forma dei casi reali.
+ */
+function anomalousPost(id: number, type: 'page' | 'post', slug: string, status: string): SqlRow {
+  return {
+    ID: id,
+    post_author: 0,
+    post_title: `Contenuto ${id}`,
+    post_content: '<p>Testo sintetico.</p>',
+    post_excerpt: '',
+    post_status: status,
+    post_name: slug,
+    post_type: type,
+    post_date: `2020-03-0${id % 7} 09:00:00`,
+    post_parent: 0,
+    menu_order: 0,
+  };
+}
+
+function anomalousSource(): SourceReader {
+  return fakeSourceReader({
+    wp_posts: [
+      anomalousPost(328, 'page', 'omonimo', 'publish'),
+      anomalousPost(332, 'post', 'omonimo', 'publish'),
+      anomalousPost(1781, 'post', '', 'draft'),
+    ],
+    wp_postmeta: [],
+    wp_term_relationships: [],
+    wp_term_taxonomy: [],
+  });
+}
+
+async function importAnomalies(db: Database): Promise<void> {
+  for (const stage of [contentsStage, relationsStage]) {
+    const runId = await newApplyRunId(db);
+    const result = await runStage(stage, {
+      db,
+      storage: fakeObjectStore(),
+      source: anomalousSource(),
+      runId,
+      mode: 'apply',
+      issues: createIssueSink(db, 'apply', runId),
+      options: OPTIONS,
+    });
+    expect(result.errors).toBe(0);
+  }
+}
+
+describe('verifica dei contenuti senza percorso — DR-063, DR-064', () => {
+  it('non conta i due contenuti che restano al percorso provvisorio per decisione', async () => {
+    const fresh = await createTestDatabase('amoris_importer_verify_provisional_ok');
+    try {
+      await importAnomalies(fresh.db);
+
+      const result = await fresh.db.transaction((tx) =>
+        checkContentsWithoutPath(ctxFor(tx, anomalousSource())),
+      );
+      expect(result.value).toBe(0);
+      expect(result.ok).toBe(true);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('conta un contenuto rimasto al percorso provvisorio senza motivo', async () => {
+    const fresh = await createTestDatabase('amoris_importer_verify_provisional_ko');
+    try {
+      await importAnomalies(fresh.db);
+      // La pagina ha diritto a `/omonimo/`: al percorso provvisorio è un difetto.
+      await fresh.db
+        .update(schema.contents)
+        .set({ path: '/omonimo-328/' })
+        .where(eq(schema.contents.legacyId, 328));
+
+      const result = await fresh.db.transaction((tx) =>
+        checkContentsWithoutPath(ctxFor(tx, anomalousSource())),
+      );
+      expect(result.value).toBe(1);
+      expect(result.ok).toBe(false);
+    } finally {
+      await fresh.teardown();
+    }
   });
 });
 

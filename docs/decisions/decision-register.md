@@ -866,3 +866,36 @@ decisioni già approvate. Dettaglio in `IMPORTER-DESIGN.md` §11.21.
 | id | Contenuto | Termine |
 |---|---|---|
 | **Attuazione di DR-087** | Protezione su `contents.updated_at` in `contents`, `relations` e `rollback` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |
+
+---
+
+## 26. Round 19 — risposta del 2026-10-03, esito della `1D-W11` e scarto d'orologio
+
+Contesto: dopo la correzione `1D-W11a-bis` il secondo `plan` dava ancora
+`partial`, perché una verifica non eseguita degrada l'esito e «file nel bucket /
+file attesi» non è mai eseguibile (HO-008 §3.3).
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-088 | 2026-10-03 | Come si rende raggiungibile il criterio 4 di `W11-PLAN.md` (esito `success`) | **Opzione A** — l'importer impara a elencare il bucket, così in `apply` la verifica «file nel bucket / file attesi» si esegue davvero; `plan` resta `partial` per questa sola ragione dichiarata, perché non carica file | B — una verifica non eseguibile non degrada l'esito; C — si modifica il criterio 4 accettando `partial` | «D17 = A» | Proprietario | Fase 1D, `apps/importer` | sì | HO-008 §3.3, `W11-PLAN.md` §7 |
+| DR-089 | 2026-10-03 | Il commit della correzione `1D-W11a-bis` | **Opzione B** — prima si riallinea l'orologio della macchina virtuale di Docker, poi si rilancia `pnpm test` e si committa solo se è verde | A — committare subito con 2 prove fallite anche su HEAD | «D18 = B (orologio riallineato)» | Proprietario | Fase 1D, repository | sì | HO-008 §6.1 |
+| DR-090 | 2026-10-03 | Come la protezione del lavoro redazionale smette di dipendere dall'allineamento degli orologi | **Opzione A** — la fine di un'esecuzione si registra con l'ora del database, la stessa delle copie di lavoro | B — requisito operativo di orologi sincronizzati (NTP), senza toccare il codice | «D19 = A» | Proprietario | Fase 1D, `apps/importer`, `importer-spec.md` §6.3 | sì | HO-008 §6 |
+
+### Note sulla portata
+
+- **DR-089 è attuata:** orologio riallineato dall'utente (scarto misurato 0 ms),
+  `pnpm test` verde su tutti gli 8 pacchetti, 272 prove su 272 nell'importer.
+- **DR-088 e DR-090 non sono ancora attuate.** Vanno fatte prima della `1D-W11c`
+  (`apply`); DR-090 al più tardi insieme a DR-087.
+- **Rilievo, non decisione:** `pnpm compose:up` non riesce più a scaricare
+  l'immagine del servizio che crea i bucket (il registro risponde 401). Database e
+  archiviazione sono ripartiti da soli e i bucket esistono già nel volume: non
+  blocca la `1D-W11`, ma blocca chi ricrea l'ambiente da zero.
+
+### Decisioni rimaste aperte dopo il Round 19
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **Attuazione di DR-087** | Protezione su `contents.updated_at` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |
+| **Attuazione di DR-088 e DR-090** | Elenco del bucket ed ora del database per la fine dell'esecuzione | prima della `1D-W11c` |
+| **Immagine del servizio che crea i bucket** | Come ricreare l'ambiente se l'immagine non è più scaricabile | prima di ricreare l'ambiente da zero |

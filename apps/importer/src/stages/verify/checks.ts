@@ -19,6 +19,8 @@ import type { CheckName, VerificationCheck } from '../../report/types.js';
 import { checksumFile, createUploadIndex } from '../../source/files/uploads.js';
 import { hasUploadsReference } from '../rewrite/urlRewrite.js';
 import { isClassifiedPostmetaKey } from '../../preflight/constants.js';
+import { loadContentRows, planContentPaths } from '../relations/contentPaths.js';
+import { provisionalPath } from '../relations/paths.js';
 import type { SqlRow } from '../../source/sql/types.js';
 
 function asString(value: SqlRow[string] | undefined): string {
@@ -247,23 +249,18 @@ export async function checkRedirectsTo404(ctx: StageContext): Promise<Verificati
 
 /**
  * Un contenuto è "senza percorso reale" quando il suo `path` è ancora quello
- * provvisorio che `stages/contents/index.ts` assegna prima che `relations`
- * lo sostituisca (`/${slug || 'senza-slug'}-${legacyId}/`).
+ * provvisorio e il calcolo dei percorsi non ve lo assegna per decisione
+ * (DR-063, DR-064): lo stesso calcolo di `relations`, non una sua copia.
  */
 export async function checkContentsWithoutPath(ctx: StageContext): Promise<VerificationCheck> {
-  const rows = await ctx.tx
-    .select({
-      slug: schema.contents.slug,
-      legacyId: schema.contents.legacyId,
-      path: schema.contents.path,
-    })
-    .from(schema.contents);
+  const contentRows = await loadContentRows(ctx);
+  const { resolvedPaths } = await planContentPaths(ctx, contentRows);
 
   let withoutPath = 0;
-  for (const row of rows) {
-    if (row.legacyId === null) continue;
-    const provisional = `/${row.slug || 'senza-slug'}-${row.legacyId}/`;
-    if (row.path === provisional) withoutPath += 1;
+  for (const row of contentRows) {
+    if (row.path !== provisionalPath(row.slug, row.legacyId)) continue;
+    if (resolvedPaths.get(row.legacyId)?.provisional) continue;
+    withoutPath += 1;
   }
   return check('contents-without-path', withoutPath, 0);
 }
