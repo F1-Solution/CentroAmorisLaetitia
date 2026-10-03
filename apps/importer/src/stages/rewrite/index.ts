@@ -18,7 +18,7 @@
  * un elemento singolo da isolare.
  */
 import { eq } from 'drizzle-orm';
-import { schema } from '@amoris/db';
+import { databaseNow, schema } from '@amoris/db';
 import type { Stage, StageContext } from '../context.js';
 import { addStageResults } from '../types.js';
 import type { ItemKey, StageResult } from '../types.js';
@@ -49,7 +49,7 @@ async function rewriteContents(ctx: StageContext): Promise<StageResult> {
         .set({
           blocks: rewrittenBlocks.changed ? rewrittenBlocks.value : row.blocks,
           contentHtml: rewrittenHtml.changed ? (rewrittenHtml.value ?? '') : row.contentHtml,
-          updatedAt: new Date(),
+          updatedAt: databaseNow(),
         })
         .where(eq(schema.contents.id, row.id));
       return 'updated';

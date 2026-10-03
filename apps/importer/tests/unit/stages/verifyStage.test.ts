@@ -23,6 +23,7 @@ import { createRun } from '../../../src/persistence/importRuns.js';
 import { createTestDatabase, type TestDatabase } from '../_support/dbHarness.js';
 import { fakeSourceReader } from '../_support/fakeSource.js';
 import { fakeObjectStore } from '../_support/fakeStorage.js';
+import type { ObjectStore } from '../../../src/storage/objectStore.js';
 import { createMediaSourceFixture } from '../_support/mediaFixtures.js';
 import { checksumFile } from '../../../src/source/files/uploads.js';
 import type { SqlRow } from '../../../src/source/sql/types.js';
@@ -49,12 +50,6 @@ afterAll(async () => {
 });
 
 describe('verifiche singole', () => {
-  it('checkFilesVsExpected non è mai eseguibile: ObjectStore non elenca il bucket', () => {
-    const result = checkFilesVsExpected();
-    expect(result.executed).toBe(false);
-    expect(result.ok).toBe(false);
-  });
-
   it('checkUploadsReferencesRemaining trova un riferimento rimasto in contents', async () => {
     await testDb.db.insert(schema.contents).values({
       type: 'page',
@@ -248,6 +243,112 @@ describe('verifica dei contenuti senza percorso — DR-063, DR-064', () => {
   });
 });
 
+const PUBLIC_KEYS = ['2020/05/foto-pubblica.jpg', '2020/05/foto-pubblica-300x200.jpg'];
+const PRIVATE_KEYS = ['2020/05/foto-riservata.jpg', '2020/05/foto-riservata-300x200.jpg'];
+
+/** Un allegato con una sua misura derivata: due chiavi attese nello stesso bucket. */
+async function seedMediaWithVariant(db: Database, isPrivate: boolean): Promise<void> {
+  const [originalKey, variantKey] = isPrivate ? PRIVATE_KEYS : PUBLIC_KEYS;
+  const [media] = await db
+    .insert(schema.media)
+    .values({
+      storageKey: originalKey!,
+      publicPath: `/media/${originalKey}`,
+      fileName: 'foto.jpg',
+      mimeType: 'image/jpeg',
+      byteSize: 9,
+      checksum: Buffer.alloc(32),
+      isPrivate,
+      uploadedAt: new Date(),
+    })
+    .returning({ id: schema.media.id });
+  await db.insert(schema.mediaVariants).values({
+    mediaId: media!.id,
+    storageKey: variantKey!,
+    publicPath: `/media/${variantKey}`,
+    width: 300,
+    height: 200,
+    byteSize: 9,
+    checksum: Buffer.alloc(32),
+  });
+}
+
+function ctxWith(tx: Tx, mode: 'plan' | 'apply', storage: ObjectStore, verifyOnly = false) {
+  return { ...ctxFor(tx), mode, storage, verifyOnly };
+}
+
+describe('verifica dei file nel bucket — DR-088, DR-092', () => {
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createTestDatabase('amoris_importer_verify_bucket');
+    await seedMediaWithVariant(db.db, false);
+    await seedMediaWithVariant(db.db, true);
+  });
+
+  afterAll(async () => {
+    await db.teardown();
+  });
+
+  const allPresent = { public: PUBLIC_KEYS, private: PRIVATE_KEYS };
+
+  it('nel plan completo non è eseguita: il bucket non è stato scritto', async () => {
+    const storage = fakeObjectStore({ extraKeys: allPresent });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'plan', storage)),
+    );
+    expect(result.executed).toBe(false);
+    expect(result.ok).toBe(false);
+  });
+
+  it('in apply, con originali e misure derivate presenti, è superata', async () => {
+    const storage = fakeObjectStore({ extraKeys: allPresent });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'apply', storage)),
+    );
+    expect(result).toMatchObject({ value: 0, ok: true, executed: true });
+  });
+
+  it('in importer verify (plan sulla sola fase verify) è eseguita e conta il file mancante', async () => {
+    const storage = fakeObjectStore({
+      extraKeys: { public: [PUBLIC_KEYS[0]!], private: PRIVATE_KEYS },
+    });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'plan', storage, true)),
+    );
+    expect(result).toMatchObject({ value: 1, ok: false, executed: true });
+  });
+
+  it('cerca i file di un allegato riservato nel bucket riservato, non in quello pubblico', async () => {
+    const storage = fakeObjectStore({
+      extraKeys: { public: [...PUBLIC_KEYS, ...PRIVATE_KEYS], private: [] },
+    });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'apply', storage)),
+    );
+    expect(result.value).toBe(2);
+  });
+
+  it('con l’archiviazione irraggiungibile non è eseguita, e non interrompe la fase', async () => {
+    const storage = fakeObjectStore({ failList: true });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'apply', storage)),
+    );
+    expect(result.executed).toBe(false);
+    expect(result.ok).toBe(false);
+  });
+
+  it('un oggetto in più nel bucket, come quelli del seme sintetico, non la fa fallire (DR-092)', async () => {
+    const storage = fakeObjectStore({
+      extraKeys: { public: [...PUBLIC_KEYS, 'seme/oggetto-sintetico.jpg'], private: PRIVATE_KEYS },
+    });
+    const result = await db.db.transaction((tx) =>
+      checkFilesVsExpected(ctxWith(tx, 'apply', storage)),
+    );
+    expect(result).toMatchObject({ value: 0, ok: true });
+  });
+});
+
 describe('verifica dei checksum', () => {
   it('DR-065: ritrova il file che sul disco ha maiuscole diverse dalla chiave archiviata', async () => {
     const fresh = await createTestDatabase('amoris_importer_verify_checksum_case');
@@ -287,9 +388,10 @@ describe('fase verify', () => {
       // stima, non un'uguaglianza) che qui non è nemmeno confrontato.
       const runId = await newApplyRunId(fresh.db);
       const issues = createIssueSink(fresh.db, 'apply', runId);
+      // Archiviazione irraggiungibile: la verifica del bucket non si può dimostrare.
       const result = await runStage(verifyStage, {
         db: fresh.db,
-        storage: fakeObjectStore(),
+        storage: fakeObjectStore({ failList: true }),
         source: fakeSourceReader({}),
         runId,
         mode: 'apply',

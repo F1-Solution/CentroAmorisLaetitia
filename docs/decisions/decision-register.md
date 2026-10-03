@@ -899,3 +899,12 @@ file attesi» non è mai eseguibile (HO-008 §3.3).
 | **Attuazione di DR-087** | Protezione su `contents.updated_at` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |
 | **Attuazione di DR-088 e DR-090** | Elenco del bucket ed ora del database per la fine dell'esecuzione | prima della `1D-W11c` |
 | **Immagine del servizio che crea i bucket** | Come ricreare l'ambiente se l'immagine non è più scaricabile | prima di ricreare l'ambiente da zero |
+
+---
+
+## 27. Round 20 — risposta del 2026-10-03, portata di DR-090 e oggetti in più nel bucket
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-091 | 2026-10-03 | Fin dove arriva DR-090, visto che l'area di gestione scrive l'ora delle copie di lavoro con l'orologio di Node | **Opzione B** — tutte le ore del confronto vengono dal database: fine dell'esecuzione, copie di lavoro e `contents.updated_at` scritti dall'API e dall'importer. Tocca anche `apps/api`. Integra DR-090 | A — solo la fine dell'esecuzione; C — superare DR-090 con orologi sincronizzati | «D20 = B» | Proprietario | Fase 1D, `apps/importer`, `apps/api` | sì | `W11d-PLAN.md` D20, DR-087, DR-090 |
+| DR-092 | 2026-10-03 | Oggetti nel bucket che l'import non attende (per esempio quelli del seme sintetico) | **Opzione A** — la verifica «file nel bucket / file attesi» conta solo i file attesi e mancanti; gli oggetti in più non la fanno fallire | B — il bucket deve coincidere con l'atteso, e il seme va cancellato prima di `apply` | «D21 = A» | Proprietario | Fase 1D, `apps/importer` | sì | `W11d-PLAN.md` D21, DR-088 |

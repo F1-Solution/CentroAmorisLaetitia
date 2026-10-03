@@ -1,7 +1,8 @@
 import { schema } from '@amoris/db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHarness, signIn, type Harness, type Signed } from './_support/harness.js';
+import { saveDraft } from '../src/modules/content/service.js';
 
 /**
  * Copie di lavoro, **DR-068**.
@@ -148,5 +149,36 @@ describe('la copia di lavoro non tocca il contenuto', () => {
       headers: { cookie: signed.cookie },
     });
     expect(letta.statusCode).toBe(404);
+  });
+});
+
+describe('l’ora della copia di lavoro — DR-091', () => {
+  it('viene dall’orologio del database, lo stesso con cui l’importer registra la fine di un’esecuzione', async () => {
+    // In una transazione `now()` resta fermo all'inizio: con l'ora del database
+    // la copia porta quell'istante anche dopo l'attesa, con quella di Node no.
+    await harness.db
+      .transaction(async (tx) => {
+        const [start] = await tx
+          .select({ at: sql<string>`date_trunc('milliseconds', now())::text` })
+          .from(schema.contents)
+          .where(eq(schema.contents.id, contentId));
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        await saveDraft(tx, contentId, harness.userId, {
+          title: 'Copia con l’ora del database',
+          blocks: { schema: 1, blocks: [] },
+          baseUpdatedAt: updatedAt,
+        });
+        const [row] = await tx
+          .select({ at: sql<string>`updated_at::text` })
+          .from(schema.contentDrafts)
+          .where(eq(schema.contentDrafts.contentId, contentId));
+        expect(row!.at).toBe(start!.at);
+        // Annullata: la copia sintetica non resta per le prove successive.
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        // drizzle annulla con un errore il cui messaggio è «Rollback»: ogni altro errore risale.
+        if (!(error instanceof Error) || !/rollback/i.test(error.message)) throw error;
+      });
   });
 });

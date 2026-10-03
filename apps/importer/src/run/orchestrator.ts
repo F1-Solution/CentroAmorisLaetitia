@@ -124,6 +124,7 @@ export async function runImport(opts: OrchestratorOptions): Promise<Orchestrator
       issues: opts.issues,
       options: opts.options,
       ipHashSalt: opts.ipHashSalt,
+      verifyOnly: onlyStage === 'verify',
     });
     results.set(stage.name, result);
     completed.add(stage.name);

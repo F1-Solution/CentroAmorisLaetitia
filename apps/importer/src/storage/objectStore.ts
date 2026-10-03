@@ -16,7 +16,7 @@
  * `stages/media/index.ts`, che chiama `put` solo quando `ctx.mode === 'apply'`.
  */
 import { createReadStream } from 'node:fs';
-import { PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
 
 export type Bucket = 'public' | 'private';
 
@@ -37,6 +37,8 @@ export interface ObjectStore {
     contentType: string,
     byteSize: number,
   ): Promise<void>;
+  /** Le chiavi presenti nel bucket, seguendo tutte le pagine (S3 ne dà al più 1.000 per volta). */
+  listKeys(bucket: Bucket): Promise<ReadonlySet<string>>;
 }
 
 export function createObjectStore(s3: S3Client, buckets: ObjectStoreBuckets): ObjectStore {
@@ -51,6 +53,21 @@ export function createObjectStore(s3: S3Client, buckets: ObjectStoreBuckets): Ob
           ContentLength: byteSize,
         }),
       );
+    },
+    async listKeys(bucket) {
+      const keys = new Set<string>();
+      let token: string | undefined;
+      do {
+        const page = await s3.send(
+          new ListObjectsV2Command({
+            Bucket: bucket === 'public' ? buckets.public : buckets.private,
+            ContinuationToken: token,
+          }),
+        );
+        for (const item of page.Contents ?? []) if (item.Key) keys.add(item.Key);
+        token = page.IsTruncated ? page.NextContinuationToken : undefined;
+      } while (token);
+      return keys;
     },
   };
 }

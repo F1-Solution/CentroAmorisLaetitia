@@ -8,9 +8,9 @@
  * non torna — diventa un `import_issues` e conta come un errore della fase:
  * cosi' l'esito complessivo non può essere `success` mentre un numero non
  * coincide, anche se nessun elemento ha prodotto un errore proprio
- * (`importer-spec.md` §8.2). Una verifica **non eseguibile** (storage non
- * raggiungibile) è un avviso, non un errore: non è un difetto dei dati, è
- * l'impossibilità di dimostrarli — e per questo non risulta mai "passata".
+ * (`importer-spec.md` §8.2). Una verifica **non eseguibile** (il bucket nel
+ * `plan` completo, o l'archiviazione irraggiungibile) è un avviso, non un
+ * errore, e non risulta mai "passata".
  */
 import type { Stage, StageContext } from '../context.js';
 import type { StageResult } from '../types.js';

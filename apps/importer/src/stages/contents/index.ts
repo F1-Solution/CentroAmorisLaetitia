@@ -22,7 +22,7 @@
  * blocco `html` di riserva e la soglia di ADR-005 §3.4 misurava l'ordine delle
  * fasi invece della qualità della conversione (`BLOCK-MODEL.md` §10.4).
  */
-import { schema } from '@amoris/db';
+import { databaseNow, schema } from '@amoris/db';
 import {
   countReserveBlocks,
   extractContentText,
@@ -255,7 +255,7 @@ export const contentsStage: Stage = {
               legacyId: row.id,
               legacyType: row.type,
               legacyFormat: family,
-              updatedAt: new Date(),
+              updatedAt: databaseNow(),
             },
           })
           .returning({ id: schema.contents.id });

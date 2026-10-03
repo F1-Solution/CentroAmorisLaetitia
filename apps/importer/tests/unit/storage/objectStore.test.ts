@@ -96,4 +96,10 @@ describe('ObjectStore — storage a oggetti vero', () => {
       expect(publicStatus).toBeGreaterThanOrEqual(400);
     },
   );
+
+  it('listKeys ritrova la chiave caricata nel solo bucket in cui è stata caricata (DR-088)', async () => {
+    const privateKey = `${testKeyPrefix}/riservato.txt`;
+    expect((await store.listKeys('private')).has(privateKey)).toBe(true);
+    expect((await store.listKeys('public')).has(privateKey)).toBe(false);
+  });
 });

@@ -5,9 +5,10 @@
  * invocare queste funzioni.
  */
 import type { Database } from '@amoris/db';
-import { schema } from '@amoris/db';
+import { databaseNow, schema } from '@amoris/db';
 import { eq, isNull } from 'drizzle-orm';
 import type { ImportReport } from '../report/types.js';
+import type { Tx } from './tx.js';
 
 export interface CreateRunOptions {
   readonly isDryRun: boolean;
@@ -28,8 +29,9 @@ export async function createRun(db: Database, options: CreateRunOptions): Promis
   return row.id;
 }
 
+/** `Tx` è ammesso solo perché una prova possa fissare l'ora della transazione. */
 export async function finishRun(
-  db: Database,
+  db: Database | Tx,
   runId: string,
   outcome: ImportReport['outcome'],
   summary: ImportReport,
@@ -37,7 +39,8 @@ export async function finishRun(
   await db
     .update(schema.importRuns)
     .set({
-      finishedAt: new Date(),
+      // DR-090, DR-091: lo stesso orologio delle righe con cui si confronta.
+      finishedAt: databaseNow(),
       outcome,
       summary: summary as unknown as Record<string, unknown>,
     })

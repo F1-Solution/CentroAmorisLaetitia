@@ -4,17 +4,16 @@
  * importate e, quando serve, la sorgente, e restituisce un
  * {@link VerificationCheck}.
  *
- * Due verifiche — `files-vs-expected` e `checksum-mismatches` — richiedono di
- * sapere che cosa esiste nello storage a oggetti. `ObjectStore`
- * (`storage/objectStore.ts`) espone solo `put`: nessun modo di elencare o
- * verificare un oggetto già caricato. Senza quell'API la verifica non si può
- * eseguire per davvero, e si dichiara `executed: false` invece di fingere un
- * risultato (`importer-spec.md` §16, ultimo paragrafo).
+ * `files-vs-expected` elenca il bucket (DR-088): si esegue in `apply` e in
+ * `importer verify`, e si dichiara `executed: false` nel `plan` completo o con
+ * l'archiviazione irraggiungibile, invece di fingere un risultato
+ * (`importer-spec.md` §16, ultimo paragrafo).
  */
 import path from 'node:path';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { StageContext } from '../context.js';
+import type { Bucket } from '../../storage/objectStore.js';
 import type { CheckName, VerificationCheck } from '../../report/types.js';
 import { checksumFile, createUploadIndex } from '../../source/files/uploads.js';
 import { hasUploadsReference } from '../rewrite/urlRewrite.js';
@@ -85,9 +84,40 @@ export async function checkUploadsReferencesRemaining(
   return check('uploads-references-remaining', remaining, 0);
 }
 
-/** Non eseguibile: `ObjectStore` non espone un modo per elencare il bucket (vedi la nota in testa al file). */
-export function checkFilesVsExpected(): VerificationCheck {
-  return check('files-vs-expected', 0, 0, false);
+/**
+ * Le chiavi di `media` e `media_variants` assenti dal bucket giusto (DR-088);
+ * gli oggetti in più non contano (DR-092). Nel `plan` completo il bucket non è
+ * stato scritto, e non c'è nulla da misurare.
+ */
+export async function checkFilesVsExpected(ctx: StageContext): Promise<VerificationCheck> {
+  if (ctx.mode === 'plan' && !ctx.verifyOnly) return check('files-vs-expected', 0, 0, false);
+
+  const [mediaRows, variantRows] = await Promise.all([
+    ctx.tx
+      .select({ storageKey: schema.media.storageKey, isPrivate: schema.media.isPrivate })
+      .from(schema.media),
+    ctx.tx
+      .select({ storageKey: schema.mediaVariants.storageKey, isPrivate: schema.media.isPrivate })
+      .from(schema.mediaVariants)
+      .innerJoin(schema.media, eq(schema.media.id, schema.mediaVariants.mediaId)),
+  ]);
+
+  let present: Record<Bucket, ReadonlySet<string>>;
+  try {
+    present = {
+      public: await ctx.storage.listKeys('public'),
+      private: await ctx.storage.listKeys('private'),
+    };
+  } catch {
+    // Archiviazione non raggiungibile: non dimostrata, mai «passata».
+    return check('files-vs-expected', 0, 0, false);
+  }
+
+  let missing = 0;
+  for (const row of [...mediaRows, ...variantRows]) {
+    if (!present[row.isPrivate ? 'private' : 'public'].has(row.storageKey)) missing += 1;
+  }
+  return check('files-vs-expected', missing, 0);
 }
 
 /**
@@ -280,7 +310,7 @@ export async function checkMetaKeysUnclassified(ctx: StageContext): Promise<Veri
 export async function runAllChecks(ctx: StageContext): Promise<readonly VerificationCheck[]> {
   return [
     await checkUploadsReferencesRemaining(ctx),
-    checkFilesVsExpected(),
+    await checkFilesVsExpected(ctx),
     await checkChecksumMismatches(ctx),
     await checkMediaMissing(ctx),
     await checkMenuItemsDangling(ctx),

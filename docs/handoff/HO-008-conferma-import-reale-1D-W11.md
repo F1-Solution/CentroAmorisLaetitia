@@ -101,6 +101,21 @@ sa solo caricare, non elencare. Con il codice attuale **nessuna esecuzione può
 dare `success`**, né `plan` né `apply`: il criterio di uscita 4 di
 `W11-PLAN.md` è irraggiungibile. Serve una decisione (§6, D17).
 
+### 3.4 Terzo `plan`, dopo la `1D-W11d` (2026-10-03, sera)
+
+Attuate DR-088, DR-090, DR-091 e DR-092 (`W11d-PLAN.md`): l'importer elenca il
+bucket, e tutte le ore che la protezione del lavoro redazionale confronta
+vengono dall'orologio del database. Revisione del codice: nessun rilievo
+critico o alto. `pnpm test`, `lint`, `typecheck`, `format:check` verdi: 8
+pacchetti su 8, 280 prove nell'importer, 120 nell'API.
+
+Database vuoto prima e dopo (0, 0, 0, 0). Conteggi identici al §2. Tutti gli
+errori per fase a 0, soglie dei blocchi di riserva rispettate, le sette
+verifiche eseguibili a 0. **Esito `partial` per una sola ragione, dichiarata e
+attesa:** «file nel bucket / file attesi — non eseguita», perché `plan` non
+carica file (DR-088). In `apply` quella verifica **si esegue** e l'esito può
+essere `success`.
+
 ## 4. Le altre anomalie, tutte di gravità `warning`
 
 | Anomalia | Quante | Significato |
@@ -130,29 +145,24 @@ pnpm --filter @amoris/importer start rollback --run <id>   # SENZA --confirm: so
 |---|---|
 | File coinvolti | nessun file del repository. Scrive nel database `amoris` e nel bucket MinIO locale |
 | Impatto | il database locale conterrà **425 compilazioni con dati personali reali** e **187 destinatari** nel registro delle email storiche (DR-073). Da quel momento ricreare il volume o riseminare non sono più operazioni indolori |
-| Bucket | `plan` non lo tocca. `apply` vi carica 170 originali, 1.287 misure derivate e i file dei documenti. Gli oggetti sintetici del seme, se presenti, restano: si contano prima di `apply` |
+| Bucket | `plan` non lo tocca. `apply` vi carica 170 originali, 1.287 misure derivate e i file dei documenti. Oggi contiene **10 oggetti nel bucket pubblico**, tutti sotto `2026/` come quelli del seme sintetico, e **0 nel riservato** (contati il 2026-10-03, solo il numero). Restano, e non fanno fallire la verifica (DR-092) |
 | Copia di salvataggio | `pg_dump` del database subito prima |
 | Come si torna indietro | `importer rollback --run <id> --confirm`, oppure il ripristino della copia con `pg_restore` |
-| Verifica successiva | esito `success`; conteggi del §2 uno per uno; la seconda esecuzione non crea nulla; il piano di `rollback` esiste |
+| Verifica successiva | esito `success`, con «file nel bucket» **eseguita** e a 0; conteggi del §2 uno per uno; la seconda esecuzione non crea nulla; il piano di `rollback` esiste |
 
 Restano aperte, e non si dichiarano risolte: **MI-06** (verifica privacy e
 legale, serve un professionista) e la conformità di cifratura, conservazione e
 cancellazione (`database-schema.md` §7 regola 5).
 
-## 6. Decisioni del 2026-10-03 e che cosa resta
+## 6. Decisioni del 2026-10-03 e che cosa ti chiedo adesso
 
-Registrate nel Round 19 del registro delle decisioni:
+Registrate nei Round 19 e 20 del registro: DR-088, DR-089, DR-090, DR-091,
+DR-092. Tutte attuate (§3.2, §3.4).
 
-- **DR-088 (D17 = A):** l'importer imparerà a elencare il bucket; in `apply` la
-  verifica del bucket si eseguirà davvero. `plan` resterà `partial` solo per
-  questa ragione dichiarata.
-- **DR-089 (D18 = B):** attuata, vedi §3.2.
-- **DR-090 (D19 = A):** la fine di un'esecuzione si registrerà con l'ora del
-  database.
-
-DR-088 e DR-090 si attuano nella `1D-W11d`, pianificata in
-`.planning/phases/1D/W11d-PLAN.md`. La conferma di DR-072 (`apply --confirm`
-due volte) **si chiede dopo** quella wave e un nuovo `plan`.
+**Ti chiedo ora la conferma di DR-072:** `apply --confirm` due volte, sui
+conteggi del §2 e con l'esito del §3.4, eseguendo i comandi del §5. Prima di
+`apply` farò la copia di salvataggio con `pg_dump`; dopo, ti riporterò l'esito
+e i conteggi uno per uno, e mi fermerò.
 
 ### 6.1 Come si riallinea l'orologio (fatto il 2026-10-03)
 
@@ -174,7 +184,7 @@ virtuale. Se i container non ripartono, non ricreare i volumi: segnalalo.
 
 ## 7. Come segnalare il completamento
 
-Dopo la `1D-W11d` e il nuovo `plan`, nel prompt successivo:
+Nel prompt successivo:
 
 ```
 HO-008 punto 2: confermo apply --confirm due volte sui conteggi mostrati.

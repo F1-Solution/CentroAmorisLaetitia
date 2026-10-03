@@ -81,3 +81,6 @@ PHASE:1D WAVE:1D-W11a STATUS:complete TS:2026-09-30T09:10:47Z
 PHASE:1D WAVE:1D-W11a-bis STATUS:failed TS:2026-10-03T15:16:53Z
 <!-- 1D-W11a-bis completata dopo DR-089: orologio riallineato, pnpm test verde. L esito partial residuo e affidato alla 1D-W11d (DR-088, DR-090). -->
 PHASE:1D WAVE:1D-W11a-bis STATUS:complete TS:2026-10-03T16:24:21Z
+PHASE:1D WAVE:1D-W11d1 STATUS:complete TS:2026-10-03T17:06:19Z
+PHASE:1D WAVE:1D-W11d2 STATUS:complete TS:2026-10-03T17:10:46Z
+PHASE:1D WAVE:1D-W11d3 STATUS:complete TS:2026-10-03T17:18:06Z

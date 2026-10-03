@@ -33,6 +33,8 @@ export interface StageContext {
    * che non ne hanno bisogno; chi lo usa fallisce apertamente se manca.
    */
   readonly ipHashSalt: string | null;
+  /** Vero quando si esegue la sola fase `verify` su dati già committati: il bucket riflette il database. */
+  readonly verifyOnly?: boolean;
 }
 
 export interface Stage {

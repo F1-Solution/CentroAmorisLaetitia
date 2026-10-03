@@ -1,4 +1,4 @@
-import { schema, type Database } from '@amoris/db';
+import { databaseNow, schema, type Database } from '@amoris/db';
 import { and, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
@@ -112,7 +112,8 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   const slug = input.slug ?? current.slug;
   const parentId = input.parentId === undefined ? current.parentId : (input.parentId ?? null);
 
-  const changes: Record<string, unknown> = { updatedAt: new Date() };
+  // DR-091: l'ora del database, la stessa con cui l'importer registra la fine di un'esecuzione.
+  const changes: Record<string, unknown> = { updatedAt: databaseNow() };
   if (input.title !== undefined) changes.title = input.title;
   if (input.excerpt !== undefined) changes.excerpt = input.excerpt;
   if (input.showTitle !== undefined) changes.showTitle = input.showTitle;
@@ -143,9 +144,9 @@ export async function setPublication(db: Database, id: string, published: boolea
         ? {
             status: 'published',
             publishedAt: current.publishedAt ?? new Date(),
-            updatedAt: new Date(),
+            updatedAt: databaseNow(),
           }
-        : { status: 'draft', updatedAt: new Date() },
+        : { status: 'draft', updatedAt: databaseNow() },
     )
     .where(eq(schema.contents.id, id));
   return findById(db, id);
@@ -178,6 +179,9 @@ export function termsOf(db: Database, contentId: string) {
 
 type DraftInput = z.infer<typeof draftBody>;
 
+/** La transazione è ammessa perché una prova possa fissare l'ora del database (DR-091). */
+type DatabaseOrTx = Database | Parameters<Parameters<Database['transaction']>[0]>[0];
+
 /**
  * Salva la copia di lavoro della persona su quel contenuto (DR-068). Una copia
  * per persona e per contenuto: ADR-006 §3.2 rimanda la modifica collaborativa,
@@ -188,7 +192,7 @@ type DraftInput = z.infer<typeof draftBody>;
  * automatico scrive qui, e il contenuto cambia solo su comando esplicito.
  */
 export async function saveDraft(
-  db: Database,
+  db: DatabaseOrTx,
   contentId: string,
   authorId: string,
   input: DraftInput,
@@ -200,7 +204,7 @@ export async function saveDraft(
     excerpt: input.excerpt ?? null,
     blocks: input.blocks,
     baseUpdatedAt: new Date(input.baseUpdatedAt),
-    updatedAt: new Date(),
+    updatedAt: databaseNow(),
   };
   const [row] = await db
     .insert(schema.contentDrafts)

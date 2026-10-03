@@ -17,7 +17,7 @@
  * copia di lavoro del redattore (DR-068).
  */
 import { eq } from 'drizzle-orm';
-import { schema } from '@amoris/db';
+import { databaseNow, schema } from '@amoris/db';
 import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
@@ -144,7 +144,7 @@ export const relationsStage: Stage = {
             path: resolved.path,
             ...(resolved.provisional ? { status: 'draft' as const } : {}),
             featuredMediaId: featuredMediaId ?? null,
-            updatedAt: new Date(),
+            updatedAt: databaseNow(),
           })
           .where(eq(schema.contents.id, row.dbId));
 
