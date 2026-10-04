@@ -184,3 +184,34 @@ riga di dato, nessun titolo di compilazione, nessun indirizzo di posta.
 Non tocca la produzione, non tocca DNS né email, non installa nulla sul server,
 non dichiara superato il gate di `CLAUDE.md`, non avvia alcuna fase gestionale.
 L'import è **locale**.
+
+## 9. Audit dei criteri di uscita — 2026-10-04
+
+Eseguito prima di dichiarare chiusa la wave. **La wave non è ancora dichiarata
+chiusa**: lo fa l'utente.
+
+| # | Criterio (§7) | Esito | Prova |
+|---|---|---|---|
+| 1 | `pnpm test`, `lint`, `typecheck` verdi dopo `1D-W11a` | ✅ | verdi dopo `1D-W11a-bis` e di nuovo dopo `1D-W11d` (commit `9df3e57`, `4aa0799`): 8 pacchetti, 280 prove nell'importer, 120 nell'API |
+| 2 | Rapporto di `plan` letto prima di mostrarlo | ✅ | tre `plan` del 2026-10-03, HO-008 §1, §3.3, §3.4 |
+| 3 | Conferma di DR-072 data sui conteggi veri e tracciata | ✅ | registro §28, con le parole dell'utente |
+| 4 | Esito della prima esecuzione `success` | ✅ | `import-completeness-report.md`, intestazione e §4; reso raggiungibile da DR-088 |
+| 5 | La seconda esecuzione non muove alcun conteggio | ✅ | rapporto §1 e §6 |
+| 6 | Ogni conteggio coincide o lo scostamento è motivato | ✅ | rapporto §2: `media_variants` (stima), `seo_templates` (DR-040), `redirects` (DR-065) |
+| 7 | Il rapporto di completezza non contiene dati personali | ✅ | soli conteggi, codici di anomalia e identificativi di esecuzione |
+| 8 | `PROGRESS.md` porta una riga per sotto-wave | ⚠️ sanato | la riga di `1D-W11b` mancava ed è stata aggiunta nell'audit, con la nota del ritardo |
+
+**Rilievi dell'audit:**
+
+- `ROADMAP.md` indica per la `1D-W11` l'uscita `docs/migration/import-report.md`;
+  questo piano (§1 punto 5) e la richiesta dell'utente dicono
+  `import-completeness-report.md`, che è il file scritto. La riga della
+  roadmap va allineata.
+- Il §5 del piano descriveva `rollback --run <id>` come via di ritorno. Dopo la
+  seconda esecuzione non lo è più: l'annullamento della prima è rifiutato per
+  costruzione (`importer-spec.md` §9). La via reale è il ripristino della copia
+  (rapporto §8).
+- Il perimetro della wave si è allargato due volte oltre `apps/importer`
+  (`1D-W11a-bis`, `1D-W11d` con `apps/api` e `packages/db` per DR-091), sempre
+  su decisione registrata.
+

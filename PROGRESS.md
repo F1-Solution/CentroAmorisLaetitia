@@ -84,3 +84,7 @@ PHASE:1D WAVE:1D-W11a-bis STATUS:complete TS:2026-10-03T16:24:21Z
 PHASE:1D WAVE:1D-W11d1 STATUS:complete TS:2026-10-03T17:06:19Z
 PHASE:1D WAVE:1D-W11d2 STATUS:complete TS:2026-10-03T17:10:46Z
 PHASE:1D WAVE:1D-W11d3 STATUS:complete TS:2026-10-03T17:18:06Z
+<!-- 1D-W11c: apply eseguito due volte su conferma di DR-072, esito success e idempotenza provata; resta import-completeness-report.md (criterio 7 di W11-PLAN). -->
+PHASE:1D WAVE:1D-W11c STATUS:complete TS:2026-10-03T22:05:55Z
+<!-- 1D-W11b registrata in ritardo, nell'audit del 2026-10-04: il plan e HO-008 erano stati fatti il 2026-10-03 senza la riga prevista dal protocollo. -->
+PHASE:1D WAVE:1D-W11b STATUS:complete TS:2026-10-03T17:20:00Z

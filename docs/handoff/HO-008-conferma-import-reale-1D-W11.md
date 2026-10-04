@@ -1,5 +1,8 @@
 # HO-008 — Conferma dell'import reale in locale (`1D-W11c`)
 
+> **Chiuso il 2026-10-04.** Entrambe le conferme sono state date e attuate; esito
+> in §6.2 e in `docs/migration/import-completeness-report.md`.
+
 Fase 1D, wave `1D-W11b`. Scritto il 2026-10-03, dopo l'esecuzione di `plan` sul
 database `amoris` ricreato vuoto (DR-086). Aggiornato lo stesso giorno dopo la
 correzione `1D-W11a-bis` e un secondo `plan` (§3.2, §3.3).
@@ -181,6 +184,25 @@ nuovo attivi; i dati restano, perché vivono nei volumi.
 
 Se fallisce: riavvia Windows, che riallinea comunque l'orologio della macchina
 virtuale. Se i container non ripartono, non ricreare i volumi: segnalalo.
+
+## 6.2 Esito di `apply` (2026-10-04, conferma di DR-072 data dall'utente)
+
+- **Copia di salvataggio:** `~/amoris-backup/amoris-prima-1D-W11c-2026-10-04.dump`,
+  leggibile, 34 tabelle con dati.
+- **Prima esecuzione:** esito **`success`**, con tutte le otto verifiche eseguite
+  e a 0, compresa «file nel bucket». Conteggi del §2 tutti coincidenti; 13
+  avvisi, gli stessi del §4 (2 percorsi provvisori, 10 file con maiuscole
+  diverse, 1 redirect senza destinazione).
+- **Seconda esecuzione:** esito **`success`**, **nessuna creazione**; tutte le
+  tabelle di dominio identiche alla prima. Nessun contenuto preso per lavoro
+  redazionale.
+- **Bucket:** pubblico 1.471 oggetti (174 originali, 1.287 misure derivate, 10
+  del seme), riservato 4.
+- **Annullamento:** il piano della seconda esecuzione non cancella nulla, e
+  quello della prima è rifiutato perché sovrascritto dalla seconda
+  (`importer-spec.md` §9). **La sola via di ritorno è il ripristino della copia**
+  con `pg_restore`; gli oggetti caricati nel bucket resterebbero e andrebbero
+  rimossi a parte.
 
 ## 7. Come segnalare il completamento
 

@@ -908,3 +908,22 @@ file attesi» non è mai eseguibile (HO-008 §3.3).
 |---|---|---|---|---|---|---|---|---|---|
 | DR-091 | 2026-10-03 | Fin dove arriva DR-090, visto che l'area di gestione scrive l'ora delle copie di lavoro con l'orologio di Node | **Opzione B** — tutte le ore del confronto vengono dal database: fine dell'esecuzione, copie di lavoro e `contents.updated_at` scritti dall'API e dall'importer. Tocca anche `apps/api`. Integra DR-090 | A — solo la fine dell'esecuzione; C — superare DR-090 con orologi sincronizzati | «D20 = B» | Proprietario | Fase 1D, `apps/importer`, `apps/api` | sì | `W11d-PLAN.md` D20, DR-087, DR-090 |
 | DR-092 | 2026-10-03 | Oggetti nel bucket che l'import non attende (per esempio quelli del seme sintetico) | **Opzione A** — la verifica «file nel bucket / file attesi» conta solo i file attesi e mancanti; gli oggetti in più non la fanno fallire | B — il bucket deve coincidere con l'atteso, e il seme va cancellato prima di `apply` | «D21 = A» | Proprietario | Fase 1D, `apps/importer` | sì | `W11d-PLAN.md` D21, DR-088 |
+
+---
+
+## 28. Attuazione di DR-072 — conferma e import reale in locale, 2026-10-03/04
+
+Questa sezione **non registra decisioni nuove**: registra l'attuazione di una
+decisione già approvata.
+
+| Voce aperta | Come è stata chiusa |
+|---|---|
+| **Conferma puntuale di `apply --confirm`** (attuazione di DR-072) | **Data dall'utente** sui conteggi del `plan` riportati in HO-008, con le parole: «HO-008 punto 2: confermo apply --confirm due volte sui conteggi mostrati». Eseguito il 2026-10-04 dopo la copia di salvataggio: due esecuzioni, entrambe con esito `success`, la seconda senza alcuna creazione. Dettaglio in `docs/migration/import-completeness-report.md` |
+
+### Decisioni rimaste aperte dopo la `1D-W11`
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **Attuazione di DR-087** | Protezione su `contents.updated_at` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |
+| **D22** | Immagine del servizio che crea i bucket, non più scaricabile | prima di ricreare l'ambiente da zero |
+| **Attuazione di DR-040 per il suffisso di paginazione** | Il suffisso in inglese non è stato importato (`seo_templates` 6 invece di circa 7); la sua resa in italiano non ha una colonna propria | nella Fase 1E |
