@@ -972,3 +972,11 @@ nuove. Restano aperte anche queste, già registrate al Round 16 e non chiuse:
 | **Attuazione di DR-082, DR-084, DR-085** | Trascinamento a due esiti nel menu e nei blocchi | prima della `1D-W12` |
 | **Attuazione di DR-094** | Form proprio per `et_pb_contact_form` | prima della Fase 1E |
 | **Attuazione di DR-095** | Copertura in CI con soglia dell'80 % | prima della chiusura della Fase 1D |
+
+---
+
+## 30. Round 22 — risposta del 2026-10-04, perimetro dello spostamento dei blocchi
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-097 | 2026-10-04 | Fin dove si sposta un blocco trascinandolo, visto che ADR-006 §3.2 limita lo spostamento «dentro una colonna» e DR-085 chiede il rilascio «dentro» | **Opzione A** — dentro e accanto ovunque `BLOCK-MODEL.md` §3.15 ammetta quel tipo, anche fra contenitori diversi; la riga di ADR-006 §3.2 si riformula di conseguenza | B — solo nel contenitore di partenza e in quelli fratelli | «D27 = A» | Proprietario | Fase 1D, `apps/admin`, ADR-006 §3.2 | sì | DR-069, DR-085, `W9b-PLAN.md` D27 |

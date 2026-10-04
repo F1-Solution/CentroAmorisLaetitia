@@ -89,7 +89,7 @@ significa questo, e non di più:
 |---|---|
 | creare, modificare, pubblicare, ritirare una pagina o un articolo | modelli di pagina riutilizzabili |
 | modificare testo e immagini dentro i blocchi esistenti | modifica fine degli stili per blocco |
-| aggiungere, spostare, eliminare blocchi dentro una colonna | creazione di layout complessi da zero |
+| aggiungere ed eliminare blocchi dentro una colonna; spostarli dentro o accanto a un altro blocco ovunque il tipo sia ammesso (DR-097, 2026-10-04) | creazione di layout complessi da zero |
 | cambiare la ripartizione delle colonne di una riga | libreria di blocchi estendibile |
 | gestire media, menu, SEO per contenuto, redirect, impostazioni | modifica collaborativa, commenti, flussi di approvazione |
 
