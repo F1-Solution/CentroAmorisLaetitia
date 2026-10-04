@@ -187,8 +187,9 @@ L'import è **locale**.
 
 ## 9. Audit dei criteri di uscita — 2026-10-04
 
-Eseguito prima di dichiarare chiusa la wave. **La wave non è ancora dichiarata
-chiusa**: lo fa l'utente.
+Eseguito prima di dichiarare chiusa la wave. **Wave dichiarata chiusa
+dall'utente il 2026-10-04**; la riga della roadmap è stata allineata lo stesso
+giorno.
 
 | # | Criterio (§7) | Esito | Prova |
 |---|---|---|---|

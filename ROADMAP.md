@@ -120,7 +120,7 @@ contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
 | `1D-W8b` | CMS: modifica dei contenuti, editor dell'albero dei blocchi, anteprima | `apps/admin` |
 | `1D-W9` | CMS: media, menu, SEO, redirect, impostazioni | `apps/admin` |
 | `1D-W10` | Test di andata e ritorno su tutti i contenuti, E2E sul CMS, copertura | — |
-| `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza | `docs/migration/import-report.md` |
+| `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza — **chiusa il 2026-10-04** | `docs/migration/import-completeness-report.md` |
 | `1D-W12` | Audit della fase | `.planning/phases/1D/AUDIT.md` |
 
 ### Fase 1E — Ricostruzione React e parità visiva

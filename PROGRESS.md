@@ -88,3 +88,4 @@ PHASE:1D WAVE:1D-W11d3 STATUS:complete TS:2026-10-03T17:18:06Z
 PHASE:1D WAVE:1D-W11c STATUS:complete TS:2026-10-03T22:05:55Z
 <!-- 1D-W11b registrata in ritardo, nell'audit del 2026-10-04: il plan e HO-008 erano stati fatti il 2026-10-03 senza la riga prevista dal protocollo. -->
 PHASE:1D WAVE:1D-W11b STATUS:complete TS:2026-10-03T17:20:00Z
+PHASE:1D WAVE:1D-W11 STATUS:complete TS:2026-10-04T07:56:06Z

@@ -16,6 +16,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — seme sintetico e sei schermate da guardare |
 | HO-007 | [Eseguire a mano le suite della `1D-W10`](HO-007-eseguire-le-suite-della-1D-W10.md) | 1D | ✅ **chiuso** 2026-09-30 — tutti i test passati |
 | HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ✅ **chiuso** 2026-10-04 — `apply` due volte, esito `success`; `import-completeness-report.md` |
+| HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ⏳ **aperto** — account locale creato, accesso da provare |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

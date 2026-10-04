@@ -927,3 +927,48 @@ decisione già approvata.
 | **Attuazione di DR-087** | Protezione su `contents.updated_at` | prima di qualunque riesecuzione dopo l'uso del CMS, e comunque prima della Fase 1F |
 | **D22** | Immagine del servizio che crea i bucket, non più scaricabile | prima di ricreare l'ambiente da zero |
 | **Attuazione di DR-040 per il suffisso di paginazione** | Il suffisso in inglese non è stato importato (`seo_templates` 6 invece di circa 7); la sua resa in italiano non ha una colonna propria | nella Fase 1E |
+
+### Correzione al §28, 2026-10-04
+
+La tabella «Decisioni rimaste aperte dopo la `1D-W11`» elencava solo le voci
+nuove. Restano aperte anche queste, già registrate al Round 16 e non chiuse:
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D6** | Fornitore, dominio, costi, collocazione dei dati | inizio Fase 1F |
+| **D8** | WhatsApp nelle comunicazioni | dopo il gate |
+| **MI-06** e il suo dossier (DR-073) | Verifica privacy e legale, richiede un professionista | prima della Fase 1F |
+| **Impacchettamento del servizio** | Conseguenza di DR-080 | Fase 1F |
+| **Riformulazione di ADR-005 §3.3 regola 2** | Attuazione di DR-071 | prima della Fase 1E |
+| **Intestazioni di cache dei media** | Conseguenza di DR-074 | Fase 1F |
+| **Media citati dentro un blocco di riserva `html`** | Conseguenza di DR-077 | prima della Fase 1E |
+| **Soglia di copertura vincolante** | Misurata, nessuna soglia applicata | prima della chiusura della Fase 1D |
+| **Un form proprio per `et_pb_contact_form`** | Unico modulo di contatto di Divi, oggi blocco di riserva | prima della Fase 1E |
+| **Attuazione di DR-082, DR-084, DR-085** | Trascinamento a due esiti nel menu e nei blocchi; per DR-083 va fatta **prima** dell'audit `1D-W12` | prima della `1D-W12` |
+
+---
+
+## 29. Round 21 — risposta del 2026-10-04, prima dell'audit della Fase 1D
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-093 | 2026-10-04 | Ordine fra la wave del trascinamento e l'audit `1D-W12` | **Opzione A** — si conferma DR-083: prima la wave che attua DR-082, DR-084 e DR-085, poi l'audit | B — audit subito, trascinamento spostato alla Fase 1G | «D23 = A» | Proprietario | Fase 1D, sequenza delle wave | sì | DR-082, DR-083, DR-084, DR-085 |
+| DR-094 | 2026-10-04 | Dove stanno il criterio di uscita 16 (301 degli indirizzi storici) e il modulo di contatto di Divi rimasto blocco di riserva (criterio 10) | **Opzione A** — il criterio 16 passa alla Fase 1E, che costruisce il sito pubblico che serve redirect e media; per `et_pb_contact_form` si costruisce un form proprio, come prevede ADR-010, prima della Fase 1E | B — criterio 16 in 1E e modulo accettato come blocco di riserva; C — gestore minimo dei redirect in 1D e form proprio | «D24 = A» | Proprietario | Fase 1D criteri 10 e 16, Fase 1E, ADR-010 | sì | `CONTEXT.md` §7, ADR-010 |
+| DR-095 | 2026-10-04 | Soglia di copertura vincolante | **Opzione A** — `pnpm test:coverage` in CI con soglia dell'**80 %** | B — sola misura, senza soglia | «D25 = A» | Proprietario | CI, tutti i pacchetti | sì | registro Round 16 |
+| DR-096 | 2026-10-04 | Come si dimostra il criterio di uscita 8 (l'annullamento riporta il database allo stato precedente) | **Opzione A** — vale la prova su dati sintetici già presente fra le prove | B — prova su dati reali con ripristino dalla copia | «D26 = A» | Proprietario | Fase 1D criterio 8 | sì | `CONTEXT.md` §7, DR-072 |
+
+### Note sulla portata
+
+- **DR-094** sposta il criterio 16 fuori dalla Fase 1D; il criterio 10 resta
+  della 1D e si chiude con il form proprio. Il form va costruito prima della
+  Fase 1E, quindi di fatto prima della chiusura della 1D.
+- **DR-095** non è ancora attuata: oggi funzioni 77,37 % e diramazioni
+  78,72 %, sotto la soglia.
+
+### Decisioni rimaste aperte dopo il Round 21
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **Attuazione di DR-082, DR-084, DR-085** | Trascinamento a due esiti nel menu e nei blocchi | prima della `1D-W12` |
+| **Attuazione di DR-094** | Form proprio per `et_pb_contact_form` | prima della Fase 1E |
+| **Attuazione di DR-095** | Copertura in CI con soglia dell'80 % | prima della chiusura della Fase 1D |
