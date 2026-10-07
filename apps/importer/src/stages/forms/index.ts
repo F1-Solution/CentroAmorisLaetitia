@@ -43,12 +43,17 @@
  * si reinseriscono ad ogni riesecuzione, come fa `documents` con
  * `document_terms`.
  */
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
+import {
+  findDiviContactForms,
+  type DiviContactForm,
+  type DiviContactForms,
+} from './diviContactForm.js';
 
 const KNOWN_FIELD_TYPES: ReadonlySet<string> = new Set([
   'address',
@@ -248,18 +253,121 @@ async function loadFormRows(ctx: StageContext): Promise<readonly FormRow[]> {
   return result;
 }
 
+/** I moduli di contatto di Divi dei contenuti pubblicati (DR-094). */
+async function loadDiviForms(ctx: StageContext): Promise<DiviContactForms> {
+  const rows = (await ctx.source.rows('wp_posts')) as readonly SqlRow[];
+  return findDiviContactForms(
+    rows
+      .filter((row) => asString(row['post_status']) === 'publish')
+      .filter((row) => ['page', 'post'].includes(asString(row['post_type'])))
+      .map((row) => ({ postId: asNumber(row['ID']), content: asString(row['post_content']) })),
+  );
+}
+
+/**
+ * Il form di un modulo di Divi, con la sua notifica come nella sorgente
+ * (DR-098). Divi non ha un oggetto proprio, e usa un predefinito in inglese: si
+ * usa il titolo del form.
+ */
+async function writeDiviForm(
+  ctx: StageContext,
+  tx: StageContext['tx'],
+  form: DiviContactForm,
+): Promise<'created' | 'updated'> {
+  const existingId = await ctx.ids.find(tx, DIVI_SOURCE, form.postId, 'form');
+  // Lo slug è unico fra tutti i form: se lo occupa un altro, lo si dice con un
+  // nome riconoscibile invece di un generico errore d'inserimento.
+  const [owner] = await tx
+    .select({ id: schema.forms.id })
+    .from(schema.forms)
+    .where(eq(schema.forms.slug, form.slug));
+  if (owner && owner.id !== existingId) {
+    const conflict = new Error('slug già usato da un altro form');
+    conflict.name = 'divi-form-slug-conflict';
+    throw conflict;
+  }
+  // Un modulo di contatto non ha pagamento né testo del bottone proprio (DR-094).
+  const values = {
+    slug: form.slug,
+    title: form.title,
+    definition: { fields: form.fields, submitText: null, submitTextProcessing: null },
+    confirmationMessage: form.confirmationMessage,
+    requiresPayment: false,
+    legacyId: null,
+  };
+  const [written] = await tx
+    .insert(schema.forms)
+    .values({ id: existingId ?? undefined, ...values })
+    .onConflictDoUpdate({ target: schema.forms.id, set: { ...values, updatedAt: new Date() } })
+    .returning({ id: schema.forms.id });
+  if (!written) throw new Error('inserimento di forms non ha restituito una riga');
+  await ctx.ids.remember(
+    tx,
+    DIVI_SOURCE,
+    form.postId,
+    'form',
+    written.id,
+    ctx.mode === 'apply' ? ctx.runId : null,
+    existingId ? 'updated' : 'created',
+  );
+
+  // Una sola notifica, alla posizione 0: si aggiorna sul posto, come quelle di WPForms.
+  const notification = {
+    formId: written.id,
+    name: 'Notifica',
+    recipients: form.notification.recipients,
+    subject: form.title,
+    senderName: null,
+    replyTo: null,
+    body: form.notification.body,
+    isActive: true,
+    position: 0,
+  };
+  const [current] = await tx
+    .select({ id: schema.formNotifications.id })
+    .from(schema.formNotifications)
+    .where(
+      and(
+        eq(schema.formNotifications.formId, written.id),
+        eq(schema.formNotifications.position, 0),
+      ),
+    );
+  if (current) {
+    await tx
+      .update(schema.formNotifications)
+      .set(notification)
+      .where(eq(schema.formNotifications.id, current.id));
+  } else {
+    await tx.insert(schema.formNotifications).values(notification);
+  }
+  return existingId ? 'updated' : 'created';
+}
+
+/** La chiave di corrispondenza dei form di Divi: il modulo non ha una riga sorgente propria. */
+export const DIVI_SOURCE = 'divi_contact_form';
+
 export const formsStage: Stage = {
   name: 'forms',
   dependsOn: [],
 
   async expected(ctx: StageContext) {
-    return (await loadFormRows(ctx)).length;
+    return (await loadFormRows(ctx)).length + (await loadDiviForms(ctx)).forms.length;
   },
 
   async run(ctx: StageContext): Promise<StageResult> {
     const rows = await loadFormRows(ctx);
+    const recordError = async (key: ItemKey, error: unknown): Promise<void> => {
+      await ctx.issues.record({
+        severity: 'error',
+        stage: 'forms',
+        code: 'item-import-failed',
+        sourceTable: key.sourceTable,
+        sourceId: key.sourceId,
+        detail: error instanceof Error ? error.name : 'unknown-error',
+      });
+    };
 
-    return forEachItem(
+    const wpforms = await forEachItem(
       ctx.tx,
       rows,
       (row): ItemKey => ({ sourceTable: 'wp_posts', sourceId: row.legacyId }),
@@ -361,16 +469,33 @@ export const formsStage: Stage = {
 
         return existingId ? 'updated' : 'created';
       },
-      async (key, error) => {
-        await ctx.issues.record({
-          severity: 'error',
-          stage: 'forms',
-          code: 'item-import-failed',
-          sourceTable: key.sourceTable,
-          sourceId: key.sourceId,
-          detail: error instanceof Error ? error.name : 'unknown-error',
-        });
-      },
+      recordError,
     );
+
+    const diviSource = await loadDiviForms(ctx);
+    for (const issue of diviSource.issues) {
+      await ctx.issues.record({
+        severity: 'warning',
+        stage: 'forms',
+        code: issue.code,
+        sourceTable: 'wp_posts',
+        sourceId: issue.postId,
+        detail: null,
+      });
+    }
+    const divi = await forEachItem(
+      ctx.tx,
+      diviSource.forms,
+      (form): ItemKey => ({ sourceTable: DIVI_SOURCE, sourceId: form.postId }),
+      (form, tx) => writeDiviForm(ctx, tx, form),
+      recordError,
+    );
+
+    return {
+      created: wpforms.created + divi.created,
+      updated: wpforms.updated + divi.updated,
+      skipped: wpforms.skipped + divi.skipped,
+      errors: wpforms.errors + divi.errors,
+    };
   },
 };

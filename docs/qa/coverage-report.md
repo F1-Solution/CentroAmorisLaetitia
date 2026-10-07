@@ -14,6 +14,29 @@ qui.
 
 ---
 
+
+## 0. Misura del 2026-10-07 e soglia in CI (DR-095)
+
+Dal 2026-10-07 `pnpm test:coverage` gira in CI con una **soglia dell'80 %** su
+tutte e quattro le misure (`vitest.config.ts`, `.github/workflows/ci.yml`).
+
+| Misura | `1D-W10` | 2026-10-07, prima delle prove nuove | 2026-10-07, con le prove nuove |
+|---|---|---|---|
+| Istruzioni e righe | 85,67 % | 85,90 % | **86,38 %** |
+| Diramazioni | 78,72 % | 79,88 % | **80,02 %** |
+| Funzioni | 77,37 % | 76,72 % | **81,50 %** |
+
+Le prove aggiunte per arrivarci verificano cose vere: l'integrità della
+dichiarazione dello schema (ogni chiave esterna punta a una tabella esistente, i
+vincoli unici su cui il codice conta ci sono) e il trascinamento da tastiera
+(prendere e annullare non cambiano nulla).
+
+**Da sapere:** le diramazioni superano la soglia di 0,02 punti; una modifica che
+aggiunge rami senza prove la farà fallire, ed è lo scopo. La misura dopo le
+ultime correzioni della revisione (che aggiungono rami, tutti provati) è stata
+interrotta dal sistema per mancanza di memoria; la prima esecuzione in CI la
+rifarà.
+
 ## 1. Che cosa è entrato nella misura
 
 **129 file di prove, 1005 prove, tutte superate.** In 585 secondi.

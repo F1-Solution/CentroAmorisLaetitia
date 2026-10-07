@@ -23,7 +23,7 @@ export const EXPECTED_COUNTS: Readonly<Record<ReportRowName, number | null>> = {
   terms: 4, // DR-061: 2 `category` + `wpdmcategory` + `cuar_private_file_category`
   contents: 108,
   menu_items: 64,
-  forms: 25,
+  forms: 26, // 25 di WPForms più il modulo di contatto di Divi (DR-094)
   form_submissions: 425,
   documents: 8,
   slider_slides: 12,

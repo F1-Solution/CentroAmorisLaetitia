@@ -176,8 +176,8 @@ un tema aperto** (MI-06), non una dimenticanza.
 | `terms` | **4** (2 `category` + 1 `wpdmcategory` + 1 `cuar_private_file_category` — DR-061) |
 | `menu_items` | **64** |
 | `redirects` | **181** (170 allegati + 4 documenti + 6 slug storici + 1 con carattere jolly). Rivisto il 2026-09-30: era 180 perché l'allegato 341 non si ritrovava, e DR-065 lo recupera |
-| `forms` | 25 |
-| `form_notifications` | 39 |
+| `forms` | 26 — 25 di WPForms più il modulo di contatto di Divi (DR-094, 2026-10-07) |
+| `form_notifications` | 40 — 39 di WPForms più quella del modulo di contatto di Divi (DR-098, 2026-10-07) |
 | `form_submissions` | **425** |
 | `documents` | 8 (4 pubblici + 4 riservati) |
 | `slider_slides` | 12 |

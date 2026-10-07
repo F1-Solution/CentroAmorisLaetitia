@@ -980,3 +980,38 @@ nuove. Restano aperte anche queste, già registrate al Round 16 e non chiuse:
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-097 | 2026-10-04 | Fin dove si sposta un blocco trascinandolo, visto che ADR-006 §3.2 limita lo spostamento «dentro una colonna» e DR-085 chiede il rilascio «dentro» | **Opzione A** — dentro e accanto ovunque `BLOCK-MODEL.md` §3.15 ammetta quel tipo, anche fra contenitori diversi; la riga di ADR-006 §3.2 si riformula di conseguenza | B — solo nel contenitore di partenza e in quelli fratelli | «D27 = A» | Proprietario | Fase 1D, `apps/admin`, ADR-006 §3.2 | sì | DR-069, DR-085, `W9b-PLAN.md` D27 |
+
+---
+
+## 31. Attuazioni del 2026-10-07 — DR-094 e DR-095
+
+Questa sezione **non registra decisioni nuove**: registra l'attuazione di
+decisioni già approvate. Piano in `.planning/phases/1D/PRE-AUDIT-PLAN.md`.
+
+| Voce aperta | Stato |
+|---|---|
+| **Attuazione di DR-094** — form proprio per `et_pb_contact_form` | **Codice fatto.** L'importer ricava dal modulo un form con quattro campi e lo cita con un blocco `form`. `plan` sulla sorgente vera: `forms` 26, blocchi di riserva 7 su 305 (2,30 %) in 4 contenuti. Resta l'`apply` reale, a conferma puntuale, e la notifica email (D28) |
+| **Attuazione di DR-095** — copertura in CI all'80 % | **Fatta.** Soglia su istruzioni, diramazioni, funzioni e righe; passo «Copertura» in CI. Misura: 86,38 %, 80,02 %, 81,50 %, 86,38 % |
+
+### Conseguenza dichiarata
+
+- **`forms` atteso passa da 25 a 26**, in `database-schema.md` §6 e nei conteggi
+  dell'importer: il modulo di contatto di Divi è ora un form proprio.
+
+### Decisioni rimaste aperte
+
+| id | Contenuto | Termine |
+|---|---|---|
+| **D28** | Notifica email del modulo di contatto: come nella sorgente, o nessuna finché non si collauda l'invio | prima dell'`apply` della `1D-W11e` |
+
+## 32. Round 23 — risposta del 2026-10-07, notifica del modulo di contatto
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-098 | 2026-10-07 | La notifica email del form ricavato dal modulo di contatto di Divi | **Opzione A** — si crea la notifica come nella sorgente: destinazione l'indirizzo del Centro scritto nel modulo, testo con i campi | B — nessuna notifica finché non si collauda l'invio | «D28 = A» | Proprietario | Fase 1D, `apps/importer`, ADR-010 §4.3 | sì | DR-094, `PRE-AUDIT-PLAN.md` D28 |
+
+### Note sulla portata
+
+- **Si configura, non si invia.** In Fase 1D nessun servizio manda email: la
+  notifica è un dato, che l'invio vero (ADR-010 §4.3) userà quando esisterà.
+- **`form_notifications` atteso passa da 39 a 40.**

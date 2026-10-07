@@ -11,12 +11,13 @@ import { defineConfig } from 'vitest/config';
  * di `packages/blocks` è coperto anche dalle prove di `apps/api` che lo usano,
  * e sommare otto percentuali lo conterebbe otto volte o nessuna.
  *
- * Non entra nella CI di ogni modifica: l'esecuzione unica dura molto più della
- * somma delle esecuzioni con cache. Si esegue quando serve una misura, con
+ * Dal 2026-10-07 entra nella CI con una **soglia dell'80 %** su istruzioni,
+ * diramazioni, funzioni e righe (DR-095): sotto soglia la verifica fallisce.
+ * In locale si esegue con
  *
  *     pnpm test:coverage
  *
- * e il risultato si scrive in `docs/qa/coverage-report.md`.
+ * e la misura si scrive in `docs/qa/coverage-report.md`.
  *
  * Restano fuori le suite che leggono `source-private/` (DR-010): i pacchetti
  * dichiarano `tests/real/**` in una configurazione separata, e questa elenca
@@ -45,6 +46,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'html'],
       reportsDirectory: './coverage',
+      // DR-095: sotto queste percentuali la verifica fallisce, anche in CI.
+      thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
       include: ['apps/*/src/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
       exclude: [
         // Non è codice del prodotto: sono i punti d'ingresso dei server e le

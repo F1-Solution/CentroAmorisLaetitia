@@ -28,8 +28,10 @@ export const EXPECTED_TABLE_COUNTS: Readonly<Record<TableCountRowName, number>> 
   terms: 4,
   menu_items: 64,
   redirects: 181, // DR-065: 170 pagine allegato, non 169
-  forms: 25,
-  form_notifications: 39,
+  // 25 di WPForms più il modulo di contatto di Divi (DR-094).
+  forms: 26,
+  // 39 di WPForms più quella del modulo di contatto di Divi (DR-098).
+  form_notifications: 40,
   form_submissions: 425,
   documents: 8,
   slider_slides: 12,

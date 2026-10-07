@@ -113,6 +113,11 @@ jobs:
           $COMPOSE up -d objects objects-init
           $COMPOSE wait objects-init
 
+      # DR-095: copertura misurata sull'insieme dei pacchetti, con soglia
+      # dell'80 % su istruzioni, diramazioni, funzioni e righe.
+      - name: Copertura
+        run: pnpm test:coverage
+
       - name: Prove end-to-end
         run: pnpm test:e2e
 

@@ -10,11 +10,13 @@
  * Stessa forma di `mediaResolver.ts`: una lettura sola per fase, poi una
  * funzione pura. Il convertitore non tocca il database.
  */
+import { and, eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Tx } from '../../persistence/tx.js';
 
 /** Prefisso del riferimento prodotto da `convertFormSelector` (blocco `wpforms/form-selector`). */
 const WPFORMS_PREFIX = 'wpforms:';
+const DIVI_FORM_PREFIX = 'divi-contact-form:';
 
 /**
  * Indicizza per identificativo di origine, scartando le collisioni invece di
@@ -42,18 +44,31 @@ function parseLegacyId(raw: string): number | null {
  * `wpforms:<id>` — l'identificativo è quello del `wp_posts` di tipo `wpforms`,
  * cioè la stessa chiave con cui la fase `forms` scrive `forms.legacyId`.
  *
- * `divi-contact-form:<titolo>` **non si risolve, ed è voluto**: un modulo
- * `et_pb_contact_form` non ha una riga sorgente propria, quindi non esiste
- * alcuna entità `forms` a cui puntare. Resta un blocco di riserva, che è
- * l'esito onesto.
+ * `divi-contact-form:<titolo>` è il modulo di contatto di Divi: dal 2026-10-07
+ * (DR-094) la fase `forms` ne crea un form proprio, registrato in
+ * `import_id_map` sotto `divi_contact_form`, e qui lo si ritrova per titolo.
  */
 export async function buildFormResolver(tx: Tx): Promise<(legacyRef: string) => string | null> {
   const rows = await tx
     .select({ id: schema.forms.id, legacyId: schema.forms.legacyId })
     .from(schema.forms);
   const byLegacyId = indexByLegacyId(rows);
+  const diviRows = await tx
+    .select({ id: schema.forms.id, title: schema.forms.title })
+    .from(schema.importIdMap)
+    .innerJoin(schema.forms, eq(schema.forms.id, schema.importIdMap.entityId))
+    .where(
+      and(
+        eq(schema.importIdMap.sourceTable, 'divi_contact_form'),
+        eq(schema.importIdMap.entity, 'form'),
+      ),
+    );
+  const diviByTitle = new Map(diviRows.map((row) => [row.title, row.id]));
 
   return (legacyRef: string) => {
+    if (legacyRef.startsWith(DIVI_FORM_PREFIX)) {
+      return diviByTitle.get(legacyRef.slice(DIVI_FORM_PREFIX.length)) ?? null;
+    }
     if (!legacyRef.startsWith(WPFORMS_PREFIX)) return null;
     const legacyId = parseLegacyId(legacyRef.slice(WPFORMS_PREFIX.length));
     return legacyId === null ? null : (byLegacyId.get(legacyId) ?? null);

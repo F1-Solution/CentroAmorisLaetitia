@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import { formsStage } from '../../../src/stages/forms/index.js';
+import { contentsStage } from '../../../src/stages/contents/index.js';
 import { runStage } from '../../../src/stages/runStage.js';
 import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
@@ -255,5 +256,135 @@ describe('fase forms', () => {
 
     const notifications = await testDb.db.select().from(schema.formNotifications);
     expect(notifications).toHaveLength(3); // non duplicate
+  });
+});
+
+/** Una pagina pubblicata con il modulo di contatto di Divi (DR-094): forma del caso reale, dati inventati. */
+const DIVI_PAGE: SqlRow = {
+  ID: 42,
+  post_type: 'page',
+  post_status: 'publish',
+  post_name: 'contatti',
+  post_title: 'Contatti',
+  post_author: 0,
+  post_excerpt: '',
+  post_date: '2020-03-01 09:00:00',
+  post_parent: 0,
+  menu_order: 0,
+  post_content:
+    '[et_pb_section][et_pb_row][et_pb_column type="4_4"]' +
+    '[et_pb_contact_form email="segreteria@esempio.invalid" title="Richiesta informazioni" success_message="Grazie." custom_message="Nome: %%Name%%"]' +
+    '[et_pb_contact_field field_id="Name" field_title="Nome"][/et_pb_contact_field]' +
+    '[et_pb_contact_field field_id="Message" field_title="Messaggio" field_type="text"][/et_pb_contact_field]' +
+    '[/et_pb_contact_form][/et_pb_column][/et_pb_row][/et_pb_section]',
+};
+
+describe('fase forms — modulo di contatto di Divi (DR-094)', () => {
+  it('crea un form proprio con la sua notifica, e la rieseguita non duplica nulla', async () => {
+    const fresh = await createTestDatabase('amoris_importer_forms_divi');
+    try {
+      const source = fakeSourceReader({ wp_posts: [DIVI_PAGE] });
+      for (const expected of ['created', 'updated'] as const) {
+        const runId = await newApplyRunId(fresh.db);
+        const result = await runStage(formsStage, {
+          db: fresh.db,
+          storage: fakeObjectStore(),
+          source,
+          runId,
+          mode: 'apply',
+          issues: createIssueSink(fresh.db, 'apply', runId),
+          options: OPTIONS,
+        });
+        expect(result[expected]).toBe(1);
+        expect(result.errors).toBe(0);
+      }
+
+      const forms = await fresh.db.select().from(schema.forms);
+      expect(forms).toHaveLength(1);
+      expect(forms[0]).toMatchObject({
+        slug: 'contatto-richiesta-informazioni',
+        title: 'Richiesta informazioni',
+        confirmationMessage: 'Grazie.',
+        requiresPayment: false,
+        legacyId: null,
+      });
+      const ids = await fresh.db
+        .select()
+        .from(schema.importIdMap)
+        .where(eq(schema.importIdMap.sourceTable, 'divi_contact_form'));
+      expect(ids.map((row) => [row.sourceId, row.entity, row.entityId])).toEqual([
+        [42, 'form', forms[0]!.id],
+      ]);
+      // DR-098: una notifica come nella sorgente, e la riesecuzione non la duplica.
+      const notifications = await fresh.db.select().from(schema.formNotifications);
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0]).toMatchObject({
+        formId: forms[0]!.id,
+        recipients: 'segreteria@esempio.invalid',
+        subject: 'Richiesta informazioni',
+        position: 0,
+        isActive: true,
+      });
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('la pagina cita il form con un blocco `form`, non con il blocco di riserva', async () => {
+    const fresh = await createTestDatabase('amoris_importer_forms_divi_contents');
+    try {
+      const source = fakeSourceReader({ wp_posts: [DIVI_PAGE], wp_postmeta: [], wp_options: [] });
+      for (const stage of [formsStage, contentsStage]) {
+        const runId = await newApplyRunId(fresh.db);
+        const issues = createIssueSink(fresh.db, 'apply', runId);
+        const result = await runStage(stage, {
+          db: fresh.db,
+          storage: fakeObjectStore(),
+          source,
+          runId,
+          mode: 'apply',
+          issues,
+          options: OPTIONS,
+        });
+        expect(result.errors).toBe(0);
+        expect(issues.collected).toEqual([]);
+      }
+      const [form] = await fresh.db.select().from(schema.forms);
+      const [page] = await fresh.db.select().from(schema.contents);
+      const text = JSON.stringify(page!.blocks);
+      expect(text).toContain(`"formId":"${form!.id}"`);
+      expect(text).not.toContain('et_pb_contact_form');
+      expect(text).not.toContain('"type":"html"');
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
+  it('uno slug già occupato da un altro form si segnala con il suo nome, non come errore generico', async () => {
+    const fresh = await createTestDatabase('amoris_importer_forms_divi_slug');
+    try {
+      await fresh.db.insert(schema.forms).values({
+        slug: 'contatto-richiesta-informazioni',
+        title: 'Un altro form',
+        definition: { fields: [] },
+      });
+      const runId = await newApplyRunId(fresh.db);
+      const issues = createIssueSink(fresh.db, 'apply', runId);
+      const result = await runStage(formsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: fakeSourceReader({ wp_posts: [DIVI_PAGE] }),
+        runId,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+      expect(result.errors).toBe(1);
+      expect(issues.collected.map((i) => [i.code, i.sourceTable, i.sourceId, i.detail])).toEqual([
+        ['item-import-failed', 'divi_contact_form', 42, 'divi-form-slug-conflict'],
+      ]);
+    } finally {
+      await fresh.teardown();
+    }
   });
 });
