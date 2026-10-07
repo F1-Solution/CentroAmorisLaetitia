@@ -1,6 +1,6 @@
 'use client';
 
-import type { BlockType, BlockNode as ModelBlock } from '@amoris/blocks';
+import { ALLOWED_CHILDREN, type BlockType, type BlockNode as ModelBlock } from '@amoris/blocks';
 import {
   Alert,
   BlockInserter,
@@ -11,6 +11,7 @@ import {
   Tabs,
   TextField,
   insertableBlockTypes,
+  type DropZone,
   type PreviewViewport,
 } from '@amoris/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -19,9 +20,11 @@ import {
   UNCREATABLE_REASON,
   creatableChildTypes,
   findBlock,
+  canDropBlock,
   insertBlock,
+  labelOf,
   moveBlockBy,
-  moveBlockOnto,
+  moveBlockTo,
   removeBlock,
   replaceBlock,
   setColumnStructure,
@@ -36,8 +39,8 @@ import {
 } from '../../lib/editor/roundtrip';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
+import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
-import { BlockTreeDragArea, SortableBlockRow, SortableSiblings } from './BlockTreeDnd';
 import { ContentSeoPanel } from './ContentSeoPanel';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
@@ -285,9 +288,9 @@ export function ContentEditor({
     mutate({ ...state, document: replaceBlock(state.document, next) });
   }
 
-  function onDrop(activeId: string, overId: string): void {
+  function onDrop(activeId: string, targetId: string, zone: DropZone): void {
     if (!state) return;
-    const outcome = moveBlockOnto(state.document, activeId, overId);
+    const outcome = moveBlockTo(state.document, activeId, targetId, zone);
     if (!outcome.ok) {
       setActionError(outcome.reason);
       return;
@@ -382,7 +385,20 @@ export function ContentEditor({
               disabled={readOnly}
               onChange={(event) => mutate({ ...state, title: event.target.value })}
             />
-            <BlockTreeDragArea onDrop={onDrop}>
+            <TreeDragArea
+              canNest={(id) => {
+                const block = findBlock(state.document.blocks, id);
+                return block ? ALLOWED_CHILDREN[block.type].length > 0 : false;
+              }}
+              canDrop={(activeId, targetId, zone) =>
+                canDropBlock(state.document, activeId, targetId, zone)
+              }
+              onDrop={onDrop}
+              describe={(id) => {
+                const block = findBlock(state.document.blocks, id);
+                return block ? labelOf(block) : id;
+              }}
+            >
               <BlockTreeEditor
                 blocks={toTreeNodes(state.document.blocks)}
                 {...(selectedId ? { selectedId } : {})}
@@ -398,10 +414,9 @@ export function ContentEditor({
                   if (id === selectedId) setSelectedId(undefined);
                 }}
                 onAddRequest={(parentId) => setInserterParent(parentId)}
-                renderList={(props) => <SortableSiblings {...props} />}
-                renderRow={(props) => <SortableBlockRow {...props} />}
+                {...(readOnly ? {} : { renderRow: DraggableTreeRow })}
               />
-            </BlockTreeDragArea>
+            </TreeDragArea>
             {draftSavedAt ? (
               <Button variant="tertiary" onClick={() => void discardDraft()} disabled={busy}>
                 Scarta la copia di lavoro

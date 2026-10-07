@@ -8,9 +8,9 @@
  * l'originale, il confronto sarebbe fra due riferimenti allo stesso oggetto e
  * direbbe sempre «uguale», anche quando non lo è.
  *
- * Il perimetro è quello di ADR-006 §3.2: aggiungere, spostare ed eliminare
- * blocchi dentro il loro contenitore, e cambiare la ripartizione delle colonne
- * di una riga. Nient'altro.
+ * Il perimetro è quello di ADR-006 §3.2: aggiungere ed eliminare blocchi,
+ * spostarli dentro o accanto a un altro blocco dove il tipo è ammesso (DR-097),
+ * e cambiare la ripartizione delle colonne di una riga. Nient'altro.
  */
 import {
   ALLOWED_CHILDREN,
@@ -26,7 +26,7 @@ import {
   type BlockNode as ModelBlock,
   type BlockType,
 } from '@amoris/blocks';
-import type { BlockNode as TreeNode } from '@amoris/ui';
+import type { DropZone, BlockNode as TreeNode } from '@amoris/ui';
 
 /**
  * I tipi che si possono creare da zero in questa wave. Gli altri sei non sono
@@ -142,7 +142,26 @@ export function moveBlock(doc: BlockDocument, id: string, toIndex: number): Bloc
   if (fromIndex < 0 || toIndex < 0 || toIndex >= siblings.length || toIndex === fromIndex) {
     return doc;
   }
-  return replaceSiblings(doc, parentId, (children) => moved(children, fromIndex, toIndex));
+  return syncColumnStructure(
+    replaceSiblings(doc, parentId, (children) => moved(children, fromIndex, toIndex)),
+    parentId,
+  );
+}
+
+/**
+ * Dopo un riordino delle colonne, `columnStructure` della riga segue il nuovo
+ * ordine delle larghezze: è l'invariante di `BLOCK-MODEL.md` §3.2.
+ */
+function syncColumnStructure(doc: BlockDocument, parentId: string | null): BlockDocument {
+  if (parentId === null) return doc;
+  const row = findBlock(doc.blocks, parentId);
+  if (!row || row.type !== 'row') return doc;
+  const structure = row.children
+    .map((child) => (child.type === 'column' ? child.props.width : null))
+    .filter((width): width is string => width !== null)
+    .join(',');
+  if (structure === row.props.columnStructure) return doc;
+  return replaceBlock(doc, { ...row, props: { ...row.props, columnStructure: structure } });
 }
 
 export function moveBlockBy(doc: BlockDocument, id: string, delta: number): BlockDocument {
@@ -300,33 +319,67 @@ export type DropOutcome =
   | { readonly ok: true; readonly document: BlockDocument }
   | { readonly ok: false; readonly reason: string };
 
-/**
- * Esito di un trascinamento: sposta `activeId` nella posizione di `overId`.
- *
- * Un blocco lasciato cadere in un contenitore diverso dal proprio **non** si
- * sposta. ADR-006 §3.2 limita lo spostamento a «dentro una colonna» e DR-069 ha
- * deciso il gesto, non il perimetro: accettarlo perché il gesto lo rende
- * facile sarebbe allargare l'ambito della fase con il puntatore.
- */
-export function moveBlockOnto(doc: BlockDocument, activeId: string, overId: string): DropOutcome {
-  if (activeId === overId) return { ok: true, document: doc };
-
-  const activeParent = parentIdOf(doc.blocks, activeId);
-  const overParent = parentIdOf(doc.blocks, overId);
-  if (activeParent === undefined || overParent === undefined) {
-    return { ok: false, reason: 'Il blocco non fa parte di questo documento.' };
+/** Il motivo per cui il rilascio non è ammesso, o `null` (DR-085, DR-097, `BLOCK-MODEL.md` §3.15). */
+export function canDropBlock(
+  doc: BlockDocument,
+  activeId: string,
+  targetId: string,
+  zone: DropZone,
+): string | null {
+  const active = findBlock(doc.blocks, activeId);
+  const target = findBlock(doc.blocks, targetId);
+  if (!active || !target) return 'Il blocco non fa parte di questo documento.';
+  if (findBlock([active], targetId)) return 'Un blocco non può entrare in sé stesso.';
+  const parentId = zone === 'inside' ? targetId : parentIdOf(doc.blocks, targetId);
+  if (parentId === undefined) return 'La destinazione non esiste più.';
+  if (!allowedChildTypes(doc, parentId).includes(active.type)) {
+    return 'Questo tipo di blocco non può stare lì.';
   }
-  if (activeParent !== overParent) {
+  if (active.type === 'column' && parentId !== parentIdOf(doc.blocks, activeId)) {
+    return 'Una colonna si sposta solo dentro la sua riga: per cambiare le colonne di una riga si usa la sua ripartizione.';
+  }
+  return null;
+}
+
+/**
+ * Trascinamento a due esiti (DR-085): porta il blocco dentro quello di arrivo,
+ * in coda ai suoi figli, oppure accanto, prima o dopo, anche in un altro
+ * contenitore purché il tipo vi sia ammesso (DR-097).
+ */
+export function moveBlockTo(
+  doc: BlockDocument,
+  activeId: string,
+  targetId: string,
+  zone: DropZone,
+): DropOutcome {
+  if (activeId === targetId) return { ok: true, document: doc };
+  const reason = canDropBlock(doc, activeId, targetId, zone);
+  if (reason) return { ok: false, reason: `${reason} Il blocco è rimasto dov’era.` };
+
+  const active = findBlock(doc.blocks, activeId);
+  if (!active) return { ok: false, reason: 'Il blocco non fa parte di questo documento.' };
+  const without = removeBlock(doc, activeId);
+  if (zone === 'inside') {
     return {
-      ok: false,
-      reason:
-        'In questa fase un blocco si sposta soltanto dentro il contenitore in cui si trova. Il blocco è rimasto dov’era.',
+      ok: true,
+      document: syncColumnStructure(
+        replaceSiblings(without, targetId, (children) => [...children, active]),
+        targetId,
+      ),
     };
   }
-
-  const siblings = siblingsOf(doc, overParent);
-  const toIndex = siblings.findIndex((block) => block.id === overId);
-  if (toIndex < 0) return { ok: false, reason: 'La destinazione non esiste più.' };
-
-  return { ok: true, document: moveBlock(doc, activeId, toIndex) };
+  const parentId = parentIdOf(without.blocks, targetId);
+  if (parentId === undefined) return { ok: false, reason: 'La destinazione non esiste più.' };
+  const index = siblingsOf(without, parentId).findIndex((block) => block.id === targetId);
+  return {
+    ok: true,
+    document: syncColumnStructure(
+      replaceSiblings(without, parentId, (children) => {
+        const next = [...children];
+        next.splice(zone === 'before' ? index : index + 1, 0, active);
+        return next;
+      }),
+      parentId,
+    ),
+  };
 }

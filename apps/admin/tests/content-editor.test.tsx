@@ -110,6 +110,17 @@ describe('editor del contenuto', () => {
     expect(within(preview).getByText(/Primo paragrafo di prova\./)).toBeInTheDocument();
   });
 
+  it('ogni blocco ha la maniglia del trascinamento a due esiti (DR-085)', async () => {
+    renderEditor();
+    await waitForEditor();
+    const handles = within(tree()).getAllByRole('button', { name: /^Prendi «.+» per spostarlo$/ });
+    expect(handles.length).toBeGreaterThan(0);
+    // I bottoni restano: sono il percorso da tastiera (`design-system.md` §9.3).
+    expect(within(tree()).getAllByRole('button', { name: /^Sposta su:/ }).length).toBe(
+      handles.length,
+    );
+  });
+
   it('criterio 1D-36: salvare senza modifiche non scrive il contenuto', async () => {
     const user = userEvent.setup();
     renderEditor();

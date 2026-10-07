@@ -17,6 +17,7 @@ import {
   buildTree,
   indent,
   moveDown,
+  moveItemTo,
   moveUp,
   outdent,
   patchesFor,
@@ -24,6 +25,7 @@ import {
 } from '../../lib/menu/tree';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
+import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { MenuItemPanel } from './MenuItemPanel';
 import type { MenuItem, MenuItemKind, MenuSummary, RoleOption } from './types';
 import './MenuManager.css';
@@ -31,6 +33,8 @@ import './MenuManager.css';
 /**
  * Menu di navigazione: il criterio 1D-32 per intero — aggiungere, spostare,
  * annidare, cambiare visibilità.
+ *
+ * Il trascinamento a due esiti (DR-082) passa dalla stessa via dei bottoni.
  *
  * Lo spostamento si fa qui e non nel componente: `MenuTreeEditor` conosce
  * l'albero ma non il servizio, e l'albero vive piatto a database. Ogni comando
@@ -283,21 +287,36 @@ export function MenuManager(): React.JSX.Element {
         </Alert>
       ) : null}
 
-      <MenuTreeEditor
-        items={displayTree}
-        {...(selectedId ? { selectedId } : {})}
-        onSelect={setSelectedId}
-        onMoveUp={(id) => void restructure(moveUp(tree, id))}
-        onMoveDown={(id) => void restructure(moveDown(tree, id))}
-        onIndent={(id) => void restructure(indent(tree, id))}
-        onOutdent={(id) => void restructure(outdent(tree, id))}
-        onDelete={(id) => {
-          setDeleteError(null);
-          setDeleting(items.find((item) => item.id === id) ?? null);
+      <TreeDragArea
+        canNest={() => true}
+        canDrop={(activeId, targetId, zone) =>
+          moveItemTo(tree, activeId, targetId, zone)
+            ? null
+            : 'Una voce non può entrare in sé stessa o in una sua sottovoce.'
+        }
+        onDrop={(activeId, targetId, zone) => {
+          const next = moveItemTo(tree, activeId, targetId, zone);
+          if (next) void restructure(next);
         }}
-        loading={loading}
-        disabled={busy || !canWrite}
-      />
+        describe={(id) => items.find((item) => item.id === id)?.label ?? id}
+      >
+        <MenuTreeEditor
+          items={displayTree}
+          {...(selectedId ? { selectedId } : {})}
+          onSelect={setSelectedId}
+          onMoveUp={(id) => void restructure(moveUp(tree, id))}
+          onMoveDown={(id) => void restructure(moveDown(tree, id))}
+          onIndent={(id) => void restructure(indent(tree, id))}
+          onOutdent={(id) => void restructure(outdent(tree, id))}
+          onDelete={(id) => {
+            setDeleteError(null);
+            setDeleting(items.find((item) => item.id === id) ?? null);
+          }}
+          loading={loading}
+          disabled={busy || !canWrite}
+          {...(busy || !canWrite ? {} : { renderRow: DraggableTreeRow })}
+        />
+      </TreeDragArea>
 
       {selected ? (
         <MenuItemPanel

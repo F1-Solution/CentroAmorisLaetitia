@@ -55,6 +55,7 @@ export * from './editor/ColumnRatioControl';
 export * from './editor/RichTextToolbar';
 export * from './editor/HtmlFallbackEditor';
 export * from './editor/MenuTreeEditor';
+export * from './editor/dropZone';
 export * from './editor/SeoPanel';
 export * from './editor/AuditTrail';
 

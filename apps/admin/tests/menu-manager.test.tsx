@@ -116,6 +116,25 @@ describe('menu di navigazione', () => {
     expect(screen.getByRole('button', { name: /^Seconda voce/ })).toBeInTheDocument();
   });
 
+  it('ogni voce ha la maniglia per il trascinamento, e i bottoni funzionano ancora (DR-082)', async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+
+    expect(
+      screen.getByRole('button', { name: 'Prendi «Prima voce» per spostarlo' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Prendi «Seconda voce» per spostarlo' }),
+    ).toBeInTheDocument();
+    // Accanto alla regione di dnd-kit c'è la nostra, che dice la fascia scelta.
+    expect(document.querySelector('.amoris-tree-drop__status')).not.toBeNull();
+
+    // Un clic non è un trascinamento: la soglia di 8 pixel lascia passare il bottone.
+    await user.click(screen.getByRole('button', { name: 'Elimina: Seconda voce' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
   it('annida una voce sotto quella che la precede', async () => {
     const user = userEvent.setup();
     renderManager();

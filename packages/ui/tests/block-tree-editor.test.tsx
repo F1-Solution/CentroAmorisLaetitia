@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { BlockTreeEditor } from '../src/editor/BlockTreeEditor.js';
@@ -76,7 +77,7 @@ describe('BlockTreeEditor — componente 41', () => {
     expect(container.querySelector('[data-drag-wrapper]')).toBeNull();
   });
 
-  it('con `renderList` e `renderRow` il trascinamento si innesta dall’esterno', () => {
+  it('con `renderRow` il trascinamento avvolge la sola riga, dall’esterno (DR-085)', () => {
     const { container } = render(
       <BlockTreeEditor
         blocks={blocks}
@@ -85,24 +86,20 @@ describe('BlockTreeEditor — componente 41', () => {
         onMoveDown={vi.fn()}
         onDelete={vi.fn()}
         onAddRequest={vi.fn()}
-        renderList={({ ids, children }) => (
-          <div data-drag-wrapper="lista" data-ids={ids.join(',')}>
+        renderRow={({ id, children }) => (
+          <div data-drag-wrapper="riga" data-id={id}>
             {children}
           </div>
         )}
-        renderRow={({ id, children }) => (
-          <li data-drag-wrapper="riga" data-id={id}>
-            {children}
-          </li>
-        )}
       />,
     );
-    // L'elenco e ogni riga passano dagli involucri, che è ciò che permette a
-    // `apps/admin` di montarvi la libreria senza che `packages/ui` la conosca.
-    expect(container.querySelector('[data-drag-wrapper="lista"]')?.getAttribute('data-ids')).toBe(
-      'b1,b2',
-    );
-    expect(container.querySelectorAll('[data-drag-wrapper="riga"]').length).toBe(2);
+    // Ogni riga passa dall'involucro, che è ciò che permette a `apps/admin` di
+    // montarvi la libreria senza che `packages/ui` la conosca; l'elemento
+    // dell'elenco resta del componente, e l'involucro misura la sola riga.
+    const wrappers = container.querySelectorAll('[data-drag-wrapper="riga"]');
+    expect(wrappers.length).toBe(2);
+    expect(wrappers[0]?.parentElement?.tagName).toBe('LI');
+    expect(wrappers[0]?.querySelector('ul')).toBeNull();
   });
 
   it("il primo blocco non può salire, l'ultimo non può scendere", () => {
@@ -174,5 +171,27 @@ describe('BlockTreeEditor — componente 41', () => {
     );
     screen.getByRole('button', { name: 'Aggiungi blocco in «Media e testo»' }).click();
     expect(onAddRequest).toHaveBeenCalledWith('c1');
+  });
+});
+
+describe('BlockTreeEditor — un involucro con hook si rende come componente', () => {
+  it('aggiungere un blocco non rompe l’ordine degli hook (React #310)', () => {
+    function RigaConHook({ id, children }: { id: string; children: ReactNode }) {
+      const [visto] = useState(id);
+      return <div data-riga={visto}>{children}</div>;
+    }
+    const props = {
+      onSelect: vi.fn(),
+      onMoveUp: vi.fn(),
+      onMoveDown: vi.fn(),
+      onDelete: vi.fn(),
+      onAddRequest: vi.fn(),
+      renderRow: RigaConHook,
+    };
+    const uno: BlockNode = { id: 'x1', type: 'rich_text', label: 'Uno' };
+    const due: BlockNode = { id: 'x2', type: 'separator', label: 'Due' };
+    const { rerender, container } = render(<BlockTreeEditor {...props} blocks={[uno]} />);
+    rerender(<BlockTreeEditor {...props} blocks={[uno, due]} />);
+    expect(container.querySelectorAll('[data-riga]').length).toBe(2);
   });
 });

@@ -7,7 +7,8 @@ import {
   insertBlock,
   labelOf,
   moveBlockBy,
-  moveBlockOnto,
+  moveBlockTo,
+  canDropBlock,
   parentIdOf,
   removeBlock,
   setColumnStructure,
@@ -84,28 +85,116 @@ describe('operazioni sull’albero (criterio 1D-30)', () => {
   });
 });
 
-describe('trascinamento (DR-069)', () => {
-  it('sposta il blocco preso nella posizione di quello su cui è stato lasciato', () => {
-    const outcome = moveBlockOnto(syntheticDocument, SECOND_TEXT, FIRST_TEXT);
+const ROW = 'b_0000000000a2';
+
+describe('trascinamento a due esiti (DR-085, DR-097)', () => {
+  it('«dentro» una colonna porta il blocco in coda ai suoi figli, anche da un altro contenitore', () => {
+    const outcome = moveBlockTo(syntheticDocument, RESERVE, COLUMN, 'inside');
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
-    expect(idsIn(outcome.document, COLUMN)).toEqual([SECOND_TEXT, FIRST_TEXT, SEPARATOR]);
+    expect(idsIn(outcome.document, COLUMN)).toEqual([FIRST_TEXT, SEPARATOR, SECOND_TEXT, RESERVE]);
+    expect(idsIn(outcome.document, null)).not.toContain(RESERVE);
+    expect(blockDocumentSchema.safeParse(outcome.document).success).toBe(true);
   });
 
-  it('rifiuta lo spostamento fra contenitori diversi, e dice perché', () => {
-    // ADR-006 §3.2 limita lo spostamento a «dentro una colonna»: DR-069 ha
-    // deciso il gesto, non il perimetro.
-    const outcome = moveBlockOnto(syntheticDocument, FIRST_TEXT, RESERVE);
+  it('«accanto» colloca il blocco prima o dopo quello di arrivo, nel suo contenitore', () => {
+    const after = moveBlockTo(syntheticDocument, FIRST_TEXT, RESERVE, 'after');
+    expect(after.ok).toBe(true);
+    if (!after.ok) return;
+    expect(idsIn(after.document, null).at(-1)).toBe(FIRST_TEXT);
+    expect(idsIn(after.document, COLUMN)).toEqual([SEPARATOR, SECOND_TEXT]);
+
+    const before = moveBlockTo(syntheticDocument, SECOND_TEXT, FIRST_TEXT, 'before');
+    expect(before.ok).toBe(true);
+    if (!before.ok) return;
+    expect(idsIn(before.document, COLUMN)).toEqual([SECOND_TEXT, FIRST_TEXT, SEPARATOR]);
+  });
+
+  it('rifiuta «dentro» un blocco che non accetta figli, e il documento non cambia', () => {
+    expect(canDropBlock(syntheticDocument, FIRST_TEXT, SECOND_TEXT, 'inside')).not.toBeNull();
+    const outcome = moveBlockTo(syntheticDocument, FIRST_TEXT, SECOND_TEXT, 'inside');
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
-    expect(outcome.reason).toContain('dentro il contenitore');
+    expect(outcome.reason).toContain('rimasto dov’era');
+  });
+
+  it('rifiuta un tipo che il contenitore di arrivo non ammette: una colonna alla radice', () => {
+    expect(moveBlockTo(syntheticDocument, COLUMN, RESERVE, 'after').ok).toBe(false);
+  });
+
+  it('rifiuta di portare un blocco dentro un proprio discendente', () => {
+    expect(canDropBlock(syntheticDocument, ROW, COLUMN, 'inside')).not.toBeNull();
+    expect(moveBlockTo(syntheticDocument, ROW, FIRST_TEXT, 'before').ok).toBe(false);
   });
 
   it('lasciare un blocco su sé stesso non cambia nulla', () => {
-    const outcome = moveBlockOnto(syntheticDocument, FIRST_TEXT, FIRST_TEXT);
+    const outcome = moveBlockTo(syntheticDocument, FIRST_TEXT, FIRST_TEXT, 'inside');
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
     expect(outcome.document).toBe(syntheticDocument);
+  });
+
+  it('non modifica il documento ricevuto', () => {
+    const before = JSON.stringify(syntheticDocument);
+    moveBlockTo(syntheticDocument, RESERVE, COLUMN, 'inside');
+    expect(JSON.stringify(syntheticDocument)).toBe(before);
+  });
+});
+
+/**
+ * Una riga con due colonne di larghezza diversa, e una seconda riga: il caso in
+ * cui spostare una colonna potrebbe rompere `columnStructure` (`BLOCK-MODEL.md`
+ * §3.2). Costruito dal documento sintetico, nessun dato reale.
+ */
+function documentWithTwoRows(): typeof syntheticDocument {
+  const doc = structuredClone(syntheticDocument);
+  const section = doc.blocks[0] as {
+    children: { type: string; props: Record<string, unknown>; children: unknown[]; id: string }[];
+  };
+  const row = section.children[0]!;
+  const first = row.children[0] as {
+    id: string;
+    props: Record<string, unknown>;
+    children: unknown[];
+  };
+  first.props = { ...first.props, width: '1_3' };
+  const second = { ...structuredClone(first), id: 'b_0000000000c1', children: [] as unknown[] };
+  second.props = { ...second.props, width: '2_3' };
+  row.children = [first, second];
+  row.props = { ...row.props, columnStructure: '1_3,2_3' };
+  const otherColumn = {
+    ...structuredClone(first),
+    id: 'b_0000000000d3',
+    children: [] as unknown[],
+  };
+  otherColumn.props = { ...otherColumn.props, width: '1_1' };
+  const otherRow = { ...structuredClone(row), id: 'b_0000000000d2', children: [otherColumn] };
+  otherRow.props = { ...otherRow.props, columnStructure: '1_1' };
+  section.children = [row, otherRow];
+  return doc;
+}
+
+describe('colonne e `columnStructure` (BLOCK-MODEL.md §3.2)', () => {
+  it('il documento di prova è valido', () => {
+    expect(blockDocumentSchema.safeParse(documentWithTwoRows()).success).toBe(true);
+  });
+
+  it('riordinare le colonne di una riga col trascinamento aggiorna `columnStructure`', () => {
+    const outcome = moveBlockTo(documentWithTwoRows(), 'b_0000000000c1', COLUMN, 'before');
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(blockDocumentSchema.safeParse(outcome.document).success).toBe(true);
+  });
+
+  it('riordinarle con «Sposta su» aggiorna anch’esso `columnStructure`', () => {
+    const next = moveBlockBy(documentWithTwoRows(), 'b_0000000000c1', -1);
+    expect(blockDocumentSchema.safeParse(next).success).toBe(true);
+  });
+
+  it('una colonna non passa in un’altra riga: cambierebbe la ripartizione di entrambe', () => {
+    expect(canDropBlock(documentWithTwoRows(), COLUMN, 'b_0000000000d3', 'after')).not.toBeNull();
+    expect(canDropBlock(documentWithTwoRows(), COLUMN, 'b_0000000000d2', 'inside')).not.toBeNull();
+    expect(moveBlockTo(documentWithTwoRows(), COLUMN, 'b_0000000000d3', 'before').ok).toBe(false);
   });
 });
 

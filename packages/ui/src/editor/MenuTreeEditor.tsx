@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { IconButton } from '../primitives/IconButton';
 import { Spinner } from '../primitives/Spinner';
 import './MenuTreeEditor.css';
@@ -16,6 +17,12 @@ export interface MenuItemNode {
   children?: MenuItemNode[];
 }
 
+/** Come si avvolge la riga di una voce, senza i suoi figli (DR-082). */
+export interface MenuTreeRowRenderProps {
+  readonly id: string;
+  readonly children: ReactNode;
+}
+
 export interface MenuTreeEditorProps {
   items: MenuItemNode[];
   selectedId?: string;
@@ -31,6 +38,12 @@ export interface MenuTreeEditorProps {
   errorText?: string;
   emptyText?: string;
   disabled?: boolean;
+  /**
+   * Trascinamento (DR-082): chi lo usa avvolge la riga dall'esterno, e
+   * `packages/ui` resta senza la libreria (`PLAN.md` §5). Assente, l'albero
+   * funziona con i soli bottoni.
+   */
+  renderRow?: (props: MenuTreeRowRenderProps) => React.JSX.Element;
 }
 
 const TARGET_PREFIX: Readonly<Record<MenuItemNode['linkType'], string>> = {
@@ -50,6 +63,22 @@ interface MenuListProps {
   onOutdent: (id: string) => void;
   onDelete: (id: string) => void;
   disabled: boolean;
+  renderRow: ((props: MenuTreeRowRenderProps) => React.JSX.Element) | undefined;
+}
+
+/**
+ * L'involucro si rende come **componente**, mai chiamato come funzione: usa
+ * degli hook, e chiamato così li metterebbe nel componente che lo contiene, con
+ * un numero che cambia insieme alle righe (React #310).
+ */
+function wrapRow(
+  id: string,
+  row: React.JSX.Element,
+  renderRow: ((props: MenuTreeRowRenderProps) => React.JSX.Element) | undefined,
+): React.JSX.Element {
+  if (!renderRow) return row;
+  const Row = renderRow;
+  return <Row id={id}>{row}</Row>;
 }
 
 function MenuList({
@@ -63,6 +92,7 @@ function MenuList({
   onOutdent,
   onDelete,
   disabled,
+  renderRow,
 }: MenuListProps): React.JSX.Element {
   return (
     <ul className="amoris-menu-tree">
@@ -72,59 +102,63 @@ function MenuList({
         const isRoot = depth === 0;
         return (
           <li key={node.id}>
-            <div
-              className={[
-                'amoris-menu-tree__row',
-                node.id === selectedId ? 'amoris-menu-tree__row--selected' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <button
-                type="button"
-                className="amoris-focusable amoris-menu-tree__label"
-                onClick={() => onSelect(node.id)}
-                disabled={disabled}
+            {wrapRow(
+              node.id,
+              <div
+                className={[
+                  'amoris-menu-tree__row',
+                  node.id === selectedId ? 'amoris-menu-tree__row--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
-                {node.label}
-                <span className="amoris-menu-tree__target">
-                  {TARGET_PREFIX[node.linkType]}
-                  {node.linkTarget}
-                </span>
-              </button>
-              <div className="amoris-menu-tree__actions">
-                <IconButton
-                  icon={<span aria-hidden="true">↑</span>}
-                  label={`Sposta su: ${node.label}`}
-                  onClick={() => onMoveUp(node.id)}
-                  disabled={disabled || isFirst}
-                />
-                <IconButton
-                  icon={<span aria-hidden="true">↓</span>}
-                  label={`Sposta giù: ${node.label}`}
-                  onClick={() => onMoveDown(node.id)}
-                  disabled={disabled || isLast}
-                />
-                <IconButton
-                  icon={<span aria-hidden="true">→</span>}
-                  label={`Annida: ${node.label}`}
-                  onClick={() => onIndent(node.id)}
-                  disabled={disabled || isFirst}
-                />
-                <IconButton
-                  icon={<span aria-hidden="true">←</span>}
-                  label={`Riporta al livello superiore: ${node.label}`}
-                  onClick={() => onOutdent(node.id)}
-                  disabled={disabled || isRoot}
-                />
-                <IconButton
-                  icon={<span aria-hidden="true">🗑</span>}
-                  label={`Elimina: ${node.label}`}
-                  onClick={() => onDelete(node.id)}
+                <button
+                  type="button"
+                  className="amoris-focusable amoris-menu-tree__label"
+                  onClick={() => onSelect(node.id)}
                   disabled={disabled}
-                />
-              </div>
-            </div>
+                >
+                  {node.label}
+                  <span className="amoris-menu-tree__target">
+                    {TARGET_PREFIX[node.linkType]}
+                    {node.linkTarget}
+                  </span>
+                </button>
+                <div className="amoris-menu-tree__actions">
+                  <IconButton
+                    icon={<span aria-hidden="true">↑</span>}
+                    label={`Sposta su: ${node.label}`}
+                    onClick={() => onMoveUp(node.id)}
+                    disabled={disabled || isFirst}
+                  />
+                  <IconButton
+                    icon={<span aria-hidden="true">↓</span>}
+                    label={`Sposta giù: ${node.label}`}
+                    onClick={() => onMoveDown(node.id)}
+                    disabled={disabled || isLast}
+                  />
+                  <IconButton
+                    icon={<span aria-hidden="true">→</span>}
+                    label={`Annida: ${node.label}`}
+                    onClick={() => onIndent(node.id)}
+                    disabled={disabled || isFirst}
+                  />
+                  <IconButton
+                    icon={<span aria-hidden="true">←</span>}
+                    label={`Riporta al livello superiore: ${node.label}`}
+                    onClick={() => onOutdent(node.id)}
+                    disabled={disabled || isRoot}
+                  />
+                  <IconButton
+                    icon={<span aria-hidden="true">🗑</span>}
+                    label={`Elimina: ${node.label}`}
+                    onClick={() => onDelete(node.id)}
+                    disabled={disabled}
+                  />
+                </div>
+              </div>,
+              renderRow,
+            )}
             {node.children && node.children.length > 0 ? (
               <div className="amoris-menu-tree__children">
                 <MenuList
@@ -138,6 +172,7 @@ function MenuList({
                   onOutdent={onOutdent}
                   onDelete={onDelete}
                   disabled={disabled}
+                  renderRow={renderRow}
                 />
               </div>
             ) : null}
@@ -150,9 +185,9 @@ function MenuList({
 
 /**
  * Componente 46: albero del menu di navigazione del sito. Sposta, annida,
- * collega a un contenuto, a una categoria o a un indirizzo — con comandi espliciti
- * (Sposta su/giù, Annida, Riporta al livello superiore), non con il
- * trascinamento.
+ * collega a un contenuto, a una categoria o a un indirizzo, con comandi espliciti
+ * (Sposta su/giù, Annida, Riporta al livello superiore); il trascinamento si
+ * aggiunge dall'esterno con `renderRow` (DR-082).
  */
 export function MenuTreeEditor({
   items,
@@ -167,6 +202,7 @@ export function MenuTreeEditor({
   errorText,
   emptyText = 'Il menu non contiene ancora voci.',
   disabled = false,
+  renderRow,
 }: MenuTreeEditorProps): React.JSX.Element {
   if (errorText) {
     return (
@@ -200,6 +236,7 @@ export function MenuTreeEditor({
       onOutdent={onOutdent}
       onDelete={onDelete}
       disabled={disabled}
+      renderRow={renderRow}
     />
   );
 }

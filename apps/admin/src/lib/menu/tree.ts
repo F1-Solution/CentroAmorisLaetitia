@@ -11,6 +11,7 @@
  * È l'unica convenzione che rende l'ordine ricostruibile raggruppando per
  * genitore, e toglie di mezzo i buchi che l'import lascia.
  */
+import type { DropZone } from '@amoris/ui';
 
 export interface FlatMenuItem {
   readonly id: string;
@@ -199,4 +200,34 @@ export function outdent<T extends FlatMenuItem>(
   const siblings = [...grandparent.siblings];
   siblings.splice(grandparent.index + 1, 0, moving);
   return replaceChildren(withoutMoving, grandparent.parentId, siblings);
+}
+
+function contains<T extends FlatMenuItem>(node: MenuNode<T>, id: string): boolean {
+  return node.item.id === id || node.children.some((child) => contains(child, id));
+}
+
+/**
+ * Trascinamento (DR-082): porta la voce dentro quella di arrivo, in coda ai suoi
+ * figli, oppure accanto, prima o dopo. `null` se il rilascio non è ammesso.
+ */
+export function moveItemTo<T extends FlatMenuItem>(
+  nodes: readonly MenuNode<T>[],
+  activeId: string,
+  targetId: string,
+  zone: DropZone,
+): MenuNode<T>[] | null {
+  const moving = pathTo(nodes, activeId)?.at(-1);
+  if (!moving || contains(moving, targetId)) return null;
+
+  const without = removeFrom(nodes, activeId);
+  if (zone === 'inside') {
+    const target = pathTo(without, targetId)?.at(-1);
+    if (!target) return null;
+    return replaceChildren(without, targetId, [...target.children, moving]);
+  }
+  const where = placementOf(without, targetId);
+  if (!where) return null;
+  const siblings = [...where.siblings];
+  siblings.splice(zone === 'before' ? where.index : where.index + 1, 0, moving);
+  return replaceChildren(without, where.parentId, siblings);
 }

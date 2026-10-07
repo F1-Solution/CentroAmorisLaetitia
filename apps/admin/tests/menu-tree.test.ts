@@ -4,6 +4,7 @@ import {
   flatten,
   indent,
   moveDown,
+  moveItemTo,
   moveUp,
   outdent,
   patchesFor,
@@ -115,5 +116,54 @@ describe('che cosa si manda al servizio', () => {
 
   it('un albero identico non produce alcuna scrittura', () => {
     expect(patchesFor(annidato, buildTree(annidato))).toEqual([]);
+  });
+});
+
+/** Tre radici, e b con un figlio. */
+const conFiglio: Voce[] = [
+  voce('a', null, 0),
+  voce('b', null, 1),
+  voce('b1', 'b', 0),
+  voce('c', null, 2),
+];
+const alberoConFiglio = buildTree(conFiglio);
+
+describe('moveItemTo — trascinamento a due esiti (DR-082)', () => {
+  it('«dentro» annida la voce in coda ai figli della voce di arrivo', () => {
+    const next = moveItemTo(alberoConFiglio, 'a', 'b', 'inside')!;
+    expect(flatten(next)).toEqual([
+      { id: 'b', parentId: null, position: 0 },
+      { id: 'b1', parentId: 'b', position: 0 },
+      { id: 'a', parentId: 'b', position: 1 },
+      { id: 'c', parentId: null, position: 1 },
+    ]);
+  });
+
+  it('«prima» e «dopo» la collocano accanto, allo stesso livello dell’arrivo', () => {
+    expect(flatten(moveItemTo(alberoConFiglio, 'c', 'b1', 'before')!)).toContainEqual({
+      id: 'c',
+      parentId: 'b',
+      position: 0,
+    });
+    expect(flatten(moveItemTo(alberoConFiglio, 'a', 'c', 'after')!).at(-1)).toEqual({
+      id: 'a',
+      parentId: null,
+      position: 2,
+    });
+  });
+
+  it('rifiuta di lasciare una voce dentro sé stessa o una propria sottovoce', () => {
+    expect(moveItemTo(alberoConFiglio, 'b', 'b1', 'inside')).toBeNull();
+    expect(moveItemTo(alberoConFiglio, 'b', 'b1', 'after')).toBeNull();
+    expect(moveItemTo(alberoConFiglio, 'b', 'b', 'inside')).toBeNull();
+  });
+
+  it('lasciarla dove già si trova non produce scritture', () => {
+    expect(patchesFor(conFiglio, moveItemTo(alberoConFiglio, 'b', 'c', 'before')!)).toEqual([]);
+  });
+
+  it('una voce sconosciuta non sposta nulla', () => {
+    expect(moveItemTo(alberoConFiglio, 'z', 'b', 'inside')).toBeNull();
+    expect(moveItemTo(alberoConFiglio, 'a', 'z', 'after')).toBeNull();
   });
 });
