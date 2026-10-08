@@ -141,3 +141,24 @@ protezione confronta ore dello stesso orologio (DR-090, DR-091).
   professionista.
 - **Nessuna parità visiva.** Il rapporto dice che i dati sono arrivati, non che
   il sito li mostri come l'originale: quello è la Fase 1E.
+
+## 10. Riesecuzioni del 2026-10-07 — `1D-W11e`
+
+Riesecuzioni sullo stesso database, dopo il form del modulo di contatto di Divi
+(DR-094) e la sua notifica (DR-098). Soli conteggi, come sopra.
+
+| Voce | Valore |
+|---|---|
+| Copie prima delle riesecuzioni | `~/amoris-backup/amoris-prima-1D-W11e-2026-10-07.dump` e `amoris-prima-1D-W11e-bis-2026-10-07.dump`, fuori dal repository |
+| Terza esecuzione | `4bd72eb6-293d-4858-aabe-aa83594fdede` — esito **`partial`**: un solo errore, `users` 2 contro 1 atteso, perché contava anche l'account locale di HO-009 |
+| Quarta esecuzione | `84755272-f5d3-43ef-945d-ce14ac561982` — esito **`success`**, dopo DR-099: i volumi contano solo le righe nate dall'import |
+| Controlli preliminari | 8 su 8 superati in entrambe |
+
+- **Conteggi di tabella dopo la quarta esecuzione:** identici alla terza;
+  `forms` 26 e `form_notifications` 40 come atteso dopo DR-094 e DR-098;
+  `users` 2 nella tabella, 1 dell'import.
+- **Quarta esecuzione:** nessuna creazione, tutte le righe aggiornate sul
+  posto, 425 compilazioni saltate perché già presenti; verifiche finali tutte a 0.
+- **Anomalie:** le stesse avvertenze della terza (2 percorsi provvisori, 1
+  redirect senza destinazione, 10 file con maiuscole diverse); scompare il solo
+  errore `table-count-mismatch`.

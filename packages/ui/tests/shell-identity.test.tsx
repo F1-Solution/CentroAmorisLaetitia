@@ -11,13 +11,13 @@ describe('UserMenu — componente 6', () => {
     const onSignOut = vi.fn();
     render(
       <UserMenu
-        name="Maria Rossi"
-        email="maria.rossi@centroamorislaetitia.it"
+        name="Persona Sintetica"
+        email="persona.sintetica@esempio.invalid"
         onSignOut={onSignOut}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Maria Rossi' }));
-    expect(screen.getByText('maria.rossi@centroamorislaetitia.it')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Persona Sintetica' }));
+    expect(screen.getByText('persona.sintetica@esempio.invalid')).not.toBeNull();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Disconnetti' }));
     expect(onSignOut).toHaveBeenCalledOnce();
   });

@@ -27,7 +27,10 @@ const OK_REORDERED_CASES: readonly [string, string][] = [
     '<p><a href="https://esempio.it" target="_blank" rel="noopener">link</a></p>',
     '<p><a href="https://esempio.it" rel="noopener" target="_blank">link</a></p>',
   ],
-  ['<p><a href="mailto:a@b.it">scrivi</a></p>', '<p><a href="mailto:a@b.it">scrivi</a></p>'],
+  [
+    '<p><a href="mailto:a@esempio.invalid">scrivi</a></p>',
+    '<p><a href="mailto:a@esempio.invalid">scrivi</a></p>',
+  ],
   [
     '<p><a href="/pagina-interna/">interno</a></p>',
     '<p><a href="/pagina-interna/">interno</a></p>',

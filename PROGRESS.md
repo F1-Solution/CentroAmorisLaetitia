@@ -95,3 +95,8 @@ PHASE:1D WAVE:1D-W9b3 STATUS:complete TS:2026-10-06T04:36:32Z
 PHASE:1D WAVE:1D-W9b4 STATUS:complete TS:2026-10-07T04:51:54Z
 PHASE:1D WAVE:1D-W9b STATUS:complete TS:2026-10-07T04:51:55Z
 PHASE:1D WAVE:1D-W10b STATUS:complete TS:2026-10-07T06:15:20Z
+<!-- 1D-W11e: apply del 2026-10-07 su conferma; form e notifica importati, criterio 10 a zero. Esito partial per il solo conteggio di users (2 contro 1): conta anche l'account locale di HO-009. Decisione D29 aperta. -->
+PHASE:1D WAVE:1D-W11e STATUS:complete TS:2026-10-07T15:02:56Z
+<!-- 1D-W11e-bis: D29 = A (DR-099) attuata con prove; apply --confirm dopo pg_dump con esito success. -->
+PHASE:1D WAVE:1D-W11e-bis STATUS:complete TS:2026-10-07T15:24:14Z
+<!-- 1D-W12 in corso dal 2026-10-07: 20 criteri su 29 eseguiti e superati, 9 in attesa (Docker non risponde, HO-011; push per la CI; D30). Nessuna riga complete finche' l'audit non e' finito. -->

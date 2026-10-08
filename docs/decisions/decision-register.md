@@ -1015,3 +1015,38 @@ decisioni già approvate. Piano in `.planning/phases/1D/PRE-AUDIT-PLAN.md`.
 - **Si configura, non si invia.** In Fase 1D nessun servizio manda email: la
   notifica è un dato, che l'invio vero (ADR-010 §4.3) userà quando esisterà.
 - **`form_notifications` atteso passa da 39 a 40.**
+
+## 33. Round 24 — risposta del 2026-10-07, il conteggio di `users` nella verifica
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-099 | 2026-10-07 | Che cosa contano i volumi di tabella della fase `verify` | **Opzione A** — solo le righe nate dall'import (quelle nella mappa di corrispondenza), non quelle create a mano o nel CMS | B — lasciare il controllo com'è e accettare `partial` finché esiste l'account locale, o rimuoverlo prima di ogni import | «D29 = A» | Proprietario | Fase 1D, `apps/importer` fase `verify`, Fase 1F | sì | DR-098, HO-009, `import-completeness-report.md` §10 |
+
+### Attuazione, 2026-10-07
+
+| Voce | Stato |
+|---|---|
+| **Attuazione di DR-099** | **Fatta e provata.** Prova sintetica nuova, rossa prima della modifica (`users` 2 invece di 1) e verde dopo; `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` verdi. `apply --confirm` rieseguito dopo la copia di salvataggio: esito **`success`** |
+
+### Scostamento dichiarato nell'attuazione
+
+La mappa di corrispondenza non copre ogni tabella contata. Dove manca si è
+usato il segno più vicino che l'import lascia, senza cambiare lo schema:
+
+| Tabella | Riga dell'import se |
+|---|---|
+| `contents`, `media`, `terms`, `menu_items`, `forms`, `documents`, `slider_slides`, `users` | il suo id è nella mappa |
+| `form_notifications` | il form è nella mappa |
+| `content_seo` | il contenuto è nella mappa |
+| `redirects`, `form_submissions` | origine `migration` |
+
+Limite noto: una notifica aggiunta nel CMS a un form importato, o la SEO data
+nel CMS a un contenuto importato che nella sorgente non l'aveva, contano come
+dell'import. Non succede in Fase 1D; va riconsiderato prima dell'import finale
+della Fase 1F.
+
+## 34. Round 25 — risposta del 2026-10-08, criterio di uscita 21
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-100 | 2026-10-08 | Come si chiude il criterio 21 per le parti di 1D-29…1D-34 non ancora eseguite nel browser | **Opzione A** — prove Playwright nuove, che restano come regressione e girano in CI | B — HO-006 eseguita a mano dall'utente, con l'esito registrato | «D30 = A» | Proprietario | Fase 1D, `tests/e2e/cms` | sì | `AUDIT.md` §2 criterio 21, HO-006 |

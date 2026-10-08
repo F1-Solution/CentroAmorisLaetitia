@@ -141,9 +141,16 @@ describe('verifiche singole', () => {
   });
 
   it('measureTableCounts confronta il volume reale con la costante attesa', async () => {
-    await testDb.db
+    const [user] = await testDb.db
       .insert(schema.users)
-      .values({ email: 'chi@example.test', fullName: 'Persona di prova' });
+      .values({ email: 'chi@example.test', fullName: 'Persona di prova' })
+      .returning({ id: schema.users.id });
+    await testDb.db.insert(schema.importIdMap).values({
+      sourceTable: 'wp_users',
+      sourceId: 1,
+      entity: 'user',
+      entityId: user!.id,
+    });
 
     const results = await testDb.db.transaction((tx) => measureTableCounts(ctxFor(tx)));
     const usersRow = results.find((r) => r.table === 'users')!;
@@ -376,6 +383,104 @@ describe('verifica dei checksum', () => {
       await fixture.teardown();
       await fresh.teardown();
     }
+  });
+});
+
+/**
+ * DR-099: i volumi contano solo le righe nate dall'import. Un account creato a
+ * mano o un contenuto, un form, un redirect, un invio nati nel CMS o dal sito
+ * non devono spostare il conteggio, altrimenti ogni import successivo esce
+ * `partial` per lavoro legittimo fatto dopo.
+ */
+describe('volumi di tabella — solo righe dell’import (DR-099)', () => {
+  let db: TestDatabase;
+
+  beforeAll(async () => {
+    db = await createTestDatabase('amoris_importer_verify_volumes');
+  });
+
+  afterAll(async () => {
+    await db.teardown();
+  });
+
+  async function rememberImported(
+    entity: 'user' | 'form' | 'content',
+    id: string,
+    sourceId: number,
+  ) {
+    await db.db
+      .insert(schema.importIdMap)
+      .values({ sourceTable: `wp_${entity}`, sourceId, entity, entityId: id });
+  }
+
+  async function newContent(slug: string): Promise<string> {
+    const [row] = await db.db
+      .insert(schema.contents)
+      .values({ type: 'page', status: 'draft', slug, path: `/${slug}/`, title: slug })
+      .returning({ id: schema.contents.id });
+    return row!.id;
+  }
+
+  async function newForm(slug: string): Promise<string> {
+    const [row] = await db.db
+      .insert(schema.forms)
+      .values({ slug, title: slug, definition: { fields: [] } })
+      .returning({ id: schema.forms.id });
+    return row!.id;
+  }
+
+  it('non conta le righe create a mano o nel CMS, conta quelle dell’import', async () => {
+    // Un account importato e uno locale, come quello di HO-009.
+    const [imported, local] = await db.db
+      .insert(schema.users)
+      .values([
+        { email: 'importato@example.test', fullName: 'Persona importata' },
+        { email: 'locale@example.test', fullName: 'Persona locale' },
+      ])
+      .returning({ id: schema.users.id });
+    await rememberImported('user', imported!.id, 1);
+
+    // Un contenuto importato e uno nato nel CMS, ciascuno con la propria SEO.
+    const importedContent = await newContent('importata');
+    const cmsContent = await newContent('nata-nel-cms');
+    await rememberImported('content', importedContent, 10);
+    await db.db.insert(schema.contentSeo).values([
+      { contentId: importedContent, title: 'SEO importata' },
+      { contentId: cmsContent, title: 'SEO del CMS' },
+    ]);
+
+    // Un form importato e uno nato nel CMS, ciascuno con notifica e invio.
+    const importedForm = await newForm('form-importato');
+    const cmsForm = await newForm('form-del-cms');
+    await rememberImported('form', importedForm, 20);
+    const notification = { name: 'Avviso', recipients: 'a@example.test', subject: 'S', body: 'B' };
+    await db.db.insert(schema.formNotifications).values([
+      { ...notification, formId: importedForm },
+      { ...notification, formId: cmsForm },
+    ]);
+    await db.db.insert(schema.formSubmissions).values([
+      { formId: importedForm, submittedAt: new Date(), origin: 'migration', payload: {} },
+      { formId: importedForm, submittedAt: new Date(), origin: 'live', payload: {} },
+    ]);
+
+    // Un redirect dell'import e uno aggiunto a mano.
+    await db.db.insert(schema.redirects).values([
+      { sourcePath: '/vecchio/', targetPath: '/nuovo/', origin: 'migration' },
+      { sourcePath: '/a-mano/', targetPath: '/nuovo/', origin: 'manual' },
+    ]);
+
+    const results = await db.db.transaction((tx) => measureTableCounts(ctxFor(tx)));
+    const value = (table: string) => results.find((r) => r.table === table)!.value;
+
+    expect(local).toBeDefined();
+    expect(value('users')).toBe(1);
+    expect(value('contents')).toBe(1);
+    expect(value('content_seo')).toBe(1);
+    expect(value('forms')).toBe(1);
+    expect(value('form_notifications')).toBe(1);
+    expect(value('form_submissions')).toBe(1);
+    expect(value('redirects')).toBe(1);
+    expect(results.find((r) => r.table === 'users')!.ok).toBe(true);
   });
 });
 
