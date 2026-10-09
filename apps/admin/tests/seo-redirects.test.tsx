@@ -213,6 +213,43 @@ describe('SEO di un contenuto, dentro l’editor (DR-076)', () => {
     expect(await screen.findByText(/usa i template globali/)).toBeInTheDocument();
   });
 
+  it('ciò che si scrive prima che i metadati arrivino non viene sovrascritto (DR-102)', async () => {
+    // Il difetto del §3.1 di AUDIT.md: il pannello è modificabile mentre carica,
+    // e la lettura sostituiva anche i campi già scritti. Ora tocca solo gli altri.
+    let deliver: (row: unknown) => void = () => undefined;
+    apiMock.mockImplementation((path: string) => {
+      if (path === '/seo/contents/c1') {
+        return new Promise((resolve) => {
+          deliver = resolve;
+        });
+      }
+      return Promise.resolve({ items: [] });
+    });
+    const user = userEvent.setup();
+    renderPanel();
+    await screen.findByText('Caricamento dei metadati in corso…');
+
+    await user.type(screen.getByLabelText(/Titolo SEO/), 'Titolo scritto subito');
+    deliver({
+      contentId: 'c1',
+      title: 'Titolo dal servizio',
+      description: 'Descrizione dal servizio',
+      canonicalUrl: null,
+      ogTitle: null,
+      ogDescription: null,
+      ogImageId: null,
+      robotsNoindex: false,
+      robotsNofollow: false,
+      updatedAt: '2026-09-21T10:00:00.000Z',
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Caricamento dei metadati in corso…')).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(/Titolo SEO/)).toHaveValue('Titolo scritto subito');
+    expect(screen.getByLabelText(/Descrizione SEO/)).toHaveValue('Descrizione dal servizio');
+  });
+
   it('salva titolo, descrizione e direttive del contenuto', async () => {
     const user = userEvent.setup();
     apiMock.mockImplementation((path: string) => {

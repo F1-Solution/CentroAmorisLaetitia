@@ -9,7 +9,7 @@ import {
   SidePanel,
   TextField,
 } from '@amoris/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
 import type { MenuItem, MenuVisibility, RoleOption } from './types';
 
@@ -63,16 +63,31 @@ export function MenuItemPanel({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  // Una nuova lettura della stessa voce aggiorna solo i campi non toccati;
+  // un'altra voce riparte da zero (DR-102).
+  const touched = useRef(new Set<string>());
+  const shownId = useRef(item.id);
+
   useEffect(() => {
-    setLabel(item.label);
-    setUrl(item.url ?? '');
-    setCssClasses(item.cssClasses ?? '');
-    setNewTab(item.linkTarget === '_blank');
-    setVisibility(item.visibility);
-    setVisibleToRoles(item.visibleToRoles);
-    setError(null);
-    setSaved(false);
+    const sameItem = shownId.current === item.id;
+    shownId.current = item.id;
+    if (!sameItem) {
+      touched.current.clear();
+      setError(null);
+      setSaved(false);
+    }
+    const keep = (field: string) => sameItem && touched.current.has(field);
+    if (!keep('label')) setLabel(item.label);
+    if (!keep('url')) setUrl(item.url ?? '');
+    if (!keep('cssClasses')) setCssClasses(item.cssClasses ?? '');
+    if (!keep('newTab')) setNewTab(item.linkTarget === '_blank');
+    if (!keep('visibility')) setVisibility(item.visibility);
+    if (!keep('visibleToRoles')) setVisibleToRoles(item.visibleToRoles);
   }, [item]);
+
+  function touch(field: string): void {
+    touched.current.add(field);
+  }
 
   const chosen = VISIBILITY_OPTIONS.find((option) => option.value === visibility);
 
@@ -91,6 +106,7 @@ export function MenuItemPanel({
         // database pretende, e mandarlo pieno farebbe fallire la richiesta.
         visibleToRoles: visibility === 'roles' ? [...visibleToRoles] : [],
       });
+      touched.current.clear();
       setSaved(true);
     } catch (caught) {
       setError(
@@ -123,7 +139,10 @@ export function MenuItemPanel({
         value={label}
         disabled={!canWrite || busy}
         helpText="Il testo che si legge nel menu."
-        onChange={(event) => setLabel(event.target.value)}
+        onChange={(event) => {
+          touch('label');
+          setLabel(event.target.value);
+        }}
       />
 
       {item.kind === 'custom' ? (
@@ -131,7 +150,10 @@ export function MenuItemPanel({
           label="Indirizzo"
           value={url}
           disabled={!canWrite || busy}
-          onChange={(event) => setUrl(event.target.value)}
+          onChange={(event) => {
+            touch('url');
+            setUrl(event.target.value);
+          }}
         />
       ) : null}
 
@@ -139,7 +161,10 @@ export function MenuItemPanel({
         label="Apri in una scheda nuova"
         checked={newTab}
         disabled={!canWrite || busy}
-        onChange={(event) => setNewTab(event.target.checked)}
+        onChange={(event) => {
+          touch('newTab');
+          setNewTab(event.target.checked);
+        }}
       />
 
       <TextField
@@ -147,7 +172,10 @@ export function MenuItemPanel({
         value={cssClasses}
         disabled={!canWrite || busy}
         helpText="Facoltative, separate da uno spazio."
-        onChange={(event) => setCssClasses(event.target.value)}
+        onChange={(event) => {
+          touch('cssClasses');
+          setCssClasses(event.target.value);
+        }}
       />
 
       <FieldGroup title="Visibilità" description={chosen?.note ?? ''} disabled={!canWrite || busy}>
@@ -156,6 +184,7 @@ export function MenuItemPanel({
           value={visibility}
           onChange={(value) => {
             if (!canWrite || busy) return;
+            touch('visibility');
             setVisibility(value as MenuVisibility);
           }}
           options={VISIBILITY_OPTIONS.map((option) => ({
@@ -177,13 +206,14 @@ export function MenuItemPanel({
                   label={role.label}
                   checked={visibleToRoles.includes(role.key)}
                   disabled={!canWrite || busy}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    touch('visibleToRoles');
                     setVisibleToRoles(
                       event.target.checked
                         ? [...visibleToRoles, role.key]
                         : visibleToRoles.filter((entry) => entry !== role.key),
-                    )
-                  }
+                    );
+                  }}
                 />
               ))
             )}

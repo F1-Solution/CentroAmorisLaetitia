@@ -1,6 +1,6 @@
 # AUDIT — Fase 1D
 
-**Stato: in corso.** Avviato il 2026-10-07, **prima** di dichiarare la fase
+**Stato: in corso, 27 criteri su 28 superati; il 28° aspetta la CI.** Avviato il 2026-10-07, **prima** di dichiarare la fase
 completa, come impone `CLAUDE.md`. La fase **non** è dichiarata chiusa.
 
 Verifica i 28 criteri di uscita di [`CONTEXT.md`](CONTEXT.md) §7, più il 24-bis.
@@ -13,14 +13,15 @@ criterio è segnato ⏳ e il motivo è scritto.
 
 | | |
 |---|---|
-| Criteri verificati con esito positivo | **20 su 29** |
-| Criteri in attesa di esecuzione | **9** |
+| Criteri della Fase 1D | **28**: i 28 di `CONTEXT.md` più il 24-bis, meno il 16 spostato in 1E da DR-094 |
+| Criteri verificati con esito positivo | **27 su 28** |
+| Criteri in attesa | **1**: il 26, per la sola parte in CI |
 | Criteri falliti | **0** |
-| Difetti trovati e corretti durante l'audit | **2** (§3) |
+| Difetti trovati e corretti durante l'audit | **5** (§3 e §3.1) |
+| Difetti trovati e non corretti | **0** |
 
-Blocco principale: dal 2026-10-08 il motore di Docker Desktop risponde `500` a
-ogni richiesta, quindi database, archiviazione e servizi non sono raggiungibili.
-I criteri che ne hanno bisogno aspettano HO-011.
+Il criterio 26 aspetta solo l'esecuzione della CI dopo il push: le immagini di
+MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
 
 ## 2. I criteri di uscita, uno per uno
 
@@ -28,22 +29,22 @@ I criteri che ne hanno bisogno aspettano HO-011.
 
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
-| 1 | `plan` non scrive nulla | da eseguire: fotografia di tutte le tabelle prima e dopo un `plan` sul database importato | ⏳ Docker |
-| 2 | Due `apply` di fila danno lo stesso stato | da eseguire: la copia presa fra la terza e la quarta esecuzione, ripristinata in un database temporaneo, contro lo stato attuale, escluse `created_at` e `updated_at`. Un primo tentativo il 2026-10-08 ha dato «identici» su due fotografie **vuote** per il guasto di Docker: scartato | ⏳ Docker |
+| 1 | `plan` non scrive nulla | 2026-10-09: fotografia di **tutte** le 33 tabelle, comprese `import_runs`, `import_issues`, `import_id_map` e le marche temporali, prima e dopo un `plan` completo sul database importato: **identiche**. Il `plan` esce `partial` per la sola ragione dichiarata da DR-088 (non carica file, quindi non verifica il bucket) | ✅ |
+| 2 | Due `apply` di fila danno lo stesso stato | 2026-10-09: la copia presa fra la terza e la quarta esecuzione, ripristinata in un database temporaneo poi eliminato, contro lo stato dopo la quarta: 30 tabelle di dominio, 27 non vuote, **identiche** riga per riga, identificativi compresi, escluse solo `created_at` e `updated_at`. La suite reale lo riprova anche da zero (`idempotency.real.test.ts`, verde). Il tentativo del 2026-10-08 su due fotografie vuote, per il guasto di Docker, era stato scartato | ✅ |
 | 3 | I conteggi di `database-schema.md` §6 coincidono | quarta esecuzione, 2026-10-07: tutti i volumi coincidono con gli attesi **aggiornati da decisioni**: `terms` 4 (DR-061), `media` 178 di tabella (DR-058, DR-060), `redirects` 181 (DR-065), `forms` 26 (DR-094), `form_notifications` 40 (DR-098). `media_variants` 1.287 contro circa 1.376: scostamento motivato in `import-completeness-report.md` §2.1 | ✅ |
 | 4 | Zero riferimenti `wp-content/uploads` rimasti | verifica finale della quarta esecuzione: 0 | ✅ |
 | 5 | Zero righe `error` in `import_issues` | interrogata la tabella per la quarta esecuzione: 0 `error`, 13 `warning` | ✅ |
 | 6 | Riserva ≤ 10 % dei blocchi e ≤ 15 contenuti | quarta esecuzione: 7 blocchi su 305 (2,30 %), 4 contenuti su 108 | ✅ |
 | 7 | Il rapporto non contiene dati personali | ispezionato il rapporto stampato dalla quarta esecuzione (58 righe) e `import-completeness-report.md`: nessun indirizzo, nome di file, IP o nome di persona | ✅ |
-| 8 | `rollback` riporta il database allo stato precedente | prova su dati sintetici, come deciso da DR-096: `apps/importer/tests/unit/rollback.test.ts` verde in `pnpm test` del 2026-10-07 | ✅ |
+| 8 | `rollback` riporta il database allo stato precedente | prova su dati sintetici, come deciso da DR-096: `apps/importer/tests/unit/rollback.test.ts` verde il 2026-10-07. In più, il 2026-10-09, la suite reale annulla un'esecuzione sulla sorgente vera e riporta il database a vuoto (`idempotency.real.test.ts`, verde) | ✅ |
 
 ### Modello a blocchi — ADR-005, ADR-006
 
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
-| 9 | 108 documenti validi secondo lo schema | da eseguire: suite reale dell'importer | ⏳ Docker |
-| 10 | Zero `[et_pb_` e `<!-- wp:` nel testo convertito | da eseguire: suite reale e ricerca sul database importato | ⏳ Docker |
-| 11 | Andata e ritorno su 108 contenuti | da eseguire: suite reale (`roundTripReal.real.test.ts`) | ⏳ Docker |
+| 9 | 108 documenti validi secondo lo schema | suite reale, 2026-10-09: 108 contenuti importati, **0** documenti rifiutati dallo schema (`roundTripReal.real.test.ts`); la suite reale intera: 8 file, 13 prove, verdi | ✅ |
+| 10 | Zero `[et_pb_` e `<!-- wp:` nel testo convertito | ricerca sul database importato, 2026-10-09, in `blocks`, `content_html` e `content_text` dei 108 contenuti: **0** e **0** | ✅ |
+| 11 | Andata e ritorno su 108 contenuti | `roundTripReal.real.test.ts`, 2026-10-09: 108 contenuti, **0** con HTML divergente, **0** con testo divergente, 0 su 193 blocchi `rich_text` non stabili | ✅ |
 | 12 | Sanificazione idempotente | `packages/blocks/tests/sanitize.test.ts`: 35 prove verdi il 2026-10-08 | ✅ |
 
 ### Media e URL — ADR-004 §7
@@ -52,8 +53,8 @@ I criteri che ne hanno bisogno aspettano HO-011.
 |---|---|---|---|
 | 13 | Oggetti in `media-public` = file sorgente meno le esclusioni | preflight della quarta esecuzione: 1.475 file dopo le esclusioni, come atteso; verifica «file nel bucket / file attesi» eseguita: 0 mancanti | ✅ |
 | 14 | Checksum identici al 100 % | verifica «checksum non corrispondenti» della quarta esecuzione: 0 | ✅ |
-| 15 | I 4 documenti riservati non sono raggiungibili da anonimo | da eseguire: prova negativa sull'archiviazione avviata | ⏳ Docker |
-| 16 | URL storici rispondono 301 | da eseguire: campione di `/wp-content/uploads/...` e i 6 slug storici sul servizio avviato | ⏳ Docker |
+| 15 | I 4 documenti riservati non sono raggiungibili da anonimo | prova negativa del 2026-10-09 con le chiavi vere dei 4 file: archiviazione diretta **403** sul bucket riservato e su quello pubblico; attraverso l'API, la stessa che Caddy espone su `/media/*`, **404** per percorso e **401** su `/media/:id`. Controllo positivo: con le credenziali il bucket riservato elenca 4 oggetti | ✅ |
+| 16 | URL storici rispondono 301 | **spostato nella Fase 1E da DR-094** (2026-10-04): oggi nessun componente serve i redirect al pubblico | ➡️ 1E |
 
 ### API e sessioni — ADR-007, ADR-001
 
@@ -68,7 +69,7 @@ I criteri che ne hanno bisogno aspettano HO-011.
 
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
-| 21 | 1D-28…1D-35 eseguiti nell'area amministrativa avviata | nel browser, con Playwright: 1D-28 completo; 1D-31 caricare e testo alternativo; 1D-32 aggiungere, visibilità, spostare e annidare; 1D-34 creare e spegnere; 1D-35. **Non eseguiti nel browser**: 1D-29, 1D-33, e per 1D-30, 1D-31, 1D-34 aggiungere ed eliminare un blocco, sostituire ed eliminare un media, modificare un redirect. Coperti solo da prove di API e componenti. Serve una decisione (§5, D30) | ⏳ |
+| 21 | 1D-28…1D-35 eseguiti nell'area amministrativa avviata | Playwright sull'area amministrativa avviata, 2026-10-09: suite intera **30 su 30**. Le 7 prove nuove di DR-100 (`tests/e2e/cms/modifiche.spec.ts`) coprono il resto: testo e immagine dentro i blocchi (1D-29), aggiungere, spostare ed eliminare un blocco (1D-30), didascalia, sostituzione ed eliminazione di un media (1D-31), SEO di un contenuto e template globale (1D-33), modifica di un redirect (1D-34). Eseguite 3 volte di fila: 21 su 21. Hanno trovato il difetto del §3.1; dopo la correzione (DR-102), senza più le attese che lo aggiravano, di nuovo 30 su 30 e 21 su 21 | ✅ |
 | 22 | L'anteprima usa i componenti di `packages/blocks` | `apps/admin/tests/preview-import-graph.test.ts`, verde il 2026-10-07: l'anteprima usa `BlocksDocument` del pacchetto condiviso e l'area amministrativa non ha una resa propria. Limite dichiarato: il sito pubblico non rende ancora contenuti, il confronto con `apps/web` arriva in 1E | ✅ |
 | 23 | Il blocco di riserva si modifica in un'area di testo evidenziata, con avviso | `HtmlFallbackEditor` di `packages/ui`: `textarea` con evidenziazione sovrapposta e avviso «Blocco non convertito»; `packages/ui/tests/html-fallback-editor.test.tsx` verde | ✅ |
 | 24 | Commutatore di ruolo, ambiente in parole, permessi del ruolo attivo | `apps/api/tests/areaBinding.test.ts` verde il 2026-10-07; nel browser, `tests/e2e/cms/accesso.spec.ts` (scelta della veste, ambiente scritto in parole, lavoro nell'altra area) | ✅ |
@@ -79,7 +80,7 @@ I criteri che ne hanno bisogno aspettano HO-011.
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
 | 25 | `apps/web` non importa da `packages/ui` | file di prova in `apps/web/src` che importa da `@amoris/ui`: **il lint fallisce** con `no-restricted-imports`; file rimosso, lint di nuovo verde | ✅ |
-| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale il 2026-10-07: `typecheck`, `lint`, `format:check`, `test` verdi. Da eseguire: `pnpm build` e la CI, che non gira dal 2026-09-14 perché 47 commit non sono stati spinti | ⏳ push |
+| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale: `test` verde il 2026-10-07, `build` il 2026-10-08, `lint`, `format:check`, `typecheck` ed end-to-end il 2026-10-09. In CI, esecuzione `37786645548` del 2026-10-08: lint, formattazione, tipi e build verdi, **test falliti** per un difetto della CI (§3, punti 3 e 5), corretto ma non ancora spinto. Il 2026-10-09, dopo DR-101 e DR-102, in locale tutti verdi: `lint`, `format:check`, `typecheck`, `test` (8 pacchetti, 1090 prove) e end-to-end 30 su 30 | ⏳ CI |
 | 27 | Nessun dato reale né segreto fra i file tracciati | ricerca su 723 file tracciati: 0 IBAN, 0 codici fiscali, 0 chiavi private, 0 token noti, nessun file di `source-private/`, `.reference/` o `.env`. Trovati due indirizzi su domini reali in prove: corretti (§3). Resta l'indirizzo pubblico della segreteria in `docs/migration/seo-rendered-baseline.csv`, già dichiarato nell'audit della 1C | ✅ |
 | 28 | `PROGRESS.md` ha una riga per wave | 36 righe `PHASE:1D` `complete`; W4, W5, W7 e W8 registrate per sotto-wave. Manca solo la `1D-W12`, che è questo audit | ✅ |
 
@@ -91,16 +92,64 @@ I criteri che ne hanno bisogno aspettano HO-011.
 2. **Indirizzo su un dominio reale** in `packages/blocks/tests/sanitize.test.ts`.
    Sostituito con uno sul dominio `.invalid`. Prova verde.
 
+3. **La CI non poteva eseguire la prova dell'archiviazione dell'importer**
+   (`apps/importer/tests/unit/storage/objectStore.test.ts`, aggiunta nella
+   `1D-W11` quando la CI non girava più). Due cause: Turborepo non passava le
+   variabili `S3_*` al compito `test`, e la CI avviava l'archivio a oggetti
+   **dopo** le prove. Corretti `turbo.json` e `.github/workflows/ci.yml`; l'esito
+   si vedrà alla prossima esecuzione della CI. Le altre prove che leggono la
+   configurazione usano valori sintetici e non ne dipendono.
+4. **Le immagini di MinIO non erano più scaricabili** da quay.io (`401`) né da
+   Docker Hub (`404`). Sostituite con quelle Chainguard fissate per digest
+   (DR-101). Il volume di sviluppo esistente va riassegnato una volta (HO-012).
+5. **Il passo dell'archivio a oggetti della CI usava `docker compose wait`**, che
+   fallisce se la creazione dei bucket è già finita. Ora la esegue in modo
+   sincrono; provato due volte di fila in un progetto Compose isolato.
+
+### 3.1 Difetto trovato e corretto con DR-102: una lettura cancellava ciò che si era appena scritto
+
+Trovato dalle prove nuove del criterio 21. In tre punti dell'area
+amministrativa una lettura dal servizio sovrascriveva, senza avvisare, le
+modifiche fatte mentre era in corso:
+
+| Punto | Che cosa si perde |
+|---|---|
+| `apps/admin/src/components/editor/ContentEditor.tsx`, `writeToContent` (righe 205–256): dopo «Salva» azzera le modifiche in sospeso e rilegge il contenuto, mentre albero, ispettore e titolo restano modificabili | una modifica fatta durante il salvataggio |
+| `apps/admin/src/components/editor/ContentSeoPanel.tsx`, `load` (righe 90–117), con i campi disabilitati solo durante il salvataggio (righe 202–229) e non durante il caricamento | ciò che si scrive nel pannello SEO prima che i metadati siano arrivati |
+| `apps/admin/src/components/menu/MenuItemPanel.tsx`, effetto alle righe 66–75, che riporta i campi ai valori salvati a ogni nuova lettura delle voci, per esempio dopo uno spostamento (`MenuManager.tsx` riga 190) | le modifiche non salvate della voce aperta |
+
+Media, redirect, template globali e impostazioni non hanno il difetto: lì la
+lettura non tocca la bozza aperta.
+
+**Correzione, 2026-10-09 (DR-102).** I campi restano modificabili. L'editor,
+dopo il salvataggio, rimette sullo schermo le modifiche fatte nel frattempo e
+le segna da salvare; il salvataggio automatico aspetta la fine del salvataggio.
+Il pannello SEO e la scheda della voce di menu, a ogni lettura, aggiornano solo
+i campi non ancora modificati. Una prova di componente per punto, rossa prima
+e verde dopo; anche il terzo punto, prima solo dedotto, è stato riprodotto. Le
+prove end-to-end non aspettano più la fine del caricamento.
+
 Prima dell'audit, nella stessa giornata: il conteggio dei volumi contava anche
 l'account locale di HO-009 (DR-099, attuata e provata).
 
 ## 4. Dipendenze
 
-Nessuna dipendenza aggiunta durante l'audit. Il confronto con il §4 di `PLAN.md`
-è da completare con l'elenco di `pnpm list` prima della chiusura.
+Nessuna dipendenza aggiunta durante l'audit. Confronto fra i `package.json` alla
+chiusura della 1C (`f3d35dc`) e oggi: le dipendenze nuove della 1D sono quelle
+del §4 di `PLAN.md` (`zod`, `parse5`, `@aws-sdk/client-s3`, `@node-rs/argon2`,
+`@fastify/cookie`, `@fastify/rate-limit`, `@fastify/multipart`, `@tiptap/*`) e
+`@dnd-kit/core`, autorizzata da DR-069. Due, solo di sviluppo, **non erano
+dichiarate** e lo sono qui:
+
+| Pacchetto | Dove | Perché |
+|---|---|---|
+| `@testing-library/user-event` | `apps/admin`, dal 2026-09-22 | simula i gesti della persona nelle prove dei componenti dell'editor; stessa famiglia di `@testing-library/react`, presente dalla 1C |
+| `@vitest/coverage-v8` | radice, dal 2026-09-24 | misura la copertura; senza, la soglia dell'80 % di DR-095 non si potrebbe verificare |
 
 ## 5. Decisioni richieste
 
 | id | Contenuto | Termine |
 |---|---|---|
 | ~~**D30**~~ | **Chiusa il 2026-10-08 da DR-100**: prove Playwright nuove | — |
+| ~~**D22**~~ | **Chiusa il 2026-10-09 da DR-101**: immagini Chainguard fissate per digest | — |
+| ~~**D31**~~ | **Chiusa il 2026-10-09 da DR-102**: campi modificabili, modifiche conservate | — |

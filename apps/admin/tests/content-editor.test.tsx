@@ -184,6 +184,90 @@ describe('editor del contenuto', () => {
     });
   });
 
+  it('una modifica fatta mentre il salvataggio è in corso resta sullo schermo (DR-102)', async () => {
+    // Il difetto del §3.1 di AUDIT.md: dopo «Salva» l'editor rileggeva il
+    // contenuto e sostituiva ciò che si era scritto nel frattempo.
+    let releasePatch: () => void = () => undefined;
+    let savedTitle = syntheticContent.title;
+    apiMock.mockImplementation((path: string, options?: { method?: string; body?: unknown }) => {
+      if (path === `/contents/${syntheticContent.id}` && options?.method === 'PATCH') {
+        savedTitle = (options.body as { title: string }).title;
+        return new Promise<void>((resolve) => {
+          releasePatch = resolve;
+        });
+      }
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({ ...syntheticContent, title: savedTitle });
+      }
+      if (path === `/contents/${syntheticContent.id}/draft`) {
+        return options?.method === undefined
+          ? Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'))
+          : Promise.resolve(undefined);
+      }
+      return Promise.resolve(undefined);
+    });
+    const user = userEvent.setup();
+    renderEditor();
+    await waitForEditor();
+
+    const title = screen.getByRole('textbox', { name: 'Titolo' });
+    await user.clear(title);
+    await user.type(title, 'Titolo salvato');
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await waitFor(() => expect(savedTitle).toBe('Titolo salvato'));
+
+    await user.type(title, ' e poi ritoccato');
+    releasePatch();
+
+    await screen.findByText('Contenuto salvato.');
+    expect(screen.getByRole('textbox', { name: 'Titolo' })).toHaveValue(
+      'Titolo salvato e poi ritoccato',
+    );
+    expect(
+      screen.getByText('Modifiche non ancora salvate nella copia di lavoro.'),
+    ).toBeInTheDocument();
+  });
+
+  it('durante un salvataggio la copia di lavoro non si scrive (DR-102)', async () => {
+    // Scritta durante il salvataggio, la copia porterebbe la data del contenuto
+    // di prima e verrebbe scartata alla rilettura come «più vecchia».
+    let releasePatch: () => void = () => undefined;
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path === `/contents/${syntheticContent.id}` && options?.method === 'PATCH') {
+        return new Promise<void>((resolve) => {
+          releasePatch = resolve;
+        });
+      }
+      if (path === `/contents/${syntheticContent.id}`) return Promise.resolve(syntheticContent);
+      if (path === `/contents/${syntheticContent.id}/draft` && options?.method === undefined) {
+        return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+      }
+      return Promise.resolve(undefined);
+    });
+    const draftWrites = () =>
+      apiMock.mock.calls.filter(
+        (call) =>
+          call[0] === `/contents/${syntheticContent.id}/draft` &&
+          (call[1] as { method?: string } | undefined)?.method === 'PUT',
+      ).length;
+    const user = userEvent.setup();
+    renderEditor();
+    await waitForEditor();
+
+    const title = screen.getByRole('textbox', { name: 'Titolo' });
+    await user.type(title, ' modificato');
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.type(title, ' ancora');
+    const before = draftWrites();
+    // Più del ritardo del salvataggio automatico, con il salvataggio ancora aperto.
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    expect(draftWrites()).toBe(before);
+
+    releasePatch();
+    await screen.findByText('Contenuto salvato.');
+    await waitFor(() => expect(draftWrites()).toBeGreaterThan(before), { timeout: 4000 });
+  });
+
   it('un documento non valido non si apre, e lo dice invece di riscriverlo', async () => {
     apiMock.mockImplementation((path: string) => {
       if (path === `/contents/${syntheticContent.id}`) {

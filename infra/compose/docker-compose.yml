@@ -34,8 +34,10 @@ services:
       retries: 20
       start_period: 10s
 
+  # Immagini Chainguard fissate per digest (DR-101): quelle di quay.io non sono
+  # piu' scaricabili. Il server gira come utente 65532, non come root.
   objects:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: cgr.dev/chainguard/minio:latest@sha256:f74600a1a46330cdbda1ef760d17a96bd6e0f4a6f0a2c49792ca3ee7e4c6fa18
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -47,7 +49,7 @@ services:
     volumes:
       - objects-data:/data
     healthcheck:
-      test: ['CMD-SHELL', 'mc ready local || exit 1']
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -55,7 +57,8 @@ services:
 
   # Crea i due bucket di ADR-004 §3.6 e poi esce. Rieseguirlo non fa danno.
   objects-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    # La variante -dev ha la shell che lo script richiede.
+    image: cgr.dev/chainguard/minio-client:latest-dev@sha256:5feb4dcc570e7578f82e6c84384849e6557d005fb9b06f714c63f7184883b13f
     depends_on:
       objects:
         condition: service_healthy

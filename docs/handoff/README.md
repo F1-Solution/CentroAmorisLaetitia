@@ -18,7 +18,8 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ✅ **chiuso** 2026-10-04 — `apply` due volte, esito `success`; `import-completeness-report.md` |
 | HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ⏳ **aperto** — account locale creato, accesso da provare |
 | HO-010 | [Prova a vista del trascinamento](HO-010-prova-a-vista-del-trascinamento.md) | 1D | ✅ **chiuso** 2026-10-07 — resa approvata dall'utente |
-| HO-011 | [Riavviare Docker per l'audit 1D-W12](HO-011-riavviare-docker-per-l-audit-1D-W12.md) | 1D | ⏳ **aperto** — riavvio segnalato il 2026-10-08, ma da qui il motore risponde ancora 500 |
+| HO-011 | [Riavviare Docker per l'audit 1D-W12](HO-011-riavviare-docker-per-l-audit-1D-W12.md) | 1D | ✅ **chiuso** 2026-10-09 — Docker risponde; il comando del passo 4 era sbagliato ed è corretto |
+| HO-012 | [Passare il volume di sviluppo alle immagini Chainguard](HO-012-passare-il-volume-di-sviluppo-alle-immagini-chainguard.md) | 1D | ⏳ **in attesa** — DR-101: il nuovo server non gira come root |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

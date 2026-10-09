@@ -100,3 +100,5 @@ PHASE:1D WAVE:1D-W11e STATUS:complete TS:2026-10-07T15:02:56Z
 <!-- 1D-W11e-bis: D29 = A (DR-099) attuata con prove; apply --confirm dopo pg_dump con esito success. -->
 PHASE:1D WAVE:1D-W11e-bis STATUS:complete TS:2026-10-07T15:24:14Z
 <!-- 1D-W12 in corso dal 2026-10-07: 20 criteri su 29 eseguiti e superati, 9 in attesa (Docker non risponde, HO-011; push per la CI; D30). Nessuna riga complete finche' l'audit non e' finito. -->
+<!-- 1D-W12 2026-10-09: 27 criteri su 28 superati, il 16 spostato in 1E (DR-094). Resta il 26 in CI, che dipende da D22; difetto del par. 3.1 di AUDIT.md in attesa di D31. Nessuna riga complete. -->
+<!-- 1D-W12 2026-10-09: D22 = A (DR-101) e D31 = B (DR-102) attuate e provate in locale; HO-012 aperto per il volume di sviluppo. Resta il criterio 26 in CI dopo il push. Nessuna riga complete. -->

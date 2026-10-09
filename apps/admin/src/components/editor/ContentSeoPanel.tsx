@@ -10,7 +10,7 @@ import {
   TextField,
   type MediaPickerItem,
 } from '@amoris/ui';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 
 /**
@@ -58,6 +58,19 @@ const EMPTY = {
   robotsNofollow: false,
 };
 
+type SeoDraft = typeof EMPTY;
+
+/** I valori letti, tranne nei campi che la persona ha già modificato (DR-102). */
+function mergeUntouched(
+  current: SeoDraft,
+  loaded: SeoDraft,
+  touched: ReadonlySet<keyof SeoDraft>,
+): SeoDraft {
+  const merged = { ...loaded };
+  for (const key of touched) Object.assign(merged, { [key]: current[key] });
+  return merged;
+}
+
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
     ? caught.fullMessage
@@ -77,6 +90,7 @@ export function ContentSeoPanel({
   disabled,
 }: ContentSeoPanelProps): React.JSX.Element {
   const [draft, setDraft] = useState(EMPTY);
+  const touched = useRef(new Set<keyof SeoDraft>());
   const [exists, setExists] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +105,7 @@ export function ContentSeoPanel({
     setLoading(true);
     try {
       const row = await api<ContentSeo>(`/seo/contents/${contentId}`);
-      setDraft({
+      const loaded: SeoDraft = {
         title: row.title ?? '',
         description: row.description ?? '',
         canonicalUrl: row.canonicalUrl ?? '',
@@ -100,12 +114,13 @@ export function ContentSeoPanel({
         ogImageId: row.ogImageId,
         robotsNoindex: row.robotsNoindex,
         robotsNofollow: row.robotsNofollow,
-      });
+      };
+      setDraft((current) => mergeUntouched(current, loaded, touched.current));
       setExists(true);
       setError(null);
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 404) {
-        setDraft(EMPTY);
+        setDraft((current) => mergeUntouched(current, EMPTY, touched.current));
         setExists(false);
         setError(null);
       } else {
@@ -119,6 +134,12 @@ export function ContentSeoPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  /** Ogni modifica passa di qui, così la lettura sa quali campi lasciare stare. */
+  function edit(patch: Partial<SeoDraft>): void {
+    for (const key of Object.keys(patch) as (keyof SeoDraft)[]) touched.current.add(key);
+    setDraft((current) => ({ ...current, ...patch }));
+  }
 
   useEffect(() => {
     if (!picking) return;
@@ -163,6 +184,7 @@ export function ContentSeoPanel({
       });
       setExists(true);
       setSaved(true);
+      touched.current.clear();
     } catch (caught) {
       setError(messageOf(caught));
     } finally {
@@ -195,9 +217,9 @@ export function ContentSeoPanel({
 
       <SeoPanel
         title={draft.title}
-        onTitleChange={(value) => setDraft({ ...draft, title: value })}
+        onTitleChange={(value) => edit({ title: value })}
         description={draft.description}
-        onDescriptionChange={(value) => setDraft({ ...draft, description: value })}
+        onDescriptionChange={(value) => edit({ description: value })}
         resultUrl={path}
         disabled={disabled || busy}
         {...(chosenImage ? { shareImageAlt: chosenImage.title ?? chosenImage.fileName } : {})}
@@ -213,20 +235,20 @@ export function ContentSeoPanel({
           label="Non indicizzare questa pagina"
           checked={draft.robotsNoindex}
           disabled={disabled || busy}
-          onChange={(event) => setDraft({ ...draft, robotsNoindex: event.target.checked })}
+          onChange={(event) => edit({ robotsNoindex: event.target.checked })}
         />
         <CheckboxField
           label="Non seguire i collegamenti di questa pagina"
           checked={draft.robotsNofollow}
           disabled={disabled || busy}
-          onChange={(event) => setDraft({ ...draft, robotsNofollow: event.target.checked })}
+          onChange={(event) => edit({ robotsNofollow: event.target.checked })}
         />
         <TextField
           label="Indirizzo canonico"
           value={draft.canonicalUrl}
           disabled={disabled || busy}
           helpText="Solo se questa pagina ripete il contenuto di un'altra. Di norma resta vuoto."
-          onChange={(event) => setDraft({ ...draft, canonicalUrl: event.target.value })}
+          onChange={(event) => edit({ canonicalUrl: event.target.value })}
         />
       </FieldGroup>
 
@@ -239,13 +261,13 @@ export function ContentSeoPanel({
           label="Titolo di condivisione"
           value={draft.ogTitle}
           disabled={disabled || busy}
-          onChange={(event) => setDraft({ ...draft, ogTitle: event.target.value })}
+          onChange={(event) => edit({ ogTitle: event.target.value })}
         />
         <TextField
           label="Descrizione di condivisione"
           value={draft.ogDescription}
           disabled={disabled || busy}
-          onChange={(event) => setDraft({ ...draft, ogDescription: event.target.value })}
+          onChange={(event) => edit({ ogDescription: event.target.value })}
         />
       </FieldGroup>
 
@@ -266,7 +288,7 @@ export function ContentSeoPanel({
         searchValue={mediaSearch}
         onSearchChange={setMediaSearch}
         onSelect={(item) => {
-          setDraft({ ...draft, ogImageId: item.id });
+          edit({ ogImageId: item.id });
           setPicking(false);
         }}
       />

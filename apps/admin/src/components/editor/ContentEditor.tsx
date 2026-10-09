@@ -165,8 +165,15 @@ export function ContentEditor({
     void load();
   }, [load]);
 
+  // L'ultima modifica e il suo contatore: dopo un salvataggio dicono se si è
+  // scritto qualcosa nel frattempo, che la rilettura non deve cancellare (DR-102).
+  const lastEdit = useRef<EditorState | null>(null);
+  const editCount = useRef(0);
+
   /** Ogni modifica passa di qui: un solo punto che segna il documento da salvare. */
   const mutate = useCallback((next: EditorState) => {
+    lastEdit.current = next;
+    editCount.current += 1;
     setState(next);
     setPending(true);
     setActionError(null);
@@ -197,13 +204,15 @@ export function ContentEditor({
   };
 
   useEffect(() => {
-    if (!pending || readOnly) return undefined;
+    // Durante un salvataggio la copia di lavoro aspetta: ripartirà sul contenuto riletto.
+    if (!pending || readOnly || busy) return undefined;
     const timer = setTimeout(() => void saveDraft.current(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [pending, state, readOnly]);
+  }, [pending, state, readOnly, busy]);
 
   async function writeToContent(publish: boolean | null): Promise<void> {
     if (!state || !content) return;
+    const editsBefore = editCount.current;
     setBusy(true);
     setActionError(null);
     try {
@@ -247,6 +256,11 @@ export function ContentEditor({
             : 'Contenuto ritirato: non è più raggiungibile dal pubblico.',
       );
       await load();
+      const editedMeanwhile = lastEdit.current;
+      if (editCount.current !== editsBefore && editedMeanwhile) {
+        setState(editedMeanwhile);
+        setPending(true);
+      }
     } catch (caught) {
       setActionError(
         caught instanceof ApiError ? caught.fullMessage : 'L’operazione non è riuscita.',

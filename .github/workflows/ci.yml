@@ -91,6 +91,17 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Serve già alle prove di integrazione dell'importer, oltre ai flussi del
+      # CMS che caricano un file davvero (criterio 1D-31). Si avvia con la **stessa**
+      # definizione dell'ambiente locale, non con una copia scritta qui.
+      - name: Archivio a oggetti
+        env:
+          COMPOSE: docker compose -f infra/compose/docker-compose.yml --env-file .env.example
+        run: |
+          $COMPOSE up -d --wait objects
+          # Sincrono: l'esito del passo e' quello della creazione dei bucket.
+          $COMPOSE run --rm objects-init
+
       - name: Test unitari e di integrazione
         run: pnpm test
 
@@ -102,16 +113,6 @@ jobs:
 
       - name: Browser per le prove end-to-end
         run: pnpm exec playwright install --with-deps chromium
-
-      # I flussi del CMS caricano un file davvero: senza archivio a oggetti la
-      # prova del criterio 1D-31 non esisterebbe. Si avvia con la **stessa**
-      # definizione dell'ambiente locale, non con una copia scritta qui.
-      - name: Archivio a oggetti
-        env:
-          COMPOSE: docker compose -f infra/compose/docker-compose.yml --env-file .env.example
-        run: |
-          $COMPOSE up -d objects objects-init
-          $COMPOSE wait objects-init
 
       # DR-095: copertura misurata sull'insieme dei pacchetti, con soglia
       # dell'80 % su istruzioni, diramazioni, funzioni e righe.

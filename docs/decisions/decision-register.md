@@ -1050,3 +1050,26 @@ della Fase 1F.
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-100 | 2026-10-08 | Come si chiude il criterio 21 per le parti di 1D-29…1D-34 non ancora eseguite nel browser | **Opzione A** — prove Playwright nuove, che restano come regressione e girano in CI | B — HO-006 eseguita a mano dall'utente, con l'esito registrato | «D30 = A» | Proprietario | Fase 1D, `tests/e2e/cms` | sì | `AUDIT.md` §2 criterio 21, HO-006 |
+
+## 35. Round 26 — risposta del 2026-10-09, immagini di MinIO e difetto del §3.1
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-101 | 2026-10-09 | Da dove vengono le immagini di MinIO, ora che `quay.io/minio/minio` e `quay.io/minio/mc` non sono più scaricabili (D22) | **Opzione A** — immagini Chainguard di MinIO (`cgr.dev/chainguard/minio` e `cgr.dev/chainguard/minio-client`), fissate per digest | B — costruire l'immagine di MinIO dai sorgenti, a una release fissata; C — un altro server compatibile S3 (Garage o RustFS), con ADR | «D22 = A» | Proprietario | `infra/compose`, CI, ogni installazione da zero | sì | DR-005, ADR-004 §3.6, `AUDIT.md` §5 |
+| DR-102 | 2026-10-09 | Come si corregge il difetto del §3.1 di `AUDIT.md`: una lettura dal servizio cancella ciò che si è appena scritto (D31) | **Opzione B** — i campi restano modificabili e le modifiche fatte nel frattempo si conservano: nell'editor nulla va perso durante il salvataggio, nel pannello SEO e nella scheda della voce di menu una lettura non tocca i campi già modificati | A — bloccare la modifica durante caricamento e salvataggio | «D31 = B» | Proprietario | `apps/admin`: editor del contenuto, SEO del contenuto, scheda della voce di menu | sì | `AUDIT.md` §3.1, DR-100 |
+
+### Attuazione, 2026-10-09
+
+| Voce | Stato |
+|---|---|
+| **Attuazione di DR-102** | **Fatta e provata.** Tre prove di componente nuove, rosse prima della correzione nei tre punti, compreso il menu, dove il difetto era solo dedotto; verdi dopo. Altre due dopo la revisione del codice: il salvataggio automatico resta fermo durante un salvataggio, e aprire un'altra voce di menu riparte dai suoi valori. Tolte dalle prove end-to-end le due attese che aggiravano il difetto: suite intera 30 su 30, le 7 prove di DR-100 21 su 21 in tre giri |
+| **Attuazione di DR-101** | **Fatta per CI e installazioni nuove.** Server `minio:latest`, client `minio-client:latest-dev` (lo script dei bucket vuole una shell), entrambi per digest. Provato in un progetto Compose isolato: server sano, bucket creati, seconda esecuzione senza cambiamenti. Il volume di sviluppo esistente richiede un passo dell'utente (HO-012) |
+
+### Conseguenze dichiarate di DR-101
+
+| Voce | Effetto |
+|---|---|
+| Versione | il server passa da `RELEASE.2025-09-07T16-13-09Z` a `RELEASE.2026-09-22T19-25-18Z`; il client non dichiara una release (`DEVELOPMENT.GOGET`) |
+| Utente | il server gira come utente 65532, non come root: un volume creato dall'immagine precedente va riassegnato una volta (HO-012), altrimenti il server non parte |
+| Digest | Chainguard pubblica gratis solo `latest` e `latest-dev`: un digest vecchio può sparire. Se succede, la CI fallisce allo scaricamento e si aggiorna il digest |
+| CI | il passo dell'archivio a oggetti ora crea i bucket in modo sincrono: `docker compose wait` falliva se il servizio di inizializzazione era già uscito |

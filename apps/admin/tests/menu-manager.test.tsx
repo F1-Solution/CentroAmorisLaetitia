@@ -165,6 +165,54 @@ describe('menu di navigazione', () => {
     ).toEqual(['/menu-items/v1', '/menu-items/v2']);
   });
 
+  it('spostare le voci non cancella le modifiche non salvate della voce aperta (DR-102)', async () => {
+    // Il difetto del §3.1 di AUDIT.md: ogni nuova lettura delle voci riportava
+    // la scheda aperta ai valori salvati. Il servizio restituisce oggetti nuovi
+    // a ogni lettura, come fa quello vero.
+    const reads = apiMock.getMockImplementation();
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.startsWith('/menus/') && !options?.method) {
+        return Promise.resolve(items.map((item) => ({ ...item })));
+      }
+      return reads?.(path, options) as unknown;
+    });
+    const user = userEvent.setup();
+    renderManager();
+    await user.click(await screen.findByRole('button', { name: /^Prima voce/ }));
+
+    const etichetta = await screen.findByLabelText('Etichetta');
+    await user.clear(etichetta);
+    await user.type(etichetta, 'Etichetta non ancora salvata');
+    const lettureDelleVoci = () =>
+      apiMock.mock.calls.filter(
+        (call) =>
+          (call[0] as string).startsWith('/menus/') &&
+          (call[1] as { method?: string } | undefined)?.method === undefined,
+      ).length;
+    const prima = lettureDelleVoci();
+    await user.click(screen.getByRole('button', { name: 'Sposta su: Seconda voce', hidden: true }));
+
+    await waitFor(() => expect(lettureDelleVoci()).toBeGreaterThan(prima));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Etichetta')).toHaveValue('Etichetta non ancora salvata');
+    });
+  });
+
+  it('aprire un’altra voce mostra i suoi valori, non le modifiche della precedente (DR-102)', async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await user.click(await screen.findByRole('button', { name: /^Prima voce/ }));
+    const etichetta = await screen.findByLabelText('Etichetta');
+    await user.clear(etichetta);
+    await user.type(etichetta, 'Modifica della prima voce');
+
+    await user.click(screen.getByRole('button', { name: /^Seconda voce/, hidden: true }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Etichetta')).toHaveValue('Seconda voce');
+    });
+  });
+
   it('aggiunge una voce che punta a un contenuto', async () => {
     const user = userEvent.setup();
     renderManager();
