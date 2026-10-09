@@ -1084,3 +1084,25 @@ La chiusura non tocca il gate pre-gestionale: mancano ancora la parità visiva
 approvata e il deploy in produzione verificato. La Fase 1E si pianifica solo su
 richiesta dell'utente. HO-009 è chiuso lo stesso giorno, su segnalazione
 dell'utente.
+
+## 37. Round 28 — risposta del 2026-10-09, pianificazione della Fase 1E
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-104 | 2026-10-09 | Come legge i dati il sito pubblico (D33) | **Opzione A** — un modulo pubblico di sola lettura nell'API: rotte anonime che restituiscono solo i contenuti pubblicati, menu, SEO, impostazioni pubbliche, redirect, più la rotta che serve `/media/*` dal bucket pubblico; prova negativa per ogni rotta | B — il sito chiama le rotte della redazione dal server, con un account tecnico | «D33 = A» | Proprietario | Fase 1E `1E-W2`, `apps/api`, `apps/web` | sì | ADR-008 §3.3 regola 4, ADR-004 §3.6, `.planning/phases/1E/PLAN.md` |
+| DR-105 | 2026-10-09 | Come si rende e si aggiorna una pagina pubblica (D34) | **Opzione A** — resa sul server a ogni richiesta, senza cache intermedia: ogni modifica è visibile subito | B — HTML statico rigenerato su richiesta dell'API alla pubblicazione (era la raccomandazione) | «D34 = A» | Proprietario | Fase 1E `1E-W4`, `apps/web`; carico dell'API in Fase 1F | sì | ADR-008 («statico dove possibile»), criterio 1G-10 |
+| DR-106 | 2026-10-09 | Regole del confronto visivo (D35) | **Opzione C** — le 6 viewport a scala 1 di `visual-regression-plan.md` (594 confronti, Chromium a versione fissata); immagini in `docs/qa/screenshots/` **fuori da Git** (`.gitignore`); nel rapporto un'impronta per ogni immagine | A — il piano della 1B così com'è, immagini fuori da Git senza cartella fissa; B — 3 viewport a scala 1/2/3 della skill, immagini in Git | «D35 = C» | Proprietario | Fase 1E `1E-W1`, `1E-W6`, skill `wordpress-visual-parity` e `deployment-gate` | parziale: le catture di riferimento si fanno una volta | `visual-regression-plan.md` §3 e §11 |
+| DR-107 | 2026-10-09 | Terze parti nel sito pubblico (D36) | **Opzione A** — nessuna chiamata a terzi in 1E: Open Sans in file locali, nessuna analisi, nessun popup, video e mappa caricati solo al clic con un'immagine di copertina equivalente, banner dei cookie mascherato e approvato come difformità; la politica di consenso si decide in Fase 1F con la verifica legale | B — riprodurre tutto come nella sorgente | «D36 = A» | Proprietario | Fase 1E `1E-W3`, `1E-W5`; Fase 1F | sì | MI-06, MI-08, `plugin-and-feature-map.md` |
+| DR-108 | 2026-10-09 | I form in Fase 1E (D37) | **Opzione A** — resa dei 25 form e richiesta d'invio salvata nel database, con validazione lato servizio e l'antispam di ADR-010; provata solo con dati sintetici; **nessuna email** fino alla Fase 1F | B — sola resa, invio non attivo fino alla 1F | «D37 = A» | Proprietario | Fase 1E `1E-W5`, `apps/api`, `packages/blocks` | sì | ADR-010 §4.3 e §4.5, DR-039, DR-094, DR-098 |
+
+### Conseguenze dichiarate
+
+- **DR-105 scarta la raccomandazione.** Il sito non tiene copie dell'HTML: ogni
+  pagina interroga l'API a ogni richiesta. ADR-008 diceva «statico dove
+  possibile»; la scelta resta compatibile perché nessuna ADR lo imponeva, ma il
+  carico dell'API va misurato nelle prove di prestazione della Fase 1F.
+- **DR-106** fissa `docs/qa/screenshots/` come cartella delle prove per il
+  `deployment-gate`, fuori da Git: va conservata fino all'approvazione della
+  parità, e la sua perdita costringerebbe a ricatturare.
+- **DR-107 non dichiara alcuna conformità** sui cookie o sul tracciamento: la
+  rimanda alla verifica del professionista (MI-06), prima della Fase 1F.

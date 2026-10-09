@@ -133,6 +133,21 @@ Design token dal sito originale, tutte le route e i template, responsive,
 screenshot e visual diff Playwright, chiusura delle difformità, report QA in
 `docs/qa/visual-parity-report.md`.
 
+Pianificazione avviata il 2026-10-09 (`1E-W0`): `.planning/phases/1E/CONTEXT.md`
+e `PLAN.md`; D33…D37 chiuse da DR-104…DR-108; D38 e D39 aperte.
+
+| Wave | Attività |
+|---|---|
+| `1E-W0` | Pianificazione, revisione di ADR-005 §3.3 per DR-071, decisioni |
+| `1E-W1` | Istanza di riferimento, rumore di fondo, catture di riferimento, controprova online |
+| `1E-W2` | Lettura pubblica dei dati, media e redirect |
+| `1E-W3` | Token e stili estratti dal CSS reso |
+| `1E-W4` | Template e rotte |
+| `1E-W5` | Blocchi dinamici e form |
+| `1E-W6` | Confronto visivo e correzione |
+| `1E-W7` | Verifiche non visive e manuali |
+| `1E-W8` | Rapporto, audit, richiesta di UAT |
+
 ### Fase 1G — Collaudo redazionale del CMS
 
 Verifica che contenuti, articoli, media, menu, SEO, redirect e impostazioni siano

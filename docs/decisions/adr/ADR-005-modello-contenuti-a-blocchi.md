@@ -8,6 +8,12 @@
 | **Decide** | come è fatto, a database, il corpo di una pagina o di un articolo |
 | **Origine** | rischio R-06, il principale della Fase 1; RC-03; DR-033 |
 
+## Revisioni
+
+| Data | Revisione |
+|---|---|
+| 2026-10-09 | **§3.3 regola 2 riformulata**, attuazione di **DR-071** nella `1E-W0`: le spaziature per modulo di Divi si conservano come **valori** in proprietà personalizzate CSS sul contenitore del blocco; le **regole** che li usano stanno nel foglio di stile. Il divieto di stile in linea resta per le regole |
+
 ---
 
 ## 1. Contesto
@@ -171,6 +177,17 @@ richiede una nota in questa ADR.
    di Divi che non hanno corrispondente si registrano nel rapporto di import e
    diventano, se necessari alla resa, **classi dichiarate** — mai stile in linea
    generato automaticamente.
+
+   > **Riformulata il 2026-10-09, decisione DR-071.** Fa eccezione un solo caso:
+   > le spaziature per modulo di Divi (`padding`, `margin` e simili), che sono
+   > valori numerici liberi e non si riducono a una scala di classi senza
+   > arrotondare. Si scrivono sul contenitore del blocco come **proprietà
+   > personalizzate CSS** (per esempio `style="--blk-pad-top:54px"`), e solo le
+   > regole del foglio di stile del sito le leggono. L'attributo porta un
+   > **valore**, non una **regola**: nessuna proprietà CSS ordinaria
+   > (`padding`, `color`, `display`…) compare mai in linea, e nessun nome di
+   > proprietà personalizzata fuori dall'elenco chiuso del foglio di stile.
+   > Il controllo è un test della Fase 1E sull'HTML reso.
 3. Un contenuto **HTML nudo** (4 casi) diventa un singolo `rich_text`.
 4. Il blocco `html` si usa solo quando la conversione perderebbe qualcosa di
    visibile. Ogni uso è **contato e motivato** nel rapporto di import.

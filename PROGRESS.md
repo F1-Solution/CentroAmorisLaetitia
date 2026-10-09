@@ -105,3 +105,5 @@ PHASE:1D WAVE:1D-W11e-bis STATUS:complete TS:2026-10-07T15:24:14Z
 <!-- 1D-W12 2026-10-09: CI 37890020769 rossa ai test per IMPORTER_IP_HASH_SALT assente in CI; corretto, in attesa di conferma del secondo push. Nessuna riga complete. -->
 PHASE:1D WAVE:1D-W12 STATUS:complete TS:2026-10-09T10:52:45Z
 <!-- Fase 1D chiusa dall'utente il 2026-10-09 (DR-103). -->
+<!-- 1E-W0 avviata il 2026-10-09: CONTEXT.md e PLAN.md scritti, ADR-005 revisionata per DR-071; decisioni D33-D37 in attesa. Nessuna riga complete finche' le bloccanti non sono chiuse. -->
+PHASE:1E WAVE:1E-W0 STATUS:complete TS:2026-10-09T21:19:29Z
