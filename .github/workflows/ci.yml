@@ -57,6 +57,8 @@ jobs:
       # in alcun documento (ADR-009 §4.3).
       IP_HASH_SALT: '0000000000000000000000000000000000000000000000000000000000000000'
       CSRF_SECRET: '1111111111111111111111111111111111111111111111111111111111111111'
+      # Sale dell'importer: lo pretende la configurazione letta dalla prova dell'archivio.
+      IMPORTER_IP_HASH_SALT: '2222222222222222222222222222222222222222222222222222222222222222'
       # Archivio a oggetti delle prove end-to-end: stessi valori di
       # `.env.example`, con cui l'ambiente locale già gira.
       S3_ENDPOINT: http://127.0.0.1:9000

@@ -17,7 +17,7 @@ criterio è segnato ⏳ e il motivo è scritto.
 | Criteri verificati con esito positivo | **27 su 28** |
 | Criteri in attesa | **1**: il 26, per la sola parte in CI |
 | Criteri falliti | **0** |
-| Difetti trovati e corretti durante l'audit | **5** (§3 e §3.1) |
+| Difetti trovati e corretti durante l'audit | **6** (§3 e §3.1) |
 | Difetti trovati e non corretti | **0** |
 
 Il criterio 26 aspetta solo l'esecuzione della CI dopo il push: le immagini di
@@ -80,7 +80,7 @@ MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
 | 25 | `apps/web` non importa da `packages/ui` | file di prova in `apps/web/src` che importa da `@amoris/ui`: **il lint fallisce** con `no-restricted-imports`; file rimosso, lint di nuovo verde | ✅ |
-| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale: `test` verde il 2026-10-07, `build` il 2026-10-08, `lint`, `format:check`, `typecheck` ed end-to-end il 2026-10-09. In CI, esecuzione `37786645548` del 2026-10-08: lint, formattazione, tipi e build verdi, **test falliti** per un difetto della CI (§3, punti 3 e 5), corretto ma non ancora spinto. Il 2026-10-09, dopo DR-101 e DR-102, in locale tutti verdi: `lint`, `format:check`, `typecheck`, `test` (8 pacchetti, 1090 prove) e end-to-end 30 su 30 | ⏳ CI |
+| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale: `test` verde il 2026-10-07, `build` il 2026-10-08, `lint`, `format:check`, `typecheck` ed end-to-end il 2026-10-09. In CI, esecuzione `37786645548` del 2026-10-08: lint, formattazione, tipi e build verdi, **test falliti** per un difetto della CI (§3, punti 3 e 5). Esecuzione `37890020769` del 2026-10-09: lint, formattazione, tipi, build e archivio a oggetti verdi, test falliti per il §3, punto 6, corretto ma non ancora spinto. Il 2026-10-09, dopo DR-101 e DR-102, in locale tutti verdi: `lint`, `format:check`, `typecheck`, `test` (8 pacchetti, 1090 prove) e end-to-end 30 su 30 | ⏳ CI |
 | 27 | Nessun dato reale né segreto fra i file tracciati | ricerca su 723 file tracciati: 0 IBAN, 0 codici fiscali, 0 chiavi private, 0 token noti, nessun file di `source-private/`, `.reference/` o `.env`. Trovati due indirizzi su domini reali in prove: corretti (§3). Resta l'indirizzo pubblico della segreteria in `docs/migration/seo-rendered-baseline.csv`, già dichiarato nell'audit della 1C | ✅ |
 | 28 | `PROGRESS.md` ha una riga per wave | 36 righe `PHASE:1D` `complete`; W4, W5, W7 e W8 registrate per sotto-wave. Manca solo la `1D-W12`, che è questo audit | ✅ |
 
@@ -105,6 +105,12 @@ MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
 5. **Il passo dell'archivio a oggetti della CI usava `docker compose wait`**, che
    fallisce se la creazione dei bucket è già finita. Ora la esegue in modo
    sincrono; provato due volte di fila in un progetto Compose isolato.
+6. **La CI non dava all'importer il sale `IMPORTER_IP_HASH_SALT`**, che la sua
+   configurazione pretende anche nella prova dell'archivio. Emerso dalla CI
+   `37890020769` del 2026-10-09, la prima con l'archivio funzionante: tutto verde
+   fino ai test, poi quell'unica variabile mancante. Aggiunto un valore sintetico
+   alla CI e la variabile al compito `test` di Turborepo; la prova, eseguita in
+   locale con i valori della CI, passa.
 
 ### 3.1 Difetto trovato e corretto con DR-102: una lettura cancellava ciò che si era appena scritto
 
