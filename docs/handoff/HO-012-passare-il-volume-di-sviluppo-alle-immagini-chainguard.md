@@ -1,6 +1,6 @@
 # HO-012 — Passare il volume di sviluppo alle immagini Chainguard di MinIO
 
-**Fase:** 1D, wave `1D-W12`. **Stato:** in attesa che tu la esegua.
+**Fase:** 1D, wave `1D-W12`. **Stato:** chiuso il 2026-10-09, verificato: server sano, 1477 e 4 oggetti, accesso anonimo 403.
 
 ## 1. Perché serve
 

@@ -1,6 +1,6 @@
 # AUDIT — Fase 1D
 
-**Stato: in corso, 27 criteri su 28 superati; il 28° aspetta la CI.** Avviato il 2026-10-07, **prima** di dichiarare la fase
+**Stato: audit completato il 2026-10-09, 28 criteri su 28 superati.** Avviato il 2026-10-07, **prima** di dichiarare la fase
 completa, come impone `CLAUDE.md`. La fase **non** è dichiarata chiusa.
 
 Verifica i 28 criteri di uscita di [`CONTEXT.md`](CONTEXT.md) §7, più il 24-bis.
@@ -9,19 +9,19 @@ criterio è segnato ⏳ e il motivo è scritto.
 
 ---
 
-## 1. Esito provvisorio
+## 1. Esito
 
 | | |
 |---|---|
 | Criteri della Fase 1D | **28**: i 28 di `CONTEXT.md` più il 24-bis, meno il 16 spostato in 1E da DR-094 |
-| Criteri verificati con esito positivo | **27 su 28** |
-| Criteri in attesa | **1**: il 26, per la sola parte in CI |
+| Criteri verificati con esito positivo | **28 su 28** |
+| Criteri in attesa | **0** |
 | Criteri falliti | **0** |
 | Difetti trovati e corretti durante l'audit | **6** (§3 e §3.1) |
 | Difetti trovati e non corretti | **0** |
 
-Il criterio 26 aspetta solo l'esecuzione della CI dopo il push: le immagini di
-MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
+L'audit è completo. La chiusura della Fase 1D resta una decisione
+dell'utente: questo documento non la dichiara.
 
 ## 2. I criteri di uscita, uno per uno
 
@@ -80,9 +80,9 @@ MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
 | # | Criterio | Come è stato verificato | Esito |
 |---|---|---|---|
 | 25 | `apps/web` non importa da `packages/ui` | file di prova in `apps/web/src` che importa da `@amoris/ui`: **il lint fallisce** con `no-restricted-imports`; file rimosso, lint di nuovo verde | ✅ |
-| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale: `test` verde il 2026-10-07, `build` il 2026-10-08, `lint`, `format:check`, `typecheck` ed end-to-end il 2026-10-09. In CI, esecuzione `37786645548` del 2026-10-08: lint, formattazione, tipi e build verdi, **test falliti** per un difetto della CI (§3, punti 3 e 5). Esecuzione `37890020769` del 2026-10-09: lint, formattazione, tipi, build e archivio a oggetti verdi, test falliti per il §3, punto 6, corretto ma non ancora spinto. Il 2026-10-09, dopo DR-101 e DR-102, in locale tutti verdi: `lint`, `format:check`, `typecheck`, `test` (8 pacchetti, 1090 prove) e end-to-end 30 su 30 | ⏳ CI |
+| 26 | `lint`, `typecheck`, `build`, `test` passano, in locale e in CI | in locale: `test` verde il 2026-10-07, `build` il 2026-10-08, `lint`, `format:check`, `typecheck` ed end-to-end il 2026-10-09. In CI, esecuzione `37786645548` del 2026-10-08: lint, formattazione, tipi e build verdi, **test falliti** per un difetto della CI (§3, punti 3 e 5). Esecuzione `37890020769` del 2026-10-09: lint, formattazione, tipi, build e archivio a oggetti verdi, test falliti per il §3, punto 6. Il 2026-10-09, dopo DR-101 e DR-102, in locale tutti verdi: `lint`, `format:check`, `typecheck`, `test` (8 pacchetti, 1090 prove) e end-to-end 30 su 30 Esecuzione `37919066237` del 2026-10-09, sul commit `68e3e88`: **tutti i passi verdi**, compresi test, copertura, schema ed end-to-end | ✅ |
 | 27 | Nessun dato reale né segreto fra i file tracciati | ricerca su 723 file tracciati: 0 IBAN, 0 codici fiscali, 0 chiavi private, 0 token noti, nessun file di `source-private/`, `.reference/` o `.env`. Trovati due indirizzi su domini reali in prove: corretti (§3). Resta l'indirizzo pubblico della segreteria in `docs/migration/seo-rendered-baseline.csv`, già dichiarato nell'audit della 1C | ✅ |
-| 28 | `PROGRESS.md` ha una riga per wave | 36 righe `PHASE:1D` `complete`; W4, W5, W7 e W8 registrate per sotto-wave. Manca solo la `1D-W12`, che è questo audit | ✅ |
+| 28 | `PROGRESS.md` ha una riga per wave | 36 righe `PHASE:1D` `complete`; W4, W5, W7 e W8 registrate per sotto-wave. La `1D-W12`, questo audit, si registra alla sua conclusione, il 2026-10-09 | ✅ |
 
 ## 3. Difetti trovati e corretti durante l'audit
 
@@ -101,7 +101,9 @@ MinIO sono sostituite da DR-101 e il passo dell'archivio a oggetti è provato.
    configurazione usano valori sintetici e non ne dipendono.
 4. **Le immagini di MinIO non erano più scaricabili** da quay.io (`401`) né da
    Docker Hub (`404`). Sostituite con quelle Chainguard fissate per digest
-   (DR-101). Il volume di sviluppo esistente va riassegnato una volta (HO-012).
+   (DR-101). Il volume di sviluppo esistente è stato riassegnato con HO-012, il
+   2026-10-09: server sano, 1477 oggetti pubblici e 4 riservati come prima,
+   accesso anonimo 403 su entrambi i bucket.
 5. **Il passo dell'archivio a oggetti della CI usava `docker compose wait`**, che
    fallisce se la creazione dei bucket è già finita. Ora la esegue in modo
    sincrono; provato due volte di fila in un progetto Compose isolato.
