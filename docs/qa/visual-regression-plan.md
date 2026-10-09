@@ -4,7 +4,7 @@ Come si dimostra, con numeri, che il nuovo sito è identico a quello attuale.
 
 | | |
 |---|---|
-| **Stato** | **proposta** |
+| **Stato** | **approvato** il 2026-10-10 con DR-110 |
 | **Esecuzione** | Fase 1E |
 | **Riferimento** | istanza WordPress congelata al 2026-09-13, `tools/wp-reference/` (DR-025) |
 | **Registro dei risultati** | `docs/qa/visual-parity-report.md`, prodotto in Fase 1E |
@@ -12,6 +12,12 @@ Come si dimostra, con numeri, che il nuovo sito è identico a quello attuale.
 
 `CLAUDE.md` vieta l'uso del termine «pixel-perfect» senza prove. Questo documento
 definisce quali sono le prove.
+
+## Revisioni
+
+| Data | Revisione |
+|---|---|
+| 2026-10-10 | **Approvato con DR-110** e allineato alle decisioni successive alla 1B: cartella e impronte delle immagini (§7, DR-106), D13 chiusa da DR-040 (§9 e §12), maschere alla luce di DR-107 (§5.1), stampa fuori perimetro per DR-041 (§11). Viewport, soglie e numero dei confronti **invariati** |
 
 ---
 
@@ -113,6 +119,11 @@ Si escludono dal confronto, con maschera dichiarata e motivata:
 | Banner dei cookie | sostituito da un componente proprio: **difformità dichiarata** (MI-08) | tutte le pagine |
 | Video incorporati, area del riproduttore | anteprima fornita da un servizio esterno | 7 occorrenze |
 
+Dal 2026-10-10 (DR-107) il sito nuovo non chiama terzi: video e mappa compaiono
+come immagine di copertina e si caricano solo al clic, e il banner dei cookie
+della sorgente non ha un corrispondente in Fase 1E. Le tre aree restano
+mascherate e sono **difformità dichiarate**, da approvare nel rapporto.
+
 Ogni maschera è elencata nel rapporto con le sue coordinate. **Una maschera non
 dichiarata è una difformità nascosta**, ed è esattamente ciò che il gate vieta.
 
@@ -173,7 +184,10 @@ rumore significherebbe smettere di misurare.
 
 Le immagini di riferimento **non entrano in Git**: sono 594 file, alcuni contengono
 testi di pagine reali, e Git non è il posto giusto per artefatti binari rigenerabili.
-Restano locali e si rigenerano dall'istanza congelata.
+Stanno in **`docs/qa/screenshots/`**, cartella esclusa da Git, organizzate per URL e
+viewport (DR-106). Il rapporto riporta per ogni immagine l'**impronta SHA-256**,
+così un'immagine conservata si riconosce come quella giudicata. La cartella va
+conservata fino all'approvazione della parità: perderla obbliga a ricatturare.
 
 Entra in Git **il rapporto**: percorsi, percentuali, esiti, maschere, versioni. Cioè
 ciò che serve a ricostruire il giudizio.
@@ -197,8 +211,11 @@ ciò che serve a ricostruire il giudizio.
 
 ## 9. Confronto dei metadati e dei contenuti non visivi
 
-Separato dal confronto visivo, perché **la decisione D13 è aperta** (`1B-W5` §8):
-finché non è decisa, una difformità di metadati non deve bloccare la parità visiva.
+Separato dal confronto visivo. D13 è chiusa da **DR-040** (opzione C): i metadati
+non visibili si **correggono** invece di riprodurne i difetti, e le 29 pagine senza
+`<h1>` lo ricevono, reso identico al testo che oggi lo sostituisce. Una
+differenza di metadati dovuta a quella correzione è attesa e si classifica come
+tale, non come fallimento.
 
 | Confronto | Riferimento | Numero |
 |---|---|---|
@@ -229,8 +246,7 @@ simmetrico e va scritto come tale.
 - **Prestazioni.** PageSpeed > 80 (RC-08) si misura in Fase 1F, non qui: è un
   criterio diverso e con strumenti diversi.
 - **Confronto fra browser.** Per costruzione, §4.
-- **Stampa.** Il tema ha un foglio di stile per la stampa; nessun requisito lo
-  menziona. Se l'utente lo ritiene rilevante, va detto ora.
+- **Stampa.** Fuori perimetro per **DR-041**: non si confronta e non si riproduce.
 - **Difformità approvate.** Ciò che l'utente approva come diverso esce dal confronto
   ed entra nell'elenco delle difformità dichiarate.
 
@@ -242,7 +258,7 @@ La Fase 1E si chiude quando, **tutte insieme**:
 2. nessuna area contigua di differenza supera 32 × 32 pixel su alcun URL;
 3. le verifiche manuali del §8 sono registrate per tutti gli 81 URL ad alta priorità;
 4. i confronti dei metadati del §9 sono registrati, con le difformità classificate
-   secondo l'esito di D13;
+   secondo DR-040;
 5. i 180 redirect rispondono come atteso, nei due sensi;
 6. ogni maschera e ogni difformità è dichiarata e **approvata esplicitamente
    dall'utente** in `visual-parity-report.md`;

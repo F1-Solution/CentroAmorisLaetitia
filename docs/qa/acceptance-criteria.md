@@ -5,9 +5,16 @@ dirsi conclusa e il gate possa dirsi superato.
 
 | | |
 |---|---|
-| **Stato** | **proposta** |
+| **Stato** | **approvato** il 2026-10-10 con DR-110 |
 | **Principio** | ogni criterio è **misurabile** o **osservabile**. Nessun criterio si soddisfa per dichiarazione |
 | **Correlati** | [`visual-regression-plan.md`](visual-regression-plan.md), `docs/discovery/phase-plan.md` §3 |
+
+
+## Revisioni
+
+| Data | Revisione |
+|---|---|
+| 2026-10-10 | **Approvato con DR-110** e allineato: criteri 1E-13…1E-19 aggiunti al §4 dalle decisioni successive alla 1B (`.planning/phases/1E/CONTEXT.md` §7); criteri sospesi del §8 risolti da DR-039 e DR-040; A-7 riscritto di conseguenza. Soglie e numeri dei criteri esistenti **invariati** |
 
 ---
 
@@ -116,6 +123,13 @@ Piano completo in [`visual-regression-plan.md`](visual-regression-plan.md).
 | 1E-10 | Controprova a campione contro il sito online | 10 URL, nessuna divergenza dell'istanza di riferimento |
 | 1E-11 | Difformità residue elencate e **approvate dall'utente** | condizione 10 del gate |
 | 1E-12 | Nessun service worker registrato sul sito pubblico | ADR-008 §3.3 |
+| 1E-13 | Gli URL storici rispondono 301, serviti dall'applicazione | DR-094 |
+| 1E-14 | Le 29 pagine hanno un `h1` reso identico al testo che oggi lo sostituisce | DR-040 |
+| 1E-15 | Nessuna proprietà CSS ordinaria in linea nell'HTML reso | DR-071, ADR-005 §3.3 regola 2 |
+| 1E-16 | La lettura pubblica non espone bozze, contenuti ritirati, account, compilazioni né documenti riservati | DR-104, prova negativa per rotta |
+| 1E-17 | Zero errori in console e zero richieste fallite | 81 URL ad alta priorità |
+| 1E-18 | `lint`, `typecheck`, `build`, `test`, end-to-end verdi | in locale e in CI |
+| 1E-19 | Aprire e salvare senza modifiche non cambia la pagina pubblica | ADR-005 §7 |
 
 ## 5. Fase 1G — Collaudo redazionale — condizione 7 del gate
 
@@ -151,7 +165,7 @@ dentro la verifica di parità.
 | A-4 | Ogni immagine informativa ha un testo alternativo; quelle decorative lo hanno vuoto |
 | A-5 | I campi dei form hanno etichette collegate |
 | A-6 | La lingua della pagina è dichiarata come italiano |
-| A-7 | Gerarchia dei titoli coerente — **dipende dalla decisione D13**, vedi §8 |
+| A-7 | Gerarchia dei titoli coerente: ogni pagina ha un solo `h1`, comprese le 29 che lo ricevono per DR-040 |
 | A-8 | Contrasto del testo conforme alla soglia comune, misurato sui colori estratti |
 
 ## 7. Fase 1F — Produzione — condizioni 14 e 15 del gate
@@ -171,18 +185,15 @@ dentro la verifica di parità.
 | 1F-11 | **Verifica privacy e legale completata** (MI-06) — richiede un professionista, non si sostituisce con una dichiarazione tecnica |
 | 1F-12 | Ogni azione irreversibile ha una conferma puntuale registrata |
 
-## 8. Criteri sospesi in attesa di decisione
+## 8. Criteri sospesi — risolti
 
-Tre criteri non si possono fissare ora, perché dipendono da decisioni aperte.
+I tre criteri sospesi dalla 1B sono stati risolti dalle decisioni del 2026-09-14.
 
-| # | Criterio | Dipende da |
+| # | Criterio | Esito |
 |---|---|---|
-| S-1 | Se le 29 pagine senza `<h1>` debbano riprodurre l'assenza o ricevere un titolo reso identico | **D13** |
-| S-2 | Se le 45 pagine senza meta description debbano restarne prive | **D13** |
-| S-3 | Come si comporta il campo di pagamento dei form | **D14** |
-
-Fino alla risposta, i confronti relativi si eseguono e si **registrano** come
-osservazioni, senza produrre un esito di superamento o fallimento.
+| S-1 | Le 29 pagine senza `<h1>` | **DR-040**: ricevono un titolo reso identico al testo che oggi lo sostituisce; diventa il criterio 1E-14 |
+| S-2 | Le 45 pagine senza meta description | **DR-040**: i difetti dei metadati non visibili non si riproducono. Una description assente nella sorgente e presente nel sito nuovo è una correzione attesa, non un fallimento del confronto; scrivere i testi è lavoro redazionale, non della 1E |
+| S-3 | Il campo di pagamento dei form | **DR-039**: il form resta identico, dopo l'invio compare il collegamento al pagamento con l'importo |
 
 ## 9. Corrispondenza con le 15 condizioni del gate
 

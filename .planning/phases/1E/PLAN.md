@@ -48,8 +48,8 @@ il cui documento è l'esito di controlli eseguiti restano a Sonnet.
 
 | Wave | Dipende da | Perché |
 |---|---|---|
-| `1E-W1` | `1E-W0`, D39 | Perimetro e cartella delle catture fissati da DR-106; D39 dice quale versione del piano del confronto fa fede |
-| `1E-W2` | `1E-W0`, D38 | La forma della lettura pubblica è DR-104; D38 decide il controllo sui media prima di servirli |
+| `1E-W1` | `1E-W0` | Perimetro e cartella delle catture fissati da DR-106; piano del confronto approvato da DR-110 |
+| `1E-W2` | `1E-W0` | Lettura pubblica di DR-104; controllo sui media di DR-109 prima di servirli |
 | `1E-W3` | `1E-W1` | I token si estraggono dal CSS reso dell'istanza avviata |
 | `1E-W4` | `1E-W2`, `1E-W3` | Le rotte leggono dalla lettura pubblica e usano i token |
 | `1E-W5` | `1E-W4` | I blocchi vivono nei template |
@@ -125,9 +125,9 @@ Il primo round della 1E è chiuso il 2026-10-09:
 | ~~**D36**~~ | Terze parti | **DR-107**: nessuna chiamata a terzi in 1E |
 | ~~**D37**~~ | Form | **DR-108**: resa e invio salvato, nessuna email |
 
-Round successivo, aperto il 2026-10-09:
+Secondo round, chiuso il 2026-10-10:
 
-| id | Decisione | Tipo | Termine |
-|---|---|---|---|
-| **D38** | Media citati dentro un blocco di riserva `html`, oggi fuori dal controllo di eliminazione (conseguenza di DR-077) | differibile | prima della `1E-W2` |
-| **D39** | Stato di `visual-regression-plan.md` e `acceptance-criteria.md`, ancora «proposta», e i criteri sospesi S-1…S-3 | differibile | prima della `1E-W1` |
+| id | Decisione | Esito |
+|---|---|---|
+| ~~**D38**~~ | Media citati dentro un blocco `html` | **DR-109**: il controllo cerca anche gli indirizzi, attuato nella `1E-W2` |
+| ~~**D39**~~ | Documenti del confronto della 1B | **DR-110**: approvati e allineati |

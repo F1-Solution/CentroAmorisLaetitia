@@ -134,7 +134,7 @@ screenshot e visual diff Playwright, chiusura delle difformità, report QA in
 `docs/qa/visual-parity-report.md`.
 
 Pianificazione avviata il 2026-10-09 (`1E-W0`): `.planning/phases/1E/CONTEXT.md`
-e `PLAN.md`; D33…D37 chiuse da DR-104…DR-108; D38 e D39 aperte.
+e `PLAN.md`; D33…D39 chiuse da DR-104…DR-110.
 
 | Wave | Attività |
 |---|---|

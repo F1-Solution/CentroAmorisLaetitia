@@ -190,5 +190,5 @@ registrata in `docs/qa/visual-parity-report.md` (condizione 13 del gate).
 ## 8. Assunzioni vietate e decisioni richieste
 
 Le decisioni sono in [`PLAN.md`](PLAN.md) §8: D33…D37 chiuse da DR-104…DR-108,
-D38 e D39 aperte.
+D38 e D39 chiuse da DR-109 e DR-110.
 Nessuna wave dalla `1E-W1` in avanti parte con una decisione bloccante aperta.

@@ -1106,3 +1106,22 @@ dell'utente.
   parità, e la sua perdita costringerebbe a ricatturare.
 - **DR-107 non dichiara alcuna conformità** sui cookie o sul tracciamento: la
   rimanda alla verifica del professionista (MI-06), prima della Fase 1F.
+
+## 38. Round 29 — risposta del 2026-10-10, controllo sui media e documenti del confronto
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-109 | 2026-10-10 | Media citati per indirizzo dentro un blocco `html` scritto a mano (D38) | **Opzione A** — il controllo di eliminazione cerca nei blocchi, oltre all'identificativo, anche l'indirizzo pubblico del media e quelli delle sue dimensioni derivate; una prova per caso | B — accettare il limite dichiarato, con un avviso fisso nell'editor del blocco | «D38 = A» | Proprietario | Fase 1E `1E-W2`, `apps/api` modulo media | sì | DR-077 |
+| DR-110 | 2026-10-10 | Stato di `visual-regression-plan.md` e `acceptance-criteria.md` (D39) | **Opzione A** — entrambi **approvati** e allineati alle decisioni successive alla 1B, con una tabella di revisioni datata: cartella e impronte di DR-106, criteri sospesi risolti da DR-039 e DR-040, criteri 1E-13…1E-19; viewport, soglie e numero dei confronti invariati | B — revisione dell'utente prima dell'approvazione | «D39 = A» | Proprietario | Fase 1E, gate condizioni 6, 9, 10 | sì | DR-038, DR-106, `.planning/phases/1E/CONTEXT.md` §7 |
+
+### Attuazione, 2026-10-10
+
+| Voce | Stato |
+|---|---|
+| **Attuazione di DR-110** | **Fatta**: i due documenti portano lo stato «approvato» e la revisione datata |
+| **Attuazione di DR-109** | Nella `1E-W2`, prima di servire `/media/*` al pubblico |
+
+Una lettura da dichiarare: per **S-2** (le 45 pagine senza description) DR-040 è
+stato letto come «una description presente nel sito nuovo e assente nella
+sorgente è una correzione attesa»; **scrivere** quelle description non è lavoro
+della 1E. Se l'utente intendeva altro, va detto prima della `1E-W7`.
