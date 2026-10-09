@@ -1073,3 +1073,14 @@ della Fase 1F.
 | Utente | il server gira come utente 65532, non come root: un volume creato dall'immagine precedente va riassegnato una volta (HO-012), altrimenti il server non parte |
 | Digest | Chainguard pubblica gratis solo `latest` e `latest-dev`: un digest vecchio può sparire. Se succede, la CI fallisce allo scaricamento e si aggiorna il digest |
 | CI | il passo dell'archivio a oggetti ora crea i bucket in modo sincrono: `docker compose wait` falliva se il servizio di inizializzazione era già uscito |
+
+## 36. Round 27 — risposta del 2026-10-09, chiusura della Fase 1D
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-103 | 2026-10-09 | Chiudere la Fase 1D (D32) | **Opzione A** — la Fase 1D è chiusa sulle prove di `AUDIT.md`: 28 criteri su 28, CI `37919066237` verde | B — non chiudere ancora, per una revisione dell'audit o per HO-009 | «D32 = A: registra la chiusura della Fase 1D» | Proprietario | Fase 1D, `ROADMAP.md` | sì | `.planning/phases/1D/AUDIT.md`, DR-094, DR-099…DR-102 |
+
+La chiusura non tocca il gate pre-gestionale: mancano ancora la parità visiva
+approvata e il deploy in produzione verificato. La Fase 1E si pianifica solo su
+richiesta dell'utente. HO-009 è chiuso lo stesso giorno, su segnalazione
+dell'utente.

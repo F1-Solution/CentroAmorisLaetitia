@@ -101,7 +101,11 @@ corretti, CI verde alla prima corsa.
 Il gate di Fase 1 **non avanza**: questa fase costruisce l'impalcatura, non il
 prodotto.
 
-### Fase 1D — Importazione e CMS minimo
+### Fase 1D — Importazione e CMS minimo — **APPROVATA 2026-10-09**
+
+Tredici wave, audit superato (`.planning/phases/1D/AUDIT.md`): 28 criteri di
+uscita su 28, il 16 spostato in 1E da DR-094; 6 difetti trovati e corretti; CI
+`37919066237` verde. Chiusura decisa dall'utente con DR-103.
 
 Importer idempotente con dry-run, import media, ricostruzione di menu, routing,
 contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
@@ -121,7 +125,7 @@ contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
 | `1D-W9` | CMS: media, menu, SEO, redirect, impostazioni | `apps/admin` |
 | `1D-W10` | Test di andata e ritorno su tutti i contenuti, E2E sul CMS, copertura | — |
 | `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza — **chiusa il 2026-10-04** | `docs/migration/import-completeness-report.md` |
-| `1D-W12` | Audit della fase | `.planning/phases/1D/AUDIT.md` |
+| `1D-W12` | Audit della fase — **chiusa il 2026-10-09** | `.planning/phases/1D/AUDIT.md` |
 
 ### Fase 1E — Ricostruzione React e parità visiva
 

@@ -1,5 +1,7 @@
 # HO-009 — Entrare nell'area amministrativa locale con i contenuti importati
 
+**Stato:** chiuso il 2026-10-09, su segnalazione dell'utente.
+
 Scritto il 2026-10-04, dopo la creazione dell'account locale
 (`.planning/phases/1D/LOCAL-ACCOUNT-PLAN.md`).
 

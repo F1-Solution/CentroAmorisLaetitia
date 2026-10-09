@@ -16,7 +16,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — seme sintetico e sei schermate da guardare |
 | HO-007 | [Eseguire a mano le suite della `1D-W10`](HO-007-eseguire-le-suite-della-1D-W10.md) | 1D | ✅ **chiuso** 2026-09-30 — tutti i test passati |
 | HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ✅ **chiuso** 2026-10-04 — `apply` due volte, esito `success`; `import-completeness-report.md` |
-| HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ⏳ **aperto** — account locale creato, accesso da provare |
+| HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ✅ **chiuso** 2026-10-09 — l'utente è entrato nell'area amministrativa locale |
 | HO-010 | [Prova a vista del trascinamento](HO-010-prova-a-vista-del-trascinamento.md) | 1D | ✅ **chiuso** 2026-10-07 — resa approvata dall'utente |
 | HO-011 | [Riavviare Docker per l'audit 1D-W12](HO-011-riavviare-docker-per-l-audit-1D-W12.md) | 1D | ✅ **chiuso** 2026-10-09 — Docker risponde; il comando del passo 4 era sbagliato ed è corretto |
 | HO-012 | [Passare il volume di sviluppo alle immagini Chainguard](HO-012-passare-il-volume-di-sviluppo-alle-immagini-chainguard.md) | 1D | ✅ **chiuso** 2026-10-09 — server Chainguard sano, 1477 + 4 oggetti, anonimo 403 |

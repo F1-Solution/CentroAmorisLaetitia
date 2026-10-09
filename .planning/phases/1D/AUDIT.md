@@ -1,6 +1,6 @@
 # AUDIT — Fase 1D
 
-**Stato: audit completato il 2026-10-09, 28 criteri su 28 superati.** Avviato il 2026-10-07, **prima** di dichiarare la fase
+**Stato: audit completato il 2026-10-09, 28 criteri su 28 superati. Fase chiusa dall'utente lo stesso giorno (DR-103).** Avviato il 2026-10-07, **prima** di dichiarare la fase
 completa, come impone `CLAUDE.md`. La fase **non** è dichiarata chiusa.
 
 Verifica i 28 criteri di uscita di [`CONTEXT.md`](CONTEXT.md) §7, più il 24-bis.
@@ -20,8 +20,8 @@ criterio è segnato ⏳ e il motivo è scritto.
 | Difetti trovati e corretti durante l'audit | **6** (§3 e §3.1) |
 | Difetti trovati e non corretti | **0** |
 
-L'audit è completo. La chiusura della Fase 1D resta una decisione
-dell'utente: questo documento non la dichiara.
+L'audit è completo. Su questa base l'utente ha chiuso la Fase 1D il
+2026-10-09 (DR-103).
 
 ## 2. I criteri di uscita, uno per uno
 

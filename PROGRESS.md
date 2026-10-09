@@ -104,3 +104,4 @@ PHASE:1D WAVE:1D-W11e-bis STATUS:complete TS:2026-10-07T15:24:14Z
 <!-- 1D-W12 2026-10-09: D22 = A (DR-101) e D31 = B (DR-102) attuate e provate in locale; HO-012 aperto per il volume di sviluppo. Resta il criterio 26 in CI dopo il push. Nessuna riga complete. -->
 <!-- 1D-W12 2026-10-09: CI 37890020769 rossa ai test per IMPORTER_IP_HASH_SALT assente in CI; corretto, in attesa di conferma del secondo push. Nessuna riga complete. -->
 PHASE:1D WAVE:1D-W12 STATUS:complete TS:2026-10-09T10:52:45Z
+<!-- Fase 1D chiusa dall'utente il 2026-10-09 (DR-103). -->
