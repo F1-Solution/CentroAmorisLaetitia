@@ -1133,3 +1133,20 @@ della 1E. Se l'utente intendeva altro, va detto prima della `1E-W7`.
 | DR-111 | 2026-10-10 | Riferimento delle 4 pagine in cui l'istanza diverge dal sito online (D40) | **Opzione A** — il riferimento di `/dal-vizioso-al-virtuoso/`, `/corso-per-consulenti-familiari-vecchia-pagina/`, `/riparte-il-corso-per-consulenti-familiari/` (video di YouTube) e `/i-prossimi-corsi-del-centro/` (file con maiuscole diverse) si cattura dal sito online, in sola lettura, nelle stesse condizioni | B — correggere l'istanza (chiamate verso YouTube, nomi di file senza distinzione di maiuscole) e ricatturare da lì; C — tenere le catture dell'istanza e dichiarare le 4 pagine come divergenze note | «D40 = A» | Proprietario | Fase 1E `1E-W1`, `docs/qa/visual-parity-report.md` | sì | `visual-regression-plan.md` §1, DR-016, HO-001 |
 | DR-112 | 2026-10-10 | Il conteggio del criterio 1E-2 (D41) | **Opzione A** — **585** confronti: i 567 della matrice che hanno aspetto proprio, più le 4 pagine di destinazione dei documenti e le pagine 2 e 3 dell'archivio delle notizie, a 3 viewport | B — 567, con le 18 catture in più non vincolanti | «D41 = A» | Proprietario | criterio 1E-2, `acceptance-criteria.md`, `visual-regression-plan.md` §2 | sì | DR-106, DR-110 |
 | DR-113 | 2026-10-10 | La soglia di superamento automatico con un rumore di fondo misurato di zero (D42) | **Opzione A** — lettura letterale del §6.3: tre volte il rumore, cioè **0 %**. Supera da solo solo il confronto identico al pixel; fino allo 0,50 % si esamina a mano; oltre è fallito | B — soglia automatica allo 0,10 %, il tetto del piano | «D42 = A» | Proprietario | Fase 1E `1E-W6`, criterio 1E-3 | sì | `visual-regression-plan.md` §6.3 |
+
+### Attuazioni del 2026-10-10 nella `1E-W2`
+
+| Voce | Stato |
+|---|---|
+| **Attuazione di DR-104** | **Fatta e provata.** Modulo `public` dell'API, sola lettura, senza area né permessi, sotto `/public`: contenuto per percorso (con media, carosello, documenti e SEO risolto), menu per chi non ha fatto accesso, impostazioni da un elenco chiuso, redirect, articoli, tassonomie, documenti, mappa del sito; e i file dei media a `/media/…` dal bucket pubblico. Prova negativa per ogni rotta (criterio 1E-16): 29 prove. Revisione di sicurezza indipendente: nessun problema grave; applicati un tetto alla paginazione, il divieto per un redirect a prefisso di portare il percorso verso un altro dominio, e un limite di profondità al menu. Sui dati locali veri il menu dà 41 voci su 41 identiche a `public-menu.csv` |
+| **Attuazione di DR-109** | **Fatta e provata.** Il controllo di eliminazione cerca anche l'indirizzo del media e delle sue dimensioni derivate, così come sono e codificati |
+
+Due regole di attuazione, dichiarate perché non scritte in alcun documento: una voce
+di menu senza titolo prende il titolo del suo bersaglio, come in WordPress; la
+descrizione SEO, se manca la sovrascrittura, è l'estratto o l'inizio del testo
+tagliato a 160 caratteri (DR-040), da confrontare con la sorgente nella `1E-W7`.
+
+**Rilievo aperto:** l'importer non scrive `settings['site.home_content_id']`, che
+`wp-to-postgres-mapping.md` §5 prevede da `page_on_front` e che
+`IMPORTER-DESIGN.md` §11.4 rimandava «a più tardi». Il modulo pubblico la legge; finché
+manca, sui dati locali `/` non ha contenuto. Decisione **D43**.

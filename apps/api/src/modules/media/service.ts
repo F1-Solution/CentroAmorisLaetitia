@@ -188,18 +188,22 @@ export async function update(db: Database, id: string, input: UpdateInput) {
  * identificativo è unico: cercarlo nel testo del documento non produce falsi
  * positivi e non dimentica nulla.
  *
- * Quello che **non** copre, e va detto: un media citato per indirizzo dentro un
- * blocco di riserva `html` scritto a mano non porta l'identificativo, e resta
- * fuori.
+ * Dal 2026-10-10 (DR-109) si cercano anche gli **indirizzi**: quello del media
+ * e quelli delle sue dimensioni derivate, così come sono e codificati, perché
+ * un blocco di riserva `html` scritto a mano cita il file per indirizzo e non
+ * per identificativo. `strpos` invece di `like`: il trattino basso, frequente
+ * nei nomi di file, per `like` è un carattere jolly.
  */
-async function citedBy(db: Database, id: string) {
+async function citedBy(db: Database, id: string, paths: readonly string[]) {
+  const needles = [...new Set(paths.flatMap((path) => [path, encodeURI(path)]))];
   return db
     .select({ id: schema.contents.id, title: schema.contents.title })
     .from(schema.contents)
     .where(
       or(
         eq(schema.contents.featuredMediaId, id),
-        sql`${schema.contents.blocks}::text like ${`%${id}%`}`,
+        sql`strpos(${schema.contents.blocks}::text, ${id}) > 0`,
+        ...needles.map((needle) => sql`strpos(${schema.contents.blocks}::text, ${needle}) > 0`),
       ),
     )
     .limit(10);
@@ -210,7 +214,18 @@ export async function remove(db: Database, store: ObjectStore, id: string): Prom
   const current = await findById(db, id);
   if (!current) return false;
 
-  const used = await citedBy(db, id);
+  const variants = await db
+    .select({
+      storageKey: schema.mediaVariants.storageKey,
+      publicPath: schema.mediaVariants.publicPath,
+    })
+    .from(schema.mediaVariants)
+    .where(eq(schema.mediaVariants.mediaId, id));
+
+  const used = await citedBy(db, id, [
+    current.publicPath,
+    ...variants.map((variant) => variant.publicPath),
+  ]);
   if (used.length > 0) {
     const titles = used.map((row) => row.title).join(', ');
     throw Object.assign(
@@ -220,11 +235,6 @@ export async function remove(db: Database, store: ObjectStore, id: string): Prom
       { statusCode: 409 },
     );
   }
-
-  const variants = await db
-    .select({ storageKey: schema.mediaVariants.storageKey })
-    .from(schema.mediaVariants)
-    .where(eq(schema.mediaVariants.mediaId, id));
 
   await db.delete(schema.media).where(eq(schema.media.id, id));
 

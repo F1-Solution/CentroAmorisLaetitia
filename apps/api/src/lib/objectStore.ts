@@ -1,4 +1,11 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  NoSuchKey,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import type { Readable } from 'node:stream';
 import type { Config } from '../config.js';
 
 /**
@@ -10,8 +17,16 @@ import type { Config } from '../config.js';
  * riprodurle diverse farebbe divergere il `srcset`.
  */
 
+/** Un oggetto letto: il contenuto come flusso, da passare alla risposta senza caricarlo in memoria. */
+export interface StoredObject {
+  readonly body: Readable;
+  readonly contentLength?: number;
+}
+
 export interface ObjectStore {
   put(bucket: string, key: string, body: Buffer, contentType: string): Promise<void>;
+  /** `null` se l'oggetto non c'è: il chiamante risponde 404, non 500. */
+  get(bucket: string, key: string): Promise<StoredObject | null>;
   remove(bucket: string, key: string): Promise<void>;
   readonly publicBucket: string;
   readonly privateBucket: string;
@@ -35,6 +50,19 @@ export function createObjectStore(config: Config): ObjectStore {
       await client.send(
         new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
       );
+    },
+    async get(bucket, key) {
+      try {
+        const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+        if (!object.Body) return null;
+        return {
+          body: object.Body as Readable,
+          ...(object.ContentLength === undefined ? {} : { contentLength: object.ContentLength }),
+        };
+      } catch (caught) {
+        if (caught instanceof NoSuchKey) return null;
+        throw caught;
+      }
     },
     async remove(bucket, key) {
       await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));

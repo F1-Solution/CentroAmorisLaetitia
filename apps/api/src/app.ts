@@ -19,6 +19,7 @@ import { authRoutes } from './modules/auth/routes.js';
 import { contentRoutes } from './modules/content/routes.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { menuRoutes } from './modules/menu/routes.js';
+import { publicMediaRoutes, publicRoutes } from './modules/public/routes.js';
 import { redirectRoutes } from './modules/redirects/routes.js';
 import { roleRoutes } from './modules/roles/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
@@ -161,6 +162,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
         { name: 'redirect', description: 'Reindirizzamenti, che sono dati' },
         { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
         { name: 'impostazioni', description: 'Impostazioni globali del sito' },
+        { name: 'pubblico', description: 'Lettura senza accesso, per il sito pubblico' },
       ],
     },
     transform: jsonSchemaTransform,
@@ -227,6 +229,10 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     roleRoutes,
   );
   await registerArea(app, 'impostazioni', settingsRoutes);
+
+  // Lettura pubblica (DR-104): fuori da ogni area, senza permessi, sola lettura.
+  await app.register(publicRoutes, { prefix: '/public' });
+  await app.register(publicMediaRoutes);
 
   return app;
 }

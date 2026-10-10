@@ -131,3 +131,9 @@ Secondo round, chiuso il 2026-10-10:
 |---|---|---|
 | ~~**D38**~~ | Media citati dentro un blocco `html` | **DR-109**: il controllo cerca anche gli indirizzi, attuato nella `1E-W2` |
 | ~~**D39**~~ | Documenti del confronto della 1B | **DR-110**: approvati e allineati |
+
+Terzo round, aperto il 2026-10-10 nella `1E-W2`:
+
+| id | Decisione | Tipo | Termine |
+|---|---|---|---|
+| **D43** | Come si popola `settings['site.home_content_id']`, che l'importer non scrive: senza, `/` non ha contenuto sui dati veri | differibile | prima della `1E-W4` |

@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import postgres from 'postgres';
 import { buildApp } from '../../src/app.js';
 import { loadConfig, type Config } from '../../src/config.js';
@@ -38,18 +39,32 @@ export const TEST_EMAIL = 'redattore.sintetico@esempio.invalid';
 export const TEST_PASSWORD = 'password-sintetica-di-prova';
 export const TEST_FULL_NAME = 'Redattore Sintetico';
 
-/** Archivio a oggetti finto: registra le chiamate, non tocca alcun bucket. */
-export function fakeObjectStore(): ObjectStore & { readonly puts: string[] } {
+/**
+ * Archivio a oggetti finto: registra le chiamate, non tocca alcun bucket.
+ * `objects` tiene in memoria ciò che si carica, così che una prova possa
+ * anche rileggerlo.
+ */
+export function fakeObjectStore(): ObjectStore & {
+  readonly puts: string[];
+  readonly objects: Map<string, Buffer>;
+} {
   const puts: string[] = [];
+  const objects = new Map<string, Buffer>();
   return {
     puts,
+    objects,
     publicBucket: 'media-public',
     privateBucket: 'media-private',
-    async put(bucket, key) {
+    async put(bucket, key, body) {
       puts.push(`${bucket}/${key}`);
+      objects.set(`${bucket}/${key}`, body);
     },
-    async remove() {
-      /* nulla da fare */
+    async get(bucket, key) {
+      const body = objects.get(`${bucket}/${key}`);
+      return body ? { body: Readable.from(body), contentLength: body.length } : null;
+    },
+    async remove(bucket, key) {
+      objects.delete(`${bucket}/${key}`);
     },
   };
 }
