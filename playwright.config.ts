@@ -59,7 +59,9 @@ export default defineConfig({
     },
     {
       command: `pnpm --filter @amoris/web exec next start -p ${PORTE.web}`,
-      url: WEB_URL,
+      // Il seme sintetico non ha una pagina iniziale: `/` risponde 404, che per
+      // Playwright non è «pronto». `robots.txt` risponde sempre.
+      url: `${WEB_URL}/robots.txt`,
       reuseExistingServer: false,
       env,
       timeout: 120_000,

@@ -4,15 +4,15 @@ import '../styles/open-sans.css';
 import '../styles/tokens.css';
 import '../styles/base.css';
 import '../styles/blocks.css';
+import '../styles/layout.css';
 
 /**
- * Struttura minima. L'aspetto del sito pubblico nasce in **Fase 1E**, dai design
- * token estratti dal sito attuale: qualunque scelta grafica fatta adesso sarebbe
- * da rifare, e nel frattempo confonderebbe i confronti al pixel.
+ * Radice del sito pubblico (`1E-W3`, `1E-W4`): fogli di stile misurati sul
+ * riferimento e lingua italiana (criterio A-6). Titolo e metadati li scrive ogni
+ * pagina dalla lettura pubblica.
  */
 export const metadata: Metadata = {
-  title: 'Centro per la Famiglia Amoris Laetitia',
-  description: 'Fondazione della piattaforma. Il sito pubblico arriva in Fase 1E.',
+  title: 'Centro Amoris Laetitia',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

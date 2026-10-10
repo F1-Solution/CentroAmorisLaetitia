@@ -147,6 +147,8 @@ export const postsResponse = z.object({
       title: z.string(),
       excerpt: z.string().nullable(),
       summary: z.string().nullable(),
+      /** L'inizio del testo, per chi lo tronca a modo suo (l'archivio del tema: 270 caratteri). */
+      textStart: z.string(),
       featuredMediaId: z.string().nullable(),
       publishedAt: z.string().nullable(),
     }),

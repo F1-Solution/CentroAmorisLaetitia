@@ -2,12 +2,14 @@ import type { ColumnBlock } from '../schema/block';
 import { blockClassName } from './class-name';
 import { spacingVariables } from './spacing';
 import { BlockRenderer } from './BlockRenderer';
+import type { MediaMap } from './media';
 
 export interface ColumnComponentProps {
   readonly block: ColumnBlock;
+  readonly media?: MediaMap | undefined;
 }
 
-export function Column({ block }: ColumnComponentProps) {
+export function Column({ block, media }: ColumnComponentProps) {
   return (
     <div
       className={blockClassName('column', block.props.classes)}
@@ -15,7 +17,7 @@ export function Column({ block }: ColumnComponentProps) {
       id={block.id}
     >
       {block.children.map((child) => (
-        <BlockRenderer key={child.id} block={child} />
+        <BlockRenderer key={child.id} block={child} media={media} />
       ))}
     </div>
   );

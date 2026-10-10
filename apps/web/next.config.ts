@@ -14,8 +14,24 @@ import type { NextConfig } from 'next';
  *    amministrativa, che DR-018 vuole visivamente distinta. La regola è verificata
  *    dal lint, in `eslint.config.js`.
  */
+const API_URL = (
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  'http://localhost:3002'
+).replace(/\/$/, '');
+
 const config: NextConfig = {
   reactStrictMode: true,
+  // Gli indirizzi della sorgente finiscono con la barra (`/chi-siamo/`): restano così.
+  trailingSlash: true,
+  /**
+   * I file dei media li serve l'API (ADR-004 §3.6). In produzione Caddy instrada
+   * `/media/*` prima di arrivare qui (ADR-003); in sviluppo, senza Caddy, lo fa
+   * questa riscrittura.
+   */
+  async rewrites() {
+    return [{ source: '/media/:path*', destination: `${API_URL}/media/:path*` }];
+  },
   poweredByHeader: false,
   // Il pacchetto resta leggero: il sito pubblico deve superare PageSpeed 80 (RC-08).
   productionBrowserSourceMaps: false,

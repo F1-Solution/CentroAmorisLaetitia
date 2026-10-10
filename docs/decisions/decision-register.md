@@ -1168,3 +1168,39 @@ manca, sui dati locali `/` non ha contenuto. Decisione **D43**.
 **Rilievo:** il colore d'accento della sorgente non supera il criterio A-8 (2,75 sul bianco).
 Decisione **D44**.
 
+## 41. Round 32 — risposta del 2026-10-10, contrasto del colore d'accento
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-115 | 2026-10-10 | Il colore d'accento `#2ea3f2` (2,75 sul bianco) e il testo dei campi `#999` su `#eee` (2,46) non superano il criterio A-8 (D44) | **Opzione C** — fedeltà per la parità: i colori si riproducono come sono e A-8 risulta non superato su due coppie, difetto della sorgente da approvare nella UAT; la correzione si pianifica come modifica dopo l'approvazione della parità | A — fedeltà piena senza correzione successiva; B — correggere subito, con una difformità visibile su ogni pagina | «D44 = C» | Proprietario | Fase 1E `1E-W6`, `1E-W8`, UAT; dopo la parità | sì | `docs/design/public-site-tokens.md` §5 |
+
+### Attuazioni del 2026-10-10 dopo la conferma
+
+| Voce | Stato |
+|---|---|
+| **Riesecuzione dell'import per DR-114** | **Fatta su conferma.** Copia di salvataggio `~/amoris-backup/amoris-prima-DR-114-2026-10-10.dump` (438 KB, 34 tabelle con dati); `apply --confirm`, esecuzione `5100992c`, esito **`success`**. Verifiche: `site.home_content_id` punta al contenuto che nella sorgente era la pagina 62; `/public/content?path=/` risponde 200 con la home; `/public/redirect?path=/home/` risponde 301 verso `/` |
+
+### Rilievi della `1E-W4`
+
+- **L'elenco degli articoli della home non è stato importato.** Lo shortcode
+  `[catposts name="News" thumb="true"]` sta in HTML libero, fuori dai blocchi
+  Gutenberg, e il lettore dei blocchi scarta quel testo per costruzione
+  (`apps/importer/src/convert/gutenberg/comments.ts`). Misurato su tutti i 64
+  contenuti Gutenberg: è l'unico testo perso. Decisione **D45**.
+- **Logo e piè di pagina non sono dati.** Il logo è un'opzione del tema
+  (`et_divi.divi_logo`), il testo del piè di pagina un widget HTML dell'area
+  `sidebar-2`; nessuno dei due è nella mappatura approvata. Decisione **D46**.
+- **Il titolo delle pagine costruite con Divi.** Il tema mostra il titolo solo se la
+  pagina non usa il Divi Builder (`_et_pb_use_builder`); l'importer non lo considera.
+  Con questa regola il titolo previsto coincide con la sorgente su 73 pagine su 78; le
+  altre 5 sono 4 pagine con il Builder attivo e contenuto Gutenberg, e `/contatti/`,
+  il cui `h1` è il titolo del form (`1E-W5`). Decisione **D48**.
+- **Regole di presentazione del tema** lette da `et_divi` e attuate nei template, non
+  contenuto: 6 articoli per pagina negli archivi (`divi_catnum_posts`), testo
+  dell'archivio troncato a 270 caratteri (`divi_use_excerpt = false`), data
+  `j M Y`. Il suffisso di paginazione del titolo è in italiano, « - Pagina N», al
+  posto del « - Page N» della sorgente (DR-040).
+- **Un contenuto pubblicato vince su un redirect con lo stesso percorso**, come in
+  WordPress: un solo caso, `/pronti-a-ripartire/`, articolo che condivide lo slug con
+  una pagina allegato importata.
+

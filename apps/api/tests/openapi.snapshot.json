@@ -13309,6 +13309,9 @@
                             "nullable": true,
                             "type": "string"
                           },
+                          "textStart": {
+                            "type": "string"
+                          },
                           "featuredMediaId": {
                             "nullable": true,
                             "type": "string"
@@ -13324,6 +13327,7 @@
                           "title",
                           "excerpt",
                           "summary",
+                          "textStart",
                           "featuredMediaId",
                           "publishedAt"
                         ],

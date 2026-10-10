@@ -583,6 +583,15 @@ export async function resolveRedirect(db: Database, path: string) {
     if (home?.path === path) return { targetPath: '/', statusCode: 301 };
   }
 
+  // Come in WordPress, un contenuto pubblicato vince su una regola con lo stesso
+  // percorso: è il caso di una pagina allegato importata con lo slug di un articolo.
+  const [published] = await db
+    .select({ id: schema.contents.id })
+    .from(schema.contents)
+    .where(and(eq(schema.contents.path, path), eq(schema.contents.status, 'published')))
+    .limit(1);
+  if (published && published.id !== homeId) return null;
+
   const [exact] = await db
     .select({ targetPath: schema.redirects.targetPath, statusCode: schema.redirects.statusCode })
     .from(schema.redirects)

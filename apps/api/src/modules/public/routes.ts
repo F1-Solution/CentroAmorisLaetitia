@@ -179,6 +179,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           title: row.title,
           excerpt: row.excerpt,
           summary: fallbackDescription(row.excerpt, row.contentText),
+          textStart: row.contentText.replace(/\s+/g, ' ').trim().slice(0, 600),
           featuredMediaId: row.featuredMediaId,
           publishedAt: iso(row.publishedAt),
         })),
@@ -296,6 +297,19 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
       if (!file) return reply.callNotFound();
 
       const etag = `"${file.checksum.toString('hex')}"`;
+      if (request.headers['if-none-match'] === etag) {
+        return reply.code(304).header('etag', etag).send(null);
+      }
+      const object = await app.objectStore.get(app.objectStore.publicBucket, file.storageKey);
+      if (!object) {
+        // Le intestazioni del file non si scrivono prima di averlo: un 404 in JSON
+        // con il tipo di un'immagine non si potrebbe inviare.
+        request.log.error(
+          { storageKey: file.storageKey },
+          'media a registro ma assente dal bucket',
+        );
+        return reply.callNotFound();
+      }
       void reply
         .header('content-type', file.mimeType)
         .header('etag', etag)
@@ -303,15 +317,6 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
         .header('x-content-type-options', 'nosniff');
       if (ACTIVE_TYPES.has(file.mimeType)) {
         void reply.header('content-security-policy', "default-src 'none'; sandbox");
-      }
-      if (request.headers['if-none-match'] === etag) return reply.code(304).send(null);
-      const object = await app.objectStore.get(app.objectStore.publicBucket, file.storageKey);
-      if (!object) {
-        request.log.error(
-          { storageKey: file.storageKey },
-          'media a registro ma assente dal bucket',
-        );
-        return reply.callNotFound();
       }
       if (object.contentLength !== undefined) {
         void reply.header('content-length', String(object.contentLength));

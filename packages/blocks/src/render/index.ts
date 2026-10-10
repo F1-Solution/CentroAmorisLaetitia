@@ -15,3 +15,4 @@ export * from './DocBlock';
 export * from './Slider';
 export * from './HtmlBlock';
 export { SPACING_VARIABLES, spacingVariables } from './spacing';
+export { imageAttributes, type ImageAttributes, type MediaMap, type RenderMedia } from './media';

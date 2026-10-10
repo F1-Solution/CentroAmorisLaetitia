@@ -7,16 +7,21 @@ import { ADMIN_URL as ADMIN } from './support/ambiente';
  * 1E e la riservatezza dell'area amministrativa.
  */
 
+/** Una pagina del seme sintetico, resa dalla lettura pubblica (DR-104). */
+const PAGINA = '/pagina-di-prova/';
+
 test.describe('sito pubblico', () => {
-  test('risponde e dichiara di essere una fondazione, non il sito', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Centro per la Famiglia Amoris Laetitia',
-    );
+  test('rende una pagina dalla lettura pubblica, e un percorso inesistente risponde 404', async ({
+    page,
+  }) => {
+    const risposta = await page.goto(PAGINA);
+    expect(risposta?.status()).toBe(200);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pagina di prova');
+    expect((await page.goto('/percorso-che-non-esiste/'))?.status()).toBe(404);
   });
 
   test('non registra alcun service worker (ADR-008 §3.3 regola 1)', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(PAGINA);
     const registrazioni = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return 0;
       const elenco = await navigator.serviceWorker.getRegistrations();
@@ -32,7 +37,7 @@ test.describe('sito pubblico', () => {
     page,
     request,
   }) => {
-    await page.goto('/');
+    await page.goto(PAGINA);
     await expect(page.locator('link[rel="manifest"]')).toHaveCount(0);
 
     for (const percorso of ['/manifest.webmanifest', '/manifest.json', '/sw.js']) {

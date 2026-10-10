@@ -80,3 +80,37 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/*
+ * Un titolo del contenuto promosso a `<h1>` (DR-040) conserva l'aspetto del suo
+ * livello originale.
+ */
+h1.come-h2 {
+  font-size: var(--font-size-h2);
+}
+
+h1.come-h3 {
+  font-size: var(--font-size-h3);
+}
+
+h1.come-h4 {
+  font-size: var(--font-size-h4);
+}
+
+h1.come-h5 {
+  font-size: var(--font-size-h5);
+}
+
+h1.come-h6 {
+  font-size: var(--font-size-h6);
+}
+
+/* Presente per chi usa un lettore di schermo, invisibile nella resa. */
+.screen-reader-text {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

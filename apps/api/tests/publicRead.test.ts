@@ -365,6 +365,15 @@ describe('redirect', () => {
     expect((await get('/public/redirect?path=/esterno/qualcosa')).statusCode).toBe(404);
   });
 
+  it('un contenuto pubblicato vince su una regola con lo stesso percorso, come in WordPress', async () => {
+    await h.db.insert(schema.redirects).values({
+      sourcePath: '/pagina-sintetica/',
+      targetPath: '/media/2026/01/pubblico.png',
+      origin: 'migration',
+    });
+    expect((await get('/public/redirect?path=/pagina-sintetica/')).statusCode).toBe(404);
+  });
+
   it('prova negativa: una regola spenta, o nessuna regola, non reindirizza', async () => {
     expect((await get('/public/redirect?path=/spento/')).statusCode).toBe(404);
     expect((await get('/public/redirect?path=/pagina-sintetica/')).statusCode).toBe(404);
@@ -463,6 +472,13 @@ describe('file dei media a /media/…', () => {
     expect(h.store.objects.has('media-private/2026/01/riservato.png')).toBe(true);
     expect((await get('/media/2026/01/riservato.png')).statusCode).toBe(404);
     expect((await get('/media/2026/01/inesistente.png')).statusCode).toBe(404);
+  });
+
+  it('un media a registro ma assente dal bucket risponde 404, non 500', async () => {
+    h.store.objects.delete('media-public/2026/01/libero.png');
+    const response = await get('/media/2026/01/libero.png');
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error.code).toBe('NOT_FOUND');
   });
 
   it('le rotte della redazione su /media restano protette', async () => {

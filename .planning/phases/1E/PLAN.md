@@ -137,4 +137,14 @@ Terzo round, aperto il 2026-10-10 nella `1E-W2`:
 | id | Decisione | Tipo | Termine |
 |---|---|---|---|
 | ~~**D43**~~ | Come si popola `settings['site.home_content_id']` | chiusa da **DR-114**: la scrive l'importer; riesecuzione dell'import su conferma | — |
-| **D44** | Il colore d'accento `#2ea3f2` (collegamenti, menu, bottoni) ha contrasto 2,75 sul bianco e non supera il criterio A-8; il testo dei campi `#999` su `#eee` ha 2,46: fedeltà o correzione | differibile | prima della `1E-W6` |
+| ~~**D44**~~ | Il colore d'accento non supera A-8 | chiusa da **DR-115**: fedeltà per la parità, correzione dopo l'approvazione | — |
+
+Quarto round, aperto il 2026-10-10 nella `1E-W4`:
+
+| id | Decisione | Tipo | Termine |
+|---|---|---|---|
+| **D45** | Il convertitore Gutenberg scarta l'HTML fuori dai blocchi: sulla home si perde l'elenco degli articoli (`[catposts]`), unico caso su 64 contenuti | bloccante per la parità della home | prima della `1E-W6` |
+| **D46** | Logo e testo del piè di pagina non sono importati (`et_divi.divi_logo`, widget `custom_html-2`): come diventano dati modificabili | bloccante per la parità di ogni pagina | prima della `1E-W6` |
+| **D47** | Criterio 1E-15 e blocchi di riserva `html`: 3 dichiarazioni in linea della sorgente | differibile | prima della `1E-W8` |
+| **D48** | L'importer non deriva `show_title` da `_et_pb_use_builder`: il titolo compare dove la sorgente non lo mostra | bloccante per la parità | prima della `1E-W6` |
+

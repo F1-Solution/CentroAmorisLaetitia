@@ -1,0 +1,24 @@
+{
+ "menu": {
+  "rese": 41,
+  "attese": 41,
+  "diverse": []
+ },
+ "lingua": "it",
+ "serviceWorker": 0,
+ "titoli": [
+  "/contest-fotografico-selfiemotions/ (2 h1)",
+  "/category/news/ (0 h1)",
+  "/category/news/page/2/ (0 h1)",
+  "/category/news/page/3/ (0 h1)"
+ ],
+ "stiliNonAmmessi": [
+  "/contest-fotografico-selfiemotions/ text-align",
+  "/litighiamo-oggi/ font-size",
+  "/vuoi-diventare-consulente-familiare/ position"
+ ],
+ "orizzontali": [
+  "/informazioni-sui-cookie/ 390 (+59px)",
+  "/informazioni-sui-cookie/ 360 (+86px)"
+ ]
+}
