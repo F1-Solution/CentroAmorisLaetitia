@@ -157,8 +157,8 @@ Una fase non si dichiara conclusa per affermazione. Ognuno di questi criteri vie
 | # | Criterio | Soglia |
 |---|---|---|
 | 1E-1 | Rumore di fondo della catena di cattura misurato | sotto lo 0,10 % |
-| 1E-2 | Confronti eseguiti | 594 (81 URL × 6 viewport + 36 × 3), DR-106 |
-| 1E-3 | Differenza per confronto | ≤ 0,10 % automatico; 0,10–0,50 % esaminato; > 0,50 % fallito |
+| 1E-2 | Confronti eseguiti | **585** (DR-112) |
+| 1E-3 | Differenza per confronto | 0 % automatico (DR-113); fino allo 0,50 % esaminato; > 0,50 % fallito |
 | 1E-4 | Nessuna area contigua di differenza | oltre 32 × 32 px |
 | 1E-5 | Ogni maschera dichiarata, motivata, con coordinate | elenco nel rapporto |
 | 1E-6 | Verifiche manuali sugli 81 URL ad alta priorità | §8 del piano |

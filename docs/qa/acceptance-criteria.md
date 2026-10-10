@@ -14,6 +14,7 @@ dirsi conclusa e il gate possa dirsi superato.
 
 | Data | Revisione |
 |---|---|
+| 2026-10-10 | **DR-112**: il criterio 1E-2 conta **585** confronti; **DR-113**: la soglia automatica del criterio 1E-3 è lo **0 %** |
 | 2026-10-10 | **Approvato con DR-110** e allineato: criteri 1E-13…1E-19 aggiunti al §4 dalle decisioni successive alla 1B (`.planning/phases/1E/CONTEXT.md` §7); criteri sospesi del §8 risolti da DR-039 e DR-040; A-7 riscritto di conseguenza. Soglie e numeri dei criteri esistenti **invariati** |
 
 ---
@@ -112,8 +113,8 @@ Piano completo in [`visual-regression-plan.md`](visual-regression-plan.md).
 | # | Criterio | Soglia |
 |---|---|---|
 | 1E-1 | Rumore di fondo della catena di cattura misurato e registrato | deve risultare **sotto lo 0,10%** |
-| 1E-2 | 594 confronti eseguiti | 81 URL × 6 viewport + 36 × 3 |
-| 1E-3 | Differenza per confronto | ≤ **0,10%** automatico; 0,10–0,50% esaminato; > 0,50% fallito |
+| 1E-2 | **585** confronti eseguiti (DR-112) | 79 URL × 6 viewport + 31 × 3, più 6 pagine aggiunte × 3 |
+| 1E-3 | Differenza per confronto | **0 %** automatico (DR-113: tre volte il rumore misurato, zero); fino allo 0,50% esaminato; > 0,50% fallito |
 | 1E-4 | Nessuna area contigua di differenza | > **32 × 32 px** |
 | 1E-5 | Ogni maschera dichiarata, motivata e con coordinate | elenco nel rapporto |
 | 1E-6 | Verifiche manuali su tutti gli 81 URL ad alta priorità | §8 del piano |

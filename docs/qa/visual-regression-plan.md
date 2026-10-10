@@ -17,6 +17,7 @@ definisce quali sono le prove.
 
 | Data | Revisione |
 |---|---|
+| 2026-10-10 | **DR-112**: i confronti sono **585** (§2). **DR-113**: con il rumore misurato a zero la soglia di superamento automatico è lo **0 %** (§6.3). **DR-111**: il riferimento di 4 pagine viene dal sito online (§1) |
 | 2026-10-10 | **Approvato con DR-110** e allineato alle decisioni successive alla 1B: cartella e impronte delle immagini (§7, DR-106), D13 chiusa da DR-040 (§9 e §12), maschere alla luce di DR-107 (§5.1), stampa fuori perimetro per DR-041 (§11). Viewport, soglie e numero dei confronti **invariati** |
 
 ---
@@ -32,6 +33,10 @@ l'istanza di riferimento renda diversamente dalla produzione a causa della
 differenza di ambiente PHP (R-16). Se emergesse una divergenza, **fa fede il sito
 online**.
 
+> **Applicato il 2026-10-10, DR-111:** il riferimento di 4 pagine viene dal sito
+> online, perché l'istanza non le rende come la produzione. Sono elencate in
+> `visual-parity-report.md` §6.
+
 ## 2. Perimetro
 
 Da `url-matrix.csv`, con DR-034 che esclude dal confronto visivo le 170 pagine
@@ -45,6 +50,12 @@ allegato perché sono redirect a un file e non hanno aspetto proprio.
 | **Redirect** | 180 | — | verifica di codice e destinazione, §10 |
 
 Immagini attese: 81 × 6 + 36 × 3 = **594 confronti**.
+
+> **Rivisto il 2026-10-10, DR-112.** I livelli contano anche righe senza aspetto
+> proprio: `robots.txt` e `sitemap.xml` (livello A), `wp-sitemap.xml` e i 4 documenti
+> che rispondono 301 (livello B). Restano **567** catture dalla matrice (79 × 6 + 31 × 3),
+> a cui si aggiungono le 4 pagine di destinazione dei documenti e le pagine 2 e 3
+> dell'archivio delle notizie, a 3 viewport: **585 confronti**.
 
 ## 3. Viewport — fissate, e scelte sui punti di rottura reali
 
@@ -168,6 +179,10 @@ La conferma è **empirica** e va fatta all'inizio della Fase 1E:
 3. La soglia di superamento automatico si fissa a **tre volte il rumore di fondo
    misurato**, e comunque non oltre lo 0,10%.
 4. Il numero misurato e la data della misura finiscono nel rapporto.
+
+> **Misurato il 2026-10-10:** rumore **zero** fuori dalle aree da mascherare. Per
+> **DR-113** la soglia di superamento automatico è quindi lo **0 %**: supera da solo
+> solo il confronto identico al pixel; da 0 a 0,50 % si esamina a mano.
 
 Se il rumore di fondo risultasse superiore allo 0,10%, la catena di cattura non è
 deterministica e va corretta prima di iniziare: alzare la soglia per farci stare il

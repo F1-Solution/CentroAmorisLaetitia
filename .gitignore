@@ -64,3 +64,6 @@ Thumbs.db
 
 # Playwright
 /.playwright-mcp/
+
+# Catture della parità visiva: contengono pagine del sito vero (DR-106).
+/docs/qa/screenshots/

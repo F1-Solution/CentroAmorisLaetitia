@@ -49,10 +49,14 @@ services:
       WPREF_SITE_URL: ${WPREF_SITE_URL:-http://localhost:8080}
     volumes:
       # Copia di lavoro dei file WordPress, mai la sorgente in source-private/.
-      - ../../.reference/html:/var/www/html
+      # Dal 2026-10-10 sta in un volume, copiato una volta da `.reference/html`:
+      # sulla cartella di Windows montata ogni controllo di file costava ~7 ms e
+      # una pagina più di un minuto (`1E-W1`).
+      - html:/var/www/html
       - ./wp-config.reference.php:/var/www/html/wp-config.php:ro
     ports:
       - "127.0.0.1:${WPREF_HTTP_PORT:-8080}:80"
 
 volumes:
   dbdata:
+  html:
