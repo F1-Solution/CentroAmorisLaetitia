@@ -92,6 +92,7 @@ export type IssueCode =
   | 'divi-form-slug-conflict'
   | 'unclassified-capabilities'
   | 'settings-value-missing'
+  | 'home-content-missing'
   | 'document-file-unresolved'
   | 'redirect-self-loop'
   | 'redirect-unresolved-target'

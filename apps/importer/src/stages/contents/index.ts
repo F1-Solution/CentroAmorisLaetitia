@@ -41,6 +41,7 @@ import {
   buildSliderResolver,
 } from './entityResolvers.js';
 import { buildPostMetaIndex, deriveShowTitle, parseStickyPostIds } from './meta.js';
+import { writeHomeContentSetting } from './homePage.js';
 import {
   hasEditorialWorkSince,
   isForced,
@@ -285,6 +286,8 @@ export const contentsStage: Stage = {
         });
       },
     );
+
+    await writeHomeContentSetting(ctx, optionRows as readonly SqlRow[]);
 
     // La soglia si calcola con la funzione di `@amoris/blocks`
     // (`BLOCK-MODEL.md` §8), non con un secondo conteggio scritto qui: due

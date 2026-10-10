@@ -738,6 +738,11 @@ Va notato che `settings.site.home_content_id` **non** è scritto dalla fase 1: r
 l'identificatore di un contenuto, che nasce nella fase 5. Non è una delle tre mancanti —
 è una chiave che si popola più tardi.
 
+> **Attuato il 2026-10-10, DR-114:** la fase `contents` la scrive alla fine, da
+> `page_on_front` con `show_on_front = page`, dopo aver importato i contenuti. Fino ad
+> allora non era stata scritta da nessuna fase: il rimando «più tardi» non aveva
+> un luogo, e lo ha trovato il sito pubblico della `1E-W2`.
+
 I valori attesi nel codice vanno allineati a **15** e **2**. Come per il §11.3, la
 correzione dei documenti di Fase 1B e della specifica è lavoro della wave di
 documentazione, non di quella di codice, e va dichiarata invece che fatta di nascosto.

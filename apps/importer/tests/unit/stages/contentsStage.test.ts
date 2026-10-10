@@ -526,4 +526,73 @@ describe('fase contents', () => {
       await fresh.teardown();
     }
   });
+
+  describe('pagina iniziale (DR-114)', () => {
+    const run = async (db: Database, options: readonly SqlRow[]) => {
+      const runId = await newApplyRunId(db);
+      return runStage(contentsStage, {
+        db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(BASE_POSTS, [], options),
+        runId,
+        mode: 'apply',
+        issues: createIssueSink(db, 'apply', runId),
+        options: OPTIONS,
+      });
+    };
+    const homeSetting = async (db: Database) =>
+      (
+        await db
+          .select({ value: schema.settings.value })
+          .from(schema.settings)
+          .where(eq(schema.settings.key, 'site.home_content_id'))
+      )[0]?.value;
+
+    it('`page_on_front` diventa `site.home_content_id`, con l’identificativo del contenuto importato', async () => {
+      const fresh = await createTestDatabase('amoris_importer_contents_home');
+      try {
+        await run(fresh.db, [
+          { option_id: 1, option_name: 'show_on_front', option_value: 'page' },
+          { option_id: 2, option_name: 'page_on_front', option_value: '100' },
+        ]);
+        const [page] = await fresh.db
+          .select({ id: schema.contents.id })
+          .from(schema.contents)
+          .where(eq(schema.contents.legacyId, 100));
+        expect(await homeSetting(fresh.db)).toBe(page?.id);
+
+        // Rieseguita, aggiorna e non duplica.
+        await run(fresh.db, [
+          { option_id: 1, option_name: 'show_on_front', option_value: 'page' },
+          { option_id: 2, option_name: 'page_on_front', option_value: '100' },
+        ]);
+        expect(await homeSetting(fresh.db)).toBe(page?.id);
+      } finally {
+        await fresh.teardown();
+      }
+    });
+
+    it('senza pagina iniziale statica, o con una pagina che non c’è, non inventa nulla', async () => {
+      const fresh = await createTestDatabase('amoris_importer_contents_home_none');
+      try {
+        await run(fresh.db, [
+          { option_id: 1, option_name: 'show_on_front', option_value: 'posts' },
+          { option_id: 2, option_name: 'page_on_front', option_value: '100' },
+        ]);
+        expect(await homeSetting(fresh.db)).toBeUndefined();
+
+        await run(fresh.db, [
+          { option_id: 1, option_name: 'show_on_front', option_value: 'page' },
+          { option_id: 2, option_name: 'page_on_front', option_value: '999' },
+        ]);
+        expect(await homeSetting(fresh.db)).toBeUndefined();
+        const issues = await fresh.db
+          .select({ code: schema.importIssues.category })
+          .from(schema.importIssues);
+        expect(issues.map((i) => i.code)).toContain('home-content-missing');
+      } finally {
+        await fresh.teardown();
+      }
+    });
+  });
 });
