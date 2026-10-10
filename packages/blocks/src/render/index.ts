@@ -14,3 +14,4 @@ export * from './PostList';
 export * from './DocBlock';
 export * from './Slider';
 export * from './HtmlBlock';
+export { SPACING_VARIABLES, spacingVariables } from './spacing';

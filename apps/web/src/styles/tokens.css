@@ -1,0 +1,84 @@
+/*
+ * Design token del sito pubblico (`1E-W3`).
+ *
+ * Ogni valore è **misurato** sull'istanza di riferimento, come stile calcolato dal
+ * browser (`docs/qa/stile/calcolati.json`), e la regola che lo produce è citata
+ * accanto (`docs/qa/stile/regole.json`). Nessun valore è stimato a occhio
+ * (`divi-shortcode-strategy.md` §6). Tabella completa con le fonti:
+ * `docs/design/public-site-tokens.md`.
+ */
+
+:root {
+  /* Carattere — `body` del tema. */
+  --font-body: 'Open Sans', Arial, sans-serif;
+  --font-size-base: 16px; /* body */
+  --line-height-base: 1.7; /* body: 1.7em, reso 27.2px */
+  /*
+   * 500 non è fra i pesi caricati (300, 400, 600, 700, 800): il browser sceglie il
+   * più vicino, come fa con la sorgente. Va lasciato 500, non «corretto» a 400.
+   */
+  --font-weight-body: 500;
+  --font-weight-menu: 600; /* #top-menu a */
+
+  /* Titoli — h1…h6 del tema; peso e interlinea dei titoli resi. */
+  --font-size-h1: 30px;
+  --font-size-h2: 26px;
+  --font-size-h3: 22px;
+  --font-size-h4: 18px;
+  --font-size-h5: 16px;
+  --font-size-h6: 14px;
+  --font-weight-heading: 500;
+  --line-height-heading: 1em;
+  --heading-padding-bottom: 10px;
+
+  /* Colori. */
+  --color-text: #666; /* body: rgb(102, 102, 102) */
+  --color-heading: #333; /* h1…h6: rgb(51, 51, 51) */
+  --color-accent: #2ea3f2; /* a, #top-menu a, .et_pb_button: rgb(46, 163, 242) */
+  --color-background: #fff; /* body */
+  --color-submenu-link: rgba(0, 0, 0, 0.6); /* #top-menu .sub-menu a */
+  --color-field-background: #eee; /* .et_pb_contact_field input: rgb(238, 238, 238) */
+  --color-field-text: #999; /* .et_pb_contact_field input: rgb(153, 153, 153) */
+  --color-footer-background: #222; /* #main-footer: rgb(34, 34, 34) */
+  --color-footer-bottom-background: rgba(0, 0, 0, 0.32); /* #footer-bottom */
+
+  /* Intestazione e menu. */
+  --header-shadow: 0 1px 0 rgba(0, 0, 0, 0.1); /* #main-header */
+  --menu-font-size: 14px; /* #top-menu a */
+  --menu-item-padding-bottom: 18px; /* #top-menu > li > a */
+  --submenu-width: 240px; /* #top-menu .sub-menu */
+  --submenu-padding: 20px 0; /* #top-menu .sub-menu */
+  --submenu-border-top: 3px solid var(--color-accent); /* #top-menu .sub-menu */
+  --submenu-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* #top-menu .sub-menu */
+  --submenu-link-width: 200px; /* #top-menu .sub-menu a */
+  --submenu-link-padding: 6px 20px; /* #top-menu .sub-menu a */
+  --submenu-link-line-height: 28px;
+  --logo-height-desktop: 90px; /* #logo, sopra 980px */
+  --logo-height-mobile: 60px; /* #logo, fino a 980px */
+
+  /* Griglia — .container e .et_pb_row. */
+  --container-width: 80%;
+  --container-max-width: 1080px;
+  /* Spaziature predefinite di Divi, quando il blocco non ne dichiara una propria. */
+  --section-padding-y: 4%; /* .et_pb_section: 54px a 1440 */
+  --section-padding-y-mobile: 50px; /* .et_pb_section, fino a 980px */
+  --row-padding-y: 2%; /* .et_pb_row: 27px a 1440 */
+  --row-padding-y-mobile: 30px; /* .et_pb_row, fino a 980px */
+
+  /* Bottoni — .et_pb_button. */
+  --button-font-size: 20px;
+  --button-line-height: 1.7em;
+  --button-border: 2px solid var(--color-accent);
+  --button-radius: 3px;
+  --button-padding: 0.3em 1em;
+
+  /* Campi dei form — .et_pb_contact_field. */
+  --field-font-size: 14px;
+  --field-padding: 16px;
+}
+
+/*
+ * Punti di rottura del tema, per numero di regole (`visual-regression-plan.md` §3):
+ * 980/981, 767/768, 479/480, 1100, 1405, 380. Le proprietà personalizzate non
+ * valgono dentro una media query: i valori sono scritti nelle regole che li usano.
+ */

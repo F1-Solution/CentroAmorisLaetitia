@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import '../styles/open-sans.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/blocks.css';
 
 /**
  * Struttura minima. L'aspetto del sito pubblico nasce in **Fase 1E**, dai design

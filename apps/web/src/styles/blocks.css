@@ -1,0 +1,74 @@
+/*
+ * Spaziature dei blocchi (DR-071, ADR-005 §3.3 regola 2): il valore arriva come
+ * proprietà personalizzata in linea (`--blk-pad-*`, elenco chiuso in
+ * `@amoris/blocks` `SPACING_VARIABLES`), la regola sta qui.
+ *
+ * Come in Divi, il valore del tablet eredita quello del desktop e il telefono
+ * quello del tablet; quando il blocco non ne dichiara alcuno vale il predefinito
+ * del tema, misurato sull'istanza di riferimento (`tokens.css`).
+ */
+
+.blk-section,
+.blk-row,
+.blk-column,
+.blk-text {
+  padding-top: var(--blk-pad-top, var(--blk-default-y, 0));
+  padding-right: var(--blk-pad-right, 0);
+  padding-bottom: var(--blk-pad-bottom, var(--blk-default-y, 0));
+  padding-left: var(--blk-pad-left, 0);
+}
+
+.blk-section {
+  --blk-default-y: var(--section-padding-y);
+
+  position: relative;
+}
+
+.blk-row {
+  --blk-default-y: var(--row-padding-y);
+
+  position: relative;
+  width: var(--container-width);
+  max-width: var(--container-max-width);
+  margin: auto;
+}
+
+/* Tablet: fino a 980px. */
+@media (max-width: 980px) {
+  .blk-section {
+    --blk-default-y: var(--section-padding-y-mobile);
+  }
+
+  .blk-row {
+    --blk-default-y: var(--row-padding-y-mobile);
+  }
+
+  .blk-section,
+  .blk-row,
+  .blk-column,
+  .blk-text {
+    padding-top: var(--blk-pad-top-t, var(--blk-pad-top, var(--blk-default-y, 0)));
+    padding-right: var(--blk-pad-right-t, var(--blk-pad-right, 0));
+    padding-bottom: var(--blk-pad-bottom-t, var(--blk-pad-bottom, var(--blk-default-y, 0)));
+    padding-left: var(--blk-pad-left-t, var(--blk-pad-left, 0));
+  }
+}
+
+/* Telefono: fino a 767px. */
+@media (max-width: 767px) {
+  .blk-section,
+  .blk-row,
+  .blk-column,
+  .blk-text {
+    padding-top: var(
+      --blk-pad-top-p,
+      var(--blk-pad-top-t, var(--blk-pad-top, var(--blk-default-y, 0)))
+    );
+    padding-right: var(--blk-pad-right-p, var(--blk-pad-right-t, var(--blk-pad-right, 0)));
+    padding-bottom: var(
+      --blk-pad-bottom-p,
+      var(--blk-pad-bottom-t, var(--blk-pad-bottom, var(--blk-default-y, 0)))
+    );
+    padding-left: var(--blk-pad-left-p, var(--blk-pad-left-t, var(--blk-pad-left, 0)));
+  }
+}

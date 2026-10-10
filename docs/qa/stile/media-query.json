@@ -1,0 +1,130 @@
+[
+ {
+  "condizione": "(max-width: 980px)",
+  "regole": 100
+ },
+ {
+  "condizione": "(max-width: 767px)",
+  "regole": 70
+ },
+ {
+  "condizione": "(min-width: 981px)",
+  "regole": 69
+ },
+ {
+  "condizione": "(prefers-color-scheme: dark)",
+  "regole": 49
+ },
+ {
+  "condizione": "(max-width: 479px)",
+  "regole": 40
+ },
+ {
+  "condizione": "(min-width: 768px) and (max-width: 980px)",
+  "regole": 19
+ },
+ {
+  "condizione": "(max-width: 480px)",
+  "regole": 17
+ },
+ {
+  "condizione": "print",
+  "regole": 17
+ },
+ {
+  "condizione": "(min-width: 768px)",
+  "regole": 13
+ },
+ {
+  "condizione": "(max-width: 768px)",
+  "regole": 12
+ },
+ {
+  "condizione": "(min-width: 981px) and (max-width: 1100px)",
+  "regole": 12
+ },
+ {
+  "condizione": "(min-resolution: 192dpi)",
+  "regole": 8
+ },
+ {
+  "condizione": "screen and (max-width: 600px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(min-width: 576px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(min-width: 992px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(min-width: 1200px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(prefers-reduced-motion: reduce)",
+  "regole": 8
+ },
+ {
+  "condizione": "(max-width: 767.98px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(max-width: 575.98px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(max-width: 575px)",
+  "regole": 8
+ },
+ {
+  "condizione": "(max-width: 400px)",
+  "regole": 8
+ },
+ {
+  "condizione": "screen and (max-width: 782px)",
+  "regole": 8
+ },
+ {
+  "condizione": "only screen and (min-width: 981px)",
+  "regole": 8
+ },
+ {
+  "condizione": "only screen and (min-width: 1350px)",
+  "regole": 8
+ },
+ {
+  "condizione": "not all",
+  "regole": 8
+ },
+ {
+  "condizione": "not all and (min-resolution: 0.001dpcm)",
+  "regole": 8
+ },
+ {
+  "condizione": "only screen and (max-width: 980px)",
+  "regole": 2
+ },
+ {
+  "condizione": "only screen and (max-width: 767px)",
+  "regole": 2
+ },
+ {
+  "condizione": "screen and (max-height: 300px), screen and (max-width: 800px) and (orientation: landscape)",
+  "regole": 1
+ },
+ {
+  "condizione": "(max-width: 900px)",
+  "regole": 1
+ },
+ {
+  "condizione": "screen",
+  "regole": 1
+ },
+ {
+  "condizione": "(min-width: 981px) and (max-width: 1405px)",
+  "regole": 1
+ }
+]

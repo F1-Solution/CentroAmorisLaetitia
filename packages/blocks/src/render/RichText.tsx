@@ -1,5 +1,6 @@
 import type { RichTextBlock } from '../schema/block';
 import { blockClassName } from './class-name';
+import { spacingVariables } from './spacing';
 
 export interface RichTextComponentProps {
   readonly block: RichTextBlock;
@@ -13,6 +14,7 @@ export function RichText({ block }: RichTextComponentProps) {
   return (
     <div
       className={blockClassName('text', block.props.classes)}
+      style={spacingVariables(block.props.padding)}
       id={block.id}
       dangerouslySetInnerHTML={{ __html: block.props.html }}
     />

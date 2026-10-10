@@ -1150,3 +1150,21 @@ tagliato a 160 caratteri (DR-040), da confrontare con la sorgente nella `1E-W7`.
 `wp-to-postgres-mapping.md` §5 prevede da `page_on_front` e che
 `IMPORTER-DESIGN.md` §11.4 rimandava «a più tardi». Il modulo pubblico la legge; finché
 manca, sui dati locali `/` non ha contenuto. Decisione **D43**.
+
+## 40. Round 31 — risposta del 2026-10-10, la pagina iniziale
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-114 | 2026-10-10 | Come si popola `settings['site.home_content_id']`, che l'importer non scriveva (D43) | **Opzione A** — l'importer la scrive nella fase `contents`, da `page_on_front` con `show_on_front = page`, con prove sintetiche; poi copia di salvataggio e riesecuzione di `apply --confirm` sul database locale, su conferma | B — un selettore della pagina iniziale nelle Impostazioni, da usare a mano a ogni import | «D43 = A» | Proprietario | `apps/importer` fase `contents`, database locale, import finale della Fase 1F | sì | `wp-to-postgres-mapping.md` §5, `IMPORTER-DESIGN.md` §11.4, DR-104 |
+
+### Attuazioni del 2026-10-10 nella `1E-W3`
+
+| Voce | Stato |
+|---|---|
+| **Attuazione di DR-114** | **Fatta e provata** nell'importer: la fase `contents` scrive `site.home_content_id`. Due prove nuove, rosse prima e verdi dopo; suite dell'importer 292 su 292. `plan` sui dati veri: tutto aggiornato sul posto, nessun errore. La riesecuzione di `apply --confirm` attende la conferma dell'utente |
+| **Attuazione di DR-071** | **Fatta e provata.** La resa React dei blocchi con spaziature scrive le proprietà personalizzate dell'elenco chiuso; il foglio di stile del sito le usa con il predefinito di Divi come ripiego. Il serializzatore no: `content_html` non porta le proprietà di presentazione (`BLOCK-MODEL.md` §6.1), quindi nessun contenuto cambia e nessuna riesecuzione dell'import serve per questo |
+| **Attuazione di DR-107 per il carattere** | **Fatta**: Open Sans v44 in file locali, gli stessi 20 file e le stesse 100 dichiarazioni che Google serve alla sorgente |
+
+**Rilievo:** il colore d'accento della sorgente non supera il criterio A-8 (2,75 sul bianco).
+Decisione **D44**.
+

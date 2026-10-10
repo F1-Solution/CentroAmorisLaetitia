@@ -110,3 +110,4 @@ PHASE:1E WAVE:1E-W0 STATUS:complete TS:2026-10-09T21:19:29Z
 <!-- 1E-W1 2026-10-10: 585 catture di riferimento, rumore 0 fuori dalle aree da mascherare, controprova 8 su 10 identiche; due divergenze dell'istanza dal sito online (D40), conteggio 1E-2 (D41), soglia con rumore zero (D42). Nessuna riga complete finche' D40 e D41 non sono chiuse. -->
 PHASE:1E WAVE:1E-W1 STATUS:complete TS:2026-10-10T06:40:51Z
 PHASE:1E WAVE:1E-W2 STATUS:complete TS:2026-10-10T07:22:26Z
+PHASE:1E WAVE:1E-W3 STATUS:complete TS:2026-10-10T14:36:19Z

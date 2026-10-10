@@ -1,0 +1,82 @@
+/*
+ * Regole di base del sito pubblico (`1E-W3`): tipografia e colori del tema
+ * riprodotti con i token di `tokens.css`. Le regole dei template (intestazione,
+ * menu, piè di pagina, archivi) sono della `1E-W4`.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+p {
+  margin: 0;
+  padding-bottom: 1em;
+}
+
+p:last-of-type {
+  padding-bottom: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding-bottom: var(--heading-padding-bottom);
+  color: var(--color-heading);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-heading);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+}
+
+h4 {
+  font-size: var(--font-size-h4);
+}
+
+h5 {
+  font-size: var(--font-size-h5);
+}
+
+h6 {
+  font-size: var(--font-size-h6);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
