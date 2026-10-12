@@ -164,6 +164,9 @@ export const PUBLIC_SETTING_KEYS = [
   'content.posts_per_page',
   'seo.robots_txt',
   'seo.sitemap_enabled',
+  // DR-117: logo e piè di pagina, importati dal tema e modificabili dal CMS.
+  'site.logo_media_id',
+  'site.footer_html',
 ] as const;
 
 export async function publicSettings(db: Database): Promise<Record<string, unknown>> {
@@ -176,7 +179,16 @@ export async function publicSettings(db: Database): Promise<Record<string, unkno
         eq(schema.settings.isSecret, false),
       ),
     );
-  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  const settings: Record<string, unknown> = Object.fromEntries(
+    rows.map((row) => [row.key, row.value]),
+  );
+  // L'indirizzo del logo, se il media esiste ed è pubblico: il sito non lo cerca da sé.
+  const logoId = settings['site.logo_media_id'];
+  if (typeof logoId === 'string') {
+    const logo = (await mediaByIds(db, [logoId]))[logoId];
+    if (logo) settings['site.logo_path'] = logo.publicPath;
+  }
+  return settings;
 }
 
 // ── SEO ──────────────────────────────────────────────────────────────────────

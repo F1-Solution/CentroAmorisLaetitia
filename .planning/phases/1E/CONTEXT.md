@@ -178,7 +178,7 @@ A-7 segue DR-040.
 |---|---|---|
 | 1E-13 | Gli URL storici rispondono 301 verso la destinazione registrata, serviti dall'applicazione | DR-094 (ex criterio 16 della 1D) |
 | 1E-14 | Le 29 pagine hanno un `h1`, reso identico al testo che oggi lo sostituisce, e i loro confronti superano la soglia | DR-040 |
-| 1E-15 | Nessuna proprietà CSS ordinaria in linea nell'HTML reso; solo proprietà personalizzate dell'elenco chiuso | DR-071, ADR-005 §3.3 regola 2 |
+| 1E-15 | Nessuna proprietà CSS ordinaria in linea nell'HTML che il sistema genera; solo proprietà personalizzate dell'elenco chiuso. Le dichiarazioni dei blocchi di riserva `html` si contano e si dichiarano (DR-118) | DR-071, ADR-005 §3.3 regola 2 |
 | 1E-16 | La lettura pubblica non espone bozze, contenuti ritirati, account, compilazioni né i 4 documenti riservati: prova negativa per ogni rotta | ADR-004 §3.6, ADR-007 |
 | 1E-17 | Zero errori in console e zero richieste fallite sugli 81 URL ad alta priorità | skill `wordpress-visual-parity` |
 | 1E-18 | `lint`, `typecheck`, `build`, `test`, end-to-end verdi in locale e in CI | condizione 12 del gate |

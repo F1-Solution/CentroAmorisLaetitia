@@ -66,6 +66,8 @@ export function convertNonDiviShortcode(
 }
 
 const KNOWN_CATPOSTS_PARAMS = new Set([
+  // Il nome della configurazione salvata, che la fase `contents` espande (DR-116).
+  'name',
   'category',
   'cat',
   'limit',
@@ -92,12 +94,18 @@ function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNo
   // (`1D-W4`) fornirà il risolutore; qui l'elenco resta vuoto, non inventato.
   const termIds: string[] = [];
 
+  // Un flag assente vale acceso, come prima; «0», «false» o vuoto lo spengono.
+  const flag = (key: string) => {
+    const value = shortcode.attrs[key];
+    return value === undefined || !['', '0', 'false', 'no', 'off'].includes(value.toLowerCase());
+  };
+
   const props = postListPropsSchema.parse({
     termIds,
     limit,
-    showThumbnail: true,
-    showDate: true,
-    showExcerpt: true,
+    showThumbnail: flag('thumb'),
+    showDate: flag('date'),
+    showExcerpt: flag('excerpt'),
     order: 'date_desc',
     classes: [],
   });

@@ -14,6 +14,7 @@ dirsi conclusa e il gate possa dirsi superato.
 
 | Data | Revisione |
 |---|---|
+| 2026-10-11 | **DR-118**: il criterio 1E-15 vale per l'HTML generato; le dichiarazioni dei blocchi di riserva si dichiarano |
 | 2026-10-10 | **DR-112**: il criterio 1E-2 conta **585** confronti; **DR-113**: la soglia automatica del criterio 1E-3 è lo **0 %** |
 | 2026-10-10 | **Approvato con DR-110** e allineato: criteri 1E-13…1E-19 aggiunti al §4 dalle decisioni successive alla 1B (`.planning/phases/1E/CONTEXT.md` §7); criteri sospesi del §8 risolti da DR-039 e DR-040; A-7 riscritto di conseguenza. Soglie e numeri dei criteri esistenti **invariati** |
 
@@ -126,7 +127,7 @@ Piano completo in [`visual-regression-plan.md`](visual-regression-plan.md).
 | 1E-12 | Nessun service worker registrato sul sito pubblico | ADR-008 §3.3 |
 | 1E-13 | Gli URL storici rispondono 301, serviti dall'applicazione | DR-094 |
 | 1E-14 | Le 29 pagine hanno un `h1` reso identico al testo che oggi lo sostituisce | DR-040 |
-| 1E-15 | Nessuna proprietà CSS ordinaria in linea nell'HTML reso | DR-071, ADR-005 §3.3 regola 2 |
+| 1E-15 | Nessuna proprietà CSS ordinaria in linea nell'HTML che il sistema genera; quelle dei blocchi di riserva `html`, copiate dalla sorgente, sono contate e dichiarate nel rapporto (DR-118) | DR-071, ADR-005 §3.3–§3.4 |
 | 1E-16 | La lettura pubblica non espone bozze, contenuti ritirati, account, compilazioni né documenti riservati | DR-104, prova negativa per rotta |
 | 1E-17 | Zero errori in console e zero richieste fallite | 81 URL ad alta priorità |
 | 1E-18 | `lint`, `typecheck`, `build`, `test`, end-to-end verdi | in locale e in CI |

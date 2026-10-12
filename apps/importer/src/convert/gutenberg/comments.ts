@@ -77,8 +77,9 @@ interface Frame {
 
 /**
  * Analizza l'intero `post_content` e restituisce i blocchi di primo livello.
- * Il testo fra un blocco e l'altro (di norma solo whitespace, in Gutenberg) si
- * scarta: non porta contenuto.
+ * Il testo fra un blocco e l'altro, al primo livello, di norma è solo spazio e si
+ * scarta. Quando non lo è diventa un blocco `freeform` (DR-116): sulla home della
+ * sorgente c'era l'elenco degli articoli, scritto in un paragrafo fuori dai blocchi.
  */
 export function parseGutenbergBlocks(text: string): ParsedGutenbergBlock[] {
   const tokens = tokenize(text);
@@ -93,8 +94,19 @@ export function parseGutenbergBlocks(text: string): ParsedGutenbergBlock[] {
   let cursor = 0;
 
   const flushTextBefore = (tokenStart: number): void => {
-    if (tokenStart > cursor) {
-      currentHtmlParts().push(text.slice(cursor, tokenStart));
+    if (tokenStart <= cursor) return;
+    const chunk = text.slice(cursor, tokenStart);
+    if (stack.length > 0) {
+      currentHtmlParts().push(chunk);
+    } else if (chunk.trim() !== '') {
+      root.push({
+        blockName: 'freeform',
+        attrs: {},
+        innerHtml: chunk,
+        innerBlocks: [],
+        start: cursor,
+        end: tokenStart,
+      });
     }
   };
 
@@ -162,6 +174,9 @@ export function parseGutenbergBlocks(text: string): ParsedGutenbergBlock[] {
       root.push(block);
     }
   }
+
+  // Il testo dopo l'ultimo commento.
+  flushTextBefore(text.length);
 
   return root;
 }

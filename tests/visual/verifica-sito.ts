@@ -67,6 +67,7 @@ async function main(): Promise<void> {
   const ammesse = new Set(SPACING_VARIABLES);
   const titoli: string[] = [];
   const stiliNonAmmessi: string[] = [];
+  const stiliCopiati: string[] = [];
   {
     const ctx = await nuovoContesto(browser, VIEWPORT[0]!);
     const p = await ctx.newPage();
@@ -77,20 +78,28 @@ async function main(): Promise<void> {
       });
       const esito = await p.evaluate(() => ({
         h1: document.querySelectorAll('h1').length,
+        // DR-118: le dichiarazioni dentro un blocco di riserva o nel piè di pagina
+        // sono markup copiato dalla sorgente; si contano a parte.
         stili: [...document.querySelectorAll('[style]')].flatMap((el) => {
           const st = (el as HTMLElement).style;
-          return Array.from({ length: st.length }, (_, i) => st.item(i));
+          const copiato = el.closest('.blk-raw, .footer-widget') !== null;
+          return Array.from({ length: st.length }, (_, i) => ({ nome: st.item(i), copiato }));
         }),
       }));
       if (risposta?.status() === 200 && esito.h1 !== 1) titoli.push(`${b.url} (${esito.h1} h1)`);
-      for (const nome of esito.stili)
-        if (!ammesse.has(nome)) stiliNonAmmessi.push(`${b.url} ${nome}`);
+      for (const { nome, copiato } of esito.stili) {
+        if (ammesse.has(nome)) continue;
+        (copiato ? stiliCopiati : stiliNonAmmessi).push(`${b.url} ${nome}`);
+      }
     }
     await ctx.close();
   }
   console.log(`pagine senza esattamente un h1: ${titoli.length}`);
   for (const t of titoli.slice(0, 10)) console.log('  ', t);
-  console.log(`dichiarazioni in linea fuori elenco: ${stiliNonAmmessi.length}`);
+  console.log(`dichiarazioni in linea generate fuori elenco (1E-15): ${stiliNonAmmessi.length}`);
+  console.log(
+    `dichiarazioni copiate dalla sorgente (blocchi di riserva, piè di pagina; DR-118): ${new Set(stiliCopiati).size}`,
+  );
   for (const t of [...new Set(stiliNonAmmessi)].slice(0, 10)) console.log('  ', t);
 
   // Scorrimento orizzontale.
@@ -112,7 +121,7 @@ async function main(): Promise<void> {
   for (const o of orizzontali.slice(0, 20)) console.log('  ', o);
   writeFileSync(
     path.join(RADICE, 'docs/qa/riferimento/verifica-sito-w4.json'),
-    `${JSON.stringify({ menu: { rese: voci.length, attese: attese.length, diverse: menuDiversi }, lingua, serviceWorker, titoli, stiliNonAmmessi, orizzontali }, null, 1)}\n`,
+    `${JSON.stringify({ menu: { rese: voci.length, attese: attese.length, diverse: menuDiversi }, lingua, serviceWorker, titoli, stiliNonAmmessi, stiliCopiati: [...new Set(stiliCopiati)], orizzontali }, null, 1)}\n`,
   );
   await browser.close();
 }

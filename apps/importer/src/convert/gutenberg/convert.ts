@@ -99,6 +99,8 @@ function convertSingleBlock(
       }) as BlockNode | null;
     case 'shortcode':
       return convertShortcodeBlock(block, ctx);
+    case 'freeform':
+      return convertFreeform(block, ctx);
     case 'divi/placeholder':
       // Marcatore, non contenuto: si scarta (§4).
       return null;
@@ -346,6 +348,21 @@ function convertShortcodeBlock(block: ParsedGutenbergBlock, ctx: ConvertContext)
 
   const result = convertNonDiviShortcode(shortcode, ctx);
   return result.block;
+}
+
+/**
+ * HTML fuori dai blocchi (DR-116): se, tolti i tag, è un solo shortcode, si
+ * converte come `wp:shortcode`; altrimenti è testo.
+ */
+function convertFreeform(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNode | null {
+  const text = block.innerHtml.replace(/<[^>]*>/g, '').trim();
+  if (/^\[[a-zA-Z][a-zA-Z0-9_]*(?:\s[^\]]*)?\]$/.test(text)) {
+    return convertShortcodeBlock({ ...block, innerHtml: text }, ctx);
+  }
+  return buildRichTextOrFallback(ctx, block.innerHtml, {
+    start: block.start,
+    end: block.end,
+  }) as BlockNode | null;
 }
 
 const INLINE_ATTR_RE = /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;

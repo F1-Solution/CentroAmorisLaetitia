@@ -17,7 +17,11 @@ import type { SqlRow } from '../../source/sql/types.js';
  * `_et_pb_show_title`: 30 righe, 2 a `'off'`. Solo `'off'` nasconde; ogni
  * altro valore, compreso quello assente, lascia il titolo visibile.
  */
-export function deriveShowTitle(meta: ReadonlyMap<string, string>): boolean {
+export function deriveShowTitle(meta: ReadonlyMap<string, string>, type: 'page' | 'post'): boolean {
+  // DR-119: nel modello di pagina di Divi il titolo compare solo senza il Divi Builder.
+  if (type === 'page' && meta.get('_et_pb_use_builder') === 'on') {
+    return false;
+  }
   const hideTitle = meta.get('st_hide_title_check_option');
   if (hideTitle && ['1', 'on', 'yes', 'true'].includes(hideTitle.toLowerCase())) {
     return false;

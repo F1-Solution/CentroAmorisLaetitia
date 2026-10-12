@@ -1,4 +1,5 @@
 import { schema } from '@amoris/db';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHarness, signIn, type Harness } from './_support/harness.js';
 
@@ -338,6 +339,20 @@ describe('menu', () => {
 });
 
 describe('impostazioni', () => {
+  it('il logo esce con il suo indirizzo, se il media è pubblico (DR-117)', async () => {
+    await h.db
+      .insert(schema.settings)
+      .values({ key: 'site.logo_media_id', value: ids.pubblico ?? '', label: 'Logo' });
+    const body = (await get('/public/settings')).json();
+    expect(body['site.logo_path']).toBe('/media/2026/01/pubblico.png');
+    await h.db
+      .update(schema.settings)
+      .set({ value: ids.riservato ?? '' })
+      .where(eq(schema.settings.key, 'site.logo_media_id'));
+    expect((await get('/public/settings')).json()['site.logo_path']).toBeUndefined();
+    await h.db.delete(schema.settings).where(eq(schema.settings.key, 'site.logo_media_id'));
+  });
+
   it('prova negativa: escono solo quelle dell’elenco, mai analisi né segreti', async () => {
     const body = (await get('/public/settings')).json();
     // Nemmeno l'identificativo della pagina iniziale: serve al servizio, non al sito.

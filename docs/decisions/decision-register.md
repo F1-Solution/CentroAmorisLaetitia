@@ -1204,3 +1204,12 @@ Decisione **D44**.
   WordPress: un solo caso, `/pronti-a-ripartire/`, articolo che condivide lo slug con
   una pagina allegato importata.
 
+
+## 42. Round 33 — risposta del 2026-10-11, rilievi della `1E-W4`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-116 | 2026-10-11 | L'HTML fuori dai blocchi Gutenberg, scartato dal convertitore (D45) | **Opzione A** — il convertitore lo conserva e converte `[catposts]` nel blocco `post_list`; prove; riesecuzione dell'import | B — aggiungere a mano il blocco alla home dal CMS | «D45 = A» | Proprietario | `apps/importer` convertitore Gutenberg, home | sì | `divi-shortcode-strategy.md` §2.1, `BLOCK-MODEL.md` §3.11 |
+| DR-117 | 2026-10-11 | Logo e testo del piè di pagina (D46) | **Opzione A** — l'importer scrive due impostazioni, `site.logo_media_id` (da `et_divi.divi_logo`) e `site.footer_html` (dal widget HTML dell'area del piè di pagina, sanificato), modificabili dalle Impostazioni e lette dal sito | B — piè di pagina come contenuto a blocchi | «D46 = A» | Proprietario | `apps/importer`, `apps/api` lettura pubblica, `apps/web` | sì | `wp-to-postgres-mapping.md` §5, DR-104 |
+| DR-118 | 2026-10-11 | Criterio 1E-15 e blocchi di riserva `html` (D47) | **Opzione A** — il criterio vale per l'HTML che il sistema genera; i blocchi di riserva conservano il markup della sorgente per costruzione (ADR-005 §3.4) e le loro dichiarazioni in linea si contano e si dichiarano nel rapporto | B — trasformare in classi gli stili dei blocchi di riserva | «D47 = A» | Proprietario | criterio 1E-15, `acceptance-criteria.md`, rapporto di parità | sì | DR-071, ADR-005 §3.3–§3.4 |
+| DR-119 | 2026-10-11 | `show_title` delle pagine costruite con Divi (D48) | **Opzione A** — l'importer mette `show_title` a falso per le pagine con `_et_pb_use_builder = on`, come fa il tema; prove; riesecuzione dell'import | B — regola nel sito dal formato d'origine | «D48 = A» | Proprietario | `apps/importer` fase `contents`, criterio 1E-14 | sì | DR-040 |

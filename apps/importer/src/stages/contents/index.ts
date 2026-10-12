@@ -42,6 +42,8 @@ import {
 } from './entityResolvers.js';
 import { buildPostMetaIndex, deriveShowTitle, parseStickyPostIds } from './meta.js';
 import { writeHomeContentSetting } from './homePage.js';
+import { expandCatposts } from './catposts.js';
+import { writeThemeSettings } from './themeSettings.js';
 import {
   hasEditorialWorkSince,
   isForced,
@@ -195,9 +197,10 @@ export const contentsStage: Stage = {
           return 'skipped';
         }
 
+        const meta = postMetaIndex.get(row.id) ?? new Map<string, string>();
         const { document, family } = convertContent({
           legacyContentId: row.id,
-          postContent: row.content,
+          postContent: expandCatposts(row.content, meta),
           resolvers: { resolveMedia, resolveDocument, resolveSlider, resolveForm },
         });
         const contentHtml = serializeBlockDocument(document);
@@ -205,8 +208,7 @@ export const contentsStage: Stage = {
         byFamily[family] += 1;
         documents.push(document);
 
-        const meta = postMetaIndex.get(row.id) ?? new Map<string, string>();
-        const showTitle = deriveShowTitle(meta);
+        const showTitle = deriveShowTitle(meta, row.type);
         const isSticky = stickyIds.has(row.id);
 
         const authorEntityId = row.authorLegacyId
@@ -288,6 +290,7 @@ export const contentsStage: Stage = {
     );
 
     await writeHomeContentSetting(ctx, optionRows as readonly SqlRow[]);
+    await writeThemeSettings(ctx, optionRows as readonly SqlRow[]);
 
     // La soglia si calcola con la funzione di `@amoris/blocks`
     // (`BLOCK-MODEL.md` §8), non con un secondo conteggio scritto qui: due
