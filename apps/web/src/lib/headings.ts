@@ -32,10 +32,12 @@ export interface PromotedHeading {
   readonly document: BlockDocument;
   /** `true` se un titolo del contenuto è diventato `<h1>`. */
   readonly promoted: boolean;
+  /** `true` se il documento reso contiene un `<h1>`, suo o promosso: il titolo nascosto non serve. */
+  readonly hasH1: boolean;
 }
 
 export function promoteFirstHeading(document: BlockDocument): PromotedHeading {
-  if (hasH1(document)) return { document, promoted: false };
+  if (hasH1(document)) return { document, promoted: false, hasH1: true };
   let promoted = false;
   const visit = (node: unknown): unknown => {
     if (promoted || node === null || typeof node !== 'object') return node;
@@ -59,5 +61,5 @@ export function promoteFirstHeading(document: BlockDocument): PromotedHeading {
     return block.children ? { ...block, children: block.children.map(visit) } : block;
   };
   const blocks = visit(document.blocks) as BlockDocument['blocks'];
-  return { document: promoted ? { ...document, blocks } : document, promoted };
+  return { document: promoted ? { ...document, blocks } : document, promoted, hasH1: promoted };
 }

@@ -68,6 +68,7 @@ async function main(): Promise<void> {
   const titoli: string[] = [];
   const stiliNonAmmessi: string[] = [];
   const stiliCopiati: string[] = [];
+  const stiliDelQuadro: string[] = [];
   {
     const ctx = await nuovoContesto(browser, VIEWPORT[0]!);
     const p = await ctx.newPage();
@@ -83,13 +84,21 @@ async function main(): Promise<void> {
         stili: [...document.querySelectorAll('[style]')].flatMap((el) => {
           const st = (el as HTMLElement).style;
           const copiato = el.closest('.blk-raw, .footer-widget') !== null;
-          return Array.from({ length: st.length }, (_, i) => ({ nome: st.item(i), copiato }));
+          // L'annunciatore di rotta che Next.js aggiunge a runtime: del quadro, non della pagina.
+          const quadro = el.tagName === 'NEXT-ROUTE-ANNOUNCER';
+          return Array.from({ length: st.length }, (_, i) => ({
+            nome: st.item(i),
+            copiato,
+            quadro,
+          }));
         }),
       }));
       if (risposta?.status() === 200 && esito.h1 !== 1) titoli.push(`${b.url} (${esito.h1} h1)`);
-      for (const { nome, copiato } of esito.stili) {
+      for (const { nome, copiato, quadro } of esito.stili) {
         if (ammesse.has(nome)) continue;
-        (copiato ? stiliCopiati : stiliNonAmmessi).push(`${b.url} ${nome}`);
+        (quadro ? stiliDelQuadro : copiato ? stiliCopiati : stiliNonAmmessi).push(
+          `${b.url} ${nome}`,
+        );
       }
     }
     await ctx.close();
@@ -100,6 +109,7 @@ async function main(): Promise<void> {
   console.log(
     `dichiarazioni copiate dalla sorgente (blocchi di riserva, piè di pagina; DR-118): ${new Set(stiliCopiati).size}`,
   );
+  console.log(`dichiarazioni dell'annunciatore di rotta di Next.js: ${stiliDelQuadro.length}`);
   for (const t of [...new Set(stiliNonAmmessi)].slice(0, 10)) console.log('  ', t);
 
   // Scorrimento orizzontale.
@@ -121,7 +131,7 @@ async function main(): Promise<void> {
   for (const o of orizzontali.slice(0, 20)) console.log('  ', o);
   writeFileSync(
     path.join(RADICE, 'docs/qa/riferimento/verifica-sito-w4.json'),
-    `${JSON.stringify({ menu: { rese: voci.length, attese: attese.length, diverse: menuDiversi }, lingua, serviceWorker, titoli, stiliNonAmmessi, stiliCopiati: [...new Set(stiliCopiati)], orizzontali }, null, 1)}\n`,
+    `${JSON.stringify({ menu: { rese: voci.length, attese: attese.length, diverse: menuDiversi }, lingua, serviceWorker, titoli, stiliNonAmmessi, stiliCopiati: [...new Set(stiliCopiati)], stiliDelQuadro, orizzontali }, null, 1)}\n`,
   );
   await browser.close();
 }

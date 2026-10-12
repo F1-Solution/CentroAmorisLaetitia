@@ -1213,3 +1213,26 @@ Decisione **D44**.
 | DR-117 | 2026-10-11 | Logo e testo del piè di pagina (D46) | **Opzione A** — l'importer scrive due impostazioni, `site.logo_media_id` (da `et_divi.divi_logo`) e `site.footer_html` (dal widget HTML dell'area del piè di pagina, sanificato), modificabili dalle Impostazioni e lette dal sito | B — piè di pagina come contenuto a blocchi | «D46 = A» | Proprietario | `apps/importer`, `apps/api` lettura pubblica, `apps/web` | sì | `wp-to-postgres-mapping.md` §5, DR-104 |
 | DR-118 | 2026-10-11 | Criterio 1E-15 e blocchi di riserva `html` (D47) | **Opzione A** — il criterio vale per l'HTML che il sistema genera; i blocchi di riserva conservano il markup della sorgente per costruzione (ADR-005 §3.4) e le loro dichiarazioni in linea si contano e si dichiarano nel rapporto | B — trasformare in classi gli stili dei blocchi di riserva | «D47 = A» | Proprietario | criterio 1E-15, `acceptance-criteria.md`, rapporto di parità | sì | DR-071, ADR-005 §3.3–§3.4 |
 | DR-119 | 2026-10-11 | `show_title` delle pagine costruite con Divi (D48) | **Opzione A** — l'importer mette `show_title` a falso per le pagine con `_et_pb_use_builder = on`, come fa il tema; prove; riesecuzione dell'import | B — regola nel sito dal formato d'origine | «D48 = A» | Proprietario | `apps/importer` fase `contents`, criterio 1E-14 | sì | DR-040 |
+
+### Attuazioni del 2026-10-12 dopo la conferma
+
+| Voce | Stato |
+|---|---|
+| **Commit e push delle correzioni di DR-116…119** | Fatti su conferma: `08bad93` |
+| **Riesecuzione dell'import** | **Fatta su conferma, due volte.** Copia `~/amoris-backup/amoris-prima-DR-116-119-2026-10-12.dump` (34 tabelle con dati); esecuzione `1245a919`, esito `success`, ma senza il logo: l'opzione del tema contiene un oggetto PHP serializzato e la lettura falliva. Corretta con una prova; nuova copia `amoris-prima-DR-117-logo-2026-10-12.dump`; esecuzione `0a1abf95`, esito `success`, conteggi identici alla prima (idempotenza) |
+| **Verifiche nel database** | `site.logo_media_id` → `2017/09/logo_header_2.png`; `site.footer_html` presente; la home contiene il blocco `post_list` (tutte le categorie, 10 articoli, miniatura, data, estratto, come la configurazione salvata); `show_title` falso per 30 pagine |
+
+### Rilievi del 2026-10-12
+
+- **Il piè di pagina perdeva allineamento e stili** nel sito: il componente lo rifiltrava con l'elenco chiuso del testo ricco. Ora toglie solo il markup pericoloso, come all'import (DR-117, DR-118).
+- **La rimozione del markup pericoloso non toglieva gli indirizzi `javascript:`, `vbscript:`, `data:`**: ora li toglie, anche nei blocchi di riserva. Nessun contenuto importato ne conteneva.
+- **Titolo nascosto in più**: con `show_title` falso il sito aggiungeva un `h1` nascosto anche dove il contenuto ha già il suo (`/contest-fotografico-selfiemotions/`, 2 `h1` contro 1 della sorgente). Corretto.
+- **L'elenco degli articoli della home salta il più recente** nella sorgente (`offset 1` della configurazione salvata): il blocco `post_list` non ha questo parametro. Da trattare nella resa del blocco, `1E-W5`.
+- **`next-route-announcer`**: Next.js aggiunge a runtime un elemento con `position` in linea, per l'accessibilità; la verifica lo conta a parte, non come HTML generato dal sistema.
+- **Scorrimento orizzontale su `/informazioni-sui-cookie/` a 390 e 360 px**: lo causa la tabella dei cookie, che sporge anche nella sorgente (710 px contro 464). Decisione **D49**.
+
+## 43. Round 34 — risposta del 2026-10-12, rilievo della `1E-W4`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-120 | 2026-10-12 | Scorrimento orizzontale di `/informazioni-sui-cookie/` a 390 e 360 px, presente anche nella sorgente (D49) | **Opzione A** — la tabella scorre nel proprio riquadro e la pagina non scorre; difformità da mascherare e approvare nella `1E-W6` | B — comportamento della sorgente, eccezione dichiarata al criterio | «D49 = A» | Proprietario | `apps/web` stili, criterio d'uscita della `1E-W4`, `1E-W6` | sì | `.planning/phases/1E/PLAN.md` §3 |

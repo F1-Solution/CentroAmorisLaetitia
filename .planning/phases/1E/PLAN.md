@@ -147,4 +147,5 @@ Quarto round, aperto il 2026-10-10 nella `1E-W4`:
 | ~~**D46**~~ | chiusa | **DR-117**: logo e piè di pagina diventano impostazioni importate | — |
 | ~~**D47**~~ | chiusa | **DR-118**: 1E-15 vale per l'HTML generato; i blocchi di riserva si dichiarano | — |
 | ~~**D48**~~ | chiusa | **DR-119**: `show_title` falso con il Divi Builder | — |
+| ~~**D49**~~ | chiusa | **DR-120**: la tabella scorre nel suo riquadro; difformità per la `1E-W6` | — |
 

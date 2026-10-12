@@ -311,3 +311,12 @@
   padding: 15px 0 5px;
   background-color: var(--color-footer-bottom-background);
 }
+
+/* DR-120: al telefono una tabella più larga dello schermo scorre nel suo riquadro, non la pagina. */
+@media (max-width: 479px) {
+  .entry-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

@@ -21,8 +21,8 @@ function isFullWidthLayout(content: PublicContent['content']): boolean {
  */
 function pageHeading(content: PublicContent['content'], titleShown: boolean) {
   if (titleShown) return { document: content.blocks, hidden: false };
-  const { document, promoted } = promoteFirstHeading(content.blocks);
-  return { document, hidden: !promoted && content.title.trim() !== '' };
+  const { document, hasH1 } = promoteFirstHeading(content.blocks);
+  return { document, hidden: !hasH1 && content.title.trim() !== '' };
 }
 
 export function ContentView({ data }: { readonly data: PublicContent }) {

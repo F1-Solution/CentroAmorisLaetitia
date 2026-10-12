@@ -31,10 +31,26 @@ function option(rows: readonly SqlRow[], name: string): PhpValue | null {
 
 const asMap = (value: PhpValue | null | undefined) => (value instanceof Map ? value : null);
 
+/**
+ * Il valore stringa di una chiave di primo livello, letto dal testo serializzato:
+ * `et_divi` contiene un oggetto PHP, che il lettore generale rifiuta.
+ */
+function serializedString(raw: string, key: string): string | null {
+  const marker = `s:${Buffer.byteLength(key)}:"${key}";s:`;
+  const at = raw.indexOf(marker);
+  if (at < 0) return null;
+  const lengthMatch = /^(\d+):"/.exec(raw.slice(at + marker.length));
+  if (!lengthMatch) return null;
+  const start = Buffer.byteLength(raw.slice(0, at + marker.length + lengthMatch[0].length));
+  const bytes = Buffer.from(raw);
+  return bytes.subarray(start, start + Number(lengthMatch[1])).toString('utf8');
+}
+
 /** La chiave nel bucket del logo del tema, da `et_divi.divi_logo`. */
 export function logoStorageKey(rows: readonly SqlRow[]): string | null {
-  const logo = asMap(option(rows, 'et_divi'))?.get('divi_logo');
-  if (typeof logo !== 'string') return null;
+  const raw = rows.find((r) => r['option_name'] === 'et_divi')?.['option_value'];
+  const logo = typeof raw === 'string' ? serializedString(raw, 'divi_logo') : null;
+  if (logo === null) return null;
   const match = /\/wp-content\/uploads\/(.+)$/.exec(logo.replace(/[?#].*$/, ''));
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }

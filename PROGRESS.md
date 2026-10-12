@@ -112,3 +112,6 @@ PHASE:1E WAVE:1E-W1 STATUS:complete TS:2026-10-10T06:40:51Z
 PHASE:1E WAVE:1E-W2 STATUS:complete TS:2026-10-10T07:22:26Z
 PHASE:1E WAVE:1E-W3 STATUS:complete TS:2026-10-10T14:36:19Z
 <!-- 1E-W4 2026-10-10: modulo del sito pubblico in apps/web (rotte, template, proxy dei redirect e dei feed, mappa del sito); 292/292 indirizzi della matrice con lo stato atteso, menu 41/41, nessun service worker, lingua it. Non completa: 1E-14 dipende da D48 e dal titolo del form (1E-W5); logo e piè di pagina da D46; elenco della home da D45; 1E-15 e blocchi di riserva da D47. -->
+<!-- 1E-W4 2026-10-12: correzioni DR-116…119 in 08bad93; import rieseguito due volte su conferma, success. 292/292, menu 41/41, h1 0 difformi, 1E-15 a zero, sw 0, lingua it. Resta lo scorrimento orizzontale di /informazioni-sui-cookie/ (D49). Nessuna riga complete. -->
+<!-- 1E-W4 2026-10-12: D49 = A (DR-120) attuata; 292/292, menu 41/41, h1 e 1E-15 a zero, sw 0, lingua it, nessuno scorrimento orizzontale. -->
+PHASE:1E WAVE:1E-W4 STATUS:complete TS:2026-10-12T13:55:52Z

@@ -18,6 +18,12 @@ export interface StripDangerousResult {
   readonly issues: SanitizeIssue[];
 }
 
+/** Attributi che portano un indirizzo; gli altri schemi, relativi compresi, restano per fedeltà. */
+const URL_ATTRIBUTES = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'poster']);
+const EXECUTABLE_SCHEME = /^\s*(?:javascript|vbscript|data):/i;
+// eslint-disable-next-line no-control-regex -- i browser li ignorano anche dentro lo schema.
+const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
+
 export function stripDangerousMarkup(html: string): StripDangerousResult {
   const fragment = parseFragment(html);
   const issues: SanitizeIssue[] = [];
@@ -63,6 +69,15 @@ function stripNode(node: Tree.ChildNode, issues: SanitizeIssue[]): string | null
         element: tag,
         attribute: name,
         message: 'gestore di evento rimosso (§3.14.2)',
+      });
+      continue;
+    }
+    if (URL_ATTRIBUTES.has(name) && EXECUTABLE_SCHEME.test(attr.value.replace(CONTROL_CHARS, ''))) {
+      issues.push({
+        severity: 'error',
+        element: tag,
+        attribute: name,
+        message: 'indirizzo con schema eseguibile rimosso (§3.14.2)',
       });
       continue;
     }

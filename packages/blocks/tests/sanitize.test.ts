@@ -218,4 +218,17 @@ describe('stripDangerousMarkup — il blocco di riserva (§3.14.2)', () => {
     const result = stripDangerousMarkup('<div onclick="x()">ciao</div>');
     expect(result.html).toBe('<div>ciao</div>');
   });
+
+  it('toglie gli indirizzi con uno schema eseguibile, anche mascherato', () => {
+    const result = stripDangerousMarkup(
+      '<a href="java&#9;script:x()">a</a><img src="data:text/html,x"><a href=" VBScript:x">b</a>',
+    );
+    expect(result.html).toBe('<a>a</a><img><a>b</a>');
+    expect(result.issues.every((i) => i.severity === 'error')).toBe(true);
+  });
+
+  it('conserva gli indirizzi relativi e ordinari, come nella sorgente', () => {
+    const html = '<a href="pagina.html">a</a><a href="/x/">b</a><a href="tel:+390000000">c</a>';
+    expect(stripDangerousMarkup(html).html).toBe(html);
+  });
 });

@@ -49,6 +49,18 @@ describe('logo e piè di pagina (DR-117)', () => {
     expect(html).not.toContain('centroamorislaetitia.it');
   });
 
+  it('legge il logo anche se le opzioni del tema contengono un oggetto PHP', () => {
+    // Nella sorgente `et_divi` contiene un oggetto serializzato, che il lettore
+    // generale rifiuta: la sola chiave del logo si legge comunque.
+    const withObject: SqlRow[] = [
+      {
+        option_name: 'et_divi',
+        option_value: `a:2:{${s('qualcosa')}O:8:"stdClass":0:{}${s('divi_logo')}${s('https://www.centroamorislaetitia.it/wp-content/uploads/2017/09/logò.png')}}`,
+      },
+    ];
+    expect(logoStorageKey(withObject)).toBe('2017/09/logò.png');
+  });
+
   it('senza opzioni non inventa nulla', () => {
     expect(logoStorageKey([])).toBeNull();
     expect(footerHtml([])).toBeNull();

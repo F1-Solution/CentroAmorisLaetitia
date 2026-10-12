@@ -31,10 +31,17 @@ describe('titolo principale delle pagine che non lo hanno (DR-040)', () => {
 
   it('se il contenuto ha già un h1 non cambia nulla', () => {
     const original = doc(text('<h1>Già presente</h1><h2>Altro</h2>'));
-    expect(promoteFirstHeading(original)).toEqual({ document: original, promoted: false });
+    // Il titolo nascosto non si aggiunge: la pagina avrebbe due h1, la sorgente uno.
+    expect(promoteFirstHeading(original)).toEqual({
+      document: original,
+      promoted: false,
+      hasH1: true,
+    });
   });
 
   it('senza titoli nel contenuto non promuove nulla', () => {
-    expect(promoteFirstHeading(doc(text('<p>Solo testo</p>'))).promoted).toBe(false);
+    const result = promoteFirstHeading(doc(text('<p>Solo testo</p>')));
+    expect(result.promoted).toBe(false);
+    expect(result.hasH1).toBe(false);
   });
 });
