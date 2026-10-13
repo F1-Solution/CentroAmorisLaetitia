@@ -26,6 +26,9 @@ import { convertNonDiviShortcode } from '../shared/non-divi-shortcodes.js';
 import type { ParsedShortcode } from '../divi/shortcodes.js';
 import { parseGutenbergBlocks, type ParsedGutenbergBlock } from './comments.js';
 
+/** WordPress non applica `wpautop()` ai contenuti con blocchi. */
+const NO_AUTOP = { autop: false } as const;
+
 /** Punto di ingresso: converte l'intero `post_content` di un contenuto Gutenberg. */
 export function convertGutenbergContent(text: string, ctx: ConvertContext): BlockNode[] {
   return convertSiblings(parseGutenbergBlocks(text), ctx);
@@ -51,7 +54,7 @@ function convertSiblings(
       const html = run.map((b) => b.innerHtml).join('');
       const start = run[0]!.start;
       const end = run[run.length - 1]!.end;
-      const built = buildRichTextOrFallback(ctx, html, { start, end });
+      const built = buildRichTextOrFallback(ctx, html, { start, end }, {}, NO_AUTOP);
       if (built) out.push(built as BlockNode);
       i = j;
       continue;
@@ -71,10 +74,13 @@ function convertSingleBlock(
   switch (block.blockName) {
     case 'list':
     case 'heading':
-      return buildRichTextOrFallback(ctx, block.innerHtml, {
-        start: block.start,
-        end: block.end,
-      }) as BlockNode | null;
+      return buildRichTextOrFallback(
+        ctx,
+        block.innerHtml,
+        { start: block.start, end: block.end },
+        {},
+        NO_AUTOP,
+      ) as BlockNode | null;
     case 'image':
       return convertImage(block, ctx);
     case 'columns':
@@ -329,10 +335,13 @@ function convertShortcodeBlock(block: ParsedGutenbergBlock, ctx: ConvertContext)
   const raw = block.innerHtml.trim();
   const match = /^\[([a-zA-Z][a-zA-Z0-9_]*)/.exec(raw);
   if (!match) {
-    return buildRichTextOrFallback(ctx, block.innerHtml, {
-      start: block.start,
-      end: block.end,
-    }) as BlockNode | null;
+    return buildRichTextOrFallback(
+      ctx,
+      block.innerHtml,
+      { start: block.start, end: block.end },
+      {},
+      NO_AUTOP,
+    ) as BlockNode | null;
   }
 
   const shortcode: ParsedShortcode = {
@@ -359,10 +368,13 @@ function convertFreeform(block: ParsedGutenbergBlock, ctx: ConvertContext): Bloc
   if (/^\[[a-zA-Z][a-zA-Z0-9_]*(?:\s[^\]]*)?\]$/.test(text)) {
     return convertShortcodeBlock({ ...block, innerHtml: text }, ctx);
   }
-  return buildRichTextOrFallback(ctx, block.innerHtml, {
-    start: block.start,
-    end: block.end,
-  }) as BlockNode | null;
+  return buildRichTextOrFallback(
+    ctx,
+    block.innerHtml,
+    { start: block.start, end: block.end },
+    {},
+    NO_AUTOP,
+  ) as BlockNode | null;
 }
 
 const INLINE_ATTR_RE = /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;

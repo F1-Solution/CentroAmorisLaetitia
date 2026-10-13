@@ -14,26 +14,68 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 const MEDIA_KEYS = new Set(['mediaId', 'backgroundMediaId', 'posterMediaId']);
 
+/** Ciò che serve a risolvere un blocco `post_list`: i suoi stessi parametri (DR-116). */
+export interface PostListRef {
+  readonly blockId: string;
+  readonly termIds: readonly string[];
+  readonly limit: number | null;
+  readonly offset: number;
+  readonly order: 'date_desc' | 'date_asc' | 'title_asc';
+}
+
 export interface BlockRefs {
   readonly mediaIds: Set<string>;
   readonly sliderIds: Set<string>;
   readonly documentIds: Set<string>;
+  readonly formIds: Set<string>;
+  readonly postLists: PostListRef[];
+}
+
+function isPostListNode(
+  node: Record<string, unknown>,
+): node is { id: string; props: Record<string, unknown> } {
+  return (
+    node['type'] === 'post_list' &&
+    typeof node['id'] === 'string' &&
+    typeof node['props'] === 'object'
+  );
 }
 
 /** Gli identificativi citati da un documento a blocchi, a qualunque profondità. */
 export function collectRefs(document: unknown): BlockRefs {
-  const refs: BlockRefs = { mediaIds: new Set(), sliderIds: new Set(), documentIds: new Set() };
+  const refs: BlockRefs = {
+    mediaIds: new Set(),
+    sliderIds: new Set(),
+    documentIds: new Set(),
+    formIds: new Set(),
+    postLists: [],
+  };
   const visit = (node: unknown): void => {
     if (Array.isArray(node)) {
       node.forEach(visit);
       return;
     }
     if (node === null || typeof node !== 'object') return;
-    for (const [key, value] of Object.entries(node)) {
+    const record = node as Record<string, unknown>;
+    if (isPostListNode(record)) {
+      const props = record.props;
+      refs.postLists.push({
+        blockId: record.id,
+        termIds: Array.isArray(props['termIds']) ? (props['termIds'] as string[]) : [],
+        limit: typeof props['limit'] === 'number' ? props['limit'] : null,
+        offset: typeof props['offset'] === 'number' ? props['offset'] : 0,
+        order:
+          props['order'] === 'date_asc' || props['order'] === 'title_asc'
+            ? props['order']
+            : 'date_desc',
+      });
+    }
+    for (const [key, value] of Object.entries(record)) {
       if (typeof value === 'string') {
         if (MEDIA_KEYS.has(key)) refs.mediaIds.add(value);
         else if (key === 'sliderId') refs.sliderIds.add(value);
         else if (key === 'documentId') refs.documentIds.add(value);
+        else if (key === 'formId') refs.formIds.add(value);
       } else visit(value);
     }
   };
@@ -400,6 +442,143 @@ export async function slidersByIds(db: Database, ids: Iterable<string>) {
   );
 }
 
+// ── Form ─────────────────────────────────────────────────────────────────────
+
+export interface PublicFormField {
+  readonly id: string;
+  readonly type: string;
+  readonly label: string;
+  readonly required: boolean;
+  readonly order: number;
+  readonly description: string | null;
+  readonly options: Readonly<Record<string, unknown>>;
+}
+
+export interface PublicForm {
+  readonly id: string;
+  readonly slug: string;
+  readonly title: string;
+  readonly confirmationMessage: string | null;
+  readonly requiresPayment: boolean;
+  readonly fields: PublicFormField[];
+  /**
+   * Il rimando di pagamento di DR-039: importo dal campo `payment-single` della
+   * definizione; l'indirizzo non è configurato in questa fase (nessun dato reale
+   * di PayPal è stato importato) e resta `null` finché l'utente non lo fornisce.
+   */
+  readonly payment: { readonly amount: number | null; readonly url: string | null } | null;
+}
+
+function numericOption(options: Readonly<Record<string, unknown>>, key: string): number | null {
+  const raw = options[key];
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/** Le definizioni dei form citati, se attivi: il form bozza o disattivato non esce (1E-16). */
+export async function formsByIds(
+  db: Database,
+  ids: Iterable<string>,
+): Promise<Record<string, PublicForm>> {
+  const wanted = [...new Set(ids)];
+  if (wanted.length === 0) return {};
+  const rows = await db
+    .select({
+      id: schema.forms.id,
+      slug: schema.forms.slug,
+      title: schema.forms.title,
+      definition: schema.forms.definition,
+      confirmationMessage: schema.forms.confirmationMessage,
+      requiresPayment: schema.forms.requiresPayment,
+    })
+    .from(schema.forms)
+    .where(and(inArray(schema.forms.id, wanted), eq(schema.forms.isActive, true)));
+
+  const out: Record<string, PublicForm> = {};
+  for (const row of rows) {
+    const definition = row.definition as { fields?: unknown } | null;
+    const rawFields = Array.isArray(definition?.fields) ? definition.fields : [];
+    const fields = rawFields.filter(
+      (f): f is PublicFormField =>
+        f !== null &&
+        typeof f === 'object' &&
+        typeof (f as Record<string, unknown>)['id'] === 'string' &&
+        typeof (f as Record<string, unknown>)['type'] === 'string',
+    );
+    const paymentField = fields.find((f) => f.type === 'payment-single');
+    out[row.id] = {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      confirmationMessage: row.confirmationMessage,
+      requiresPayment: row.requiresPayment,
+      // ADR-010 §4.2: ogni tipo noto tranne `payment-single`, che non si rende in Fase 1.
+      fields: fields
+        .filter((f) => f.type !== 'payment-single')
+        .map((f) => ({
+          id: f.id,
+          type: f.type,
+          label: f.label ?? '',
+          required: Boolean(f.required),
+          order: typeof f.order === 'number' ? f.order : 0,
+          description: typeof f.description === 'string' ? f.description : null,
+          options: typeof f.options === 'object' && f.options !== null ? f.options : {},
+        })),
+      payment: row.requiresPayment
+        ? {
+            amount: paymentField
+              ? (numericOption(paymentField.options ?? {}, 'amount') ??
+                numericOption(paymentField.options ?? {}, 'price'))
+              : null,
+            url: null,
+          }
+        : null,
+    };
+  }
+  return out;
+}
+
+// ── Elenco articoli del blocco `post_list` ──────────────────────────────────
+
+export interface PublicPostListItem {
+  readonly id: string;
+  readonly path: string;
+  readonly title: string;
+  readonly excerpt: string | null;
+  readonly featuredMediaId: string | null;
+  readonly publishedAt: string | null;
+}
+
+/** Una richiesta per ogni blocco: i loro parametri, non quelli dell'archivio, decidono (DR-116). */
+export async function postListsByRefs(
+  db: Database,
+  refs: readonly PostListRef[],
+): Promise<Record<string, PublicPostListItem[]>> {
+  const out: Record<string, PublicPostListItem[]> = {};
+  for (const ref of refs) {
+    const { rows } = await publishedPosts(db, {
+      termIds: ref.termIds,
+      page: 1,
+      perPage: ref.limit ?? 10,
+      offset: ref.offset,
+      order: ref.order,
+    });
+    out[ref.blockId] = rows.map((row) => ({
+      id: row.id,
+      path: row.path,
+      title: row.title,
+      excerpt: row.excerpt,
+      featuredMediaId: row.featuredMediaId,
+      publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
+    }));
+  }
+  return out;
+}
+
 /** I documenti pubblici fra quelli chiesti: riservati, o con il file riservato, non escono. */
 export async function documentsBy(
   db: Database,
@@ -528,6 +707,7 @@ export interface PostQuery {
   readonly termIds: readonly string[];
   readonly page: number;
   readonly perPage: number;
+  readonly offset: number;
   readonly order: 'date_desc' | 'date_asc' | 'title_asc';
 }
 
@@ -567,7 +747,7 @@ export async function publishedPosts(db: Database, query: PostQuery) {
       .where(where)
       .orderBy(...order)
       .limit(query.perPage)
-      .offset((query.page - 1) * query.perPage),
+      .offset((query.page - 1) * query.perPage + query.offset),
     db
       .select({ total: sql<number>`count(*)::int` })
       .from(schema.contents)

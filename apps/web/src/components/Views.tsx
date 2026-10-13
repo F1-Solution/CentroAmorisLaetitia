@@ -26,7 +26,7 @@ function pageHeading(content: PublicContent['content'], titleShown: boolean) {
 }
 
 export function ContentView({ data }: { readonly data: PublicContent }) {
-  const { content, media } = data;
+  const { content, media, sliders, forms, postLists } = data;
   if (content.type === 'page' && isFullWidthLayout(content)) {
     // Le pagine costruite con Divi non mostrano il titolo: lo fa il loro contenuto.
     const { document, hidden } = pageHeading(content, false);
@@ -34,7 +34,13 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
       <article id={`post-${content.id}`} className="page type-page et_pb_post">
         {hidden ? <h1 className="screen-reader-text">{content.title}</h1> : null}
         <div className="entry-content">
-          <BlocksDocument document={document} media={media} />
+          <BlocksDocument
+            document={document}
+            media={media}
+            sliders={sliders}
+            forms={forms}
+            postLists={postLists}
+          />
         </div>
       </article>
     );
@@ -59,7 +65,13 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
               <h1 className="screen-reader-text">{content.title}</h1>
             ) : null}
             <div className="entry-content">
-              <BlocksDocument document={heading?.document ?? content.blocks} media={media} />
+              <BlocksDocument
+                document={heading?.document ?? content.blocks}
+                media={media}
+                sliders={sliders}
+                forms={forms}
+                postLists={postLists}
+              />
             </div>
           </article>
         </div>

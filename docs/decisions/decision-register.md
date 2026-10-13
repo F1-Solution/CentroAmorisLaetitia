@@ -1236,3 +1236,30 @@ Decisione **D44**.
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-120 | 2026-10-12 | Scorrimento orizzontale di `/informazioni-sui-cookie/` a 390 e 360 px, presente anche nella sorgente (D49) | **Opzione A** — la tabella scorre nel proprio riquadro e la pagina non scorre; difformità da mascherare e approvare nella `1E-W6` | B — comportamento della sorgente, eccezione dichiarata al criterio | «D49 = A» | Proprietario | `apps/web` stili, criterio d'uscita della `1E-W4`, `1E-W6` | sì | `.planning/phases/1E/PLAN.md` §3 |
+
+### Esiti della `1E-W5` (2026-10-12)
+
+- **Blocchi resi**: carosello scritto nel progetto, video e mappa con copertina e caricamento solo al clic, elenco degli articoli dalla lettura pubblica (con il nuovo parametro `offset`), form generati dalla definizione con invio salvato e nessuna email (DR-107, DR-108).
+- **Rimando di pagamento (DR-039)**: la configurazione PayPal Standard di ogni form si importa dalla sorgente (conto, modalità, donazione o acquisto, valuta EUR); l'indirizzo compare **solo nella risposta all'invio**, come nella sorgente, mai nei dati della pagina.
+- **`h1` di `/contatti/`**: il titolo del modulo di contatto di Divi si rende come `h1`, «Richiesta informazioni», come nella sorgente (1E-14).
+- **Revisione del codice**: nessun rilievo critico; corretto l'indirizzo della copertina del video, che ora passa dal controllo degli schemi. Rischi residui dichiarati: l'invio pubblico non ha CSRF (non c'è sessione), quindi un sito terzo può far inviare il modulo dai browser dei visitatori aggirando il limite per IP; il conteggio dei tentativi non è atomico. Le `options` dei campi escono nella lettura pubblica già filtrate dall'importer: quando il CMS potrà scrivere i form, il filtro va ripetuto in lettura.
+- **Il carosello non è usato da nessun contenuto importato** (12 slide in `slider_slides`, nessun blocco `slider`): resa provata solo dai test.
+- **In attesa di conferma**: riesecuzione dell'import per portare nel database `offset` della home e la configurazione di pagamento dei 22 form. Decisioni **D50** e **D51**.
+
+### Esiti parziali della `1E-W6` (2026-10-12)
+
+- **Cattura interrotta**: 475 catture su 585, per mancanza di memoria della macchina (due catture partite in parallelo per errore). Il confronto parziale non vale come esito dei criteri 1E-2…1E-4. Serve una ricattura integrale con memoria libera.
+- **Causa A, «a capo» non trasformati** (bloccante): l'importer ora applica `wpautop()` come la resa della sorgente, ma non ai contenuti Gutenberg, perché WordPress non lo fa. Effettiva solo dopo la riesecuzione dell'import.
+- **Causa B, immagini allineate a sinistra o a destra** (maggiore): regole del tema riportate nel foglio di stile, effettive subito.
+- **1E-19 eseguito su 4 contenuti**: aprire e salvare senza modifiche non cambia la pagina pubblica. Per la prova è stato creato un account locale sintetico di ruolo editor, non cancellato.
+- **Carosello della home**: nella sorgente pubblicata non c'è. Lo shortcode è solo in revisioni vecchie della home e la cattura di riferimento non lo mostra. Il punto 10 del §8 di `visual-regression-plan.md` va rivisto: decisione **D52**.
+
+## 44. Round 35 — risposta del 2026-10-13, rilievi della `1E-W5` e della `1E-W6`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-121 | 2026-10-13 | Mappa dopo il clic (D50) | **Opzione A** — incorporazione di Google Maps senza chiave, caricata solo al clic, come la sorgente | B — OpenStreetMap; C — solo un collegamento a Google Maps | «D50=A» | Proprietario | `packages/blocks` resa della mappa | sì | DR-107, MI-05 |
+| DR-122 | 2026-10-13 | Video dopo il clic (D51) | **Opzione A** — `youtube-nocookie.com` | B — `youtube.com` come la sorgente | «D51=A» | Proprietario | `packages/blocks` resa del video | sì | DR-107 |
+| DR-123 | 2026-10-13 | Verifica del carosello della home (D52) | **Opzione A** — tolta dal §8 di `visual-regression-plan.md`, con riga di revisione | B — lasciata e dichiarata non applicabile | «D52=A» | Proprietario | `docs/qa/visual-regression-plan.md` §8 | sì | esiti parziali della `1E-W6` |
+
+Nella stessa risposta: **HO-013 confermato** (riesecuzione dell'import in locale), **HO-014 fatto** (9,3 GB liberi), conferma di commit e push della `1E-W5` e della `1E-W6`; l'account locale di prova della `1E-W6` resta.

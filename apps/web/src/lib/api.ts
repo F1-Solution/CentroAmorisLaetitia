@@ -1,5 +1,4 @@
-import type { MediaMap } from '@amoris/blocks';
-import type { BlockDocument } from '@amoris/blocks';
+import type { BlockDocument, FormsMap, MediaMap, PostListsMap, SlidersMap } from '@amoris/blocks';
 
 /**
  * Lettura dei dati del sito pubblico, solo dal modulo `public` dell'API (DR-104):
@@ -70,7 +69,9 @@ export interface PublicContent {
   readonly seo: Seo;
   readonly terms: readonly Term[];
   readonly media: MediaMap;
-  readonly sliders: Readonly<Record<string, unknown>>;
+  readonly sliders: SlidersMap;
+  readonly forms: FormsMap;
+  readonly postLists: PostListsMap;
   readonly documents: Readonly<Record<string, PublicDocument>>;
 }
 

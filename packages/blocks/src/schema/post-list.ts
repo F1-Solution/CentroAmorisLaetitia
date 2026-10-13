@@ -10,6 +10,8 @@ export const postListPropsSchema = z
   .object({
     termIds: z.array(EntityRef).default([]),
     limit: z.number().int().min(1).max(50).nullable().default(null),
+    /** Quanti articoli saltare dall'inizio dell'ordinamento (DR-116, `offset` di `[catposts]`). */
+    offset: z.number().int().min(0).default(0),
     showThumbnail: z.boolean().default(true),
     showDate: z.boolean().default(true),
     showExcerpt: z.boolean().default(true),

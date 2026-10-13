@@ -21,7 +21,9 @@ import {
   fallbackDescription,
   fileByPublicPath,
   fillTemplate,
+  formsByIds,
   mediaByIds,
+  postListsByRefs,
   publicMenu,
   publicSettings,
   publishedByPath,
@@ -77,11 +79,21 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       }
       const documents = await documentsBy(app.db, { ids: refs.documentIds });
       for (const document of documents) refs.mediaIds.add(document.mediaId);
-      const [media, terms, seo] = await Promise.all([
+      const [media, terms, seo, forms, postLists] = await Promise.all([
         mediaByIds(app.db, refs.mediaIds),
         termsOfContent(app.db, content.id),
         seoForContent(app.db, content, await siteTitle(app)),
+        formsByIds(app.db, refs.formIds),
+        postListsByRefs(app.db, refs.postLists),
       ]);
+      // Le miniature degli articoli dell'elenco: media noti a chi rende, come il resto.
+      for (const items of Object.values(postLists)) {
+        for (const item of items) if (item.featuredMediaId) refs.mediaIds.add(item.featuredMediaId);
+      }
+      const extraMedia = await mediaByIds(
+        app.db,
+        [...refs.mediaIds].filter((id) => !(id in media)),
+      );
       return reply.send({
         content: {
           id: content.id,
@@ -98,8 +110,10 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         },
         seo,
         terms,
-        media,
+        media: { ...media, ...extraMedia },
         sliders,
+        forms,
+        postLists,
         documents: Object.fromEntries(
           documents.map((document) => [
             document.id,

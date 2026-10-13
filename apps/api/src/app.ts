@@ -19,6 +19,7 @@ import { authRoutes } from './modules/auth/routes.js';
 import { contentRoutes } from './modules/content/routes.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { menuRoutes } from './modules/menu/routes.js';
+import { formSubmissionRoutes } from './modules/formSubmissions/routes.js';
 import { publicMediaRoutes, publicRoutes } from './modules/public/routes.js';
 import { redirectRoutes } from './modules/redirects/routes.js';
 import { roleRoutes } from './modules/roles/routes.js';
@@ -233,6 +234,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
   // Lettura pubblica (DR-104): fuori da ogni area, senza permessi, sola lettura.
   await app.register(publicRoutes, { prefix: '/public' });
   await app.register(publicMediaRoutes);
+  await app.register(formSubmissionRoutes);
 
   return app;
 }

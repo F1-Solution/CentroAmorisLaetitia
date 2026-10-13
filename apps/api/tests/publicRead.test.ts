@@ -182,6 +182,49 @@ beforeAll(async () => {
     await h.db.insert(schema.contentTerms).values({ contentId: id, termId: ids.news });
   }
 
+  const [formAttiva] = await h.db
+    .insert(schema.forms)
+    .values({
+      slug: 'contatti-sintetico',
+      title: 'Contatti',
+      definition: {
+        fields: [
+          { id: 'nome', type: 'text', label: 'Nome', required: true, order: 0, options: {} },
+          {
+            id: 'quota',
+            type: 'payment-single',
+            label: 'Quota',
+            required: true,
+            order: 1,
+            options: { amount: '35' },
+          },
+        ],
+      },
+      confirmationMessage: 'Grazie, ti risponderemo presto.',
+      requiresPayment: true,
+    })
+    .returning({ id: schema.forms.id });
+  ids.form = formAttiva?.id ?? '';
+  const [formBozza] = await h.db
+    .insert(schema.forms)
+    .values({ slug: 'disattivo-sintetico', title: 'Disattivo', definition: {}, isActive: false })
+    .returning({ id: schema.forms.id });
+  ids.formDisattivo = formBozza?.id ?? '';
+
+  await content('conBlocchiRuntime', {
+    path: '/con-blocchi-runtime/',
+    status: 'published',
+    blocks: [
+      { type: 'form', id: 'bf1', props: { formId: ids.form } },
+      { type: 'form', id: 'bf2', props: { formId: ids.formDisattivo } },
+      {
+        type: 'post_list',
+        id: 'bl1',
+        props: { termIds: [ids.news], offset: 1, order: 'date_desc' },
+      },
+    ],
+  });
+
   await h.db.insert(schema.seoTemplates).values([
     { scope: 'page', titleTemplate: '{title} - {site_title}' },
     { scope: 'home', titleTemplate: '{title} - {site_title}' },
@@ -268,6 +311,19 @@ describe('contenuti', () => {
     expect(Object.keys(body.documents)).toEqual([ids['modulo-pubblico']]);
   });
 
+  it('risolve il form attivo citato da un blocco «form», escluso il campo di pagamento', async () => {
+    const body = (await get('/public/content?path=/con-blocchi-runtime/')).json();
+    const form = body.forms[ids.form ?? ''];
+    expect(form.slug).toBe('contatti-sintetico');
+    expect(form.fields.map((f: { type: string }) => f.type)).toEqual(['text']);
+    expect(form.payment).toEqual({ amount: 35, url: null });
+  });
+
+  it('risolve l’elenco di un blocco «post_list», con l’«offset» del blocco (DR-116)', async () => {
+    const body = (await get('/public/content?path=/con-blocchi-runtime/')).json();
+    expect(body.postLists.bl1.map((p: { path: string }) => p.path)).toEqual(['/articolo-0/']);
+  });
+
   it('la pagina iniziale si serve a «/», con il suo ambito SEO e l’indirizzo canonico «/»', async () => {
     const body = (await get('/public/content?path=/')).json();
     expect(body.content.id).toBe(ids.home);
@@ -303,6 +359,11 @@ describe('contenuti', () => {
 
   it('rifiuta un percorso che non è un percorso', async () => {
     expect((await get('/public/content?path=pagina')).statusCode).toBe(400);
+  });
+
+  it('prova negativa: un form disattivato citato da un blocco non compare', async () => {
+    const body = (await get('/public/content?path=/con-blocchi-runtime/')).json();
+    expect(body.forms[ids.formDisattivo ?? '']).toBeUndefined();
   });
 });
 
@@ -412,6 +473,13 @@ describe('articoli e tassonomie', () => {
   it('impagina', async () => {
     const body = (await get('/public/posts?perPage=1&page=2')).json();
     expect(body.items.map((i: { path: string }) => i.path)).toEqual(['/articolo-0/']);
+  });
+
+  it('salta i primi articoli con «offset», oltre alla pagina (DR-116)', async () => {
+    const body = (await get(`/public/posts?termIds=${ids.news}&offset=1`)).json();
+    expect(body.items.map((i: { path: string }) => i.path)).toEqual(['/articolo-0/']);
+    // Il totale non cambia: «offset» sposta solo dove comincia l'elenco.
+    expect(body.meta.total).toBe(2);
   });
 
   it('una categoria per percorso, con il titolo dal template', async () => {

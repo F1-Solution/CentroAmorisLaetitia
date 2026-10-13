@@ -232,6 +232,7 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
           props: {
             termIds: [],
             limit: null,
+            offset: 0,
             showThumbnail: true,
             showDate: true,
             showExcerpt: true,

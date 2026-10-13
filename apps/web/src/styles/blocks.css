@@ -72,3 +72,156 @@
     padding-left: var(--blk-pad-left-p, var(--blk-pad-left-t, var(--blk-pad-left, 0)));
   }
 }
+
+/* Carosello (1E-W5): il clic sui punti e sulle frecce cambia la slide attiva. */
+.blk-slider {
+  position: relative;
+}
+
+.blk-slider-viewport {
+  position: relative;
+  overflow: hidden;
+}
+
+.blk-slider-slide {
+  position: relative;
+}
+
+.blk-slider-slide[data-active='false'] {
+  display: none;
+}
+
+.blk-slider-slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.blk-slider-prev,
+.blk-slider-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.blk-slider-prev {
+  left: 0;
+}
+
+.blk-slider-next {
+  right: 0;
+}
+
+.blk-slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.blk-slider-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+/* Video (DR-107): la copertina resta finché non si clicca. */
+.blk-video-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.blk-video-cover img,
+.blk-video-placeholder {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.blk-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.blk-video iframe,
+.blk-video video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+}
+
+/* Mappa (DR-107): nessuna chiamata a terzi prima del clic. */
+.blk-map-cover {
+  display: block;
+  width: 100%;
+  border: none;
+  background: var(--color-surface-muted, #eee);
+  cursor: pointer;
+}
+
+.blk-map-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+}
+
+/* Elenco articoli (`post_list`, DR-116). */
+.blk-post-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.blk-post-list-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Form (ADR-010): il campo esca non deve mai essere visibile. */
+.blk-form-field {
+  margin-bottom: 1rem;
+}
+
+.blk-form-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Allineamento delle immagini nel testo ricco, valori misurati sul CSS reso di Divi (1E-W6). */
+.blk-text img.alignleft {
+  display: inline;
+  float: left;
+  margin-right: 15px;
+}
+
+.blk-text img.alignright {
+  display: inline;
+  float: right;
+  margin-left: 15px;
+}
+
+.blk-text .aligncenter {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}

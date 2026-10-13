@@ -59,4 +59,24 @@ describe('HTML fuori dai blocchi Gutenberg (DR-116)', () => {
       false,
     ]);
   });
+
+  it('«offset» dello shortcode salta i primi articoli (DR-116, configurazione «News»)', () => {
+    const result = convertContent({
+      legacyContentId: 904,
+      postContent: `${heading}\n<p>[catposts name="News" number="10" offset="1"]</p>`,
+    });
+    const list = result.document.blocks.find((b) => b.type === 'post_list');
+    if (list?.type !== 'post_list') throw new Error('atteso post_list');
+    expect(list.props.offset).toBe(1);
+  });
+
+  it('senza «offset» nello shortcode, resta 0', () => {
+    const result = convertContent({
+      legacyContentId: 905,
+      postContent: `${heading}\n<p>[catposts name="Notizie" number="10"]</p>`,
+    });
+    const list = result.document.blocks.find((b) => b.type === 'post_list');
+    if (list?.type !== 'post_list') throw new Error('atteso post_list');
+    expect(list.props.offset).toBe(0);
+  });
 });

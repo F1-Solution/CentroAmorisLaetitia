@@ -17,6 +17,7 @@ definisce quali sono le prove.
 
 | Data | Revisione |
 |---|---|
+| 2026-10-13 | **DR-123**: tolta dal §8 la verifica del carosello della home, che la sorgente pubblicata non ha |
 | 2026-10-10 | **DR-112**: i confronti sono **585** (§2). **DR-113**: con il rumore misurato a zero la soglia di superamento automatico è lo **0 %** (§6.3). **DR-111**: il riferimento di 4 pagine viene dal sito online (§1) |
 | 2026-10-10 | **Approvato con DR-110** e allineato alle decisioni successive alla 1B: cartella e impronte delle immagini (§7, DR-106), D13 chiusa da DR-040 (§9 e §12), maschere alla luce di DR-107 (§5.1), stampa fuori perimetro per DR-041 (§11). Viewport, soglie e numero dei confronti **invariati** |
 
@@ -222,7 +223,6 @@ ciò che serve a ricostruire il giudizio.
 | 7 | Punti di rottura: ridimensionamento continuo da 1440 a 360 senza salti | le 6 viewport non coprono l'intervallo |
 | 8 | Contenuti incorporati: video, mappa | 7 video, 1 mappa |
 | 9 | Accessibilità di base: navigazione da tastiera, fuoco visibile, gerarchia dei titoli, testi alternativi | vedi `acceptance-criteria.md` §6 |
-| 10 | Carosello della home: 12 slide, avanzamento, comandi | 1 pagina |
 
 ## 9. Confronto dei metadati e dei contenuti non visivi
 

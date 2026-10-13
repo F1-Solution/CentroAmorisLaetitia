@@ -49,6 +49,7 @@ import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
+import { paypalSettings, type PaypalSettings } from './payment.js';
 import {
   findDiviContactForms,
   type DiviContactForm,
@@ -118,6 +119,7 @@ interface ParsedForm {
   readonly fields: readonly FormFieldDefinition[];
   readonly notifications: readonly FormNotificationDefinition[];
   readonly requiresPayment: boolean;
+  readonly payment: PaypalSettings | null;
 }
 
 interface FormRow {
@@ -234,6 +236,7 @@ function parseFormPost(raw: string): ParsedForm {
     fields,
     notifications,
     requiresPayment: fields.some((f) => f.type === 'payment-single'),
+    payment: paypalSettings(parsed),
   };
 }
 
@@ -385,6 +388,7 @@ export const formsStage: Stage = {
               fields: parsed.fields,
               submitText: parsed.submitText,
               submitTextProcessing: parsed.submitTextProcessing,
+              payment: parsed.payment,
             },
             confirmationMessage: parsed.confirmationMessage,
             requiresPayment: parsed.requiresPayment,
@@ -399,6 +403,7 @@ export const formsStage: Stage = {
                 fields: parsed.fields,
                 submitText: parsed.submitText,
                 submitTextProcessing: parsed.submitTextProcessing,
+                payment: parsed.payment,
               },
               confirmationMessage: parsed.confirmationMessage,
               requiresPayment: parsed.requiresPayment,

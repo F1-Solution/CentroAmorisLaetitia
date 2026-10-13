@@ -35,7 +35,7 @@ getta, distrutti alla fine.
 
 ### 3.1 Prove sintetiche, quelle che gira anche la CI
 
-```bash
+```powershell
 pnpm test
 ```
 
@@ -50,13 +50,13 @@ Sono le prove di tutti i pacchetti. Dentro ci sono le tre novità della wave:
 Il corpus dei documenti sta in `tests/fixtures/block-corpus.json`, è generato e
 si rigenera con:
 
-```bash
+```powershell
 pnpm --filter @amoris/importer exec tsx ../../tests/fixtures/build-block-corpus.ts
 ```
 
 ### 3.2 Flussi del CMS nel browser
 
-```bash
+```powershell
 pnpm test:e2e
 ```
 
@@ -72,7 +72,7 @@ Se una prova fallisce, il rapporto con schermate e tracce è in
 
 ### 3.3 Misura della copertura
 
-```bash
+```powershell
 pnpm test:coverage
 ```
 
@@ -83,7 +83,7 @@ dell'ultima misura sono in [`docs/qa/coverage-report.md`](../qa/coverage-report.
 
 ### 3.4 Misure sulla sorgente reale — solo in locale
 
-```bash
+```powershell
 pnpm --filter @amoris/importer exec vitest run --config vitest.real.config.ts
 ```
 

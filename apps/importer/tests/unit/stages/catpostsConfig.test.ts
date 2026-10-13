@@ -11,6 +11,10 @@ import { expandCatposts } from '../../../src/stages/contents/catposts.js';
 const config =
   'a:1:{s:7:"Notizie";a:6:{s:3:"cat";s:1:"0";s:3:"num";s:2:"10";s:5:"thumb";s:1:"1";s:4:"date";s:1:"1";s:7:"excerpt";s:1:"1";s:5:"title";s:11:"Ultime news";}}';
 
+// Come la misura reale sull'istanza di riferimento: `offset` intero, non stringa.
+const configWithOffset =
+  'a:1:{s:4:"News";a:7:{s:3:"cat";s:1:"0";s:3:"num";s:2:"10";s:6:"offset";i:1;s:5:"thumb";s:1:"1";s:4:"date";s:1:"1";s:7:"excerpt";s:1:"1";s:5:"title";s:11:"Ultime news";}}';
+
 describe('configurazione salvata di [catposts] (DR-116)', () => {
   it('riporta nello shortcode numero, categoria e opzioni della configurazione', () => {
     const out = expandCatposts(
@@ -19,6 +23,16 @@ describe('configurazione salvata di [catposts] (DR-116)', () => {
     );
     expect(out).toBe(
       '<p>[catposts name="Notizie" thumb="true" cat="0" number="10" date="1" excerpt="1"]</p>',
+    );
+  });
+
+  it('riporta anche «offset», come lo salva la configurazione «News» della home', () => {
+    const out = expandCatposts(
+      '<p>[catposts name="News"]</p>',
+      new Map([['categoryPosts-shorcode', configWithOffset]]),
+    );
+    expect(out).toBe(
+      '<p>[catposts name="News" cat="0" number="10" thumb="1" date="1" excerpt="1" offset="1"]</p>',
     );
   });
 

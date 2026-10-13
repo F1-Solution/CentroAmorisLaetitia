@@ -52,8 +52,9 @@ definizione non esiste.
 
 Il confronto lo fai con un comando, senza aprire i file:
 
-```bash
-comm -13 <(grep -oE '^[A-Z_]+=' .env | tr -d '=' | sort)          <(grep -oE '^[A-Z_]+=' .env.example | tr -d '=' | sort)
+```powershell
+$chiavi = { param($f) Get-Content $f | Select-String '^[A-Z_]+=' | ForEach-Object { ($_.Line -split '=')[0] } }
+Compare-Object (& $chiavi .env) (& $chiavi .env.example) | Where-Object SideIndicator -eq '=>' | ForEach-Object InputObject
 ```
 
 Stampa le chiavi che ci sono in `.env.example` e mancano nel tuo `.env`. Copia
@@ -73,7 +74,7 @@ Dalla radice del repository, uno per volta.
 
 Serve un `.env` alla radice: tutti i comandi qui sotto lo leggono da soli.
 
-```bash
+```powershell
 # 1. Servizi (PostgreSQL, MinIO). Se sono già su, salta.
 pnpm compose:up
 
@@ -81,18 +82,12 @@ pnpm compose:up
 pnpm db:migrate
 
 # 3. Seme sintetico. Scegli tu la parola: vale solo per questo database locale.
-SEED_PASSWORD="scegli-una-parola-lunga" pnpm db:seed
-```
-
-Su PowerShell il terzo comando si scrive così:
-
-```powershell
 $env:SEED_PASSWORD = "scegli-una-parola-lunga"; pnpm db:seed
 ```
 
 Poi, in due terminali distinti:
 
-```bash
+```powershell
 pnpm --filter @amoris/api dev      # servizio, porta 3002
 pnpm --filter @amoris/admin dev    # area amministrativa, porta 3001
 ```

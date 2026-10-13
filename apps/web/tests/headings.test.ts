@@ -39,6 +39,20 @@ describe('titolo principale delle pagine che non lo hanno (DR-040)', () => {
     });
   });
 
+  it('il titolo del modulo di contatto di Divi vale come h1: niente da promuovere né da nascondere', () => {
+    const original = doc(text('<h3></h3><h3>Contatti</h3>'), {
+      type: 'form',
+      id: 'b_000000000002',
+      props: { formId: 'x', origin: 'divi', showTitle: true, showDescription: false, classes: [] },
+      children: [],
+    });
+    expect(promoteFirstHeading(original)).toEqual({
+      document: original,
+      promoted: false,
+      hasH1: true,
+    });
+  });
+
   it('senza titoli nel contenuto non promuove nulla', () => {
     const result = promoteFirstHeading(doc(text('<p>Solo testo</p>')));
     expect(result.promoted).toBe(false);

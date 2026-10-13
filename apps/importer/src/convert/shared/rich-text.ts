@@ -17,6 +17,7 @@ import type { ConvertContext } from './context.js';
 import { buildHtmlFallbackBlock, type BuiltHtmlBlock } from './html-fallback.js';
 import { normalizeSameSiteUrls } from './url-normalize.js';
 import { richTextClasses } from './classes.js';
+import { wpautop } from './wpautop.js';
 
 export interface RichTextExtras {
   readonly textAlign?: RichTextProps['textAlign'];
@@ -44,8 +45,12 @@ export function buildRichTextOrFallback(
   rawHtml: string,
   range: { start: number; end: number },
   extras: RichTextExtras = {},
+  { autop = true }: { readonly autop?: boolean } = {},
 ): RichTextOrFallback | null {
-  const { html: normalizedHtml, count: normalizedCount } = normalizeSameSiteUrls(rawHtml);
+  // `wpautop()` come nella resa della sorgente, una sola volta; WordPress non lo applica ai contenuti con blocchi.
+  const { html: normalizedHtml, count: normalizedCount } = normalizeSameSiteUrls(
+    autop ? wpautop(rawHtml) : rawHtml,
+  );
   if (normalizedCount > 0) {
     ctx.push({
       severity: 'info',

@@ -71,6 +71,16 @@ const configSchema = z.object({
    */
   LOGIN_UNIFORM_MS: z.coerce.number().int().min(0).default(350),
 
+  /**
+   * ADR-010 §4.4: limitazione per indirizzo IP e per form, senza captcha di
+   * terze parti. `FORM_MIN_SECONDS` è la marca temporale minima dal
+   * caricamento del form all'invio.
+   */
+  FORM_SUBMIT_WINDOW_MINUTES: z.coerce.number().int().min(1).default(60),
+  FORM_SUBMIT_MAX_PER_IP: z.coerce.number().int().min(1).default(20),
+  FORM_SUBMIT_MAX_PER_FORM_AND_IP: z.coerce.number().int().min(1).default(5),
+  FORM_SUBMIT_MIN_SECONDS: z.coerce.number().int().min(0).default(3),
+
   /** Archivio a oggetti (ADR-004). Serve al modulo dei media. */
   S3_ENDPOINT: z.string().min(1).default('http://127.0.0.1:9000'),
   S3_REGION: z.string().min(1).default('eu-south-1'),

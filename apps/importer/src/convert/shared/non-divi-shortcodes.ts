@@ -76,6 +76,8 @@ const KNOWN_CATPOSTS_PARAMS = new Set([
   'date',
   'excerpt',
   'order',
+  // La configurazione salvata (DR-116) lo passa come `offset`.
+  'offset',
 ]);
 
 function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNode {
@@ -100,9 +102,13 @@ function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNo
     return value === undefined || !['', '0', 'false', 'no', 'off'].includes(value.toLowerCase());
   };
 
+  const rawOffset = shortcode.attrs.offset;
+  const offset = rawOffset && /^\d+$/.test(rawOffset) ? Number(rawOffset) : 0;
+
   const props = postListPropsSchema.parse({
     termIds,
     limit,
+    offset,
     showThumbnail: flag('thumb'),
     showDate: flag('date'),
     showExcerpt: flag('excerpt'),

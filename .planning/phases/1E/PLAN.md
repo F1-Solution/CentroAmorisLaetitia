@@ -148,4 +148,7 @@ Quarto round, aperto il 2026-10-10 nella `1E-W4`:
 | ~~**D47**~~ | chiusa | **DR-118**: 1E-15 vale per l'HTML generato; i blocchi di riserva si dichiarano | — |
 | ~~**D48**~~ | chiusa | **DR-119**: `show_title` falso con il Divi Builder | — |
 | ~~**D49**~~ | chiusa | **DR-120**: la tabella scorre nel suo riquadro; difformità per la `1E-W6` | — |
+| ~~**D50**~~ | chiusa | **DR-121**: Google Maps dopo il clic | — |
+| ~~**D51**~~ | chiusa | **DR-122**: `youtube-nocookie.com` dopo il clic | — |
+| ~~**D52**~~ | chiusa | **DR-123**: verifica del carosello tolta dal piano del confronto | — |
 

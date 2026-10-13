@@ -14,6 +14,8 @@ const PARAMS: readonly [config: string, shortcode: string][] = [
   ['thumb', 'thumb'],
   ['date', 'date'],
   ['excerpt', 'excerpt'],
+  // Salta i primi N articoli dell'ordinamento (es. «News»: offset 1, salta il più recente).
+  ['offset', 'offset'],
 ];
 
 function configurations(meta: ReadonlyMap<string, string>): ReadonlyMap<unknown, unknown> | null {

@@ -72,6 +72,35 @@ const sliderSchema = z.object({
   ),
 });
 
+const formFieldSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  label: z.string(),
+  required: z.boolean(),
+  order: z.number().int(),
+  description: z.string().nullable(),
+  options: z.record(z.string(), z.unknown()),
+});
+
+const formSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  confirmationMessage: z.string().nullable(),
+  requiresPayment: z.boolean(),
+  fields: z.array(formFieldSchema),
+  payment: z.object({ amount: z.number().nullable(), url: z.string().nullable() }).nullable(),
+});
+
+const postListItemSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  title: z.string(),
+  excerpt: z.string().nullable(),
+  featuredMediaId: z.string().nullable(),
+  publishedAt: z.string().nullable(),
+});
+
 export const contentResponse = z.object({
   content: z.object({
     id: z.string(),
@@ -91,6 +120,10 @@ export const contentResponse = z.object({
   /** Ogni media citato dai blocchi o in evidenza, se pubblico: chiave l'identificativo. */
   media: z.record(z.string(), mediaSchema),
   sliders: z.record(z.string(), sliderSchema),
+  /** Solo i form attivi: un blocco che ne cita uno bozza o disattivato non lo trova qui. */
+  forms: z.record(z.string(), formSchema),
+  /** Chiave l'identificativo del blocco `post_list`, non quello dell'elenco. */
+  postLists: z.record(z.string(), z.array(postListItemSchema)),
   /** Solo i documenti pubblici: un blocco che ne cita uno riservato non lo trova qui. */
   documents: z.record(z.string(), documentSchema),
 });
@@ -136,6 +169,8 @@ export const postsQuery = z.object({
   // centinaia di migliaia di righe, a una richiesta anonima.
   page: z.coerce.number().int().min(1).max(200).default(1),
   perPage: z.coerce.number().int().min(1).max(50).default(10),
+  /** Quanti articoli saltare oltre alla pagina, per il blocco `post_list` (DR-116). */
+  offset: z.coerce.number().int().min(0).max(1000).default(0),
   order: z.enum(['date_desc', 'date_asc', 'title_asc']).default('date_desc'),
 });
 

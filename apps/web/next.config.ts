@@ -30,7 +30,11 @@ const config: NextConfig = {
    * questa riscrittura.
    */
   async rewrites() {
-    return [{ source: '/media/:path*', destination: `${API_URL}/media/:path*` }];
+    return [
+      { source: '/media/:path*', destination: `${API_URL}/media/:path*` },
+      // L'invio dei form (ADR-010 §4.3): il browser chiama lo stesso dominio, senza CORS.
+      { source: '/forms/:path*', destination: `${API_URL}/forms/:path*` },
+    ];
   },
   poweredByHeader: false,
   // Il pacchetto resta leggero: il sito pubblico deve superare PageSpeed 80 (RC-08).

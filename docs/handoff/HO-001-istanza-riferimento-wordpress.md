@@ -113,7 +113,7 @@ perché. Non prima.
 2. **Crea il database** e importa il dump:
    ```powershell
    mysql -u root -p -e "CREATE DATABASE wpref CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-   mysql -u root -p wpref < "C:\work\CentroAmorisLaetitia\source-private\BackupDB-2026-09-13\Sql1138799_1.sql"
+   mysql -u root -p wpref -e "source C:/work/CentroAmorisLaetitia/source-private/BackupDB-2026-09-13/Sql1138799_1.sql"
    ```
 
 3. **Aggiorna `C:\wp-reference\wp-config.php`** con nome database, utente e password

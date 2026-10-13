@@ -1,0 +1,172 @@
+[
+ {
+  "url": "/contatti/",
+  "viewport": "1440",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 180,
+  "y": 1050,
+  "w": 1080,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "1440",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 180,
+  "y": 315,
+  "w": 1080,
+  "h": 450
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 260,
+  "y": 1884,
+  "w": 636,
+  "h": 358
+ },
+ {
+  "url": "/contatti/",
+  "viewport": "1280",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 128,
+  "y": 1026,
+  "w": 1024,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "1280",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 128,
+  "y": 302,
+  "w": 1024,
+  "h": 450
+ },
+ {
+  "url": "/contatti/",
+  "viewport": "1024",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 102,
+  "y": 972,
+  "w": 819,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "1024",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 102,
+  "y": 275,
+  "w": 819,
+  "h": 450
+ },
+ {
+  "url": "/contatti/",
+  "viewport": "768",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 77,
+  "y": 1121,
+  "w": 614,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "768",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 77,
+  "y": 350,
+  "w": 614,
+  "h": 450
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 138,
+  "y": 2526,
+  "w": 492,
+  "h": 276
+ },
+ {
+  "url": "/contatti/",
+  "viewport": "390",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 39,
+  "y": 1121,
+  "w": 312,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "390",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 39,
+  "y": 350,
+  "w": 312,
+  "h": 450
+ },
+ {
+  "url": "/informazioni-sui-cookie/",
+  "viewport": "390",
+  "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
+  "selettore": "table (cookie)",
+  "x": 39,
+  "y": 4134,
+  "w": 312,
+  "h": 259
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 70,
+  "y": 4264,
+  "w": 250,
+  "h": 140
+ },
+ {
+  "url": "/contatti/",
+  "viewport": "360",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 36,
+  "y": 1205,
+  "w": 288,
+  "h": 450
+ },
+ {
+  "url": "/dove-siamo/",
+  "viewport": "360",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "selettore": ".blk-map",
+  "x": 36,
+  "y": 350,
+  "w": 288,
+  "h": 450
+ },
+ {
+  "url": "/informazioni-sui-cookie/",
+  "viewport": "360",
+  "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
+  "selettore": "table (cookie)",
+  "x": 36,
+  "y": 4406,
+  "w": 288,
+  "h": 259
+ }
+]

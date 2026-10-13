@@ -12,8 +12,19 @@ import type { BlockDocument } from '@amoris/blocks';
 
 const FIRST_HEADING = /<h([2-6])(\s[^>]*)?>([\s\S]*?)<\/h\1>/i;
 
+/** Il modulo di contatto di Divi con il titolo visibile lo rende come `h1` (Form.tsx). */
+function hasDiviFormTitle(node: unknown): boolean {
+  if (Array.isArray(node)) return node.some(hasDiviFormTitle);
+  if (node === null || typeof node !== 'object') return false;
+  const block = node as { type?: string; props?: Record<string, unknown>; children?: unknown };
+  if (block.type === 'form' && block.props?.origin === 'divi' && block.props.showTitle === true) {
+    return true;
+  }
+  return hasDiviFormTitle(block.children);
+}
+
 function hasH1(document: BlockDocument): boolean {
-  return /<h1[\s>]/i.test(JSON.stringify(document.blocks));
+  return /<h1[\s>]/i.test(JSON.stringify(document.blocks)) || hasDiviFormTitle(document.blocks);
 }
 
 /** `class="…"` con in più `come-hN`, o un attributo nuovo. */
