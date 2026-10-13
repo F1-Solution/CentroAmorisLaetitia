@@ -14,9 +14,27 @@ const PARAMS: readonly [config: string, shortcode: string][] = [
   ['thumb', 'thumb'],
   ['date', 'date'],
   ['excerpt', 'excerpt'],
-  // Salta i primi N articoli dell'ordinamento (es. «News»: offset 1, salta il più recente).
+  // «Inizia dall'articolo N», contato da 1 (DR-130): il convertitore lo traduce.
   ['offset', 'offset'],
+  ['thumbTop', 'thumb_top'],
+  ['thumb_w', 'thumb_w'],
+  ['thumb_h', 'thumb_h'],
+  ['excerpt_length', 'excerpt_length'],
+  ['excerpt_more_text', 'excerpt_more_text'],
+  // Il refuso è del plugin: la chiave salvata si chiama così.
+  ['default_thunmbnail', 'default_thumbnail'],
 ];
+
+/** Il percorso di un allegato dato il suo identificativo, per la miniatura di riserva. */
+export type AttachmentPathResolver = (legacyId: string) => string | null;
+
+/** Un valore salvato come lo vede lo shortcode: i booleani PHP diventano «1»/«0». */
+function shortcodeValue(value: unknown): string | null {
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'string') return value.replace(/"/g, '');
+  return null;
+}
 
 function configurations(meta: ReadonlyMap<string, string>): ReadonlyMap<unknown, unknown> | null {
   const raw = meta.get('categoryPosts-shorcode');
@@ -29,7 +47,11 @@ function configurations(meta: ReadonlyMap<string, string>): ReadonlyMap<unknown,
   }
 }
 
-export function expandCatposts(postContent: string, meta: ReadonlyMap<string, string>): string {
+export function expandCatposts(
+  postContent: string,
+  meta: ReadonlyMap<string, string>,
+  attachmentPath: AttachmentPathResolver = () => null,
+): string {
   const saved = configurations(meta);
   if (!saved) return postContent;
   return postContent.replace(/\[catposts\b([^\]]*)\]/g, (whole, attrs: string) => {
@@ -37,12 +59,13 @@ export function expandCatposts(postContent: string, meta: ReadonlyMap<string, st
     const config = name === undefined ? undefined : saved.get(name);
     if (!(config instanceof Map)) return whole;
     const extra = PARAMS.filter(([, key]) => !new RegExp(`\\b${key}\\s*=`).test(attrs))
-      .map(([from, key]) => [key, config.get(from)] as const)
-      .filter(
-        (pair): pair is readonly [string, string | number] =>
-          typeof pair[1] === 'string' || typeof pair[1] === 'number',
-      )
-      .map(([key, value]) => ` ${key}="${String(value)}"`)
+      .map(([from, key]) => {
+        const value = shortcodeValue(config.get(from));
+        if (key !== 'default_thumbnail' || value === null) return [key, value] as const;
+        return [key, attachmentPath(value)] as const;
+      })
+      .filter((pair): pair is readonly [string, string] => pair[1] !== null && pair[1] !== '')
+      .map(([key, value]) => ` ${key}="${value}"`)
       .join('');
     return `[catposts${attrs}${extra}]`;
   });

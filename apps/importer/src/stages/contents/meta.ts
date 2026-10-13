@@ -33,6 +33,47 @@ export function deriveShowTitle(meta: ReadonlyMap<string, string>, type: 'page' 
   return true;
 }
 
+export type PageLayout = 'right_sidebar' | 'full_width' | 'no_sidebar';
+
+const PAGE_LAYOUTS: Readonly<Record<string, PageLayout>> = {
+  et_right_sidebar: 'right_sidebar',
+  et_full_width_page: 'full_width',
+  et_no_sidebar: 'no_sidebar',
+};
+
+/**
+ * Il layout come lo rende Divi, non come è registrato in `_et_pb_page_layout`
+ * (DR-139): regole misurate sulle classi del body dei contenuti della sorgente.
+ */
+export function derivePageLayout(
+  meta: ReadonlyMap<string, string>,
+  type: 'page' | 'post',
+): PageLayout {
+  const builder = meta.get('_et_pb_use_builder') === 'on';
+  if (type === 'page' && builder) return 'no_sidebar';
+  const stored = PAGE_LAYOUTS[meta.get('_et_pb_page_layout') ?? ''] ?? 'right_sidebar';
+  return stored === 'no_sidebar' && !builder ? 'full_width' : stored;
+}
+
+/** `post_date_gmt` è UTC, `post_date` è l'ora locale del sito: si legge la prima, se valorizzata. */
+export function publicationDateSource(postDateGmt: string, postDate: string): string {
+  return postDateGmt && !postDateGmt.startsWith('0000') ? postDateGmt : postDate;
+}
+
+/** Testo che il plugin Members della sorgente rende a chi non ha il ruolo richiesto. */
+export const MEMBERS_ACCESS_MESSAGE = 'Sorry, but you do not have permission to view this content.';
+
+/**
+ * DR-131: con `_members_access_role` la sorgente mostra all'anonimo solo il
+ * messaggio di Members, mai il contenuto; si importa quel testo, statico.
+ */
+export function applyMembersRestriction(
+  postContent: string,
+  meta: ReadonlyMap<string, string>,
+): string {
+  return meta.has('_members_access_role') ? `<p>${MEMBERS_ACCESS_MESSAGE}</p>` : postContent;
+}
+
 /**
  * `contents.isSticky` da `wp_options.sticky_posts`
  * (`wp-to-postgres-mapping.md` §5): un array PHP serializzato di identificatori

@@ -108,7 +108,7 @@ function convertSingleBlock(
     case 'freeform':
       return convertFreeform(block, ctx);
     case 'divi/placeholder':
-      // Marcatore, non contenuto: si scarta (§4).
+      // Qui arriva solo vuoto: se racchiude Divi, il contenuto è già della famiglia Divi (family.ts).
       return null;
     default: {
       ctx.push({ severity: 'warning', code: 'unmapped-markup', detail: `wp:${block.blockName}` });
@@ -121,6 +121,12 @@ function convertSingleBlock(
       }) as BlockNode | null;
     }
   }
+}
+
+/** La dimensione ridotta scelta nella sorgente, dal suffisso `-LxA` del file (D59). */
+function variantOf(src: string): string | null {
+  const match = /-(\d+)x(\d+)\.[a-z0-9]+$/i.exec(src.split(/[?#]/)[0] ?? '');
+  return match ? `${match[1]}x${match[2]}` : null;
 }
 
 function convertImage(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNode | null {
@@ -149,7 +155,7 @@ function convertImage(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNo
   const props = imagePropsSchema.parse({
     mediaId,
     src: mediaId ? null : src,
-    variant: null,
+    variant: mediaId ? variantOf(src) : null,
     alt: img?.attrs.alt ?? '',
     title: img?.attrs.title ?? null,
     caption,
@@ -182,6 +188,7 @@ function convertColumns(block: ParsedGutenbergBlock, ctx: ConvertContext): Block
 
   const props = rowPropsSchema.parse({
     columnStructure,
+    layout: 'flex', // DR-134
     fullWidth: false,
     customWidth: defaultCustomWidth,
     gutter: defaultGutter,

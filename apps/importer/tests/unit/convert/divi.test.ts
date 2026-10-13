@@ -23,6 +23,17 @@ describe('convertContent — famiglia Divi', () => {
     expect(result.family).toBe('divi');
   });
 
+  it('il contenuto nel marcatore wp:divi/placeholder si converte come Divi, senza paragrafi vuoti', () => {
+    const result = convertContent({
+      legacyContentId: 102,
+      postContent: `<!-- wp:divi/placeholder -->\n${sectionRowColumnTextImage}\n<!-- /wp:divi/placeholder -->`,
+      resolvers: { resolveMedia: () => null },
+    });
+    expect(result.family).toBe('divi');
+    expect(result.document.blocks).toHaveLength(1);
+    expect(result.document.blocks[0]!.type).toBe('section');
+  });
+
   it('section > row > column > text/image, con columnStructure coerente e attributi conservati', () => {
     const result = convertContent({
       legacyContentId: 101,

@@ -27,4 +27,13 @@ describe('rowPropsSchema', () => {
   it('rifiuta una chiave sconosciuta', () => {
     expect(() => rowPropsSchema.parse({ columnStructure: '1_2,1_2', extra: 1 })).toThrow();
   });
+
+  // DR-134: la riga ricorda se viene da Gutenberg (flex) o da Divi (assente).
+  it('accetta layout flex e lo lascia assente per Divi', () => {
+    expect(rowPropsSchema.parse({ columnStructure: '1_2,1_2', layout: 'flex' }).layout).toBe(
+      'flex',
+    );
+    expect(rowPropsSchema.parse({ columnStructure: '1_2,1_2' }).layout).toBeUndefined();
+    expect(() => rowPropsSchema.parse({ columnStructure: '1_2,1_2', layout: 'grid' })).toThrow();
+  });
 });

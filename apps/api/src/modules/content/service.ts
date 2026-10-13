@@ -72,6 +72,7 @@ export async function findById(db: Database, id: string) {
     .select({
       ...summaryColumns,
       showTitle: schema.contents.showTitle,
+      pageLayout: schema.contents.pageLayout,
       isSticky: schema.contents.isSticky,
       excerpt: schema.contents.excerpt,
       blocks: schema.contents.blocks,
@@ -96,6 +97,7 @@ export async function create(db: Database, input: CreateInput, authorId: string)
       parentId: input.type === 'post' ? null : (input.parentId ?? null),
       title: input.title,
       showTitle: input.showTitle ?? true,
+      ...(input.pageLayout ? { pageLayout: input.pageLayout } : {}),
       excerpt: input.excerpt ?? null,
       blocks: input.blocks ?? { schema: 1, blocks: [] },
       authorId,
@@ -117,6 +119,7 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   if (input.title !== undefined) changes.title = input.title;
   if (input.excerpt !== undefined) changes.excerpt = input.excerpt;
   if (input.showTitle !== undefined) changes.showTitle = input.showTitle;
+  if (input.pageLayout !== undefined) changes.pageLayout = input.pageLayout;
   if (input.isSticky !== undefined) changes.isSticky = input.isSticky;
   if (input.featuredMediaId !== undefined) changes.featuredMediaId = input.featuredMediaId;
   if (input.blocks !== undefined) changes.blocks = input.blocks;

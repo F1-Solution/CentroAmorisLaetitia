@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Database } from '@amoris/db';
-import { menusStage } from '../../../src/stages/menus/index.js';
+import { menusStage, parseCssClasses } from '../../../src/stages/menus/index.js';
 import { runStage } from '../../../src/stages/runStage.js';
 import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
@@ -347,5 +347,25 @@ describe('fase menus', () => {
     } finally {
       await fresh.teardown();
     }
+  });
+});
+
+describe('parseCssClasses', () => {
+  it('restituisce null per un array PHP serializzato vuoto', () => {
+    // Caso reale misurato sulla sorgente: `a:1:{i:0;s:0:"";}`.
+    expect(parseCssClasses('a:1:{i:0;s:0:"";}')).toBeNull();
+  });
+
+  it('restituisce null quando il meta è assente', () => {
+    expect(parseCssClasses(null)).toBeNull();
+  });
+
+  it('estrae le classi reali da un array PHP serializzato', () => {
+    expect(parseCssClasses('a:2:{i:0;s:8:"evidenza";i:1;s:4:"nuvo";}')).toBe('evidenza nuvo');
+  });
+
+  it('non lascia mai passare il testo serializzato grezzo', () => {
+    const risultato = parseCssClasses('a:1:{i:0;s:0:"";}') ?? '';
+    expect(risultato).not.toContain('a:1:');
   });
 });

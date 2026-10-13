@@ -16,6 +16,15 @@ export const postListPropsSchema = z
     showDate: z.boolean().default(true),
     showExcerpt: z.boolean().default(true),
     order: z.enum(['date_desc', 'date_asc', 'title_asc']).default('date_desc'),
+    /** Miniatura alla misura del plugin della sorgente (`thumb_w`/`thumb_h`). */
+    thumbnailWidth: z.number().int().min(1).max(2000).nullable().optional(),
+    thumbnailHeight: z.number().int().min(1).max(2000).nullable().optional(),
+    /** Parole dell'estratto generato dal testo (`excerpt_length`); il servizio lo taglia. */
+    excerptWords: z.number().int().min(1).max(1000).nullable().optional(),
+    /** Link dopo un estratto tagliato (`excerpt_more_text`). */
+    excerptMoreText: z.string().max(100).nullable().optional(),
+    /** Miniatura per gli articoli senza immagine in evidenza (`default_thunmbnail`). */
+    defaultThumbnailMediaId: EntityRef.nullable().optional(),
     classes: classesField,
   })
   .strict();

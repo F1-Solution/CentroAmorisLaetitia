@@ -41,6 +41,7 @@ export function Map({ block }: MapComponentProps) {
         <button
           type="button"
           className="blk-map-cover"
+          aria-label={address ? `Mostra la mappa: ${address}` : undefined}
           onClick={() => setLoaded(true)}
           disabled={!canEmbed}
         >
@@ -48,14 +49,19 @@ export function Map({ block }: MapComponentProps) {
           <span>Mostra la mappa</span>
         </button>
       )}
-      <p>{address}</p>
-      {pins.length > 0 ? (
-        <ul>
-          {pins.map((pin, index) =>
-            pin.title !== null ? <li key={`${pin.lat}-${pin.lng}-${index}`}>{pin.title}</li> : null,
-          )}
-        </ul>
-      ) : null}
+      {/* Nascosti come `.et_pb_map_pin` della sorgente (D61). */}
+      <div className="blk-map-details" hidden>
+        <p>{address}</p>
+        {pins.length > 0 ? (
+          <ul>
+            {pins.map((pin, index) =>
+              pin.title !== null ? (
+                <li key={`${pin.lat}-${pin.lng}-${index}`}>{pin.title}</li>
+              ) : null,
+            )}
+          </ul>
+        ) : null}
+      </div>
     </div>
   );
 }

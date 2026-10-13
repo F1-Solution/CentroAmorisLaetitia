@@ -35,6 +35,7 @@ precedente, e la decisione si registra in
 | [ADR-008](ADR-008-struttura-applicazioni.md) | Struttura delle applicazioni nel monorepo | app unica · due app · SPA | **approvata** (DR-038) |
 | [ADR-009](ADR-009-hosting-e-deployment.md) | Forma del deployment | Compose su VPS singolo | **approvata nella forma** (DR-038); fornitore aperto in D6 |
 | [ADR-010](ADR-010-form-fase-1.md) | Funzionamento dei form in Fase 1 | attuazione di DR-032 | **approvata** (DR-038) |
+| [ADR-011](ADR-011-campo-telefono-con-prefisso.md) | Campo telefono con bandiera e prefisso | parità dei form, `1E-W6` | **approvata** (DR-132) |
 
 ## Come leggerle
 

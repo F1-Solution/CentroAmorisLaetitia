@@ -90,6 +90,8 @@ const formSchema = z.object({
   requiresPayment: z.boolean(),
   fields: z.array(formFieldSchema),
   payment: z.object({ amount: z.number().nullable(), url: z.string().nullable() }).nullable(),
+  submitText: z.string().nullable(),
+  submitTextProcessing: z.string().nullable(),
 });
 
 const postListItemSchema = z.object({
@@ -97,6 +99,8 @@ const postListItemSchema = z.object({
   path: z.string(),
   title: z.string(),
   excerpt: z.string().nullable(),
+  summary: z.string().nullable(),
+  summaryTruncated: z.boolean(),
   featuredMediaId: z.string().nullable(),
   publishedAt: z.string().nullable(),
 });
@@ -109,6 +113,7 @@ export const contentResponse = z.object({
     slug: z.string(),
     title: z.string(),
     showTitle: z.boolean(),
+    pageLayout: z.enum(['right_sidebar', 'full_width', 'no_sidebar']),
     excerpt: z.string().nullable(),
     blocks: z.unknown(),
     featuredMediaId: z.string().nullable(),

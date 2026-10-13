@@ -32,7 +32,7 @@ import {
 import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
-import { convertContent } from '../../convert/index.js';
+import { convertContent, detectContentFamily } from '../../convert/index.js';
 import type { SqlRow } from '../../source/sql/types.js';
 import { buildMediaLookup, createMediaResolver } from './mediaResolver.js';
 import {
@@ -40,7 +40,14 @@ import {
   buildFormResolver,
   buildSliderResolver,
 } from './entityResolvers.js';
-import { buildPostMetaIndex, deriveShowTitle, parseStickyPostIds } from './meta.js';
+import {
+  applyMembersRestriction,
+  buildPostMetaIndex,
+  derivePageLayout,
+  deriveShowTitle,
+  parseStickyPostIds,
+  publicationDateSource,
+} from './meta.js';
 import { writeHomeContentSetting } from './homePage.js';
 import { expandCatposts } from './catposts.js';
 import { writeThemeSettings } from './themeSettings.js';
@@ -104,7 +111,7 @@ async function loadSourceContents(ctx: StageContext): Promise<readonly SourceCon
       excerpt: asString(row['post_excerpt']),
       content: asString(row['post_content']),
       authorLegacyId: asNumber(row['post_author']),
-      postDate: asString(row['post_date']),
+      postDate: publicationDateSource(asString(row['post_date_gmt']), asString(row['post_date'])),
       position: asNumber(row['menu_order']) ?? 0,
       parentLegacyId: asNumber(row['post_parent']) ?? 0,
     });
@@ -156,6 +163,11 @@ export const contentsStage: Stage = {
       ctx.source.rows('wp_options'),
     ]);
     const postMetaIndex = buildPostMetaIndex(postMetaRows as readonly SqlRow[]);
+    // La miniatura di riserva di `[catposts]` è un allegato: si passa il suo file al risolutore dei media.
+    const attachmentPath = (legacyId: string): string | null => {
+      const file = postMetaIndex.get(Number(legacyId))?.get('_wp_attached_file');
+      return file ? `/wp-content/uploads/${file}` : null;
+    };
     const stickyOption = (optionRows as readonly SqlRow[]).find(
       (r) => asString(r['option_name']) === 'sticky_posts',
     );
@@ -198,17 +210,23 @@ export const contentsStage: Stage = {
         }
 
         const meta = postMetaIndex.get(row.id) ?? new Map<string, string>();
-        const { document, family } = convertContent({
+        const { document } = convertContent({
           legacyContentId: row.id,
-          postContent: expandCatposts(row.content, meta),
+          postContent: applyMembersRestriction(
+            expandCatposts(row.content, meta, attachmentPath),
+            meta,
+          ),
           resolvers: { resolveMedia, resolveDocument, resolveSlider, resolveForm },
         });
         const contentHtml = serializeBlockDocument(document);
         const contentText = extractContentText(contentHtml);
+        // La famiglia d'origine si legge sul testo della sorgente, prima di Members e `[catposts]` (DR-136).
+        const family = detectContentFamily(row.content);
         byFamily[family] += 1;
         documents.push(document);
 
         const showTitle = deriveShowTitle(meta, row.type);
+        const pageLayout = derivePageLayout(meta, row.type);
         const isSticky = stickyIds.has(row.id);
 
         const authorEntityId = row.authorLegacyId
@@ -228,6 +246,7 @@ export const contentsStage: Stage = {
             position: row.position,
             title: row.title,
             showTitle,
+            pageLayout,
             isSticky,
             excerpt: row.excerpt || null,
             blocks: document,
@@ -248,6 +267,7 @@ export const contentsStage: Stage = {
               position: row.position,
               title: row.title,
               showTitle,
+              pageLayout,
               isSticky,
               excerpt: row.excerpt || null,
               blocks: document,

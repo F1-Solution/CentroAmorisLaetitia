@@ -1,6 +1,7 @@
-import { BlocksDocument, imageAttributes, type MediaMap } from '@amoris/blocks';
+import { BlocksDocument, type MediaMap } from '@amoris/blocks';
 import type { PostPage, PublicContent, PublicDocument, Term } from '../lib/api';
 import { archiveSummary, postDate } from '../lib/format';
+import { featuredImageAttributes } from '../lib/featured';
 import { promoteFirstHeading } from '../lib/headings';
 
 /**
@@ -45,20 +46,39 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
       </article>
     );
   }
+  const builtWithDivi = content.type === 'post' && isFullWidthLayout(content);
+  if (builtWithDivi && content.pageLayout === 'full_width') {
+    // Articolo Divi a tutta larghezza: sezioni da bordo a bordo, titolo nel contenitore (DR-139).
+    return (
+      <article id={`post-${content.id}`} className="post et_pb_post" data-builder="divi">
+        <div className="container">
+          <PostHeader title={content.title} publishedAt={content.publishedAt} />
+        </div>
+        <div className="entry-content">
+          <BlocksDocument
+            document={content.blocks}
+            media={media}
+            sliders={sliders}
+            forms={forms}
+            postLists={postLists}
+          />
+        </div>
+      </article>
+    );
+  }
   const titleShown = content.type === 'page' && content.showTitle && content.title.trim() !== '';
   const heading = content.type === 'page' ? pageHeading(content, titleShown) : null;
   return (
     <div className="container">
       <div id="content-area" className="clearfix">
         <div id="left-area">
-          <article id={`post-${content.id}`} className={`${content.type} et_pb_post`}>
+          <article
+            id={`post-${content.id}`}
+            className={`${content.type} et_pb_post`}
+            data-builder={builtWithDivi ? 'divi' : undefined}
+          >
             {content.type === 'post' ? (
-              <div className="et_post_meta_wrapper">
-                <h1 className="entry-title">{content.title}</h1>
-                <p className="post-meta">
-                  <span className="published">{postDate(content.publishedAt)}</span>
-                </p>
-              </div>
+              <PostHeader title={content.title} publishedAt={content.publishedAt} />
             ) : titleShown ? (
               <h1 className="entry-title main_title">{content.title}</h1>
             ) : heading?.hidden ? (
@@ -75,8 +95,20 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
             </div>
           </article>
         </div>
-        {content.type === 'post' ? <div id="sidebar" /> : null}
+        {/* Barra laterale solo con `et_right_sidebar` della sorgente (DR-139). */}
+        {content.pageLayout === 'right_sidebar' ? <div id="sidebar" /> : null}
       </div>
+    </div>
+  );
+}
+
+function PostHeader({ title, publishedAt }: { title: string; publishedAt: string | null }) {
+  return (
+    <div className="et_post_meta_wrapper">
+      <h1 className="entry-title">{title}</h1>
+      <p className="post-meta">
+        <span className="published">{postDate(publishedAt)}</span>
+      </p>
     </div>
   );
 }
@@ -94,7 +126,7 @@ function Thumbnail({
   if (!item) return null;
   return (
     <a href={href} className="entry-featured-image-url">
-      <img alt="" {...imageAttributes(item)} />
+      <img alt="" {...featuredImageAttributes(item)} />
     </a>
   );
 }
@@ -118,14 +150,15 @@ export function ArchiveView({
           <h1 className="screen-reader-text">{term.name}</h1>
           {posts.items.map((post) => (
             <article key={post.id} id={`post-${post.id}`} className="et_pb_post post">
+              {/* Ordine e testo nudo come il modello dell'archivio di Divi (1E-W6). */}
+              <Thumbnail mediaId={post.featuredMediaId} media={posts.media} href={post.path} />
               <h2 className="entry-title">
                 <a href={post.path}>{post.title}</a>
               </h2>
               <p className="post-meta">
                 <span className="published">{postDate(post.publishedAt)}</span>
               </p>
-              {post.textStart ? <p>{archiveSummary(post.textStart)}</p> : null}
-              <Thumbnail mediaId={post.featuredMediaId} media={posts.media} href={post.path} />
+              {post.textStart ? archiveSummary(post.textStart) : null}
             </article>
           ))}
           <div className="pagination clearfix">

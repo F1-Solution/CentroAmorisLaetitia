@@ -1263,3 +1263,53 @@ Decisione **D44**.
 | DR-123 | 2026-10-13 | Verifica del carosello della home (D52) | **Opzione A** — tolta dal §8 di `visual-regression-plan.md`, con riga di revisione | B — lasciata e dichiarata non applicabile | «D52=A» | Proprietario | `docs/qa/visual-regression-plan.md` §8 | sì | esiti parziali della `1E-W6` |
 
 Nella stessa risposta: **HO-013 confermato** (riesecuzione dell'import in locale), **HO-014 fatto** (9,3 GB liberi), conferma di commit e push della `1E-W5` e della `1E-W6`; l'account locale di prova della `1E-W6` resta.
+
+## 45. Round 36 — risposta del 2026-10-13, HO-015
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-124 | 2026-10-13 | HO-015 voce 1: banner dei cookie della sorgente assente nel sito nuovo | **approvata** come maschera su tutte le pagine | da correggere | «1 approvata» | Proprietario | confronto visivo, rapporto di parità | sì | DR-107, MI-08 |
+| DR-125 | 2026-10-13 | HO-015 voce 2: mappa con copertina e caricamento al clic | **approvata** come maschera `.blk-map` su `/contatti/` e `/dove-siamo/` | da correggere | «2 approvata» | Proprietario | confronto visivo, rapporto di parità | sì | DR-107, DR-121 |
+| DR-126 | 2026-10-13 | HO-015 voce 3: video con copertina e caricamento al clic | **approvata** come maschera `.blk-video` su `/riparte-il-corso-per-consulenti-familiari/` e `/dal-vizioso-al-virtuoso/` | da correggere | «3 approvata» | Proprietario | confronto visivo, rapporto di parità | sì | DR-107, DR-122 |
+| DR-127 | 2026-10-13 | HO-015 voce 4: tabella dei cookie che scorre nel proprio riquadro a 390 e 360 px | **approvata** come difformità mascherata | da correggere | «4 approvata» | Proprietario | `/informazioni-sui-cookie/` | sì | DR-120 |
+| DR-128 | 2026-10-13 | HO-015 voce 5: suffisso di paginazione «- Pagina N» nel titolo del documento | **approvata** come difformità | da correggere | «5 approvata» | Proprietario | archivi paginati | sì | DR-040 |
+
+Le maschere 2 e 3 restano da rimisurare dopo le correzioni delle famiglie A–D; l'approvazione vale per la voce, non per le coordinate attuali.
+
+## 46. Round 37 — risposta del 2026-10-13, analisi d'impatto delle famiglie A–D della `1E-W6`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-129 | 2026-10-13 | Analisi d'impatto A–D e modifiche fuori dal perimetro della `1E-W6` | **approvata**, con modifiche ad `apps/importer` e `apps/api` | — | «Approvo l'analisi A–D e le modifiche ad apps/importer e apps/api» | Proprietario | `apps/importer`, `apps/api`, `packages/blocks`, `apps/web` | sì | `docs/qa/confronto/analisi-impatto-A-D.md`, PLAN §2 |
+| DR-130 | 2026-10-13 | Primo articolo dell'elenco della home (D53) | **Opzione A** — come la sorgente: `offset` del plugin contato da 1, si parte dal più recente | B — mantenere il salto del più recente | «D53=A» | Proprietario | importer `[catposts]`, home | sì | supera il rilievo del 2026-10-12 su DR-116 e HO-013 |
+| DR-131 | 2026-10-13 | `/bacheca/` (D54) | **Opzione A** — lo stesso testo della sorgente, statico e modificabile dal CMS | B — pagina vuota come difformità; C — tolta con redirect | «D54=A» | Proprietario | importer, shortcode `[wpdm_user_dashboard]` | sì | `divi-shortcode-strategy.md` §2.1 |
+| DR-132 | 2026-10-13 | Campo telefono con bandiera (D55) | **Opzione A** — intl-tel-input servita dal sito, con ADR | B — campo semplice come difformità | «D55=A» | Proprietario | `packages/blocks` resa del form | sì | ADR da scrivere |
+| DR-133 | 2026-10-13 | Forma dei valori dei campi composti (D56) | **Opzione A** — un oggetto per campo (`first`/`last`, indirizzo); conferma email controllata e non salvata | B — sotto-campi come voci separate | «D56=A» | Proprietario | API invio dei form, vista delle compilazioni | sì | ADR-010 |
+| DR-134 | 2026-10-13 | Geometria delle colonne Gutenberg (D57) | **Opzione B** — la riga ricorda l'origine; righe Gutenberg in flex con passaggio a 781 px e `flex-basis` conservata | A — geometria Divi per tutte | «D57=B» | Proprietario | schema dei blocchi, importer, CSS | sì | analisi A–D §B |
+
+Ordine di lavoro indicato dall'utente: A e B, poi D e C.
+
+## 47. Round 38 — risposta del 2026-10-13, famiglia J e HO-018
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-135 | 2026-10-13 | Correzione J: link interni assoluti spezzati in `https:/…` | **approvata** (J1 normalizzazione solo per indirizzi relativi allo schema, J2 prova, J3 import) | — | «Approvo la correzione J» | Proprietario | `apps/importer` normalizzazione degli indirizzi | sì | `docs/qa/confronto/analisi-impatto-A-D.md` §J |
+
+Nella stessa risposta: **HO-018 confermato** (riesecuzione dell'import in locale), poi verifica a vista di home, `/corsi-2022-2023/`, `/registrazione-sguardi-damore/`, ricattura e nuovo confronto della `1E-W6`.
+
+## 48. Round 39 — risposta del 2026-10-13, D58
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-136 | 2026-10-13 | Famiglia d'origine di `/bacheca/` (D58) | **Opzione A** — riconoscere la famiglia sul testo originale, ripartizione 57/47/4 | B — accettare 56/47/5 e aggiornare la prova | «D58=A» | Proprietario | importer, fase dei contenuti | sì | DR-131, `classificazione.md` §4 |
+
+## 49. Round 40 — risposta del 2026-10-13, analisi K–M e D59–D61
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-137 | 2026-10-13 | Analisi d'impatto K, L, G, C+, M e attuazione di D58 | **approvata**, nell'ordine K, C+ e M, L, G con D58, poi HO per l'import | — | «Approvo l'analisi K-M» | Proprietario | `packages/blocks`, `apps/web`, `apps/importer`, `apps/api`, `packages/db`, `apps/admin` | sì | `docs/qa/confronto/analisi-impatto-K-M.md` |
+| DR-138 | 2026-10-13 | Immagini Gutenberg con dimensione ridotta (D59) | **Opzione A** — si mostra la variante scelta nella sorgente (`image.variant`) | B — sempre l'originale | «D59=A» | Proprietario | importer Gutenberg, resa delle immagini | sì | K-bis |
+| DR-139 | 2026-10-13 | Dove conservare il layout della barra laterale (D60) | **Opzione A** — colonna `page_layout` dei contenuti, letta dal sito e modificabile dal CMS | B — solo importata | «D60=A» | Proprietario | schema, API, area amministrativa, sito | sì | famiglia G |
+| DR-140 | 2026-10-13 | Indirizzo e segnaposti sotto la mappa (D61) | **Opzione A** — nascosti come la sorgente | B — visibili come difformità | «D61=A» | Proprietario | resa della mappa | sì | famiglia M |
+
+Nella stessa risposta: conferma di commit e push del lavoro della `1E-W6`.

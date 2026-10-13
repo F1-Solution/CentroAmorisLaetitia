@@ -41,6 +41,7 @@ import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
+import { ContentLayoutPanel } from './ContentLayoutPanel';
 import { ContentSeoPanel } from './ContentSeoPanel';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
@@ -379,11 +380,20 @@ export function ContentEditor({
         <Tabs
           tabs={[
             { key: 'contenuto', label: 'Contenuto' },
+            { key: 'pagina', label: 'Pagina' },
             { key: 'seo', label: 'SEO' },
           ]}
           activeKey={tab}
           onChange={setTab}
         >
+          {tab === 'pagina' && content ? (
+            <ContentLayoutPanel
+              contentId={contentId}
+              initial={content.pageLayout}
+              disabled={readOnly}
+              onSaved={(pageLayout) => setContent({ ...content, pageLayout })}
+            />
+          ) : null}
           {tab === 'seo' ? (
             <ContentSeoPanel contentId={contentId} path={content?.path ?? ''} disabled={readOnly} />
           ) : null}

@@ -85,6 +85,46 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
     expect(container.querySelector('.blk-column')).not.toBeNull();
   });
 
+  it('Row di origine Gutenberg porta data-layout="flex"', () => {
+    const { container } = render(
+      <Row
+        block={{
+          type: 'row',
+          id: testBlockId(),
+          props: {
+            columnStructure: '2_3,1_3',
+            layout: 'flex',
+            fullWidth: false,
+            customWidth: { mode: 'default', value: null },
+            gutter: { custom: false, width: null },
+            backgroundColor: null,
+            backgroundMediaId: null,
+            padding: { base: null, tablet: null, phone: null },
+            classes: [],
+          },
+          children: [],
+        }}
+      />,
+    );
+    expect(container.querySelector('.blk-row')?.getAttribute('data-layout')).toBe('flex');
+  });
+
+  it('Column espone la larghezza come attributo, senza stile in linea in più', () => {
+    const { container } = render(
+      <Column
+        block={{
+          type: 'column',
+          id: testBlockId(),
+          props: { width: '2_3', padding: { base: null, tablet: null, phone: null }, classes: [] },
+          children: [],
+        }}
+      />,
+    );
+    const el = container.querySelector<HTMLElement>('.blk-column');
+    expect(el?.getAttribute('data-width')).toBe('2_3');
+    expect(el?.getAttribute('style')).toBeNull();
+  });
+
   it('RichText inietta props.html', () => {
     const node = makeRichText('<p>Contenuto <strong>ricco</strong></p>');
     const { container } = render(<RichText block={node} />);

@@ -1,5 +1,6 @@
 import { schema, type Database } from '@amoris/db';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { numericOption } from '../formSubmissions/service.js';
 
 /**
  * Lettura pubblica (DR-104): ciò che il sito pubblico può sapere senza accesso.
@@ -12,7 +13,12 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 // ── Riferimenti dentro i blocchi ──────────────────────────────────────────────
 
-const MEDIA_KEYS = new Set(['mediaId', 'backgroundMediaId', 'posterMediaId']);
+const MEDIA_KEYS = new Set([
+  'mediaId',
+  'backgroundMediaId',
+  'posterMediaId',
+  'defaultThumbnailMediaId',
+]);
 
 /** Ciò che serve a risolvere un blocco `post_list`: i suoi stessi parametri (DR-116). */
 export interface PostListRef {
@@ -21,6 +27,8 @@ export interface PostListRef {
   readonly limit: number | null;
   readonly offset: number;
   readonly order: 'date_desc' | 'date_asc' | 'title_asc';
+  /** Parole dell'estratto generato dal testo (`excerpt_length` del plugin). */
+  readonly excerptWords: number | null;
 }
 
 export interface BlockRefs {
@@ -64,6 +72,7 @@ export function collectRefs(document: unknown): BlockRefs {
         termIds: Array.isArray(props['termIds']) ? (props['termIds'] as string[]) : [],
         limit: typeof props['limit'] === 'number' ? props['limit'] : null,
         offset: typeof props['offset'] === 'number' ? props['offset'] : 0,
+        excerptWords: typeof props['excerptWords'] === 'number' ? props['excerptWords'] : null,
         order:
           props['order'] === 'date_asc' || props['order'] === 'title_asc'
             ? props['order']
@@ -291,6 +300,7 @@ const contentColumns = {
   slug: schema.contents.slug,
   title: schema.contents.title,
   showTitle: schema.contents.showTitle,
+  pageLayout: schema.contents.pageLayout,
   excerpt: schema.contents.excerpt,
   blocks: schema.contents.blocks,
   contentText: schema.contents.contentText,
@@ -467,16 +477,9 @@ export interface PublicForm {
    * di PayPal è stato importato) e resta `null` finché l'utente non lo fornisce.
    */
   readonly payment: { readonly amount: number | null; readonly url: string | null } | null;
-}
-
-function numericOption(options: Readonly<Record<string, unknown>>, key: string): number | null {
-  const raw = options[key];
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
-  if (typeof raw === 'string' && raw.trim() !== '') {
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
+  /** Testo del pulsante della sorgente, se dichiarato. */
+  readonly submitText: string | null;
+  readonly submitTextProcessing: string | null;
 }
 
 /** Le definizioni dei form citati, se attivi: il form bozza o disattivato non esce (1E-16). */
@@ -500,7 +503,11 @@ export async function formsByIds(
 
   const out: Record<string, PublicForm> = {};
   for (const row of rows) {
-    const definition = row.definition as { fields?: unknown } | null;
+    const definition = row.definition as {
+      fields?: unknown;
+      submitText?: unknown;
+      submitTextProcessing?: unknown;
+    } | null;
     const rawFields = Array.isArray(definition?.fields) ? definition.fields : [];
     const fields = rawFields.filter(
       (f): f is PublicFormField =>
@@ -537,6 +544,11 @@ export async function formsByIds(
             url: null,
           }
         : null,
+      submitText: typeof definition?.submitText === 'string' ? definition.submitText : null,
+      submitTextProcessing:
+        typeof definition?.submitTextProcessing === 'string'
+          ? definition.submitTextProcessing
+          : null,
     };
   }
   return out;
@@ -549,8 +561,29 @@ export interface PublicPostListItem {
   readonly path: string;
   readonly title: string;
   readonly excerpt: string | null;
+  readonly summary: string | null;
+  readonly summaryTruncated: boolean;
   readonly featuredMediaId: string | null;
   readonly publishedAt: string | null;
+}
+
+/** WordPress: 55 parole quando il plugin non ne dichiara (`excerpt_length`). */
+const DEFAULT_EXCERPT_WORDS = 55;
+
+/**
+ * Come `get_the_excerpt()`: il riassunto scritto a mano resta intero; altrimenti
+ * le prime parole del testo, contate e unite come `wp_trim_words()`.
+ */
+export function postSummary(
+  excerpt: string | null,
+  contentText: string,
+  words: number | null,
+): { summary: string | null; summaryTruncated: boolean } {
+  if (excerpt && excerpt.trim() !== '') return { summary: excerpt, summaryTruncated: false };
+  const all = contentText.trim().split(/\s+/).filter(Boolean);
+  if (all.length === 0) return { summary: null, summaryTruncated: false };
+  const limit = words ?? DEFAULT_EXCERPT_WORDS;
+  return { summary: all.slice(0, limit).join(' '), summaryTruncated: all.length > limit };
 }
 
 /** Una richiesta per ogni blocco: i loro parametri, non quelli dell'archivio, decidono (DR-116). */
@@ -572,6 +605,7 @@ export async function postListsByRefs(
       path: row.path,
       title: row.title,
       excerpt: row.excerpt,
+      ...postSummary(row.excerpt, row.contentText, ref.excerptWords),
       featuredMediaId: row.featuredMediaId,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
     }));

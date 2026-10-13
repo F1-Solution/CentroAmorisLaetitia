@@ -21,4 +21,29 @@ describe('detectContentFamily — scelta per contenuto (ADR-005 §1 punto 1)', (
   it('vuoto è HTML nudo', () => {
     expect(detectContentFamily('')).toBe('html');
   });
+
+  // ADR-005 §1 conta fra i Divi i contenuti racchiusi nel marcatore: caso reale
+  // di 7 contenuti (es. ID 1138), con il marcatore aperto e mai chiuso.
+  it('il marcatore wp:divi/placeholder con shortcode et_pb_ è Divi', () => {
+    expect(
+      detectContentFamily('<!-- wp:divi/placeholder -->\n[et_pb_section][/et_pb_section]'),
+    ).toBe('divi');
+    expect(
+      detectContentFamily(
+        '<!-- wp:divi/placeholder -->[et_pb_section][/et_pb_section]<!-- /wp:divi/placeholder -->',
+      ),
+    ).toBe('divi');
+  });
+
+  it('il marcatore vuoto resta Gutenberg (bozza 1781)', () => {
+    expect(detectContentFamily('<!-- wp:divi/placeholder /-->')).toBe('gutenberg');
+  });
+
+  it('un blocco Gutenberg vero accanto al marcatore resta Gutenberg', () => {
+    expect(
+      detectContentFamily(
+        '<!-- wp:divi/placeholder -->[et_pb_section][/et_pb_section]<!-- /wp:divi/placeholder --><!-- wp:paragraph --><p>x</p><!-- /wp:paragraph -->',
+      ),
+    ).toBe('gutenberg');
+  });
 });

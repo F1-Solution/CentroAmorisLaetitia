@@ -60,6 +60,8 @@ export interface PublicContent {
     readonly slug: string;
     readonly title: string;
     readonly showTitle: boolean;
+    /** Ex `_et_pb_page_layout` (DR-139). */
+    readonly pageLayout: 'right_sidebar' | 'full_width' | 'no_sidebar';
     readonly excerpt: string | null;
     readonly blocks: BlockDocument;
     readonly featuredMediaId: string | null;

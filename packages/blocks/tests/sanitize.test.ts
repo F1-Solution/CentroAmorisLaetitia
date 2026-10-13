@@ -90,6 +90,35 @@ describe('sanitizeRichText — rimozione di ciò che non è ammesso (§5.4)', ()
     }
   });
 
+  // DR-134: le colonne Gutenberg dentro un testo Divi (ID 1138) tengono la loro proporzione.
+  it('flex-basis di una frazione nota su div.wp-block-column diventa una classe', () => {
+    const outcome = sanitizeRichText(
+      '<div class="wp-block-column" style="flex-basis: 66.66%;"><p>x</p></div>',
+    );
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.html).toBe('<div class="wp-block-column blk-basis-2_3"><p>x</p></div>');
+    }
+  });
+
+  it('rimuove ogni altro style, anche su div.wp-block-column', () => {
+    for (const style of [
+      'flex-basis:66.66%;color:red',
+      'flex-basis:url(x)',
+      'width:50%',
+      'flex-basis:12.3%',
+    ]) {
+      const outcome = sanitizeRichText(`<div class="wp-block-column" style="${style}">x</div>`);
+      expect(outcome.ok && outcome.html).toBe('<div class="wp-block-column">x</div>');
+    }
+    const altrove = sanitizeRichText('<div class="altro" style="flex-basis:50%">x</div>');
+    expect(altrove.ok && altrove.html).toBe('<div class="altro">x</div>');
+  });
+
+  it('la classe prodotta è un punto fisso', () => {
+    expect(isSanitizedFixedPoint('<div class="wp-block-column blk-basis-1_3">x</div>')).toBe(true);
+  });
+
   it('rimuove script con tutto il contenuto (severità error)', () => {
     const outcome = sanitizeRichText('<p>prima</p><script>alert(1)</script><p>dopo</p>');
     expect(outcome.ok).toBe(true);

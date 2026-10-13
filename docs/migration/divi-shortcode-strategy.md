@@ -59,7 +59,7 @@ Nessuno shortcode Divi resta senza destinazione.
 | `[doc]` | 1 | blocco **`document`** |
 | `[hash]` | 2 | **da esaminare in Fase 1D.** Non appartiene ad alcun plugin attivo: se non produce nulla nel reso, si elimina; se produce testo, diventa `rich_text` |
 | `[UID]` | 4 | idem |
-| `[wpdm_user_dashboard]` | 1 | **si elimina**: plugin disattivato, non produce nulla (1A §5) |
+| `[wpdm_user_dashboard]` | 1 | **si elimina**; la pagina che lo contiene è riservata con Members e mostra il messaggio della sorgente (DR-131) |
 | `[event_dashboard]` | 1 | **si elimina**: idem |
 
 I due casi da esaminare producono, al più, un frammento di testo. Non si eliminano
@@ -129,7 +129,7 @@ Dodici tipi reali, più un marcatore.
 | `wp:wpforms/form-selector` | **23** | **23** | **`form`** — ADR-010 |
 | `wp:html` | 6 | 3 | **`html`**, il blocco di riserva. Nasce già come tale |
 | `wp:shortcode` | 1 | 1 | si risolve lo shortcode contenuto e si applica la §2.1 |
-| `wp:divi/placeholder` | 8 | 8 | **marcatore**, non contenuto: si scarta |
+| `wp:divi/placeholder` | 8 | 8 | **marcatore**, non contenuto: si scarta; lo shortcode Divi che racchiude fa del contenuto un contenuto Divi (ADR-005 §1, corretto nella `1E-W6`) |
 
 ### 4.1 Fusione dei paragrafi
 

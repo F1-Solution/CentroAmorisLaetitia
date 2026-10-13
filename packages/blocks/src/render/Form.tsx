@@ -3,150 +3,15 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { FormBlock } from '../schema/block';
 import { blockClassName } from './class-name';
-import type { FormData, FormFieldData } from './data-maps';
+import type { FormData } from './data-maps';
 import { isAllowedUrl } from '../sanitize';
+import { visibleFieldIds, type FieldValue } from '../form/logic';
+import { FormField } from './FormField';
 
 export interface FormComponentProps {
   readonly block: FormBlock;
   /** La definizione del form, dalla lettura pubblica; senza, resta il segnaposto di prima. */
   readonly form?: FormData | undefined;
-}
-
-/** I tipi che producono un campo d'inserimento in Fase 1 (ADR-010 §4.2): non `html`, non `payment-single`. */
-const RENDERED_INPUT_TYPES = new Set([
-  'text',
-  'name',
-  'email',
-  'phone',
-  'date-time',
-  'address',
-  'radio',
-  'checkbox',
-  'number',
-]);
-
-function choiceLabel(choice: unknown): string | null {
-  if (typeof choice === 'string') return choice;
-  if (choice && typeof choice === 'object') {
-    const record = choice as Record<string, unknown>;
-    if (typeof record['label'] === 'string' && record['label'] !== '') return record['label'];
-    if (typeof record['value'] === 'string' && record['value'] !== '') return record['value'];
-  }
-  return null;
-}
-
-/**
- * `options.choices` arriva come oggetto con chiavi numeriche (`{"1": {...}}`),
- * non come array: così lo salva il plugin d'origine (misurato sui dati reali).
- */
-function choiceLabels(options: Readonly<Record<string, unknown>>): readonly string[] {
-  const raw = options['choices'];
-  const values = Array.isArray(raw)
-    ? raw
-    : raw && typeof raw === 'object'
-      ? Object.values(raw as Record<string, unknown>)
-      : [];
-  return values.map(choiceLabel).filter((value): value is string => value !== null);
-}
-
-function Field({
-  field,
-  value,
-  onChange,
-}: {
-  readonly field: FormFieldData;
-  readonly value: string | readonly string[] | undefined;
-  readonly onChange: (next: string | readonly string[]) => void;
-}) {
-  const inputId = `blk-form-field-${field.id}`;
-  if (field.type === 'html') {
-    const code = field.options['code'];
-    // Testo semplice, non markup: il blob non passa dalla sanificazione dei blocchi (ADR-010 §4.2).
-    return typeof code === 'string' ? <p className="blk-form-static">{code}</p> : null;
-  }
-  if (!RENDERED_INPUT_TYPES.has(field.type)) return null;
-
-  const label = (
-    <label htmlFor={inputId}>
-      {field.label}
-      {field.required ? <span aria-hidden="true"> *</span> : null}
-    </label>
-  );
-
-  if (field.type === 'radio') {
-    const choices = choiceLabels(field.options);
-    return (
-      <fieldset className="blk-form-field" data-field-type={field.type}>
-        <legend>
-          {field.label}
-          {field.required ? <span aria-hidden="true"> *</span> : null}
-        </legend>
-        {choices.map((choice) => (
-          <label key={choice} className="blk-form-radio-option">
-            <input
-              type="radio"
-              name={inputId}
-              value={choice}
-              checked={value === choice}
-              required={field.required}
-              onChange={() => onChange(choice)}
-            />
-            {choice}
-          </label>
-        ))}
-      </fieldset>
-    );
-  }
-
-  if (field.type === 'checkbox') {
-    const choices = choiceLabels(field.options);
-    const selected = Array.isArray(value) ? value : [];
-    const toggle = (choice: string) =>
-      onChange(
-        selected.includes(choice) ? selected.filter((v) => v !== choice) : [...selected, choice],
-      );
-    return (
-      <fieldset className="blk-form-field" data-field-type={field.type}>
-        <legend>
-          {field.label}
-          {field.required ? <span aria-hidden="true"> *</span> : null}
-        </legend>
-        {choices.map((choice) => (
-          <label key={choice} className="blk-form-checkbox-option">
-            <input
-              type="checkbox"
-              checked={selected.includes(choice)}
-              onChange={() => toggle(choice)}
-            />
-            {choice}
-          </label>
-        ))}
-      </fieldset>
-    );
-  }
-
-  const inputType =
-    field.type === 'email'
-      ? 'email'
-      : field.type === 'phone'
-        ? 'tel'
-        : field.type === 'number'
-          ? 'number'
-          : 'text';
-
-  return (
-    <div className="blk-form-field" data-field-type={field.type}>
-      {label}
-      <input
-        id={inputId}
-        type={inputType}
-        required={field.required}
-        value={typeof value === 'string' ? value : ''}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      {field.description ? <p className="blk-form-field-description">{field.description}</p> : null}
-    </div>
-  );
 }
 
 interface SubmitSuccess {
@@ -170,7 +35,7 @@ interface SubmitError {
  */
 export function Form({ block, form }: FormComponentProps) {
   const className = blockClassName('form', block.props.classes);
-  const [values, setValues] = useState<Record<string, string | readonly string[]>>({});
+  const [values, setValues] = useState<Record<string, FieldValue>>({});
   const [honeypot, setHoneypot] = useState('');
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
@@ -193,6 +58,8 @@ export function Form({ block, form }: FormComponentProps) {
   }
 
   const fields = [...form.fields].sort((a, b) => a.order - b.order);
+  // Logica condizionale come la sorgente: i campi nascosti non si vedono e non si inviano.
+  const visible = visibleFieldIds(fields, values);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -202,7 +69,11 @@ export function Form({ block, form }: FormComponentProps) {
       const response = await fetch(`/forms/${encodeURIComponent(form.slug)}/submissions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ values, honeypot, startedAt }),
+        body: JSON.stringify({
+          values: Object.fromEntries(Object.entries(values).filter(([id]) => visible.has(id))),
+          honeypot,
+          startedAt,
+        }),
       });
       const body = (await response.json().catch(() => null)) as SubmitSuccess | SubmitError | null;
       if (response.ok && body && 'ok' in body && body.ok) {
@@ -263,14 +134,16 @@ export function Form({ block, form }: FormComponentProps) {
           <h2 className="blk-form-title">{form.title}</h2>
         )
       ) : null}
-      {fields.map((field) => (
-        <Field
-          key={field.id}
-          field={field}
-          value={values[field.id]}
-          onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
-        />
-      ))}
+      {fields
+        .filter((field) => visible.has(field.id))
+        .map((field) => (
+          <FormField
+            key={field.id}
+            field={field}
+            value={values[field.id]}
+            onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
+          />
+        ))}
       {/* Campo esca: invisibile a chi vede la pagina, compilato solo da invii automatici. */}
       <label className="blk-form-trap" aria-hidden="true">
         Non compilare questo campo
@@ -288,9 +161,13 @@ export function Form({ block, form }: FormComponentProps) {
           {errorMessage}
         </p>
       ) : null}
-      <button type="submit" disabled={status === 'sending'}>
-        {status === 'sending' ? 'Invio in corso…' : 'Invia'}
-      </button>
+      <div className="wpforms-submit-container">
+        <button type="submit" className="wpforms-submit" disabled={status === 'sending'}>
+          {status === 'sending'
+            ? (form.submitTextProcessing ?? 'Invio in corso…')
+            : (form.submitText ?? 'Invia')}
+        </button>
+      </div>
     </form>
   );
 }

@@ -1,169 +1,94 @@
-# Classificazione delle differenze — `1E-W6` (parziale)
+# Classificazione delle differenze — `1E-W6`, confronto finale
 
-Stato: **interrotto da un vincolo di memoria della macchina**, non concluso. I
-numeri di questo documento vengono da una cattura del sito nuovo parziale e in
-parte viziata (v. §0): non sono i 585 confronti del criterio 1E-2 e non
-sostituiscono una ricattura pulita.
+Stato al 2026-10-13: **confronto completo, parità non raggiunta.** Sostituisce la
+classificazione parziale del 2026-10-12 (475 catture interrotte); la versione
+precedente resta nella storia di Git.
 
-## 0. Che cosa è successo alla cattura
+## 0. Ambiente e numeri
 
-`tests/visual/cattura-sito.ts` è stato avviato due volte per un errore di
-sessione (un processo di un tentativo precedente non si era fermato); i due
-processi hanno catturato in parallelo competendo per la stessa memoria. Il
-governatore di sistema di Claude Code ha poi interrotto per basso livello di
-memoria sia la cattura sia un controllo di attesa, con la nota esplicita di
-**non riavviarli da soli**. Risultato: 475/585 pagine catturate, 69 errori di
-rete per timeout, e un confronto (`confronto-tutto.ts`) esteso solo a queste
-475 (481 confrontabili dopo le maschere, alcuni con viewport in più per via
-delle righe aggiunte dalla matrice).
+| Voce | Valore |
+|---|---|
+| Catture del sito nuovo | 2026-10-13, 12:21–12:36, Chromium 153.0.8010.12, `http://127.0.0.1:3200`, un solo processo (`docs/qa/screenshots/cattura-sito-finale.log`) |
+| Catture di riferimento | `1E-W1`, invariate |
+| Confronto | `npx tsx tests/visual/confronto-tutto.ts`, soglia 0 % (DR-113), esame fino a 0,5 % |
+| Maschere applicate | 29 rettangoli in `maschere.json` (mappa, video, tabella dei cookie) |
+| Esito | **585 confronti: 0 superati, 0 da esaminare, 585 falliti**; 539 con altezza di pagina diversa, 46 con altezza uguale ma dall'8,7 al 51,4 % di pixel diversi |
+| Dettaglio | `docs/qa/confronto/esiti.csv` (una riga per URL e viewport, con impronte sha256) |
 
-**Conseguenza pratica**: molte delle differenze di altezza misurate su queste
-475 catture sono reali (viste a occhio sugli screenshot, sotto), ma il quadro
-non è completo né definitivo. Serve una ricattura integrale quando la macchina
-avrà di nuovo memoria libera, su richiesta esplicita.
+Prima del confronto, su conferma dell'utente: import rieseguito in locale per la
+correzione delle classi del menu (copia `amoris-prima-classi-menu-2026-10-13.dump`,
+esito `success`, 0 classi serializzate su 64 voci). Le catture sono anteriori
+all'import: la correzione riguarda solo l'attributo `class`, senza effetto visivo.
 
-## 1. Cause pervasive (riguardano la maggioranza delle pagine)
+## 1. Difetti da correggere (non da approvare)
 
-### Causa A — «a capo» singoli non trasformati in `<br>` (bloccante)
+Una famiglia per causa. Gravità secondo `visual-regression-plan.md`.
 
-**Componente**: `apps/importer/src/convert/shared/rich-text.ts` (funzione
-condivisa da tutti i convertitori: HTML libero/«freeform» fuori dai blocchi
-Gutenberg, modulo testo di Divi, HTML nudo dei 4 casi, shortcode sconosciuti).
+| # | Famiglia | Gravità | Dove | Che cosa si vede | Componente |
+|---|---|---|---|---|---|
+| A | **9 contenuti vuoti** | bloccante | `/corsi-2022-2023/`, `/offerta-formativa-2019-2020/`, `/corso-per-consulenti-familiari-vecchia-pagina/`, `/dove-hai-la-testa-2/`, `/prossimi-corsi/`, `/riparare-le-relazioni-2018/`, `/fatti-non-parole-2/`, `/bacheca/`, più una bozza | Solo titolo e data; nella sorgente la pagina è lunga fino a 13 150 px | importer: il contenuto Divi racchiuso in `<!-- wp:divi/placeholder -->` è classificato Gutenberg e il blocco sconosciuto viene scartato senza riserva né errore; `/bacheca/` contiene solo lo shortcode `[wpdm_user_dashboard]` |
+| B | **Colonne Divi impilate** | bloccante | 40 contenuti Divi, es. `/chi-siamo/` | Testo e immagine affiancati nella sorgente, uno sotto l'altro nel sito: pagine fino a 2 200 px più alte a 1440, quasi uguali a 390 | resa delle righe e colonne Divi in `packages/blocks` |
+| C | **Form resi diversi** | bloccante | 24 contenuti con form, es. `/registrazione-sguardi-damore/` | Campi in altro ordine, etichette a lato invece del testo segnaposto, nessuna disposizione a due colonne, markup HTML mostrato come testo (`<b>`, `<a href>`), testo condizionale del bonifico sempre visibile | resa del blocco form in `packages/blocks` |
+| D | **Elenco degli articoli** | bloccante | `/` (fino a 7 913 px in più), `/category/news/` e pagine 2–3 | Immagini a piena larghezza invece delle miniature, estratti assenti, data in più | resa di `post_list` e degli archivi |
+| E | **Testata** | maggiore | tutte le 585 | Icona della ricerca assente; frecce dei sottomenu staccate dalla voce; spaziatura del menu diversa | `apps/web/src/styles/layout.css` e testata |
+| F | **Piè di pagina** | maggiore | tutte le 585 | Testo centrato su tutta la larghezza invece che nella colonna della sorgente; fascia inferiore più alta | piè di pagina in `apps/web` |
+| G | **Barra laterale** | maggiore | 404 e articoli | La sorgente ha la colonna laterale con il filetto verticale; la 404 nuova no, e il testo occupa tutta la riga | template di articoli e 404 |
+| H | **Dettagli tipografici** | minore | articoli e pagine Divi | Testo giustificato nella sorgente, allineato a sinistra nel sito; data «7 Ott 2022» contro «07 Ott 2022» | stili del testo e formato della data |
+| I | **Pagine di download** | da esaminare | 4 URL `/download/…` | 43–51 % di pixel diversi a pari altezza; causa non ancora isolata | template del download |
 
-**Causa**: la sorgente applicava `wpautop()` (`wp-includes/formatting.php`
-riga 446) a ogni resa (`the_content`): un rigo singolo diventa `<br>`, un rigo
-vuoto separa i paragrafi. L'importer copiava l'HTML grezzo, «a capo» compresi,
-ma non applicava questa trasformazione: il browser collassa gli «a capo» in
-uno spazio, e il testo si legge come un unico paragrafo continuo, molto più
-corto della sorgente (misurato su `/affettivita-e-sessualita-il-lungo-viaggio/`:
-confrontare la cattura di riferimento e quella nuova).
+Le famiglie E, F e G spiegano da sole l'8–12 % di pixel diversi delle pagine con
+la stessa altezza (es. `/404-url-inesistente/`, 9,0 %). Le famiglie A–D
+spiegano le differenze di altezza.
 
-**Correzione fatta**: porto fedele di `wpautop()` in
-`apps/importer/src/convert/shared/wpautop.ts`, applicato una sola volta in
-`buildRichTextOrFallback` prima della sanificazione — lo stesso punto usato da
-Divi, dal convertitore «freeform» e dall'HTML nudo. Test
-`apps/importer/tests/unit/convert/wpautop.test.ts` (8 prove): paragrafi,
-`<br>`, contenuto già a blocchi non raddoppiato, `<pre>` intatto. **Tutta la
-suite dell'importer e di `packages/blocks` resta verde** (30 file / 184 prove
-l'importer, 25 file / 212 prove i blocchi).
+**Nota di privacy.** Nella resa nuova del form di `/registrazione-sguardi-damore/`
+il testo del bonifico, IBAN del Centro compreso, è sempre visibile; nella
+sorgente compare solo scegliendo «Bonifico». È un dato pubblico del Centro, non
+personale, ma la resa cambia ciò che la pagina mostra: rientra nella famiglia C.
+Le catture sono fuori da Git (`.gitignore`, riga 69).
 
-**Non ancora efficace sul sito**: il database contiene l'HTML già scritto
-dall'importazione precedente; la correzione vale solo alla **prossima
-riesecuzione dell'import**, già in coda con D50/D51 (carosello, pagamento) e
-con l'`offset` della home. Fino ad allora, ogni pagina con testo non a blocchi
-Gutenberg resta più corta del dovuto: è la causa della quasi totalità delle
-«altezze diverse» viste nel confronto parziale.
+## 2. Maschere e difformità proposte per l'approvazione (HO-015)
 
-**Pagine coinvolte**: tutte quelle con contenuto «freeform» (fuori blocchi
-Gutenberg) o con modulo testo Divi scritto con «a capo» invece di paragrafi
-separati — nel campione catturato, la maggioranza dei 78 `page` e 28 `post`.
-Classificata **in attesa della riesecuzione dell'import**.
-
-**Rettifica del 2026-10-12 (coordinatore):** WordPress toglie `wpautop()` dalla resa dei contenuti con blocchi (`has_blocks`), quindi la correzione non si applica ai 64 contenuti Gutenberg (test `gutenbergNoAutop.test.ts`). Resta da confermare dopo la ricattura se il Divi Builder applica `wpautop()` ai propri moduli come nella resa misurata.
-
-### Causa B — immagini `alignleft/alignright/aligncenter` non più affiancate al testo (maggiore)
-
-**Componente**: `apps/web/src/styles/blocks.css` (nessuna regola per queste
-classi, pur presenti nell'HTML sanificato).
-
-**Causa**: la sorgente le stilizza con regole misurate su
-`wp-content/themes/Divi/style-cpt.css`: `.alignright{float:right}`,
-`img.alignright{display:inline;float:right;margin-left:15px}`,
-`img.alignleft{display:inline;float:left;margin-right:15px}`,
-`.aligncenter{display:block;margin-left:auto;margin-right:auto}`. Senza queste
-regole un'immagine pensata per affiancare il testo (es. il poster di
-`/affettivita-e-sessualita-il-lungo-viaggio/`) va a capo, spostando tutto il
-testo sotto invece che a fianco.
-
-**Correzione fatta e verificata**: le quattro regole aggiunte a `blocks.css`,
-limitate a `.blk-text` (il testo ricco); ricostruito e riavviato `apps/web`;
-verificato a vista sulla cattura rifatta di
-`/affettivita-e-sessualita-il-lungo-viaggio/`: l'immagine torna a destra con
-il testo a fianco, come nella sorgente. **Effetto immediato**, non legato
-all'import.
-
-**Pagine coinvolte**: ogni contenuto con un'immagine `alignleft`/`alignright`
-nel testo libero — non contate singolarmente in questa sessione (serve la
-ricattura completa per l'elenco esatto).
-
-## 2. Cause già note, non di questa wave
-
-- **Elenco articoli della home con un articolo in più**: `offset` della
-  configurazione salvata non ancora nel blocco `post_list` reso (rilievo
-  2026-10-12, in attesa della riesecuzione dell'import, D50).
-- **Scorrimento orizzontale della tabella dei cookie a 390/360 px**
-  (`/informazioni-sui-cookie/`): difformità **già approvata** (DR-120),
-  mascherata.
-- **Mappa e video al clic**: copertina propria al posto del riproduttore
-  esterno (DR-107), **maschera dichiarata** (§3).
-
-## 3. Il carosello della home — non è un difetto dell'importer
-
-Controllo richiesto dal coordinatore: perché nessun contenuto ha un blocco
-`slider`, pur esistendo 12 righe in `slider_slides`.
-
-**Esito della verifica** (database dell'istanza di riferimento,
-`wp_posts`/`wp_postmeta`/`wp_options`):
-
-- Il contenuto **pubblicato** della home (`wp_posts.ID = 62`) **non contiene**
-  `[rev_slider]`: solo intestazioni, un paragrafo e lo shortcode `[catposts]`.
-- Lo shortcode `[rev_slider alias="home"][/rev_slider]` esiste **solo in sei
-  revisioni** della pagina (`post_type = revision`, `post_parent = 62`),
-  l'ultima datata 2026-04-28: è stato **tolto dal contenuto pubblicato prima
-  del backup** del 2026-09-13.
-- Il widget `rev-slider-widget` esiste ma è **vuoto** (nessuna istanza
-  configurata) e **non è assegnato a nessuna barra laterale attiva**
-  (`sidebars_widgets`: solo `sidebar-2` ha un widget, il testo del piè di
-  pagina già importato con DR-117).
-- La cattura di riferimento della home (`docs/qa/screenshots/riferimento/home/1440.png`)
-  **non mostra alcun carosello**: conferma visiva che coincide con i dati.
-  I file JS/CSS di Slider Revolution si caricano comunque su ogni pagina
-  (comportamento del plugin, non legato all'uso), e questo spiega perché
-  compaiono nell'HTML pur non essendoci alcun modulo visibile.
-
-**Conclusione**: l'importer **non ha un difetto** da correggere qui — riflette
-correttamente il contenuto pubblicato, che non ha più il carosello. Il
-riferimento che non torna è `docs/qa/visual-regression-plan.md` §8 punto 10
-(«Carosello della home: 12 slide, avanzamento, comandi»), scritto nella 1B su
-base dell'inventario dei plugin, prima di questa verifica puntuale.
-
-**Non è una mia decisione da prendere**: propongo all'utente, con
-raccomandazione:
-
-- **Opzione A (raccomandata)**: correggere `visual-regression-plan.md` §8,
-  togliendo il punto 10 e annotando l'esito di questa verifica — nessuna resa
-  da provare, perché la sorgente non la rende più.
-- **Opzione B**: lasciare il punto 10 e dichiarare esplicitamente, nel
-  rapporto finale, che il controllo non è applicabile.
-
-Nessuna differenza «carosello della home» entra quindi nella classificazione
-delle difformità: le due rese (sorgente e sito nuovo) **coincidono già**, nel
-senso che **nessuna delle due mostra un carosello**.
-
-## 4. Maschere — coordinate (`docs/qa/confronto/maschere.json`)
-
-17 rettangoli, per URL e viewport, misurati sul sito nuovo in esecuzione
-(elemento `.blk-map` o `.blk-video`) o sulla tabella dei cookie:
-
-| URL | Viewport | Area | Coordinate (x,y w×h) | Motivo |
+| # | Voce | Tipo | Dove | Riferimento |
 |---|---|---|---|---|
-| `/contatti/` | tutte e 6 | `.blk-map` | v. file, allargata in altezza a 450px | mappa esterna |
-| `/dove-siamo/` | tutte e 6 | `.blk-map` | v. file, allargata in altezza a 450px | mappa esterna |
-| `/riparte-il-corso-per-consulenti-familiari/` | 1440, 768, 390 | `.blk-video` | v. file | video esterno |
-| `/informazioni-sui-cookie/` | 390, 360 | tabella cookie | v. file | DR-120 |
+| 1 | Banner dei cookie della sorgente assente nel sito nuovo | maschera | tutte le pagine; nessun rettangolo in `maschere.json`, il banner non compare nelle catture di riferimento | DR-107, MI-08 |
+| 2 | Mappa: copertina al posto di Google Maps, caricamento al clic | maschera `.blk-map` | `/contatti/`, `/dove-siamo/`, 6 viewport ciascuna, 12 rettangoli | DR-107, DR-121 |
+| 3 | Video: copertina al posto del riproduttore, caricamento al clic | maschera `.blk-video` | `/riparte-il-corso-per-consulenti-familiari/` (3 per viewport, 9) e `/dal-vizioso-al-virtuoso/` (6), 15 rettangoli | DR-107, DR-122 |
+| 4 | Tabella dei cookie che scorre nel proprio riquadro | difformità mascherata | `/informazioni-sui-cookie/` a 390 e 360 px, 2 rettangoli | DR-120 |
+| 5 | Suffisso di paginazione «- Pagina N» nel titolo del documento, non visibile nella pagina | difformità | archivi paginati | DR-040 |
 
-**Incompleto**: `/dal-vizioso-al-virtuoso/` ha un blocco `video` in database
-ma `maschere.ts` non l'ha raggiunto (nessun errore registrato: da verificare
-nella prossima sessione, probabilmente un timeout di rete silenzioso).
-L'altezza delle maschere `.blk-map` è stata **allargata a mano** (450px, non
-misurata pixel per pixel sul riquadro di errore di Google nella sorgente)
-perché quel riquadro è più alto della copertina del sito nuovo: va rimisurata
-sulla cattura di riferimento nella prossima sessione.
+Limiti dichiarati: le maschere 2 e 3 sono misurate sul sito nuovo; dove le
+altezze di pagina differiscono, le coordinate non coincidono con la sorgente e
+il confronto fallisce comunque. Vanno rimisurate dopo le correzioni A–D.
 
-## 5. Numeri (parziali, da non usare come esito ufficiale di 1E-2/1E-3/1E-4)
+## 3. Che cosa resta per chiudere la wave
 
-Su 481 confronti possibili (475 pagine catturate, alcune con più righe di
-matrice): 0 superati, 0 da esaminare, 481 falliti, 17 con area oltre 32×32
-(tutte sulle pagine con mappa/video, dove la maschera non compensa ancora la
-differenza di altezza complessiva). 104 confronti senza immagine (le 110 pagine
-non ancora catturate). La causa A (§1) spiega la quasi totalità dei falliti.
+1. Correggere le famiglie A–H ed esaminare la I, a cicli, con 1E-19 dopo ogni giro.
+2. La famiglia A tocca `apps/importer`, fuori dai file della `1E-W6` nel PLAN §2,
+   e richiede una nuova riesecuzione dell'import: entrambe da confermare.
+3. Ricatturare e riconfrontare, poi rimisurare le maschere.
+4. Approvazione delle voci del §2 (HO-015).
+
+## 4. Confronto dopo HO-018 (2026-10-13)
+
+Import con le famiglie A–D e J (`success`), ricattura integrale 585/585, maschere
+rimisurate, confronto: **0 superati, 585 falliti**, 46 coppie con la stessa altezza.
+
+| Misura | Prima | Dopo |
+|---|---|---|
+| Differenza d'altezza mediana | 227 px | 110 px |
+| Coppie con più di 500 px di differenza | 197 | 45 |
+| Differenza mediana a pari altezza | 13,19 % | 11,76 % |
+| Coppie migliorate / peggiorate di oltre 100 px | — | 260 / 40 |
+
+Difetti nuovi o riletti, da approvare prima di correggere:
+
+| # | Famiglia | Gravità | Dove | Causa |
+|---|---|---|---|---|
+| K | **Immagini ritagliate** | bloccante | pagine Divi a 390 e 768, es. `/i-prossimi-corsi-del-centro/` | `imageAttributes` (`packages/blocks/src/render/media.ts:30-42`) mette nel `srcset` anche i ritagli a proporzione diversa (150×150, 400×250, 1080×675); WordPress li esclude. Chiamanti: `Image.tsx:14`, `MediaText.tsx:22`, `PostList.tsx:38`, `Slider.tsx:58`, `Video.tsx:58` |
+| L | **Colonne Gutenberg dentro il testo Divi** | maggiore | solo `/corsi-2022-2023/` | La sorgente non carica lo stile delle colonne (commenti `divi:columns`, non `wp:columns`) e le impila; `blocks.css:125-200` le affianca |
+| G | **Barra laterale per articolo** (rilettura) | maggiore | 28 articoli | Nella sorgente dipende da `_et_pb_page_layout`: 12 a destra, 14 a tutta larghezza, 2 senza; il sito la mette sempre |
+| C+ | **Residui del form** | maggiore | 24 form | Telefono senza stile di intl-tel-input (si vede «+39») e a tutta riga invece che medio; sotto-campi dell'indirizzo senza spaziatura |
+| M | **Mappa schiacciata** | maggiore | `/contatti/`, `/dove-siamo/` | La copertina della mappa è alta pochi pixel invece di ~230 |
+
+`/bacheca/`: nella ripartizione risulta HTML (56/47/5 invece di 57/47/4) perché il
+messaggio di Members sostituisce il contenuto prima del riconoscimento; decisione D58.

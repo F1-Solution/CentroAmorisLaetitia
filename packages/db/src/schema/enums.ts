@@ -4,6 +4,8 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 
 export const contentType = pgEnum('content_type', ['page', 'post']);
 export const contentStatus = pgEnum('content_status', ['draft', 'published', 'archived']);
+/** Layout della pagina, ex `_et_pb_page_layout` di Divi (DR-139). */
+export const pageLayout = pgEnum('page_layout', ['right_sidebar', 'full_width', 'no_sidebar']);
 export const menuItemKind = pgEnum('menu_item_kind', ['content', 'term', 'custom']);
 export const menuVisibility = pgEnum('menu_visibility', [
   'public',

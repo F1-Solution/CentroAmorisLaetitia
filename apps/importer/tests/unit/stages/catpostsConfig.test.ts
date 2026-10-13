@@ -36,6 +36,20 @@ describe('configurazione salvata di [catposts] (DR-116)', () => {
     );
   });
 
+  // Forma reale della configurazione «News» (1E-W6): booleani `b:`, misure e testo del link.
+  it('riporta booleani, misure della miniatura, estratto e miniatura di riserva', () => {
+    const real =
+      'a:1:{s:4:"News";a:9:{s:5:"thumb";b:1;s:8:"thumbTop";b:1;s:4:"date";b:1;s:7:"excerpt";b:0;s:7:"thumb_w";s:3:"100";s:7:"thumb_h";s:3:"100";s:14:"excerpt_length";s:3:"100";s:17:"excerpt_more_text";s:11:"leggi tutto";s:18:"default_thunmbnail";s:2:"58";}}';
+    const out = expandCatposts(
+      '[catposts name="News"]',
+      new Map([['categoryPosts-shorcode', real]]),
+      (id) => (id === '58' ? '/wp-content/uploads/2017/09/sintetica.jpg' : null),
+    );
+    expect(out).toBe(
+      '[catposts name="News" thumb="1" date="1" excerpt="0" thumb_top="1" thumb_w="100" thumb_h="100" excerpt_length="100" excerpt_more_text="leggi tutto" default_thumbnail="/wp-content/uploads/2017/09/sintetica.jpg"]',
+    );
+  });
+
   it('senza configurazione, o con un nome sconosciuto, lascia lo shortcode com’è', () => {
     const text = '<p>[catposts name="Altro"]</p>';
     expect(expandCatposts(text, new Map())).toBe(text);

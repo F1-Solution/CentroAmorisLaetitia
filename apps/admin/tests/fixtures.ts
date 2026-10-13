@@ -114,6 +114,7 @@ export const syntheticContent: ContentDetail = {
   title: 'Pagina di prova',
   excerpt: null,
   showTitle: true,
+  pageLayout: 'right_sidebar',
   blocks: syntheticDocument,
   contentHtml: serializeBlockDocument(syntheticDocument),
   updatedAt: '2026-09-21T10:00:00.000Z',

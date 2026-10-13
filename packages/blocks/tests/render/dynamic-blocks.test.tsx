@@ -5,6 +5,7 @@ import { Video } from '../../src/render/Video.js';
 import { Map } from '../../src/render/Map.js';
 import { PostList } from '../../src/render/PostList.js';
 import { Form } from '../../src/render/Form.js';
+import { phoneWithDialCode } from '../../src/render/FormField.js';
 import { testBlockId } from '../helpers.js';
 import type { SliderData, FormData, PostListItem } from '../../src/render/data-maps.js';
 
@@ -188,43 +189,114 @@ describe('Map — copertina testuale, incorporazione solo al clic (DR-107)', () 
       'https://maps.google.com/maps?q=45%2C9&z=18&output=embed',
     );
   });
+
+  it('D61: indirizzo e segnaposti restano nel markup ma non si vedono, come la sorgente', () => {
+    const { container } = render(
+      <Map
+        block={{
+          type: 'map',
+          id: testBlockId(),
+          props: {
+            address: 'Via Roma 1',
+            lat: '45.0',
+            lng: '9.0',
+            zoom: null,
+            mouseWheel: false,
+            mobileDragging: false,
+            grayscale: false,
+            grayscaleAmount: null,
+            pins: [{ title: 'Sede sintetica', lat: '45.0', lng: '9.0', content: null }],
+            classes: [],
+          },
+          children: [],
+        }}
+      />,
+    );
+    const details = container.querySelector('.blk-map-details');
+    expect(details?.hasAttribute('hidden')).toBe(true);
+    expect(details?.textContent).toContain('Via Roma 1');
+    expect(details?.textContent).toContain('Sede sintetica');
+    // L'indirizzo resta raggiungibile dagli ausili, nell'etichetta del pulsante.
+    expect(container.querySelector('.blk-map-cover')?.getAttribute('aria-label')).toBe(
+      'Mostra la mappa: Via Roma 1',
+    );
+  });
 });
 
-describe('PostList — elenco reale con gli articoli risolti dal servizio', () => {
+describe('PostList — elenco come il plugin Category Posts della sorgente (DR-116, 1E-W6)', () => {
+  const thumb = {
+    publicPath: '/media/sintetica.jpg',
+    width: 1200,
+    height: 800,
+    altText: null,
+    variants: [
+      { publicPath: '/media/sintetica-150x150.jpg', width: 150, height: 150 },
+      { publicPath: '/media/sintetica-300x200.jpg', width: 300, height: 200 },
+    ],
+  };
   const posts: readonly PostListItem[] = [
     {
       id: 'a',
       path: '/articolo-1/',
       title: 'Articolo uno',
-      excerpt: 'Un estratto.',
-      featuredMediaId: null,
+      excerpt: null,
+      summary: 'Le prime parole del testo',
+      summaryTruncated: true,
+      featuredMediaId: 'm1',
       publishedAt: '2026-01-02T00:00:00.000Z',
     },
+    {
+      id: 'b',
+      path: '/articolo-2/',
+      title: 'Articolo due',
+      excerpt: 'Riassunto scritto a mano.',
+      summary: 'Riassunto scritto a mano.',
+      summaryTruncated: false,
+      featuredMediaId: null,
+      publishedAt: '2026-01-01T00:00:00.000Z',
+    },
   ];
+  const block = {
+    type: 'post_list' as const,
+    id: testBlockId(),
+    props: {
+      termIds: [],
+      limit: null,
+      offset: 0,
+      showThumbnail: true,
+      showDate: false,
+      showExcerpt: true,
+      order: 'date_desc' as const,
+      thumbnailWidth: 100,
+      thumbnailHeight: 100,
+      excerptMoreText: 'leggi tutto',
+      defaultThumbnailMediaId: 'm0',
+      classes: [],
+    },
+    children: [],
+  };
 
-  it('rende titolo, data ed estratto di ogni articolo', () => {
-    const { getByText } = render(
-      <PostList
-        block={{
-          type: 'post_list',
-          id: testBlockId(),
-          props: {
-            termIds: [],
-            limit: null,
-            offset: 1,
-            showThumbnail: true,
-            showDate: true,
-            showExcerpt: true,
-            order: 'date_desc',
-            classes: [],
-          },
-          children: [],
-        }}
-        posts={posts}
-      />,
+  it('miniatura quadrata alla misura dichiarata, titolo come link, estratto con «leggi tutto» se tagliato', () => {
+    const { container, getByText } = render(
+      <PostList block={block} posts={posts} media={{ m1: thumb, m0: thumb }} />,
     );
+    const img = container.querySelector('.cat-post-thumbnail img');
+    expect(img?.getAttribute('src')).toBe('/media/sintetica-150x150.jpg');
+    expect(img?.getAttribute('width')).toBe('100');
+    expect(img?.getAttribute('height')).toBe('100');
+    expect(img?.getAttribute('srcset')).toBeNull();
     expect(getByText('Articolo uno').getAttribute('href')).toBe('/articolo-1/');
-    expect(getByText('Un estratto.')).not.toBeNull();
+    expect(getByText('Articolo uno').className).toBe('cat-post-title');
+    expect(getByText('leggi tutto').getAttribute('href')).toBe('/articolo-1/');
+    expect(container.querySelectorAll('.cat-post-excerpt-more')).toHaveLength(1);
+  });
+
+  it('senza immagine in evidenza usa la miniatura di riserva; senza showDate nessuna data', () => {
+    const { container } = render(
+      <PostList block={block} posts={posts} media={{ m1: thumb, m0: thumb }} />,
+    );
+    expect(container.querySelectorAll('.cat-post-thumbnail img')).toHaveLength(2);
+    expect(container.textContent).not.toContain('2026');
   });
 });
 
@@ -385,5 +457,163 @@ describe('Form — invio con esito letto dal servizio (DR-108)', () => {
     } finally {
       global.fetch = originalFetch;
     }
+  });
+});
+
+describe('Form — resa come WPForms della sorgente (1E-W6, DR-133)', () => {
+  const block = {
+    type: 'form' as const,
+    id: testBlockId(),
+    props: {
+      formId: uuid,
+      origin: 'wpforms' as const,
+      showTitle: false,
+      showDescription: false,
+      classes: [],
+    },
+    children: [],
+  };
+  const form: FormData = {
+    id: uuid,
+    slug: 'iscrizione-sintetica',
+    title: 'Iscrizione',
+    confirmationMessage: null,
+    requiresPayment: false,
+    submitText: 'Invia',
+    fields: [
+      {
+        id: '13',
+        type: 'html',
+        label: '',
+        required: false,
+        order: 0,
+        description: null,
+        options: { code: '<b>Dati</b><script>alert(1)</script>' },
+      },
+      {
+        id: '1',
+        type: 'name',
+        label: 'Nome',
+        required: true,
+        order: 1,
+        description: null,
+        options: {
+          format: 'first-last',
+          label_hide: '1',
+          sublabel_hide: '1',
+          first_placeholder: 'Nome',
+          last_placeholder: 'Cognome',
+          size: 'medium',
+        },
+      },
+      {
+        id: '9',
+        type: 'radio',
+        label: 'Pagamento',
+        required: true,
+        order: 2,
+        description: null,
+        options: { choices: { '1': { label: 'Online' }, '2': { label: 'Bonifico' } } },
+      },
+      {
+        id: '10',
+        type: 'html',
+        label: '',
+        required: false,
+        order: 3,
+        description: null,
+        options: {
+          code: '<p>Istruzioni del bonifico</p>',
+          conditional_logic: '1',
+          conditional_type: 'show',
+          conditionals: [[{ field: '9', operator: '==', value: '2' }]],
+        },
+      },
+    ],
+    payment: null,
+  };
+
+  it('nell’ordine della definizione; HTML sanificato e reso come markup', () => {
+    const { container } = render(<Form block={block} form={form} />);
+    const types = [...container.querySelectorAll('.wpforms-field')].map((el) =>
+      el.getAttribute('data-field-type'),
+    );
+    expect(types).toEqual(['html', 'name', 'radio']);
+    expect(container.querySelector('.wpforms-field-html b')?.textContent).toBe('Dati');
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.textContent).not.toContain('<b>');
+  });
+
+  it('nome e cognome affiancati con il segnaposto; l’etichetta resta per gli ausili', () => {
+    const { container } = render(<Form block={block} form={form} />);
+    const inputs = container.querySelectorAll('.wpforms-field-name input');
+    expect([...inputs].map((i) => i.getAttribute('placeholder'))).toEqual(['Nome', 'Cognome']);
+    expect(container.querySelectorAll('.wpforms-field-name .wpforms-one-half')).toHaveLength(2);
+    expect(
+      container.querySelector('.wpforms-field-name .wpforms-label-hide')?.textContent,
+    ).toContain('Nome');
+  });
+
+  it('il campo condizionato compare solo con la scelta giusta', () => {
+    const { container, getByLabelText } = render(<Form block={block} form={form} />);
+    expect(container.textContent).not.toContain('Istruzioni del bonifico');
+    fireEvent.click(getByLabelText('Bonifico'));
+    expect(container.textContent).toContain('Istruzioni del bonifico');
+  });
+});
+
+describe('Form — indirizzo su più righe come WPForms (famiglia C+)', () => {
+  const block = {
+    type: 'form' as const,
+    id: testBlockId(),
+    props: {
+      formId: uuid,
+      origin: 'wpforms' as const,
+      showTitle: false,
+      showDescription: false,
+      classes: [],
+    },
+    children: [],
+  };
+  const form: FormData = {
+    id: uuid,
+    slug: 'indirizzo-sintetico',
+    title: 'Indirizzo',
+    confirmationMessage: null,
+    requiresPayment: false,
+    submitText: 'Invia',
+    fields: [
+      {
+        id: '4',
+        type: 'address',
+        label: 'Indirizzo',
+        required: true,
+        order: 0,
+        description: null,
+        options: { address2_hide: '1', country_hide: '1', size: 'medium' },
+      },
+    ],
+    payment: null,
+  };
+
+  it('una riga per l’indirizzo, una per città e provincia, una per il CAP', () => {
+    const { container } = render(<Form block={block} form={form} />);
+    const rows = [...container.querySelectorAll('.wpforms-field-address .wpforms-field-row')];
+    expect(rows.map((row) => row.querySelectorAll('input').length)).toEqual([1, 2, 1]);
+    expect(rows.every((row) => row.classList.contains('wpforms-field-medium'))).toBe(true);
+    expect(rows[1]?.querySelector('.wpforms-one-half.wpforms-first input')?.id).toContain('city');
+    expect(rows[2]?.querySelector('.wpforms-one-half.wpforms-first input')?.id).toContain('postal');
+  });
+});
+
+describe('telefono — prefisso del paese scelto con la bandiera (ADR-011)', () => {
+  it('aggiunge il prefisso fuori dall’Italia, non se il numero ha già il «+»', () => {
+    expect(phoneWithDialCode('333 1234567', { iso2: 'it', dialCode: '39' })).toBe('333 1234567');
+    expect(phoneWithDialCode('79 123 45 67', { iso2: 'ch', dialCode: '41' })).toBe(
+      '+41 79 123 45 67',
+    );
+    expect(phoneWithDialCode('+33 6 12', { iso2: 'ch', dialCode: '41' })).toBe('+33 6 12');
+    expect(phoneWithDialCode('', { iso2: 'ch', dialCode: '41' })).toBe('');
+    expect(phoneWithDialCode('333', null)).toBe('333');
   });
 });

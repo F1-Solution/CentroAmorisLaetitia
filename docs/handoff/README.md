@@ -20,11 +20,13 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-010 | [Prova a vista del trascinamento](HO-010-prova-a-vista-del-trascinamento.md) | 1D | ✅ **chiuso** 2026-10-07 — resa approvata dall'utente |
 | HO-011 | [Riavviare Docker per l'audit 1D-W12](HO-011-riavviare-docker-per-l-audit-1D-W12.md) | 1D | ✅ **chiuso** 2026-10-09 — Docker risponde; il comando del passo 4 era sbagliato ed è corretto |
 | HO-012 | [Passare il volume di sviluppo alle immagini Chainguard](HO-012-passare-il-volume-di-sviluppo-alle-immagini-chainguard.md) | 1D | ✅ **chiuso** 2026-10-09 — server Chainguard sano, 1477 + 4 oggetti, anonimo 403 |
-| HO-013 | [Conferma della riesecuzione dell'import](HO-013-conferma-riesecuzione-import-1E-W5.md) | 1E | ⏳ **aperto** — `offset` della home, pagamento PayPal, `wpautop` |
-| HO-014 | [Liberare memoria per la ricattura](HO-014-liberare-memoria-per-la-ricattura-1E-W6.md) | 1E | ⏳ **aperto** — servono almeno 6 GB liberi |
-| HO-015 | [Approvazione di maschere e difformità](HO-015-approvazione-maschere-e-difformita-1E-W6.md) | 1E | 🕓 **non ancora attivo** — dopo la ricattura integrale |
+| HO-013 | [Conferma della riesecuzione dell'import](HO-013-conferma-riesecuzione-import-1E-W5.md) | 1E | ✅ **chiuso** 2026-10-13 — confermato (round 35), import eseguito, esito `success` |
+| HO-014 | [Liberare memoria per la ricattura](HO-014-liberare-memoria-per-la-ricattura-1E-W6.md) | 1E | ✅ **chiuso** 2026-10-13 — 9,3 GB liberi (round 35), ricattura integrale fatta |
+| HO-015 | [Approvazione di maschere e difformità](HO-015-approvazione-maschere-e-difformita-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: 5 voci approvate (DR-124…128) |
 | HO-016 | [UAT di parità visiva](HO-016-uat-di-parita-1E-W8.md) | 1E | 🕓 **non ancora attivo** — dopo il rapporto della `1E-W8` |
 | HO-017 | [Distruzione dell'istanza di riferimento](HO-017-distruzione-istanza-di-riferimento.md) | 1E | 🕓 **non ancora attivo** — dopo la UAT approvata |
+| HO-018 | [Conferma della riesecuzione dell'import (famiglie A–D)](HO-018-conferma-riesecuzione-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: import `success`, esito in §7 |
+| HO-019 | [Migrazione e import in locale (famiglie G, D58, D59)](HO-019-migrazione-e-import-1E-W6.md) | 1E | ⏳ **in attesa** della tua conferma |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

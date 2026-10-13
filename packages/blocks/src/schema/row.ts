@@ -28,6 +28,8 @@ export const rowPropsSchema = z
      * un'invariante fra fratelli, non del solo nodo.
      */
     columnStructure: z.string().regex(/^\d+_\d+(,\d+_\d+)*$/),
+    /** DR-134: `flex` per le righe nate da Gutenberg; assente per Divi. */
+    layout: z.enum(['flex']).optional(),
     fullWidth: z.boolean().default(false),
     customWidth: CustomWidth.default(defaultCustomWidth),
     gutter: gutterSchema.default(defaultGutter),

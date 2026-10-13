@@ -19,6 +19,7 @@ export function Row({ block, media, sliders, forms, postLists }: RowComponentPro
       className={blockClassName('row', block.props.classes)}
       style={spacingVariables(block.props.padding)}
       id={block.id}
+      data-layout={block.props.layout}
     >
       {block.children.map((child) => (
         <BlockRenderer

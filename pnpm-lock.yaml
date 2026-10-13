@@ -242,6 +242,9 @@ importers:
       '@amoris/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+      intl-tel-input:
+        specifier: 29.5.3
+        version: 29.5.3
       next:
         specifier: ^16.3.5
         version: 16.3.5(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -288,6 +291,9 @@ importers:
 
   packages/blocks:
     dependencies:
+      intl-tel-input:
+        specifier: 29.5.3
+        version: 29.5.3
       parse5:
         specifier: ^8.0.1
         version: 8.0.1
@@ -2718,6 +2724,9 @@ packages:
   indent-string@4.0.0:
     resolution: {integrity: sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==}
     engines: {node: '>=8'}
+
+  intl-tel-input@29.5.3:
+    resolution: {integrity: sha512-aVqUyjALMavXrdpniEv5+9CjTdVcHRDLiHKi6fBKxb+iNVriwqnWcsGvWmKwHjjDdBoYe2lf3pta0sIJL5ytYA==}
 
   ip-address@10.7.1:
     resolution: {integrity: sha512-4OUAqU9Z1i3vCnS05hzGiFnEMDpQ+62pAD/MVQOp83fYyNC8GleCqaS0QikQBmcWCrKFiUs/B8ztRRiYOAXuCA==}
@@ -5595,6 +5604,8 @@ snapshots:
   imurmurhash@0.1.4: {}
 
   indent-string@4.0.0: {}
+
+  intl-tel-input@29.5.3: {}
 
   ip-address@10.7.1: {}
 

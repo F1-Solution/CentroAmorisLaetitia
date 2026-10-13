@@ -10,12 +10,19 @@ import {
   evaluateSubmissionAttempts,
   numericOption,
   parseDefinitionFields,
+  paymentFieldVisible,
   schemaForForm,
 } from './service.js';
 
 const submissionBody = z.object({
   /** Una coppia per campo della definizione: l'identificativo è quello della definizione. */
-  values: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+  values: z
+    .record(
+      z.string(),
+      // Testo, scelte multiple, o sotto-campi di nome, email confermata e indirizzo (DR-133).
+      z.union([z.string(), z.array(z.string()), z.record(z.string(), z.string().max(5000))]),
+    )
+    .default({}),
   /** Campo esca: un invio automatico lo compila, una persona non lo vede (ADR-010 §4.4). */
   honeypot: z.string().max(500).optional().default(''),
   /** Istante di caricamento del form, in millisecondi: la marca temporale minima. */
@@ -101,7 +108,7 @@ export async function formSubmissionRoutes(app: FastifyInstance): Promise<void> 
       }
 
       const fields = parseDefinitionFields(form.definition);
-      const parsed = schemaForForm(fields).safeParse(request.body.values);
+      const parsed = schemaForForm(fields, request.body.values).safeParse(request.body.values);
       if (!parsed.success) {
         return reply.code(400).send({
           error: {
@@ -131,15 +138,18 @@ export async function formSubmissionRoutes(app: FastifyInstance): Promise<void> 
         ? (numericOption(paymentField.options, 'amount') ??
           numericOption(paymentField.options, 'price'))
         : null;
+      // Il pagamento vale solo se il suo campo è visibile con le scelte fatte (es. non con il bonifico).
+      const paymentRequired =
+        form.requiresPayment && paymentFieldVisible(fields, request.body.values);
 
       return reply.send({
         ok: true,
         confirmationMessage: form.confirmationMessage ?? 'Richiesta inviata.',
         payment: {
-          required: form.requiresPayment,
-          amount: form.requiresPayment ? amount : null,
+          required: paymentRequired,
+          amount: paymentRequired ? amount : null,
           // Solo dopo l'invio, come nella sorgente: il conto non compare nella pagina.
-          url: form.requiresPayment ? paymentUrl(form.definition, amount, form.title) : null,
+          url: paymentRequired ? paymentUrl(form.definition, amount, form.title) : null,
         },
       });
     },

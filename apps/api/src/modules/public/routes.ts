@@ -102,6 +102,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           slug: content.slug,
           title: content.title,
           showTitle: content.showTitle,
+          pageLayout: content.pageLayout,
           excerpt: content.excerpt,
           blocks: content.blocks,
           featuredMediaId: content.featuredMediaId,

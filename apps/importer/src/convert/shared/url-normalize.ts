@@ -18,8 +18,9 @@ export interface UrlNormalizationResult {
   readonly count: number;
 }
 
+// Non preceduto da `:` o da una lettera, così `https://host/…` resta assoluto (famiglia J, 1E-W6).
 const SCHEME_RELATIVE_SITE_URL =
-  /\/\/(www\.centroamorislaetitia\.it|centroamorislaetitia\.it)(\/[^"'\s)>]*)?/g;
+  /(?<![:\w])\/\/(www\.centroamorislaetitia\.it|centroamorislaetitia\.it)(\/[^"'\s)>]*)?/g;
 
 /**
  * Sostituisce ogni occorrenza di `//<host-del-sito>/percorso` con `/percorso`

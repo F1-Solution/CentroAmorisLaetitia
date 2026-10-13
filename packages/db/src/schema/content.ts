@@ -14,7 +14,7 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { users } from './auth.js';
-import { contentStatus, contentType } from './enums.js';
+import { contentStatus, contentType, pageLayout } from './enums.js';
 import { media } from './media.js';
 import { tsvector } from './types.js';
 
@@ -35,6 +35,8 @@ export const contents = pgTable(
     title: text().notNull(),
     /** Sostituisce `shk-hide-title` e il titolo soppresso dal page builder (1B-W0 §4). */
     showTitle: boolean().notNull().default(true),
+    /** Barra laterale e larghezza della colonna; predefinito del tema `et_right_sidebar` (DR-139). */
+    pageLayout: pageLayout().notNull().default('right_sidebar'),
     isSticky: boolean().notNull().default(false),
     excerpt: text(),
     /** Documento a blocchi (ADR-005 §3.1). */

@@ -19,6 +19,7 @@ export function Column({ block, media, sliders, forms, postLists }: ColumnCompon
       className={blockClassName('column', block.props.classes)}
       style={spacingVariables(block.props.padding)}
       id={block.id}
+      data-width={block.props.width}
     >
       {block.children.map((child) => (
         <BlockRenderer

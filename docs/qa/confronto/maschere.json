@@ -2,92 +2,272 @@
  {
   "url": "/contatti/",
   "viewport": "1440",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 180,
-  "y": 1050,
+  "y": 650,
   "w": 1080,
-  "h": 450
+  "h": 87
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 180,
+  "y": 1340,
+  "w": 510,
+  "h": 287
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 750,
+  "y": 1340,
+  "w": 510,
+  "h": 287
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 408,
+  "y": 1738,
+  "w": 624,
+  "h": 351
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 940,
+  "y": 137,
+  "w": 320,
+  "h": 180
  },
  {
   "url": "/dove-siamo/",
   "viewport": "1440",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 180,
-  "y": 315,
+  "y": 275,
   "w": 1080,
-  "h": 450
+  "h": 87
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "1440",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 260,
-  "y": 1884,
-  "w": 636,
-  "h": 358
+  "x": 711,
+  "y": 558,
+  "w": 190,
+  "h": 107
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 711,
+  "y": 695,
+  "w": 190,
+  "h": 107
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "1440",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 711,
+  "y": 944,
+  "w": 190,
+  "h": 107
  },
  {
   "url": "/contatti/",
   "viewport": "1280",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 128,
-  "y": 1026,
+  "y": 643,
   "w": 1024,
-  "h": 450
+  "h": 87
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1280",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 128,
+  "y": 1330,
+  "w": 484,
+  "h": 272
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1280",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 668,
+  "y": 1330,
+  "w": 484,
+  "h": 272
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1280",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 344,
+  "y": 1710,
+  "w": 592,
+  "h": 333
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "1280",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 848,
+  "y": 137,
+  "w": 304,
+  "h": 171
  },
  {
   "url": "/dove-siamo/",
   "viewport": "1280",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 128,
-  "y": 302,
+  "y": 271,
   "w": 1024,
-  "h": 450
+  "h": 87
  },
  {
   "url": "/contatti/",
   "viewport": "1024",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 102,
-  "y": 972,
+  "y": 644,
   "w": 819,
-  "h": 450
+  "h": 87
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1024",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 102,
+  "y": 1296,
+  "w": 387,
+  "h": 218
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1024",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 535,
+  "y": 1296,
+  "w": 387,
+  "h": 218
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "1024",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 275,
+  "y": 1612,
+  "w": 473,
+  "h": 266
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "1024",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 679,
+  "y": 137,
+  "w": 243,
+  "h": 137
  },
  {
   "url": "/dove-siamo/",
   "viewport": "1024",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 102,
-  "y": 275,
+  "y": 256,
   "w": 819,
-  "h": 450
+  "h": 87
  },
  {
   "url": "/contatti/",
   "viewport": "768",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 77,
-  "y": 1121,
+  "y": 877,
   "w": 614,
-  "h": 450
+  "h": 87
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 77,
+  "y": 1849,
+  "w": 614,
+  "h": 346
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 77,
+  "y": 2324,
+  "w": 614,
+  "h": 346
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 77,
+  "y": 3157,
+  "w": 614,
+  "h": 346
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 77,
+  "y": 1577,
+  "w": 614,
+  "h": 346
  },
  {
   "url": "/dove-siamo/",
   "viewport": "768",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 77,
-  "y": 350,
+  "y": 290,
   "w": 614,
-  "h": 450
+  "h": 87
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
@@ -95,29 +275,89 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 138,
-  "y": 2526,
+  "y": 2277,
+  "w": 492,
+  "h": 276
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 138,
+  "y": 2584,
+  "w": 492,
+  "h": 276
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 138,
+  "y": 2947,
   "w": 492,
   "h": 276
  },
  {
   "url": "/contatti/",
   "viewport": "390",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 39,
-  "y": 1121,
+  "y": 877,
   "w": 312,
-  "h": 450
+  "h": 87
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 39,
+  "y": 2293,
+  "w": 312,
+  "h": 176
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 39,
+  "y": 2599,
+  "w": 312,
+  "h": 176
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 39,
+  "y": 3289,
+  "w": 312,
+  "h": 176
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 39,
+  "y": 2176,
+  "w": 312,
+  "h": 176
  },
  {
   "url": "/dove-siamo/",
   "viewport": "390",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 39,
-  "y": 350,
+  "y": 290,
   "w": 312,
-  "h": 450
+  "h": 115
  },
  {
   "url": "/informazioni-sui-cookie/",
@@ -125,7 +365,7 @@
   "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
   "selettore": "table (cookie)",
   "x": 39,
-  "y": 4134,
+  "y": 4416,
   "w": 312,
   "h": 259
  },
@@ -135,29 +375,89 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 70,
-  "y": 4264,
+  "y": 4015,
+  "w": 250,
+  "h": 140
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 70,
+  "y": 4185,
+  "w": 250,
+  "h": 140
+ },
+ {
+  "url": "/riparte-il-corso-per-consulenti-familiari/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 70,
+  "y": 4440,
   "w": 250,
   "h": 140
  },
  {
   "url": "/contatti/",
   "viewport": "360",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 36,
-  "y": 1205,
+  "y": 961,
   "w": 288,
-  "h": 450
+  "h": 115
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "360",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 36,
+  "y": 2333,
+  "w": 288,
+  "h": 162
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "360",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 36,
+  "y": 2625,
+  "w": 288,
+  "h": 162
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "360",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 36,
+  "y": 3301,
+  "w": 288,
+  "h": 162
+ },
+ {
+  "url": "/dal-vizioso-al-virtuoso/",
+  "viewport": "360",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 36,
+  "y": 2257,
+  "w": 288,
+  "h": 162
  },
  {
   "url": "/dove-siamo/",
   "viewport": "360",
-  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte (altezza allargata: la sorgente mostra un riquadro di errore di Google più alto della copertina nuova, non ancora misurato pixel per pixel)",
+  "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 36,
-  "y": 350,
+  "y": 290,
   "w": 288,
-  "h": 450
+  "h": 115
  },
  {
   "url": "/informazioni-sui-cookie/",
@@ -165,7 +465,7 @@
   "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
   "selettore": "table (cookie)",
   "x": 36,
-  "y": 4406,
+  "y": 4715,
   "w": 288,
   "h": 259
  }

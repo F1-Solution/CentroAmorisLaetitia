@@ -55,8 +55,12 @@ export const contentSummary = z.object({
   updatedAt: z.string(),
 });
 
+/** Layout della pagina, ex `_et_pb_page_layout` (DR-139). */
+export const pageLayoutSchema = z.enum(['right_sidebar', 'full_width', 'no_sidebar']);
+
 export const contentDetail = contentSummary.extend({
   showTitle: z.boolean(),
+  pageLayout: pageLayoutSchema,
   isSticky: z.boolean(),
   excerpt: z.string().nullable(),
   blocks: blockDocument,
@@ -85,6 +89,7 @@ export const createBody = z.object({
   parentId: z.string().uuid().nullable().optional(),
   excerpt: z.string().max(5000).nullable().optional(),
   showTitle: z.boolean().optional(),
+  pageLayout: pageLayoutSchema.optional(),
   blocks: blockDocument.optional(),
 });
 

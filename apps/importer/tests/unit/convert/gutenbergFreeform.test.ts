@@ -7,6 +7,8 @@ import { convertContent } from '../../../src/convert/index.js';
  * l'elenco degli articoli, `[catposts]`, in un paragrafo libero. Dati sintetici.
  */
 
+const MEDIA_UUID = '33333333-3333-4333-8333-333333333333';
+
 const heading =
   '<!-- wp:heading -->\n<h2 class="wp-block-heading">Avviso sintetico</h2>\n<!-- /wp:heading -->';
 
@@ -60,14 +62,36 @@ describe('HTML fuori dai blocchi Gutenberg (DR-116)', () => {
     ]);
   });
 
-  it('«offset» dello shortcode salta i primi articoli (DR-116, configurazione «News»)', () => {
+  // DR-130: nel plugin «offset» è «inizia dall'articolo N», contato da 1.
+  it('«offset» 1 non salta nulla, «offset» 3 salta i primi due (DR-130)', () => {
+    const offsetOf = (value: string) => {
+      const result = convertContent({
+        legacyContentId: 904,
+        postContent: `${heading}\n<p>[catposts name="News" number="10" offset="${value}"]</p>`,
+      });
+      const list = result.document.blocks.find((b) => b.type === 'post_list');
+      if (list?.type !== 'post_list') throw new Error('atteso post_list');
+      return list.props.offset;
+    };
+    expect(offsetOf('1')).toBe(0);
+    expect(offsetOf('3')).toBe(2);
+  });
+
+  it('miniatura in alto: niente data, come il modello del plugin; misure, estratto e riserva diventano proprietà', () => {
     const result = convertContent({
-      legacyContentId: 904,
-      postContent: `${heading}\n<p>[catposts name="News" number="10" offset="1"]</p>`,
+      legacyContentId: 906,
+      postContent: `${heading}\n<p>[catposts name="News" thumb="1" date="1" thumb_top="1" thumb_w="100" thumb_h="100" excerpt_length="100" excerpt_more_text="leggi tutto" default_thumbnail="/wp-content/uploads/2017/09/sintetica.jpg"]</p>`,
+      resolvers: { resolveMedia: (src) => (src.endsWith('sintetica.jpg') ? MEDIA_UUID : null) },
     });
     const list = result.document.blocks.find((b) => b.type === 'post_list');
     if (list?.type !== 'post_list') throw new Error('atteso post_list');
-    expect(list.props.offset).toBe(1);
+    expect(list.props.showDate).toBe(false);
+    expect(list.props.thumbnailWidth).toBe(100);
+    expect(list.props.thumbnailHeight).toBe(100);
+    expect(list.props.excerptWords).toBe(100);
+    expect(list.props.excerptMoreText).toBe('leggi tutto');
+    expect(list.props.defaultThumbnailMediaId).toBe(MEDIA_UUID);
+    expect(result.issues.filter((i) => i.code === 'unexpected-catposts-param')).toHaveLength(0);
   });
 
   it('senza «offset» nello shortcode, resta 0', () => {

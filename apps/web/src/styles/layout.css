@@ -38,7 +38,8 @@
 }
 
 .logo_container {
-  padding-top: 0;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 #logo {
@@ -64,7 +65,7 @@
 
 #top-menu {
   display: inline-block;
-  padding-top: 24px;
+  margin-top: 5px;
 }
 
 #top-menu > li {
@@ -95,12 +96,20 @@
   padding-right: 20px;
 }
 
+/* Freccina disegnata in CSS, non con un carattere Unicode: alcuni font non
+   hanno un glifo per '⌄' e il browser va in sostituzione con un altro font,
+   più largo, che sborda nella voce di menu successiva. */
 #top-menu .menu-item-has-children > a::after {
   position: absolute;
-  top: 0;
-  right: 0;
-  content: '⌄';
-  font-weight: 800;
+  top: 50%;
+  right: 4px;
+  width: 0;
+  height: 0;
+  content: '';
+  transform: translateY(-50%);
+  border-top: 5px solid currentcolor;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
 }
 
 #top-menu .sub-menu {
@@ -227,24 +236,32 @@
   padding-bottom: 23px;
 }
 
+/* Filetto della barra: `.et_right_sidebar` con `et_pb_gutters2`, 22,75 % (245,7 px a 1440, DR-139). */
 #main-content .container::before {
   position: absolute;
   top: 0;
-  right: 20.875%;
+  right: 22.75%;
   width: 1px;
   height: 100%;
   background-color: #e2e2e2;
   content: '';
 }
 
-#main-content .container:has(#content-area > #left-area:only-child)::before {
+#main-content .container:not(:has(> #content-area > #sidebar))::before {
   display: none;
 }
 
+/* Articoli Divi: righe a tutta colonna, come `.et_pb_pagebuilder_layout.single` (DR-139). */
+#left-area .et_pb_post[data-builder='divi'] .blk-row {
+  width: 100%;
+  max-width: none;
+}
+
+/* Misurato sull'archivio della sorgente (1E-W6): 77,25 % con 3 % di respiro (`et_pb_gutters2`). */
 #content-area:has(> #sidebar) #left-area {
   float: left;
-  width: 79.125%;
-  padding-right: 5.5%;
+  width: 77.25%;
+  padding-right: 3%;
 }
 
 #sidebar {
@@ -258,8 +275,26 @@
 }
 
 .post-meta {
-  margin-bottom: 0;
+  margin-bottom: 6px;
   font-size: 14px;
+}
+
+/* Più specifica di `p:last-of-type`, come nel tema. */
+.et_pb_post .post-meta {
+  padding-bottom: 15px;
+}
+
+/* Immagine in evidenza dell'archivio, come `.et_pb_post .entry-featured-image-url` di Divi. */
+.et_pb_post .entry-featured-image-url {
+  position: relative;
+  display: block;
+  margin-bottom: 30px;
+}
+
+.et_pb_post .entry-featured-image-url img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: bottom;
 }
 
 .et_pb_post {

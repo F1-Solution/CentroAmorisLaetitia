@@ -121,6 +121,27 @@ describe('editor del contenuto', () => {
     );
   });
 
+  it('DR-139: il layout della pagina si sceglie nella scheda «Pagina» e si salva da solo', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await waitForEditor();
+
+    await user.click(screen.getByRole('tab', { name: 'Pagina' }));
+    const select = screen.getByLabelText('Layout della pagina');
+    expect(select).toHaveValue('right_sidebar');
+    await user.selectOptions(select, 'full_width');
+    await user.click(screen.getByRole('button', { name: 'Salva il layout' }));
+
+    await waitFor(() => {
+      expect(writes()).toEqual([
+        [
+          `/contents/${syntheticContent.id}`,
+          { method: 'PATCH', body: { pageLayout: 'full_width' } },
+        ],
+      ]);
+    });
+  });
+
   it('criterio 1D-36: salvare senza modifiche non scrive il contenuto', async () => {
     const user = userEvent.setup();
     renderEditor();

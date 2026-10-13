@@ -1,0 +1,2 @@
+CREATE TYPE "public"."page_layout" AS ENUM('right_sidebar', 'full_width', 'no_sidebar');--> statement-breakpoint
+ALTER TABLE "contents" ADD COLUMN "page_layout" "page_layout" DEFAULT 'right_sidebar' NOT NULL;

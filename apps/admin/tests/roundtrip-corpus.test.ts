@@ -47,6 +47,7 @@ function asContent(entry: CorpusEntry): ContentDetail {
     title: entry.name,
     excerpt: null,
     showTitle: true,
+    pageLayout: 'right_sidebar',
     blocks: document,
     contentHtml: serializeBlockDocument(document),
     updatedAt: '2026-01-01T00:00:00.000Z',

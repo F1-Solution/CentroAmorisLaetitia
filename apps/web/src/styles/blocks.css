@@ -24,6 +24,12 @@
   position: relative;
 }
 
+/* In Divi colonne e moduli non hanno padding predefinito: non ereditano quello della riga. */
+.blk-column,
+.blk-text {
+  --blk-default-y: 0;
+}
+
 .blk-row {
   --blk-default-y: var(--row-padding-y);
 
@@ -31,6 +37,202 @@
   width: var(--container-width);
   max-width: var(--container-max-width);
   margin: auto;
+}
+
+/* Divi: da 1350px il padding di sezione e riga smette di essere in percentuale. */
+@media (min-width: 1350px) {
+  .blk-section {
+    --blk-default-y: 54px;
+  }
+
+  .blk-row {
+    --blk-default-y: 27px;
+  }
+}
+
+/* Colonne Divi (DR-134): geometria `et_pb_gutters3` misurata sulla sorgente. */
+.blk-row::after {
+  display: block;
+  clear: both;
+  content: '';
+}
+
+.blk-row:not([data-layout]) > .blk-column > .blk:not(:last-child) {
+  margin-bottom: 30px;
+}
+
+@media (min-width: 981px) {
+  .blk-row:not([data-layout]) > .blk-column {
+    position: relative;
+    float: left;
+    min-height: 1px;
+    margin-right: 5.5%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column:last-child {
+    margin-right: 0;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='4_4'],
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_1'] {
+    width: 100%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='3_4'] {
+    width: 73.625%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='2_3'] {
+    width: 64.833%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='3_5'] {
+    width: 57.8%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_2'] {
+    width: 47.25%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='2_5'] {
+    width: 36.7%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_3'] {
+    width: 29.6667%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_4'] {
+    width: 20.875%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_5'] {
+    width: 15.6%;
+  }
+
+  .blk-row:not([data-layout]) > .blk-column[data-width='1_6'] {
+    width: 12.0833%;
+  }
+}
+
+@media (max-width: 980px) {
+  .blk-row:not([data-layout]) > .blk-column:not(:last-child) {
+    margin-bottom: 30px;
+  }
+}
+
+/* Colonne Gutenberg (DR-134), flex con passaggio a 781px; le `wp-block-columns` dentro il testo Divi restano impilate come nella sorgente (famiglia L). */
+.blk-row[data-layout='flex'] {
+  --blk-default-y: 0;
+
+  display: flex;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 2em;
+  width: auto;
+  max-width: none;
+  margin: 0 0 1.75em;
+}
+
+.blk-row[data-layout='flex']::after {
+  content: none;
+}
+
+.blk-row[data-layout='flex'] > .blk-column {
+  min-width: 0;
+  flex-grow: 1;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+@media (min-width: 782px) {
+  .blk-row[data-layout='flex'] {
+    flex-wrap: nowrap;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column {
+    flex-basis: 0;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width] {
+    flex-grow: 0;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_1'] {
+    flex-basis: 100%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_2'] {
+    flex-basis: 50%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_3'] {
+    flex-basis: 33.33%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='2_3'] {
+    flex-basis: 66.66%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_4'] {
+    flex-basis: 25%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='3_4'] {
+    flex-basis: 75%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_5'] {
+    flex-basis: 20%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='2_5'] {
+    flex-basis: 40%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='3_5'] {
+    flex-basis: 60%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='4_5'] {
+    flex-basis: 80%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='1_6'] {
+    flex-basis: 16.66%;
+  }
+
+  .blk-row[data-layout='flex'] > .blk-column[data-width='5_6'] {
+    flex-basis: 83.33%;
+  }
+}
+
+@media (max-width: 781px) {
+  .blk-row[data-layout='flex'] > .blk-column {
+    flex-basis: 100% !important;
+  }
+}
+
+/* Immagine: `.et_pb_image` di Divi, `wp-block-image` nelle righe Gutenberg; mai i margini del browser per `figure`. */
+.blk-image {
+  margin: 0;
+  line-height: 0;
+}
+
+.blk-image img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: bottom;
+}
+
+/* `figure` dentro il testo senza i margini del browser, come il reset del tema (famiglia L). */
+.blk-text figure {
+  margin: 0;
+}
+
+.blk-row[data-layout='flex'] .blk-image {
+  margin: 0 0 1em;
+  line-height: normal;
 }
 
 /* Tablet: fino a 980px. */
@@ -147,6 +349,13 @@
   height: auto;
 }
 
+/* Senza immagine di copertina lo span resta vuoto: senza un rapporto
+   d'aspetto esplicito l'altezza collassa a zero e il video sparisce. */
+.blk-video-placeholder {
+  aspect-ratio: 16 / 9;
+  background: var(--color-surface-muted, #eee);
+}
+
 .blk-video-play {
   position: absolute;
   top: 50%;
@@ -166,6 +375,26 @@
 }
 
 /* Mappa (DR-107): nessuna chiamata a terzi prima del clic. */
+/* Altezze del modulo mappa di Divi: 440, 350 fino a 980 px, 200 fino a 767 px (famiglia M). */
+.blk-map-cover,
+.blk-map-frame {
+  height: 440px;
+}
+
+@media (max-width: 980px) {
+  .blk-map-cover,
+  .blk-map-frame {
+    height: 350px;
+  }
+}
+
+@media (max-width: 767px) {
+  .blk-map-cover,
+  .blk-map-frame {
+    height: 200px;
+  }
+}
+
 .blk-map-cover {
   display: block;
   width: 100%;
@@ -175,8 +404,8 @@
 }
 
 .blk-map-frame {
+  display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
   border: none;
 }
 
@@ -187,17 +416,318 @@
   padding: 0;
 }
 
-.blk-post-list-item img {
+/* Le regole che il plugin Category Posts scrive nella pagina della sorgente (1E-W6). */
+.blk-post-list .cat-post-item {
+  margin: 3px 0 10px;
+  padding: 3px 0;
+  list-style: none;
+}
+
+.blk-post-list .cat-post-item::after {
+  display: table;
+  clear: both;
+  content: '';
+}
+
+.blk-post-list .cat-post-item > div {
+  margin: 5px 0 0;
+  clear: both;
+}
+
+.blk-post-list .cat-post-thumbnail {
+  display: block;
+  max-width: 100%;
+  float: left;
+  margin: 5px 10px 5px 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.blk-post-list .cat-post-crop {
+  display: block;
+  overflow: hidden;
+}
+
+.blk-post-list .cat-post-crop img {
+  display: block;
+  max-width: 100%;
+  margin: initial;
+  object-fit: cover;
+}
+
+.blk-post-list .cat-post-title {
+  display: -webkit-box;
+  overflow: hidden;
+  padding-bottom: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: initial;
+}
+
+.blk-post-list .cpwp-wrap-text {
+  display: -webkit-box;
+  overflow: hidden;
+  padding-bottom: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  text-overflow: ellipsis;
+  white-space: initial;
+}
+
+.blk-post-list .cpwp-wrap-text p {
+  display: inline;
+  margin: 5px 0 0;
+}
+
+.blk-post-list p.cpwp-excerpt-text {
+  min-width: 120px;
+}
+
+.blk-post-list .cat-post-excerpt-more {
+  display: inline-block;
+}
+
+/*
+ * Form WPForms (1E-W6): `wpforms-full.min.css` 1.7.3 della sorgente, con
+ * `.blk-form[data-origin='wpforms']` al posto di `div.wpforms-container-full .wpforms-form`.
+ */
+.blk-form[data-origin='wpforms'] {
+  margin: 0 auto 24px;
+}
+
+/* Il selettore del paese di intl-tel-input resta fuori dal reset, a specificità invariata (famiglia C+). */
+.blk-form[data-origin='wpforms'] *:not(:where(.iti__country-container, .iti__country-container *)) {
+  box-sizing: border-box;
+  float: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0 none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 100%;
+  letter-spacing: normal;
+  list-style: none;
+  outline: none;
+  text-decoration: none;
+  text-indent: 0;
+  text-shadow: none;
+  text-transform: none;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field {
+  clear: both;
+  padding: 10px 0;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-label {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-sublabel {
+  display: block;
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-label-inline {
+  display: inline;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  vertical-align: baseline;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-label-hide,
+.blk-form[data-origin='wpforms'] .wpforms-sublabel-hide {
+  position: absolute;
+  top: -99999px;
+  left: -99999px;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-required-label {
+  color: #f00;
+  font-weight: 400;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-description {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-row {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field .wpforms-field-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-row::before,
+.blk-form[data-origin='wpforms'] .wpforms-field-row::after {
+  display: table;
+  content: ' ';
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-row::after {
+  clear: both;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-one-half {
+  width: 48%;
+  float: left;
+  clear: none;
+  margin-left: 4%;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-first {
+  clear: both;
+  margin-left: 0;
+}
+
+.blk-form[data-origin='wpforms'] input[type='text'],
+.blk-form[data-origin='wpforms'] input[type='email'],
+.blk-form[data-origin='wpforms'] input[type='tel'],
+.blk-form[data-origin='wpforms'] input[type='number'] {
   display: block;
   width: 100%;
-  height: auto;
+  height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background-color: #fff;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.blk-form[data-origin='wpforms'] input.wpforms-field-medium,
+.blk-form[data-origin='wpforms'] .wpforms-field-row.wpforms-field-medium {
+  max-width: 60%;
+}
+
+.blk-form[data-origin='wpforms'] input[type='checkbox'],
+.blk-form[data-origin='wpforms'] input[type='radio'] {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 0 10px 0 3px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  vertical-align: baseline;
+}
+
+.blk-form[data-origin='wpforms'] input[type='radio'] {
+  border-radius: 50%;
+}
+
+.blk-form[data-origin='wpforms'] ul li {
+  margin-bottom: 5px;
+}
+
+.blk-form[data-origin='wpforms'] ul li:last-of-type {
+  margin-bottom: 0;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-html ul,
+.blk-form[data-origin='wpforms'] .wpforms-field-html ol {
+  margin: 0 0 20px;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-html ul li {
+  margin: 0 0 5px;
+  list-style: disc;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-html ol li {
+  margin: 0 0 5px;
+  list-style: decimal;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-submit-container {
+  position: relative;
+  clear: both;
+  padding: 10px 0 0;
+}
+
+.blk-form[data-origin='wpforms'] button[type='submit'] {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  background-color: #eee;
+  color: #333;
+  font-size: 1em;
+}
+
+.blk-form[data-origin='wpforms'] button[type='submit']:hover,
+.blk-form[data-origin='wpforms'] button[type='submit']:focus {
+  border: 1px solid #ccc;
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+/* Campi a fuoco come `wpforms-full.min.css` della sorgente: bordo #999. */
+.blk-form[data-origin='wpforms'] input:focus,
+.blk-form[data-origin='wpforms'] textarea:focus,
+.blk-form[data-origin='wpforms'] select:focus {
+  border: 1px solid #999;
+  box-shadow: none;
+}
+
+/* Telefono (ADR-011): misure di intl-tel-input nella sorgente, contenitore a tutta riga. */
+.blk-form[data-origin='wpforms'] .wpforms-field-phone .iti {
+  display: block;
+  width: 100%;
+}
+
+/* Campo medio come gli altri, misura della sorgente; il prefisso non si mostra (famiglia C+). */
+.blk-form[data-origin='wpforms'] .wpforms-field-phone .iti input.wpforms-field-medium[type='tel'] {
+  min-width: 0;
+  max-width: 60%;
+  padding-left: 52px;
+}
+
+.blk-form[data-origin='wpforms'] .wpforms-field-phone .iti__selected-dial-code {
+  display: none;
+}
+
+/* Il reset qui sopra non deve rendere visibile il campo esca. */
+.blk-form[data-origin='wpforms'] .blk-form-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media only screen and (max-width: 600px) {
+  .blk-form[data-origin='wpforms'] .wpforms-field:not(.wpforms-field-phone) {
+    overflow-x: hidden;
+  }
+
+  .blk-form[data-origin='wpforms'] input.wpforms-field-medium,
+  .blk-form[data-origin='wpforms'] .wpforms-field-row.wpforms-field-medium,
+  .blk-form[data-origin='wpforms']
+    .wpforms-field-phone
+    .iti
+    input.wpforms-field-medium[type='tel'] {
+    max-width: 100%;
+  }
 }
 
 /* Form (ADR-010): il campo esca non deve mai essere visibile. */
-.blk-form-field {
-  margin-bottom: 1rem;
-}
-
 .blk-form-trap {
   position: absolute;
   width: 1px;

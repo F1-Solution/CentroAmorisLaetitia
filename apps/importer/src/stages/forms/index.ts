@@ -49,78 +49,12 @@ import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
-import { paypalSettings, type PaypalSettings } from './payment.js';
+import { asString, parseFormPost } from './parse.js';
 import {
   findDiviContactForms,
   type DiviContactForm,
   type DiviContactForms,
 } from './diviContactForm.js';
-
-const KNOWN_FIELD_TYPES: ReadonlySet<string> = new Set([
-  'address',
-  'checkbox',
-  'date-time',
-  'email',
-  'html',
-  'name',
-  'number',
-  'payment-single',
-  'phone',
-  'radio',
-  'text',
-]);
-
-/**
- * Chiavi facoltative della definizione grezza del plugin tenute per tipo di
- * campo: quanto basta a rendere il campo secondo ADR-010 §4.2, non l'intero
- * blob. `payment-single` è incluso solo perché la sua presenza determina
- * `requiresPayment`: le sue chiavi non producono alcun rendering in Fase 1.
- */
-const FIELD_OPTION_KEYS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
-  address: ['scheme'],
-  checkbox: ['choices', 'random'],
-  'date-time': ['format', 'date_type', 'time_type'],
-  email: ['placeholder', 'default_value', 'confirmation'],
-  html: ['code'],
-  name: ['format'],
-  number: ['placeholder', 'default_value', 'min', 'max'],
-  'payment-single': ['amount', 'price'],
-  phone: ['format', 'placeholder'],
-  radio: ['choices', 'random'],
-  text: ['placeholder', 'default_value', 'limit_count', 'limit_mode'],
-};
-
-interface FormFieldDefinition {
-  readonly id: string;
-  readonly type: string;
-  readonly label: string;
-  readonly required: boolean;
-  readonly order: number;
-  readonly description: string | null;
-  readonly options: Readonly<Record<string, unknown>>;
-}
-
-interface FormNotificationDefinition {
-  readonly name: string;
-  readonly recipients: string;
-  readonly subject: string;
-  readonly senderName: string | null;
-  readonly replyTo: string | null;
-  readonly body: string;
-  readonly isActive: boolean;
-  readonly position: number;
-}
-
-interface ParsedForm {
-  readonly title: string;
-  readonly confirmationMessage: string | null;
-  readonly submitText: string | null;
-  readonly submitTextProcessing: string | null;
-  readonly fields: readonly FormFieldDefinition[];
-  readonly notifications: readonly FormNotificationDefinition[];
-  readonly requiresPayment: boolean;
-  readonly payment: PaypalSettings | null;
-}
 
 interface FormRow {
   readonly legacyId: number;
@@ -129,115 +63,10 @@ interface FormRow {
   readonly rawContent: string;
 }
 
-function asString(value: SqlRow[string] | undefined): string {
-  return value === null || value === undefined ? '' : String(value);
-}
-
 function asNumber(value: SqlRow[string] | undefined): number {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') return Number.parseInt(value, 10) || 0;
   return 0;
-}
-
-function asBoolish(value: unknown): boolean {
-  return value === '1' || value === 1 || value === true;
-}
-
-function asStringOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-function pickKeys(
-  source: Record<string, unknown>,
-  keys: readonly string[],
-): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const key of keys) {
-    if (key in source) out[key] = source[key];
-  }
-  return out;
-}
-
-/**
- * Confermazioni: `settings.confirmations` è a sua volta una mappa; si tiene
- * solo il messaggio della prima, perché ADR-010 §1.1 misura una conferma
- * sempre "messaggio nella pagina, mai un redirect" su tutti e 25 i form —
- * non c'è, su questa sorgente, un secondo tipo di conferma da rappresentare.
- */
-function firstConfirmationMessage(confirmations: unknown): string | null {
-  if (confirmations === null || typeof confirmations !== 'object') return null;
-  for (const value of Object.values(confirmations as Record<string, unknown>)) {
-    if (value === null || typeof value !== 'object') continue;
-    const message = (value as Record<string, unknown>)['message'];
-    if (typeof message === 'string' && message.length > 0) return message;
-  }
-  return null;
-}
-
-/**
- * Analizza `post_content`. Lancia se non è JSON valido o se un campo ha un
- * tipo mai misurato (`KNOWN_FIELD_TYPES`): il chiamante isola l'errore per
- * elemento (`forEachItem`), come già fa `stages/sliders/index.ts`.
- */
-function parseFormPost(raw: string): ParsedForm {
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
-  const rawFields = (parsed['fields'] ?? {}) as Record<string, unknown>;
-  const settings = (parsed['settings'] ?? {}) as Record<string, unknown>;
-
-  const fields: FormFieldDefinition[] = [];
-  let order = 0;
-  for (const value of Object.values(rawFields)) {
-    if (value === null || typeof value !== 'object') continue;
-    const raw = value as Record<string, unknown>;
-    const type = typeof raw['type'] === 'string' ? raw['type'] : '';
-    if (!KNOWN_FIELD_TYPES.has(type)) {
-      throw new Error(`unknown-field-type`); // isolato per form, mai il tipo nel log altrove
-    }
-    fields.push({
-      id: asString(raw['id'] as SqlRow[string]) || String(order),
-      type,
-      label: typeof raw['label'] === 'string' ? raw['label'] : '',
-      required: asBoolish(raw['required']),
-      order,
-      description: asStringOrNull(raw['description']),
-      options: pickKeys(raw, FIELD_OPTION_KEYS_BY_TYPE[type] ?? []),
-    });
-    order += 1;
-  }
-
-  const rawNotifications = (settings['notifications'] ?? {}) as Record<string, unknown>;
-  const notificationsEnabled = settings['notification_enable'] !== '0';
-  const notifications: FormNotificationDefinition[] = [];
-  let position = 0;
-  for (const value of Object.values(rawNotifications)) {
-    if (value === null || typeof value !== 'object') continue;
-    const raw = value as Record<string, unknown>;
-    notifications.push({
-      name:
-        typeof raw['notification_name'] === 'string'
-          ? raw['notification_name']
-          : `Notifica ${position + 1}`,
-      recipients: typeof raw['email'] === 'string' ? raw['email'] : '',
-      subject: typeof raw['subject'] === 'string' ? raw['subject'] : '',
-      senderName: asStringOrNull(raw['sender_name']),
-      replyTo: asStringOrNull(raw['replyto']),
-      body: typeof raw['message'] === 'string' ? raw['message'] : '',
-      isActive: notificationsEnabled,
-      position,
-    });
-    position += 1;
-  }
-
-  return {
-    title: typeof settings['form_title'] === 'string' ? settings['form_title'] : '',
-    confirmationMessage: firstConfirmationMessage(settings['confirmations']),
-    submitText: asStringOrNull(settings['submit_text']),
-    submitTextProcessing: asStringOrNull(settings['submit_text_processing']),
-    fields,
-    notifications,
-    requiresPayment: fields.some((f) => f.type === 'payment-single'),
-    payment: paypalSettings(parsed),
-  };
 }
 
 async function loadFormRows(ctx: StageContext): Promise<readonly FormRow[]> {

@@ -116,6 +116,7 @@ function processNode(
 
   const allowed = allowedAttributesFor(tag);
   const keptAttrs: { name: string; value: string }[] = [];
+  const basisClass = columnBasisClass(tag, node.attrs);
 
   for (const attr of node.attrs) {
     const name = attr.name.toLowerCase();
@@ -140,6 +141,7 @@ function processNode(
       });
       continue;
     }
+    if (name === 'style' && basisClass) continue;
     if (!allowed.includes(name)) {
       if (name === 'style') {
         issues.push({
@@ -192,6 +194,13 @@ function processNode(
     keptAttrs.push({ name, value: attr.value });
   }
 
+  if (basisClass) {
+    const classAttr = keptAttrs.find((a) => a.name === 'class');
+    if (classAttr && !classAttr.value.split(/\s+/).includes(basisClass)) {
+      classAttr.value = `${classAttr.value} ${basisClass}`;
+    }
+  }
+
   // Ordine totale e deterministico: alfabetico. Garantisce l'idempotenza,
   // indipendentemente dall'ordine con cui la sorgente scriveva gli attributi.
   keptAttrs.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
@@ -207,6 +216,39 @@ function processNode(
     return `<${tag}${attrsHtml}>`;
   }
   return `<${tag}${attrsHtml}>${childrenHtml}</${tag}>`;
+}
+
+/** Le percentuali che Gutenberg scrive per le frazioni di colonna (DR-134). */
+const COLUMN_BASIS_FRACTIONS: Readonly<Record<string, string>> = {
+  '100': '1_1',
+  '50': '1_2',
+  '33.33': '1_3',
+  '66.66': '2_3',
+  '25': '1_4',
+  '75': '3_4',
+  '20': '1_5',
+  '40': '2_5',
+  '60': '3_5',
+  '80': '4_5',
+  '16.66': '1_6',
+  '83.33': '5_6',
+};
+
+/**
+ * DR-134: `flex-basis` di una colonna Gutenberg dentro un testo diventa una
+ * classe `blk-basis-N_M`, così la proporzione resta senza stile in linea.
+ */
+function columnBasisClass(
+  tag: string,
+  attrs: readonly { name: string; value: string }[],
+): string | null {
+  if (tag !== 'div') return null;
+  const classes = attrs.find((a) => a.name.toLowerCase() === 'class')?.value.split(/\s+/) ?? [];
+  if (!classes.includes('wp-block-column')) return null;
+  const style = attrs.find((a) => a.name.toLowerCase() === 'style')?.value ?? '';
+  const match = /^\s*flex-basis\s*:\s*(\d+(?:\.\d+)?)%\s*;?\s*$/.exec(style);
+  const fraction = match ? COLUMN_BASIS_FRACTIONS[match[1]!] : undefined;
+  return fraction ? `blk-basis-${fraction}` : null;
 }
 
 /** Vero se `html` è un punto fisso della sanificazione (`BLOCK-MODEL.md` §3.4, §5.6). */

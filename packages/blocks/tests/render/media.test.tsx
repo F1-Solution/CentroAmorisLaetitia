@@ -60,6 +60,73 @@ describe('immagini risolte dalla mappa dei media', () => {
     });
   });
 
+  it('famiglia K: i ritagli a proporzione diversa non entrano nel srcset, come wp_image_matches_ratio', () => {
+    // Il caso misurato su /i-prossimi-corsi-del-centro/: originale 3744×5197.
+    const portrait = {
+      publicPath: '/media/a.jpg',
+      width: 3744,
+      height: 5197,
+      altText: null,
+      variants: [
+        { publicPath: '/media/a-150x150.jpg', width: 150, height: 150 },
+        { publicPath: '/media/a-216x300.jpg', width: 216, height: 300 },
+        { publicPath: '/media/a-400x250.jpg', width: 400, height: 250 },
+        { publicPath: '/media/a-400x284.jpg', width: 400, height: 284 },
+        { publicPath: '/media/a-738x1024.jpg', width: 738, height: 1024 },
+        { publicPath: '/media/a-1080x675.jpg', width: 1080, height: 675 },
+        { publicPath: '/media/a-1080x1499.jpg', width: 1080, height: 1499 },
+      ],
+    };
+    expect(imageAttributes(portrait).srcSet).toBe(
+      '/media/a-216x300.jpg 216w, /media/a-738x1024.jpg 738w, /media/a-1080x1499.jpg 1080w, /media/a.jpg 3744w',
+    );
+  });
+
+  it('famiglia K: senza varianti della stessa proporzione non c’è srcset', () => {
+    const square = {
+      publicPath: '/media/b.png',
+      width: 500,
+      height: 300,
+      altText: null,
+      variants: [{ publicPath: '/media/b-150x150.png', width: 150, height: 150 }],
+    };
+    expect(imageAttributes(square)).toEqual({
+      src: '/media/b.png',
+      sizes: '(max-width: 500px) 100vw, 500px',
+      width: 500,
+      height: 300,
+    });
+  });
+
+  it('famiglia K: oltre 2048 px una variante non entra, salvo che sia quella mostrata', () => {
+    const big = {
+      publicPath: '/media/c.jpg',
+      width: 4000,
+      height: 2000,
+      altText: null,
+      variants: [
+        { publicPath: '/media/c-1024x512.jpg', width: 1024, height: 512 },
+        { publicPath: '/media/c-2560x1280.jpg', width: 2560, height: 1280 },
+      ],
+    };
+    expect(imageAttributes(big).srcSet).toBe('/media/c-1024x512.jpg 1024w, /media/c.jpg 4000w');
+  });
+
+  it('D59: con la variante scelta, src, dimensioni e sizes sono quelli della variante', () => {
+    expect(imageAttributes(media[MEDIA_ID]!, '768x384')).toEqual({
+      src: '/media/2026/01/sintetica-768x384.png',
+      srcSet:
+        '/media/2026/01/sintetica-300x150.png 300w, /media/2026/01/sintetica-768x384.png 768w, /media/2026/01/sintetica.png 1200w',
+      sizes: '(max-width: 768px) 100vw, 768px',
+      width: 768,
+      height: 384,
+    });
+  });
+
+  it('D59: una variante che non esiste fa tornare all’originale', () => {
+    expect(imageAttributes(media[MEDIA_ID]!, '999x999').src).toBe('/media/2026/01/sintetica.png');
+  });
+
   it('con la mappa, l’immagine ha il suo indirizzo; il testo alternativo del blocco prevale', () => {
     const { container } = render(
       <BlocksDocument document={documentWithImage(MEDIA_ID, 'Dal blocco')} media={media} />,

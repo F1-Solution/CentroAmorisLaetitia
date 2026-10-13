@@ -8,10 +8,10 @@ export interface ImageComponentProps {
 }
 
 export function Image({ block, media }: ImageComponentProps) {
-  const { mediaId, src, alt, caption, linkUrl, linkNewWindow } = block.props;
+  const { mediaId, src, variant, alt, caption, linkUrl, linkNewWindow } = block.props;
   const resolved = mediaId !== null ? media?.[mediaId] : undefined;
   const img = resolved ? (
-    <img alt={alt || resolved.altText || ''} {...imageAttributes(resolved)} />
+    <img alt={alt || resolved.altText || ''} {...imageAttributes(resolved, variant)} />
   ) : media && mediaId === null && src ? (
     <img alt={alt} src={src} />
   ) : (

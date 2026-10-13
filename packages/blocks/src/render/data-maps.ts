@@ -50,6 +50,9 @@ export interface FormData {
   readonly requiresPayment: boolean;
   readonly fields: readonly FormFieldData[];
   readonly payment: FormPaymentData | null;
+  /** Testo del pulsante della sorgente (`submit_text`, `submit_text_processing`). */
+  readonly submitText?: string | null;
+  readonly submitTextProcessing?: string | null;
 }
 
 export type FormsMap = Readonly<Record<string, FormData>>;
@@ -60,6 +63,10 @@ export interface PostListItem {
   readonly path: string;
   readonly title: string;
   readonly excerpt: string | null;
+  /** Il riassunto scritto a mano, o le prime parole del testo, come `get_the_excerpt()`. */
+  readonly summary: string | null;
+  /** Vero se `summary` è stato tagliato: si aggiunge il link «leggi tutto». */
+  readonly summaryTruncated: boolean;
   readonly featuredMediaId: string | null;
   readonly publishedAt: string | null;
 }

@@ -36,6 +36,11 @@ import {
 import type { ParsedShortcode } from './shortcodes.js';
 import { parseShortcodes } from './shortcodes.js';
 
+/** Un tratto fra moduli fatto solo di commenti HTML (es. `wp:divi/placeholder`) e spazi non si rende. */
+function hasVisibleText(gap: string): boolean {
+  return gap.replace(/<!--[\s\S]*?-->/g, '').trim() !== '';
+}
+
 /** Punto di ingresso: converte l'intero `post_content` di un contenuto Divi. */
 export function convertDiviContent(text: string, ctx: ConvertContext): BlockNode[] {
   const roots = parseShortcodes(text);
@@ -45,7 +50,7 @@ export function convertDiviContent(text: string, ctx: ConvertContext): BlockNode
   for (const node of roots) {
     if (node.start > cursor) {
       const gap = text.slice(cursor, node.start);
-      if (gap.trim() !== '') {
+      if (hasVisibleText(gap)) {
         const built = buildRichTextOrFallback(ctx, gap, { start: cursor, end: node.start });
         if (built) blocks.push(built as BlockNode);
       }
@@ -55,7 +60,7 @@ export function convertDiviContent(text: string, ctx: ConvertContext): BlockNode
   }
   if (cursor < text.length) {
     const gap = text.slice(cursor);
-    if (gap.trim() !== '') {
+    if (hasVisibleText(gap)) {
       const built = buildRichTextOrFallback(ctx, gap, { start: cursor, end: text.length });
       if (built) blocks.push(built as BlockNode);
     }

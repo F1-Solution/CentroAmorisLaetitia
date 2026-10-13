@@ -151,4 +151,9 @@ Quarto round, aperto il 2026-10-10 nella `1E-W4`:
 | ~~**D50**~~ | chiusa | **DR-121**: Google Maps dopo il clic | — |
 | ~~**D51**~~ | chiusa | **DR-122**: `youtube-nocookie.com` dopo il clic | — |
 | ~~**D52**~~ | chiusa | **DR-123**: verifica del carosello tolta dal piano del confronto | — |
+| **D53** | bloccante per D | Significato di `offset` nell'elenco della home: come la sorgente (dal più recente) o salto del più recente | `docs/qa/confronto/analisi-impatto-A-D.md` |
+| **D54** | differibile, entro la ricattura | `/bacheca/`: messaggio del plugin della sorgente | idem |
+| **D55** | differibile, entro la correzione dello stile dei form | Campo telefono con bandiera | idem |
+| **D56** | bloccante per C | Forma dei valori inviati per nome, email con conferma e indirizzo | idem |
+| **D57** | bloccante per B | Geometria delle colonne che vengono da Gutenberg | idem |
 

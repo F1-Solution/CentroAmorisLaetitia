@@ -25,6 +25,9 @@ import {
   type BlockDocument,
 } from '@amoris/blocks';
 
+/** Layout della pagina (DR-139). */
+export type PageLayout = 'right_sidebar' | 'full_width' | 'no_sidebar';
+
 export interface ContentDetail {
   readonly id: string;
   readonly type: 'page' | 'post';
@@ -34,6 +37,7 @@ export interface ContentDetail {
   readonly title: string;
   readonly excerpt: string | null;
   readonly showTitle: boolean;
+  readonly pageLayout: PageLayout;
   readonly blocks: unknown;
   readonly contentHtml: string;
   readonly updatedAt: string;

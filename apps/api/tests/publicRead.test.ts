@@ -178,6 +178,7 @@ beforeAll(async () => {
       status,
       type: 'post',
       publishedAt: `2026-03-0${n + 1}T10:00:00Z`,
+      text: 'uno  due tre\nquattro cinque',
     });
     await h.db.insert(schema.contentTerms).values({ contentId: id, termId: ids.news });
   }
@@ -220,7 +221,7 @@ beforeAll(async () => {
       {
         type: 'post_list',
         id: 'bl1',
-        props: { termIds: [ids.news], offset: 1, order: 'date_desc' },
+        props: { termIds: [ids.news], offset: 1, order: 'date_desc', excerptWords: 3 },
       },
     ],
   });
@@ -300,6 +301,8 @@ describe('contenuti', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json();
     expect(body.content.title).toBe('Titolo pagina');
+    // DR-139: il layout esce con il contenuto; qui il predefinito del tema.
+    expect(body.content.pageLayout).toBe('right_sidebar');
     expect(body.seo.title).toBe('Titolo pagina - Sito sintetico');
     expect(body.seo.robots).toBe('max-image-preview:large');
     expect(body.seo.description).toMatch(/^Testo di una pagina inventata\./);
@@ -322,6 +325,12 @@ describe('contenuti', () => {
   it('risolve l’elenco di un blocco «post_list», con l’«offset» del blocco (DR-116)', async () => {
     const body = (await get('/public/content?path=/con-blocchi-runtime/')).json();
     expect(body.postLists.bl1.map((p: { path: string }) => p.path)).toEqual(['/articolo-0/']);
+  });
+
+  it('l’estratto di un «post_list» sono le prime N parole del testo, come wp_trim_words (1E-W6)', async () => {
+    const body = (await get('/public/content?path=/con-blocchi-runtime/')).json();
+    expect(body.postLists.bl1[0].summary).toBe('uno due tre');
+    expect(body.postLists.bl1[0].summaryTruncated).toBe(true);
   });
 
   it('la pagina iniziale si serve a «/», con il suo ambito SEO e l’indirizzo canonico «/»', async () => {

@@ -78,7 +78,18 @@ const KNOWN_CATPOSTS_PARAMS = new Set([
   'order',
   // La configurazione salvata (DR-116) lo passa come `offset`.
   'offset',
+  // Dalla configurazione salvata, 1E-W6.
+  'thumb_top',
+  'thumb_w',
+  'thumb_h',
+  'excerpt_length',
+  'excerpt_more_text',
+  'default_thumbnail',
 ]);
+
+function positiveInt(raw: string | undefined, max: number): number | null {
+  return raw && /^\d+$/.test(raw) && Number(raw) >= 1 ? Math.min(Number(raw), max) : null;
+}
 
 function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNode {
   for (const key of Object.keys(shortcode.attrs)) {
@@ -102,17 +113,31 @@ function buildPostList(shortcode: ParsedShortcode, ctx: ConvertContext): BlockNo
     return value === undefined || !['', '0', 'false', 'no', 'off'].includes(value.toLowerCase());
   };
 
+  // DR-130: «inizia dall'articolo N», contato da 1 (`class-widget.php`: si salta solo con N > 1).
   const rawOffset = shortcode.attrs.offset;
-  const offset = rawOffset && /^\d+$/.test(rawOffset) ? Number(rawOffset) : 0;
+  const offset = rawOffset && /^\d+$/.test(rawOffset) ? Math.max(Number(rawOffset) - 1, 0) : 0;
+
+  // Con la miniatura in alto il modello del plugin non ha la data (`cat-posts.php`).
+  const thumbTop = shortcode.attrs.thumb_top !== undefined && flag('thumb_top');
+  const defaultThumbnail = shortcode.attrs.default_thumbnail;
+  const defaultThumbnailMediaId =
+    defaultThumbnail && ctx.resolvers.resolveMedia
+      ? ctx.resolvers.resolveMedia(defaultThumbnail)
+      : null;
 
   const props = postListPropsSchema.parse({
     termIds,
     limit,
     offset,
     showThumbnail: flag('thumb'),
-    showDate: flag('date'),
+    showDate: flag('date') && !(thumbTop && flag('thumb')),
     showExcerpt: flag('excerpt'),
     order: 'date_desc',
+    thumbnailWidth: positiveInt(shortcode.attrs.thumb_w, 2000),
+    thumbnailHeight: positiveInt(shortcode.attrs.thumb_h, 2000),
+    excerptWords: positiveInt(shortcode.attrs.excerpt_length, 1000),
+    excerptMoreText: shortcode.attrs.excerpt_more_text?.trim() || null,
+    defaultThumbnailMediaId,
     classes: [],
   });
 

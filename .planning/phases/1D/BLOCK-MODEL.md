@@ -848,6 +848,8 @@ guarda per primo.
 **Non è un difetto finché la conversione di quei sette produce blocchi corretti**, e
 va verificato guardandoli, non contandoli. È un controllo esplicito della `1D-W4`.
 
+**Esito (2026-10-13, `1E-W6`):** era un difetto, i sette contenuti risultavano vuoti; corretto, ora 57/47/4 come ADR-005.
+
 ### 10.4 La soglia del blocco di riserva non è ancora misurabile
 
 Eseguita in questa wave, senza i risolutori verso `forms` e `media` che nascono nella

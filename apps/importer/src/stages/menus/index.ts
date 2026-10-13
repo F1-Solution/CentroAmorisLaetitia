@@ -207,12 +207,31 @@ async function loadMenuItemRows(
       objectId: asNumber(meta.get('_menu_item_object_id')),
       url: meta.get('_menu_item_url') || null,
       linkTarget: meta.get('_menu_item_target') || null,
-      cssClasses: meta.get('_menu_item_classes') || null,
+      cssClasses: parseCssClasses(meta.get('_menu_item_classes') || null),
       rawRoles: meta.get('_nav_menu_role') ?? '',
       rawDisplayMode: meta.get('_nav_menu_role_display_mode') ?? '',
     });
   }
   return rows;
+}
+
+/**
+ * `_menu_item_classes` è un array PHP serializzato (es. `a:1:{i:0;s:0:"";}`),
+ * non una stringa di classi: senza questo passo il testo serializzato finiva
+ * letteralmente nell'attributo `class` della voce di menu resa.
+ */
+export function parseCssClasses(raw: string | null): string | null {
+  if (!raw) return null;
+  let valori: readonly PhpValue[] = [];
+  try {
+    const parsed: PhpValue = phpUnserialize(raw);
+    if (parsed instanceof Map) valori = [...parsed.values()];
+    else if (Array.isArray(parsed)) valori = parsed;
+  } catch {
+    return null; // non classificabile: meglio nessuna classe che un valore grezzo
+  }
+  const classi = valori.filter((v): v is string => typeof v === 'string' && v !== '');
+  return classi.length > 0 ? classi.join(' ') : null;
 }
 
 /** Genitori prima dei figli, come `terms/index.ts`, cosi' il genitore esiste sempre già. */

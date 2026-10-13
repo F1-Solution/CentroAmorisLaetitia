@@ -28,5 +28,6 @@ export function postDate(iso: string | null): string {
     year: 'numeric',
   }).formatToParts(new Date(iso));
   const value = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
-  return `${value('day')} ${MESI[Number(value('month')) - 1] ?? ''} ${value('year')}`;
+  // `Number` toglie lo zero che alcune versioni di Intl mettono davanti al giorno.
+  return `${Number(value('day'))} ${MESI[Number(value('month')) - 1] ?? ''} ${value('year')}`;
 }

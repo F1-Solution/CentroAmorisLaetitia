@@ -49,6 +49,41 @@ describe('convertContent — famiglia Gutenberg', () => {
     expect(block.props.src).toContain('prova.jpg');
   });
 
+  it('D59: wp:image con dimensione ridotta ricorda la variante, se il media si risolve', () => {
+    const postContent =
+      '<!-- wp:image {"id":9,"sizeSlug":"large"} -->\n' +
+      '<figure class="wp-block-image size-large"><img src="/wp-content/uploads/2022/09/sintetica-731x1024.jpg" alt="" class="wp-image-9"/></figure>\n' +
+      '<!-- /wp:image -->';
+    const resolved = convertContent({
+      legacyContentId: 41,
+      postContent,
+      resolvers: { resolveMedia: () => '33333333-3333-4333-8333-333333333333' },
+    });
+    const image = resolved.document.blocks[0]!;
+    if (image.type !== 'image') throw new Error('atteso image');
+    expect(image.props.variant).toBe('731x1024');
+
+    // Senza media risolto resta l'indirizzo com'è e nessuna variante.
+    const unresolved = convertContent({ legacyContentId: 42, postContent });
+    const fallback = unresolved.document.blocks[0]!;
+    if (fallback.type !== 'image') throw new Error('atteso image');
+    expect(fallback.props.variant).toBeNull();
+  });
+
+  it('D59: wp:image a dimensione piena non ha variante', () => {
+    const result = convertContent({
+      legacyContentId: 43,
+      postContent:
+        '<!-- wp:image {"id":9,"sizeSlug":"full"} -->\n' +
+        '<figure class="wp-block-image size-full"><img src="/wp-content/uploads/2022/09/sintetica.jpg" alt=""/></figure>\n' +
+        '<!-- /wp:image -->',
+      resolvers: { resolveMedia: () => '33333333-3333-4333-8333-333333333333' },
+    });
+    const image = result.document.blocks[0]!;
+    if (image.type !== 'image') throw new Error('atteso image');
+    expect(image.props.variant).toBeNull();
+  });
+
   it('wp:columns produce row > column con columnStructure coerente', () => {
     const result = convertContent({ legacyContentId: 5, postContent: columnsSample });
     expect(result.document.blocks).toHaveLength(1);
@@ -57,6 +92,8 @@ describe('convertContent — famiglia Gutenberg', () => {
     expect(row.children).toHaveLength(2);
     const widths = row.children.map((c) => (c.type === 'column' ? c.props.width : null));
     expect(row.props.columnStructure).toBe(widths.join(','));
+    // DR-134: la riga ricorda di essere nata da Gutenberg.
+    expect(row.props.layout).toBe('flex');
   });
 
   it('wp:media-text produce media_text con figlio rich_text', () => {
