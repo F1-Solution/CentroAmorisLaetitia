@@ -1313,3 +1313,13 @@ Nella stessa risposta: **HO-018 confermato** (riesecuzione dell'import in locale
 | DR-140 | 2026-10-13 | Indirizzo e segnaposti sotto la mappa (D61) | **Opzione A** — nascosti come la sorgente | B — visibili come difformità | «D61=A» | Proprietario | resa della mappa | sì | famiglia M |
 
 Nella stessa risposta: conferma di commit e push del lavoro della `1E-W6`.
+
+## 50. Round 41 — risposta del 2026-10-13, HO-019 e D62
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-141 | 2026-10-13 | Indicatore di focus da tastiera nei form (D62) | **Opzione A** — contorno visibile solo con la tastiera (`:focus-visible`) | B — solo il bordo `#999` della sorgente | «D62=A» | Proprietario | resa dei form del sito pubblico | sì | `analisi-impatto-K-M.md` |
+
+Nella stessa risposta: **HO-019 confermato** (migrazione 0003 e import in locale), poi verifica a vista di layout e barre, ricattura e nuovo confronto della `1E-W6`.
+
+Risposta del 2026-10-14: commit e push confermati; contorno di focus anche al clic nei campi di testo (comportamento standard di `:focus-visible`) accettato — «Contorno dei form ok così» (nota a DR-141).

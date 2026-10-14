@@ -685,6 +685,15 @@
   box-shadow: none;
 }
 
+/* Contorno solo per la navigazione da tastiera, assente nella sorgente (DR-141). */
+.blk-form input:focus-visible,
+.blk-form textarea:focus-visible,
+.blk-form select:focus-visible,
+.blk-form button:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+
 /* Telefono (ADR-011): misure di intl-tel-input nella sorgente, contenitore a tutta riga. */
 .blk-form[data-origin='wpforms'] .wpforms-field-phone .iti {
   display: block;

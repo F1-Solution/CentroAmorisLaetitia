@@ -251,6 +251,11 @@
   display: none;
 }
 
+/* Articolo Divi a tutta larghezza: respiro sopra il titolo come `.et_post_meta_wrapper` della sorgente (DR-139). */
+.et_pb_post[data-builder='divi'] > .container {
+  padding-top: 6%;
+}
+
 /* Articoli Divi: righe a tutta colonna, come `.et_pb_pagebuilder_layout.single` (DR-139). */
 #left-area .et_pb_post[data-builder='divi'] .blk-row {
   width: 100%;

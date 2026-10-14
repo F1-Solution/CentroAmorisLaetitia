@@ -73,3 +73,13 @@ HO-019: confermo migrazione e import in locale.
 ```
 
 Se preferisci rimandare: `HO-019: rimandata`. G, D58 e D59 restano invisibili fino ad allora.
+
+---
+
+## 7. Esito (2026-10-14)
+
+Confermato dall'utente il 2026-10-13 (DR-141). Copia in
+`$HOME\amoris-backup\amoris-prima-HO-019-2026-10-13.dump` (34 tabelle con dati).
+Migrazione applicata; import `success`, 57/47/4; `page_layout` esattamente come
+la tabella del §3; stati della matrice 292/292. Confronto in
+`docs/qa/confronto/classificazione.md` §5. **Chiuso.**

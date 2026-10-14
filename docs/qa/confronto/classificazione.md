@@ -92,3 +92,33 @@ Difetti nuovi o riletti, da approvare prima di correggere:
 
 `/bacheca/`: nella ripartizione risulta HTML (56/47/5 invece di 57/47/4) perché il
 messaggio di Members sostituisce il contenuto prima del riconoscimento; decisione D58.
+
+## 5. Confronto dopo HO-019 (2026-10-14)
+
+Migrazione 0003 e import (`success`, 57/47/4, `page_layout` come atteso), D62
+attuata, ricattura integrale 585/585, confronto: **0 superati, 585 falliti**, 47
+coppie con la stessa altezza.
+
+Misure prese con lo stesso metodo sulle due catture (altezza dei PNG contro il
+riferimento); il metodo del §4 dava 110 px sulla cattura «prima», questo 92 px.
+
+| Misura | Prima di HO-019 | Dopo |
+|---|---|---|
+| Differenza d'altezza mediana | 92 px | 72 px |
+| Coppie con altezza entro 20 px | 83 | 138 |
+| Coppie con più di 500 px di differenza | 45 | 36 |
+| Coppie con la stessa altezza | 46 | 47 |
+| Differenza mediana a pari altezza | 11,76 % | 11,81 % |
+
+Verifica a vista a 1440: filetto a 245,7 px dal bordo destro del contenitore su
+`/bacheca-degli-eventi/` e su un articolo con barra; `/corsi-2022-2023/` senza
+barra; `/convegno-17-febbraio-2018/` con le sezioni da bordo a bordo.
+
+Regressione trovata e corretta nello stesso giro: negli articoli Divi a tutta
+larghezza il titolo era a ridosso della testata; ora ha il `padding-top: 6%` di
+`.et_post_meta_wrapper` della sorgente (titolo a 238 px contro 237). I 15
+articoli sono stati ricatturati dopo la correzione.
+
+Restano, già classificate: E (testata, su tutte le 585), F (piè di pagina), H, I.
+Le 36 coppie oltre 500 px si concentrano su form (C+), pagine Divi lunghe e testi
+legali (`/informazioni-sui-cookie/`, `/informativa-privacy/`).

@@ -36,6 +36,8 @@ CREATE TYPE audit_outcome  AS ENUM ('success', 'failure');
 -- altre quattro del §7.1 non si dichiarano, perche' il gate vieta di pianificare
 -- le fasi gestionali e un valore enumerato e' una pianificazione.
 CREATE TYPE admin_area     AS ENUM ('redazione', 'impostazioni');
+-- Layout della pagina, ex `_et_pb_page_layout` di Divi (DR-139).
+CREATE TYPE page_layout    AS ENUM ('right_sidebar', 'full_width', 'no_sidebar');
 
 
 -- =====================================================================
@@ -215,6 +217,7 @@ CREATE TABLE contents (
     title         text NOT NULL,
     show_title    boolean NOT NULL DEFAULT true, -- 1B-W0 §4: sostituisce shk-hide-title e Divi
     is_sticky     boolean NOT NULL DEFAULT false, -- 1B-W0 §8.1
+    page_layout   page_layout NOT NULL DEFAULT 'right_sidebar', -- DR-139
     excerpt       text,
     blocks        jsonb NOT NULL DEFAULT '{"schema":1,"blocks":[]}'::jsonb, -- ADR-005 §3.1
     content_html  text NOT NULL DEFAULT '',    -- cache di resa, rigenerata (ADR-005 §3.6)
