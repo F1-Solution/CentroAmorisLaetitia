@@ -23,6 +23,8 @@ export const richTextPropsSchema = z
     backgroundLayout: z.enum(['light', 'dark']).nullable().default(null),
     border: borderSchema.nullable().default(null),
     padding: Spacing.default(emptySpacing),
+    /** `custom_margin` di Divi (R, DR-157). */
+    margin: Spacing.default(emptySpacing),
     classes: classesField,
   })
   .strict();

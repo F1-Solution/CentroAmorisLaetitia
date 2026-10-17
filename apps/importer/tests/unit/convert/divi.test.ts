@@ -18,6 +18,65 @@ import {
 const FORM_UUID = '22222222-2222-4222-8222-222222222222';
 
 describe('convertContent — famiglia Divi', () => {
+  it('margini personalizzati di riga, testo e immagine e padding a zero del CSS di riga (R)', () => {
+    const result = convertContent({
+      legacyContentId: 103,
+      postContent:
+        '[et_pb_section][et_pb_row custom_margin="-23px|auto||auto||" custom_css_main_element=" padding-bottom: 0;"]' +
+        '[et_pb_column type="4_4"][et_pb_text custom_margin="||30px|||"]<p>Uno</p>[/et_pb_text]' +
+        '[et_pb_image src="https://esempio.test/wp-content/uploads/2026/09/foto.jpg" custom_margin="||10px|"][/et_pb_image]' +
+        '[/et_pb_column][/et_pb_row][et_pb_row custom_css_main_element="padding: 0;" custom_padding="5px|||"]' +
+        '[et_pb_column type="4_4"][et_pb_text]<p>Due</p>[/et_pb_text][/et_pb_column][/et_pb_row][/et_pb_section]',
+      resolvers: { resolveMedia: () => null },
+    });
+    const section = result.document.blocks[0]!;
+    if (section.type !== 'section') throw new Error('atteso section');
+    const [first, second] = section.children;
+    if (first?.type !== 'row' || second?.type !== 'row') throw new Error('attese due righe');
+    expect(first.props.margin.base).toEqual({
+      top: '-23px',
+      right: null,
+      bottom: null,
+      left: null,
+    });
+    expect(first.props.padding.base).toEqual({ top: null, right: null, bottom: '0px', left: null });
+    // `custom_padding` vince sul CSS libero per il lato che imposta.
+    expect(second.props.padding.base).toEqual({
+      top: '5px',
+      right: '0px',
+      bottom: '0px',
+      left: '0px',
+    });
+    const column = first.children[0]!;
+    if (column.type !== 'column') throw new Error('atteso column');
+    const [text, image] = column.children;
+    if (text?.type !== 'rich_text' || image?.type !== 'image')
+      throw new Error('attesi testo e immagine');
+    expect(text.props.margin.base?.bottom).toBe('30px');
+    expect(image.props.margin.base?.bottom).toBe('10px');
+    expect(result.issues.some((i) => i.detail?.includes('custom_margin'))).toBe(false);
+  });
+
+  it('prova negativa: altro CSS libero di riga non si traduce e si segnala (R)', () => {
+    const result = convertContent({
+      legacyContentId: 104,
+      postContent:
+        '[et_pb_section][et_pb_row custom_css_main_element="color: red;"][et_pb_column type="4_4"]' +
+        '[et_pb_text]<p>Tre</p>[/et_pb_text][/et_pb_column][/et_pb_row][/et_pb_section]',
+    });
+    const section = result.document.blocks[0]!;
+    if (section.type !== 'section') throw new Error('atteso section');
+    const row = section.children[0]!;
+    if (row.type !== 'row') throw new Error('atteso row');
+    expect(row.props.padding.base).toBeNull();
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: 'unknown-divi-attribute',
+        detail: 'et_pb_row.custom_css_main_element',
+      }),
+    );
+  });
+
   it('riconosce la famiglia Divi da uno shortcode et_pb_', () => {
     const result = convertContent({ legacyContentId: 100, postContent: sectionRowColumnTextImage });
     expect(result.family).toBe('divi');

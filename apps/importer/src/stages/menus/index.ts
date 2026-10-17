@@ -49,6 +49,7 @@ import type { ItemKey, StageResult } from '../types.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { SqlRow } from '../../source/sql/types.js';
 import { phpUnserialize, type PhpValue } from '../../source/php/unserialize.js';
+import { texturizePlain } from '../../convert/shared/wptexturize.js';
 
 interface MenuRow {
   readonly termId: number;
@@ -199,7 +200,8 @@ async function loadMenuItemRows(
     rows.push({
       legacyId,
       menuTermId,
-      label: asString(row['post_title']),
+      // Le voci di menu passavano da `the_title`, quindi da `wptexturize()` (DR-151).
+      label: texturizePlain(asString(row['post_title'])),
       position: asNumber(row['menu_order']),
       parentLegacyId: asNumber(meta.get('_menu_item_menu_item_parent')),
       itemType: meta.get('_menu_item_type') ?? '',

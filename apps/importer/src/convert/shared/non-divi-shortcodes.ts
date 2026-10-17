@@ -50,18 +50,25 @@ export function convertNonDiviShortcode(
     // contenuto letterale dello shortcode come testo, cosi' nulla si perde;
     // se risultasse, alla verifica visiva della Fase 1E, che non produce
     // nulla, si eliminerà a quel punto, con quel dato alla mano.
-    const built = buildRichTextOrFallback(ctx, shortcode.raw, {
-      start: shortcode.start,
-      end: shortcode.end,
-    });
+    // Testo letterale di uno shortcode: nella sorgente non passava da `wptexturize()`.
+    const built = buildRichTextOrFallback(
+      ctx,
+      shortcode.raw,
+      { start: shortcode.start, end: shortcode.end },
+      {},
+      { texturize: false },
+    );
     return { block: built ?? null };
   }
 
   ctx.push({ severity: 'warning', code: 'unknown-shortcode', detail: tag });
-  const built = buildRichTextOrFallback(ctx, shortcode.raw, {
-    start: shortcode.start,
-    end: shortcode.end,
-  });
+  const built = buildRichTextOrFallback(
+    ctx,
+    shortcode.raw,
+    { start: shortcode.start, end: shortcode.end },
+    {},
+    { texturize: false },
+  );
   return { block: built ?? null };
 }
 

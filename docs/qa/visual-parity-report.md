@@ -204,3 +204,35 @@ decodificate. Il confronto le tratta di conseguenza; il file non è stato corret
 
 Il criterio 1E-17 vale per il sito nuovo; questi sono errori della sorgente, registrati
 per non attribuirli al sito nuovo.
+
+## 10. Esito della `1E-W6` e difformità accettate (2026-10-16)
+
+Ultimo confronto, dopo DR-157…161 e HO-023: **588 coppie, 38 superate, 3 da esaminare,
+547 fallite**; coppie alla stessa altezza della sorgente 303, differenza d'altezza
+mediana 0 px, 9 coppie oltre 500 px (`docs/qa/confronto/esiti.csv`,
+`analisi-famiglie-DR-154.md` §7). Criterio 1E-19 dopo l'ultimo giro: 4 contenuti su 4
+identici.
+
+Le differenze residue sono state esaminate dall'utente nel report «Bozze di parità
+visiva» (sorgente e sito affiancati a 1440, 768 e 390 px, le altre viewport in cifre) e
+**accettate tutte** (DR-162): 112 indirizzi, 544 viste non superate.
+
+| Famiglia | Indirizzi accettati |
+|---|---|
+| Pagine Divi | 47 |
+| Form di iscrizione | 23 |
+| Colonne Gutenberg | 16 |
+| Testo con titolo | 16 |
+| Archivi e ricerca | 5 |
+| Download | 4 |
+| Pagina non trovata | 1 |
+
+Difformità con una causa nota, accettate nominativamente: refuso «<b>IBAN<b>» chiuso dal
+sito (DR-159); articolo 332 non elencato nell'archivio (DR-160, DR-164); scheda dei
+download senza contatore e con un solo `h1` (DR-161); captcha di `/contatti/` sostituito dal
+campo esca (DR-163); mappa e video a copertina (HO-015); tabella dei cookie che scorre a
+390 e 360 (DR-120); scorrimento orizzontale di tre pagine Gutenberg a 360, come la
+sorgente. Elenco completo, indirizzo per indirizzo: `docs/qa/confronto/decisioni-report-DR-162.csv`.
+
+**Questa sezione non è l'approvazione della parità pixel-perfect richiesta dal gate**:
+quella si dà esplicitamente qui, dopo le verifiche manuali della `1E-W7` e la `1E-W8`.

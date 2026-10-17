@@ -17,11 +17,14 @@ import {
   videoPropsSchema,
   deriveVideoProvider,
   type BlockNode,
+  type Box,
   type ColumnBlock,
+  type Spacing,
 } from '../shared/blocks.js';
 import type { ConvertContext } from '../shared/context.js';
 import { buildHtmlFallbackBlock } from '../shared/html-fallback.js';
 import { buildRichTextOrFallback } from '../shared/rich-text.js';
+import { wptexturize } from '../shared/wptexturize.js';
 import { sectionClasses, rowClasses, imageClasses, mapClasses } from '../shared/classes.js';
 import { deriveDiviColumnWidth } from '../shared/column-width.js';
 import { normalizeSameSiteUrlValue } from '../shared/url-normalize.js';
@@ -203,6 +206,34 @@ function convertSection(node: ParsedShortcode, ctx: ConvertContext) {
   };
 }
 
+/**
+ * `custom_css_main_element` della riga: si traduce solo il `padding` a zero misurato
+ * nei contenuti (`padding: 0;`, `padding-bottom: 0;`), sui lati senza `custom_padding`;
+ * altro CSS libero resta fuori e si segnala (R, DR-157).
+ */
+function withMainElementPadding(
+  padding: Spacing,
+  css: string | undefined,
+  ctx: ConvertContext,
+): Spacing {
+  if (css === undefined || css.trim() === '') return padding;
+  const match = /^\s*padding(-top|-right|-bottom|-left)?\s*:\s*0(?:px)?\s*;?\s*$/i.exec(css);
+  if (!match) {
+    ctx.push({
+      severity: 'warning',
+      code: 'unknown-divi-attribute',
+      detail: 'et_pb_row.custom_css_main_element',
+    });
+    return padding;
+  }
+  const sides = match[1]
+    ? [match[1].slice(1) as keyof Box]
+    : (['top', 'right', 'bottom', 'left'] as const);
+  const base: Box = { top: null, right: null, bottom: null, left: null, ...padding.base };
+  for (const side of sides) base[side] ??= '0px';
+  return { ...padding, base };
+}
+
 function convertRow(node: ParsedShortcode, ctx: ConvertContext) {
   const columns = node.children
     .filter((child) => child.tag === 'et_pb_column')
@@ -249,6 +280,10 @@ function convertRow(node: ParsedShortcode, ctx: ConvertContext) {
       'custom_padding',
       'custom_padding_tablet',
       'custom_padding_phone',
+      'custom_margin',
+      'custom_margin_tablet',
+      'custom_margin_phone',
+      'custom_css_main_element',
     ]),
   );
 
@@ -259,7 +294,12 @@ function convertRow(node: ParsedShortcode, ctx: ConvertContext) {
     gutter,
     backgroundColor,
     backgroundMediaId: null,
-    padding: parseDiviSpacing(node.attrs, 'custom_padding'),
+    padding: withMainElementPadding(
+      parseDiviSpacing(node.attrs, 'custom_padding'),
+      node.attrs.custom_css_main_element,
+      ctx,
+    ),
+    margin: parseDiviSpacing(node.attrs, 'custom_margin'),
     classes: rowClasses({ fullWidth }),
   });
 
@@ -327,6 +367,9 @@ function convertText(node: ParsedShortcode, ctx: ConvertContext) {
       'custom_padding_phone',
       'use_border_color',
       'border_width',
+      'custom_margin',
+      'custom_margin_tablet',
+      'custom_margin_phone',
     ]),
   );
 
@@ -339,6 +382,7 @@ function convertText(node: ParsedShortcode, ctx: ConvertContext) {
       backgroundLayout,
       border,
       padding: parseDiviSpacing(node.attrs, 'custom_padding'),
+      margin: parseDiviSpacing(node.attrs, 'custom_margin'),
     },
   );
 }
@@ -399,6 +443,9 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
       'url_new_window',
       'show_in_lightbox',
       'always_center_on_mobile',
+      'custom_margin',
+      'custom_margin_tablet',
+      'custom_margin_phone',
     ]),
   );
 
@@ -417,6 +464,7 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
     lightbox,
     centerOnMobile,
     animation,
+    margin: parseDiviSpacing(node.attrs, 'custom_margin'),
     classes: imageClasses({ centerOnMobile, lightbox }),
   });
 
@@ -485,7 +533,7 @@ function convertMap(node: ParsedShortcode, ctx: ConvertContext) {
       title: pin.attrs.title ?? null,
       lat: pin.attrs.pin_address_lat ?? pin.attrs.address_lat ?? '0',
       lng: pin.attrs.pin_address_lng ?? pin.attrs.address_lng ?? '0',
-      html: pin.content.trim() === '' ? null : pin.content,
+      html: pin.content.trim() === '' ? null : wptexturize(pin.content),
     }));
 
   reportUnknownDiviAttributes(

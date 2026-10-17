@@ -32,6 +32,8 @@ export const documents = pgTable(
      */
     isPrivate: boolean().notNull().default(false),
     downloadCount: bigint({ mode: 'number' }).notNull().default(0),
+    /** Data del download nella sorgente, per l'ordine della ricerca (DR-144). */
+    publishedAt: timestamp({ withTimezone: true }),
     legacyId: bigint({ mode: 'number' }),
     /** `wpdmpro` | `cuar_private_file`. */
     legacySource: text(),

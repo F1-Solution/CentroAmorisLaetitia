@@ -24,6 +24,7 @@ function richText(id: string): BlockDocument['blocks'][number] {
       backgroundLayout: null,
       border: null,
       padding: emptySpacing(),
+      margin: emptySpacing(),
       classes: [],
     },
     children: [],

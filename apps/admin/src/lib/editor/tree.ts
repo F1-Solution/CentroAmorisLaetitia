@@ -287,7 +287,10 @@ function shorten(value: string, max = 60): string {
 export function labelOf(block: ModelBlock): string {
   switch (block.type) {
     case 'rich_text':
-      return shorten(extractContentText(block.props.html)) || TYPE_SUMMARY.rich_text;
+      return (
+        shorten(extractContentText(block.props.html).replace(/\s+/g, ' ')) ||
+        TYPE_SUMMARY.rich_text
+      );
     case 'html':
       return block.props.detail ?? TYPE_SUMMARY.html;
     case 'image':

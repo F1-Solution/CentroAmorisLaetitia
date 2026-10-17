@@ -26,7 +26,11 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-016 | [UAT di parità visiva](HO-016-uat-di-parita-1E-W8.md) | 1E | 🕓 **non ancora attivo** — dopo il rapporto della `1E-W8` |
 | HO-017 | [Distruzione dell'istanza di riferimento](HO-017-distruzione-istanza-di-riferimento.md) | 1E | 🕓 **non ancora attivo** — dopo la UAT approvata |
 | HO-018 | [Conferma della riesecuzione dell'import (famiglie A–D)](HO-018-conferma-riesecuzione-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: import `success`, esito in §7 |
-| HO-019 | [Migrazione e import in locale (famiglie G, D58, D59)](HO-019-migrazione-e-import-1E-W6.md) | 1E | ⏳ **in attesa** della tua conferma |
+| HO-019 | [Migrazione e import in locale (famiglie G, D58, D59)](HO-019-migrazione-e-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-14: migrazione 0003, import `success` |
+| HO-020 | [Migrazione e import in locale (ricerca E3)](HO-020-migrazione-e-import-ricerca-1E-W6.md) | 1E | ✅ fatto il 2026-10-14: migrazione 0004, import `success`, esito in `docs/qa/confronto/ricerca-E3.md` |
+| HO-021 | [Migrazione e import in locale (spaziatura D69, testo D66)](HO-021-migrazione-e-import-spaziatura-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: migrazione 0005, import `success`, `/chi-siamo/` con spaziatura 3 |
+| HO-022 | [Import in locale (tipografia D70)](HO-022-import-tipografia-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: import `success`, tipografia da 1.258 a 67 scarti |
+| HO-023 | [Migrazione 0006 e import in locale (famiglie dopo DR-154)](HO-023-migrazione-e-import-famiglie-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: migrazione 0006, import `success` 57/47/4, `summary_source` 108/108 |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

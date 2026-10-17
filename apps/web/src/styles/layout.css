@@ -21,11 +21,12 @@
 
 #page-container {
   position: relative;
-  padding-top: 137px; /* altezza dell'intestazione fissa a 1440 */
 }
 
+/* Sopra i 980 px la testata resta in cima e lo spazio segue la sua altezza reale,
+   anche quando il menu va a capo (DR-145); sotto, `absolute` come la sorgente. */
 #main-header {
-  position: fixed;
+  position: sticky;
   top: 0;
   z-index: 99999;
   width: 100%;
@@ -37,15 +38,30 @@
   text-align: center;
 }
 
+/* `#main-header` della sorgente: la riga di 23 px decide l'allineamento di menu e icona (E1). */
+#main-header {
+  line-height: 23px;
+}
+
 .logo_container {
   padding-top: 5px;
   padding-bottom: 5px;
 }
 
+span.logo_helper {
+  display: inline-block;
+  width: 0;
+  height: 100%;
+  vertical-align: middle;
+}
+
+/* Livello di composizione come Divi: cambia il ridimensionamento del logo (DR-154). */
 #logo {
   display: inline-block;
   max-height: var(--logo-height-desktop);
   vertical-align: middle;
+  transform: translate3d(0, 0, 0);
+  transition: all 0.4s ease-in-out;
 }
 
 .logo-testo {
@@ -63,9 +79,14 @@
   list-style: none;
 }
 
+/* Senza riga di testo attorno alle voci, come `#top-menu, #top-menu-nav` della sorgente (E1). */
+#top-menu-nav,
 #top-menu {
-  display: inline-block;
-  margin-top: 5px;
+  line-height: 0;
+}
+
+#top-menu {
+  display: block;
 }
 
 #top-menu > li {
@@ -79,7 +100,9 @@
   padding-right: 0;
 }
 
+/* `position: relative`: la freccia del sottomenu si appoggia al link, come la sorgente (DR-154). */
 #top-menu a {
+  position: relative;
   display: block;
   padding-bottom: var(--menu-item-padding-bottom);
   color: rgba(0, 0, 0, 0.6);
@@ -96,20 +119,15 @@
   padding-right: 20px;
 }
 
-/* Freccina disegnata in CSS, non con un carattere Unicode: alcuni font non
-   hanno un glifo per '⌄' e il browser va in sostituzione con un altro font,
-   più largo, che sborda nella voce di menu successiva. */
-#top-menu .menu-item-has-children > a::after {
+/* Freccia dei sottomenu: glifo `3` di ETmodules, come la sorgente (DR-143). */
+#top-menu .menu-item-has-children > a:first-child::after {
   position: absolute;
-  top: 50%;
-  right: 4px;
-  width: 0;
-  height: 0;
-  content: '';
-  transform: translateY(-50%);
-  border-top: 5px solid currentcolor;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
+  top: 0;
+  right: 0;
+  content: '3';
+  font-family: ETmodules;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 #top-menu .sub-menu {
@@ -117,13 +135,13 @@
   top: calc(100% - 0px);
   left: 0;
   z-index: 9999;
-  visibility: hidden;
+  /* Chiuso fuori dal flusso: con la testata `sticky` non allunga la pagina (DR-148). */
+  display: none;
   width: var(--submenu-width);
   padding: var(--submenu-padding);
   border-top: var(--submenu-border-top);
   background-color: var(--color-background);
   box-shadow: var(--submenu-shadow);
-  opacity: 0;
   text-align: left;
 }
 
@@ -134,8 +152,7 @@
 
 #top-menu li:hover > .sub-menu,
 #top-menu li:focus-within > .sub-menu {
-  visibility: visible;
-  opacity: 1;
+  display: block;
 }
 
 #top-menu .sub-menu li {
@@ -155,32 +172,191 @@
   display: none;
 }
 
+/* ── Ricerca della testata (DR-144), regole `et_header_style_centered` ── */
+
+#top-menu-nav {
+  display: inline-block;
+}
+
+#et_top_search {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  margin: 3px 0 0 22px;
+}
+
+#et_search_icon {
+  cursor: pointer;
+}
+
+#et_search_icon::before {
+  position: absolute;
+  top: -13px;
+  left: 3px;
+  content: 'U';
+  font-family: ETmodules;
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 0 0;
+  text-transform: none;
+}
+
+.et_search_outer {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.container.et_search_form_container {
+  position: relative;
+  height: 100%;
+  opacity: 0;
+}
+
+.container.et_search_form_container.et_pb_search_visible {
+  z-index: 999;
+  opacity: 1;
+  pointer-events: auto;
+  animation: et-fade-in-top 1s cubic-bezier(0.77, 0, 0.175, 1) 1;
+}
+
+.et-search-form {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+/* Come la sorgente: alto dal 60% al fondo, carattere ereditato, spaziatura del customizer. */
+.et-search-form input {
+  position: absolute;
+  top: 60%;
+  right: 30px;
+  bottom: 0;
+  width: 90%;
+  margin: auto;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-family: inherit;
+  font-size: var(--menu-font-size);
+  letter-spacing: 2px;
+}
+
+.et-search-form input::placeholder {
+  letter-spacing: 2px;
+}
+
+/* Contorno a fuoco come i form (DR-141, DR-147), dentro il campo: fuori lo taglierebbe la testata. */
+.et-search-form input:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: -2px;
+}
+
+span.et_close_search_field {
+  position: absolute;
+  top: 60%;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: auto;
+  cursor: pointer;
+}
+
+span.et_close_search_field::after {
+  display: inline-block;
+  content: 'M';
+  font-family: ETmodules;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* A ricerca aperta il menu e l'icona spariscono, come `et_pb_menu_hidden`. */
+#main-header:has(.et_pb_search_visible) #top-menu,
+#main-header:has(.et_pb_search_visible) #et_search_icon::before {
+  opacity: 0;
+  animation: et-fade-out-bottom 1s cubic-bezier(0.77, 0, 0.175, 1) 1;
+}
+
+@keyframes et-fade-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-25%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes et-fade-out-bottom {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container.et_search_form_container.et_pb_search_visible,
+  #main-header:has(.et_pb_search_visible) #top-menu {
+    animation: none;
+  }
+}
+
 @media (max-width: 980px) {
+  /* Regole `et_header_style_centered` della sorgente sotto i 981 px (E5). */
   #page-container {
-    padding-top: 153px;
+    padding-top: 152px;
+  }
+
+  #main-header {
+    position: absolute;
+    padding: 20px 0;
+  }
+
+  .logo_container {
+    padding: 0;
   }
 
   #logo {
     max-height: var(--logo-height-mobile);
   }
 
-  #top-menu-nav {
+  #top-menu-nav,
+  #et_top_search,
+  .et_search_outer {
     display: none;
   }
 
   #et_mobile_nav_menu {
+    position: relative;
     display: block;
-    margin: 18px 0;
+    margin-top: 20px;
     text-align: left;
   }
 
   .mobile_nav {
     position: relative;
     display: block;
-    padding: 9px 10px;
+    padding: 5px 10px;
     border-radius: 5px;
     background-color: rgba(0, 0, 0, 0.05);
-    color: var(--color-heading);
+    color: #666;
     font-weight: var(--font-weight-menu);
     cursor: pointer;
     list-style: none;
@@ -190,16 +366,34 @@
     display: none;
   }
 
+  .select_page {
+    display: inline-block;
+    color: #666;
+    font-size: 14px;
+  }
+
+  /* Hamburger: glifo `a` di ETmodules, come la sorgente (DR-143). */
   .mobile_menu_bar {
     position: absolute;
-    top: 50%;
-    right: 10px;
-    width: 22px;
-    height: 2px;
-    background: var(--color-accent);
-    box-shadow:
-      0 7px 0 var(--color-accent),
-      0 -7px 0 var(--color-accent);
+    top: 2px;
+    right: 5px;
+    display: block;
+    line-height: 0;
+  }
+
+  .mobile_menu_bar::before {
+    position: relative;
+    top: 0;
+    left: 0;
+    color: var(--color-accent);
+    content: 'a';
+    font-family: ETmodules;
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    text-shadow: 0 0;
+    text-transform: none;
   }
 
   .et_mobile_menu {
@@ -232,8 +426,20 @@
   padding-top: 58px;
 }
 
-#left-area {
-  padding-bottom: 23px;
+/* Solo sopra i 980 px, e 0 con `et_full_width_page`, come la sorgente. */
+@media (min-width: 981px) {
+  #left-area {
+    padding-bottom: 23px;
+  }
+
+  #content-area[data-page-layout='full_width'] #left-area {
+    padding-bottom: 0;
+  }
+}
+
+/* Titolo di pagina di `page.php`. */
+.main_title {
+  margin-bottom: 20px;
 }
 
 /* Filetto della barra: `.et_right_sidebar` con `et_pb_gutters2`, 22,75 % (245,7 px a 1440, DR-139). */
@@ -307,6 +513,35 @@
   word-wrap: break-word;
 }
 
+/* Articolo singolo: `.single .post` e `.et_pb_post .entry-content` del tema; i Divi azzerano il secondo (P, DR-157). */
+.single.post {
+  padding-bottom: 25px;
+}
+
+.single.et_pb_post:not([data-builder='divi']) > .entry-content {
+  padding-top: 30px;
+}
+
+@media (max-width: 1100px) {
+  .et_pb_post {
+    margin-bottom: 42px;
+  }
+}
+
+/* Titoli dell'elenco di `index.php` al telefono, come la sorgente. */
+@media (max-width: 767px) {
+  .et_pb_post > h2 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 479px) {
+  .et_pb_post h2 {
+    padding-bottom: 0;
+    font-size: 16px;
+  }
+}
+
 .pagination .alignleft {
   float: left;
 }
@@ -335,16 +570,76 @@
   color: #fff;
 }
 
+/* Regole di Divi per una colonna (`et_pb_footer_columns1`), F2. */
 #footer-widgets {
   padding: 6% 0 0;
 }
 
 .footer-widget {
-  margin-bottom: 9.5%;
+  float: left;
+  width: 100%;
+}
+
+/* Margine per `et_pb_gutters{N}` della pagina, come `gutters{N}_footer.css` del tema (DR-149). */
+@media (min-width: 981px) {
+  .et_pb_gutters1 .footer-widget {
+    margin-bottom: 0;
+  }
+
+  .et_pb_gutters2 .footer-widget {
+    margin-bottom: 3%;
+  }
+
+  .et_pb_gutters3 .footer-widget {
+    margin-bottom: 5.5%;
+  }
+
+  .et_pb_gutters4 .footer-widget {
+    margin-bottom: 8%;
+  }
+}
+
+/* Il widget flotta: la colonna è larga quanto il testo, come nella sorgente (F1). */
+.footer-widget .fwidget {
+  float: left;
+  max-width: 100%;
+  margin-bottom: 5.5%;
+  overflow-wrap: break-word;
+}
+
+.footer-widget .fwidget:last-child {
+  margin-bottom: 0;
 }
 
 .footer-widget a {
   color: #fff;
+}
+
+@media (max-width: 980px) {
+  #footer-widgets {
+    padding: 8% 0;
+  }
+
+  .footer-widget {
+    margin: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  #footer-widgets {
+    padding: 10% 0;
+  }
+}
+
+@media (max-width: 479px) {
+  #footer-widgets {
+    padding: 12% 0;
+  }
+
+  /* Nella sorgente questa regola vince su quella dell'ultimo widget: il margine resta. */
+  .footer-widget {
+    margin-bottom: 11.5%;
+  }
 }
 
 #footer-bottom {
@@ -359,4 +654,92 @@
     max-width: 100%;
     overflow-x: auto;
   }
+}
+
+/* Scheda del pacchetto di Download Manager (tema `w3eden`), misurata sulla sorgente (D75, DR-161). */
+.w3eden .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+}
+
+.w3eden .col-md-5,
+.w3eden .col-md-7 {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 15px;
+}
+
+@media (min-width: 768px) {
+  .w3eden .col-md-5 {
+    flex: 0 0 auto;
+    width: 41.6667%;
+  }
+
+  .w3eden .col-md-7 {
+    flex: 0 0 auto;
+    width: 58.3333%;
+  }
+}
+
+.w3eden .wpdm-button-area {
+  margin-bottom: 16px;
+}
+
+.w3eden .btn {
+  display: inline-flex;
+  padding: 8px 16px;
+  border: 1px solid #4a8eff;
+  border-radius: 4px;
+  background-color: #4a8eff;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+}
+
+.w3eden .list-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.w3eden .list-group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-top-width: 0;
+  background-color: #fff;
+  color: #1e293b;
+}
+
+.w3eden .list-group-item:first-child {
+  border-top-width: 1px;
+  border-radius: 8px 8px 0 0;
+}
+
+.w3eden .list-group-item:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+.w3eden .badge {
+  display: block;
+  padding: 0.35em 0.65em;
+  border-radius: 4px;
+  background-color: #4a8eff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 12px;
+}
+
+.w3eden h2.mt-0 {
+  margin-top: 0;
+  padding-bottom: 10px;
+  color: #333;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.3;
 }

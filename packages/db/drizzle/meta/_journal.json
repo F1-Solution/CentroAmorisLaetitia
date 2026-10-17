@@ -29,6 +29,27 @@
       "when": 1791925676640,
       "tag": "0003_layout_della_pagina",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791962387041,
+      "tag": "0004_data_dei_documenti",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791987624417,
+      "tag": "0005_spaziatura_della_pagina",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792156478235,
+      "tag": "0006_estratto_della_sorgente",
+      "breakpoints": true
     }
   ]
 }

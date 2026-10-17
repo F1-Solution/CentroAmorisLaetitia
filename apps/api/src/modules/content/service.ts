@@ -124,7 +124,11 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   if (input.featuredMediaId !== undefined) changes.featuredMediaId = input.featuredMediaId;
   if (input.blocks !== undefined) changes.blocks = input.blocks;
   if (input.contentHtml !== undefined) changes.contentHtml = input.contentHtml;
-  if (input.contentText !== undefined) changes.contentText = input.contentText;
+  if (input.contentText !== undefined) {
+    changes.contentText = input.contentText;
+    // Il testo cambiato dal CMS (spazi esclusi) si conta com'è: la forma della sorgente non vale più (D71, DR-155).
+    changes.summarySource = sql`case when regexp_replace(${schema.contents.contentText}, '\\s+', ' ', 'g') is distinct from regexp_replace(${input.contentText}, '\\s+', ' ', 'g') then null else ${schema.contents.summarySource} end`;
+  }
   if (input.slug !== undefined || input.parentId !== undefined) {
     changes.slug = slug;
     changes.parentId = parentId;

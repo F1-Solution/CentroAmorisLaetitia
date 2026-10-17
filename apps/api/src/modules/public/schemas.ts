@@ -53,6 +53,8 @@ const documentSchema = z.object({
   description: z.string().nullable(),
   mediaId: z.string(),
   updatedAt: z.string(),
+  publishedAt: z.string().nullable(),
+  byteSize: z.number().int().nonnegative(),
 });
 
 const sliderSchema = z.object({
@@ -114,6 +116,8 @@ export const contentResponse = z.object({
     title: z.string(),
     showTitle: z.boolean(),
     pageLayout: z.enum(['right_sidebar', 'full_width', 'no_sidebar']),
+    /** Ex `_et_pb_gutter_width`; `null` = valore del tema (DR-149). */
+    gutterWidth: z.number().int().min(1).max(4).nullable(),
     excerpt: z.string().nullable(),
     blocks: z.unknown(),
     featuredMediaId: z.string().nullable(),
@@ -199,6 +203,14 @@ export const postsResponse = z.object({
     page: z.number().int(),
     perPage: z.number().int(),
   }),
+});
+
+/** Ricerca del sito pubblico (DR-144): la frase come la scrive il visitatore, `s` di WordPress. */
+export const searchQuery = z.object({
+  s: z.string().max(200).default(''),
+  page: z.coerce.number().int().min(1).max(200).default(1),
+  /** La sorgente: `et_divi.divi_searchnum_posts = 5`. */
+  perPage: z.coerce.number().int().min(1).max(50).default(5),
 });
 
 export const termResponse = z.object({

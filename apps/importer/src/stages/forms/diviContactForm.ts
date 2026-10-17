@@ -70,7 +70,11 @@ function toField(node: ParsedShortcode, order: number): DiviFormField {
     required: node.attrs['required_mark'] !== 'off',
     order,
     description: null,
-    options: divType === 'text' ? { multiline: true } : {},
+    options: {
+      ...(divType === 'text' ? { multiline: true } : {}),
+      // Campo a tutta riga invece che a metà (T, DR-157).
+      ...(node.attrs['fullwidth_field'] === 'on' ? { fullwidth: true } : {}),
+    },
   };
 }
 

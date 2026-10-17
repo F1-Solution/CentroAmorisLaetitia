@@ -18,7 +18,15 @@ export function SiteFooter({ footerHtml }: SiteFooterProps) {
       {html ? (
         <div className="container">
           <div id="footer-widgets" className="clearfix">
-            <div className="footer-widget" dangerouslySetInnerHTML={{ __html: html }} />
+            <div className="footer-widget">
+              {/* Involucri del widget HTML della sorgente: la colonna flotta ed è larga quanto il testo (F1). */}
+              <div className="widget_text fwidget et_pb_widget widget_custom_html">
+                <div
+                  className="textwidget custom-html-widget"
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

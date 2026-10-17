@@ -19,6 +19,7 @@ import {
 import type { ConvertContext } from '../shared/context.js';
 import { buildHtmlFallbackBlock } from '../shared/html-fallback.js';
 import { buildRichTextOrFallback } from '../shared/rich-text.js';
+import { wptexturize } from '../shared/wptexturize.js';
 import { deriveGutenbergColumnWidth } from '../shared/column-width.js';
 import { findFirstTag, findTagContent } from '../shared/html-attrs.js';
 import { normalizeSameSiteUrlValue } from '../shared/url-normalize.js';
@@ -96,8 +97,9 @@ function convertSingleBlock(
     case 'wpforms/form-selector':
       return convertFormSelector(block, ctx);
     case 'html':
+      // Anche il blocco HTML passava da `wptexturize()` con il resto del contenuto (DR-151).
       return buildHtmlFallbackBlock(ctx, {
-        html: block.innerHtml,
+        html: wptexturize(block.innerHtml),
         reason: 'wp_html_block',
         detail: null,
         start: block.start,
@@ -113,7 +115,7 @@ function convertSingleBlock(
     default: {
       ctx.push({ severity: 'warning', code: 'unmapped-markup', detail: `wp:${block.blockName}` });
       return buildHtmlFallbackBlock(ctx, {
-        html: block.innerHtml || '',
+        html: wptexturize(block.innerHtml || ''),
         reason: 'divi_unmapped_module',
         detail: `wp:${block.blockName}`,
         start: block.start,

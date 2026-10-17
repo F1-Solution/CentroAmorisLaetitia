@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { blockDocumentSchema, type BlockDocument } from '@amoris/blocks';
 import type { PublicContent } from '../src/lib/api';
-import { ContentView } from '../src/components/Views';
+import { ContentView, DocumentView } from '../src/components/Views';
 
 /**
  * Layout della pagina come `_et_pb_page_layout` della sorgente (DR-139, famiglia
@@ -96,5 +96,47 @@ describe('articoli costruiti con Divi (DR-139)', () => {
       expect(html).toContain('id="left-area"');
       expect(html).toContain('data-builder="divi"');
     }
+  });
+});
+
+describe('scheda del pacchetto nei download (D75)', () => {
+  const html = renderToStaticMarkup(
+    <DocumentView
+      document={{
+        id: 'doc-1',
+        slug: 'modulo-sintetico',
+        title: 'Modulo sintetico',
+        description: null,
+        mediaId: 'm-1',
+        updatedAt: '2026-10-16T09:00:00Z',
+        publishedAt: '2022-04-05T10:00:00Z',
+        byteSize: 103209,
+      }}
+      media={{
+        'm-1': {
+          id: 'm-1',
+          publicPath: '/media/modulo-sintetico.pdf',
+          mimeType: 'application/pdf',
+          width: null,
+          height: null,
+          title: null,
+          altText: null,
+          caption: null,
+          variants: [],
+        },
+      }}
+    />,
+  );
+
+  it('mostra pulsante, dimensione, numero di file e date come Download Manager', () => {
+    expect(html).toContain('href="/media/modulo-sintetico.pdf"');
+    expect(html).toContain('100.79 KB');
+    expect(html).toContain('5 Aprile 2022');
+    expect(html).toContain('<span class="published">5 Apr 2022</span>');
+  });
+
+  it('prova negativa: nessun contatore dei download', () => {
+    expect(html).not.toMatch(/>\s*Download\s*<span/);
+    expect(html.match(/list-group-item/g)).toHaveLength(4);
   });
 });

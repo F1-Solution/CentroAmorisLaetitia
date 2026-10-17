@@ -38,7 +38,8 @@ const FIELD_OPTION_KEYS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
     'country_hide',
     'country_default',
   ],
-  checkbox: ['choices', 'random'],
+  // `input_columns` dispone le scelte in linea o in colonne (U1, DR-157).
+  checkbox: ['choices', 'random', 'input_columns'],
   'date-time': [
     'format',
     'date_type',
@@ -53,7 +54,7 @@ const FIELD_OPTION_KEYS_BY_TYPE: Readonly<Record<string, readonly string[]>> = {
   number: ['placeholder', 'default_value', 'min', 'max'],
   'payment-single': ['amount', 'price', 'format'],
   phone: ['format', 'placeholder'],
-  radio: ['choices', 'random'],
+  radio: ['choices', 'random', 'input_columns'],
   text: ['placeholder', 'default_value', 'limit_count', 'limit_mode'],
 };
 

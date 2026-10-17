@@ -1323,3 +1323,86 @@ Nella stessa risposta: conferma di commit e push del lavoro della `1E-W6`.
 Nella stessa risposta: **HO-019 confermato** (migrazione 0003 e import in locale), poi verifica a vista di layout e barre, ricattura e nuovo confronto della `1E-W6`.
 
 Risposta del 2026-10-14: commit e push confermati; contorno di focus anche al clic nei campi di testo (comportamento standard di `:focus-visible`) accettato — «Contorno dei form ok così» (nota a DR-141).
+
+## 51. Round 42 — risposta del 2026-10-14, analisi E-F e D63-D65
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-142 | 2026-10-14 | Analisi d'impatto E (testata) ed F (piè di pagina) | **approvata**, nell'ordine E1, F1-F2, E5, poi E2-E4, con prove e ricattura | — | «Approvo l'analisi E-F» | Proprietario | `apps/web`, `apps/api` | sì | `docs/qa/confronto/analisi-impatto-E-F.md` |
+| DR-143 | 2026-10-14 | Font delle icone (D63) | **Opzione A** — font `ETmodules` della sorgente ridotto ai glifi usati; licenza da verificare da una persona prima del rilascio | B — glifi ridisegnati in SVG | «D63=A» | Proprietario | stili del sito pubblico | sì | E2 |
+| DR-144 | 2026-10-14 | Ricerca del sito pubblico (D64) | **Opzione A** — icona, modulo e pagina dei risultati come la sorgente, lettura pubblica nuova nell'API | B — solo icona e modulo; C — difformità | «D64=A» | Proprietario | API pubblica, sito, matrice | sì | E3 |
+| DR-145 | 2026-10-14 | Spazio sotto la testata (D65) | **Opzione A** — testata `sticky` sopra i 980 px | B — script; C — valori fissi | «D65=A» | Proprietario | stili della testata | sì | E4 |
+
+## 52. Round 43 — risposta del 2026-10-14, HO-020
+
+Nessuna nuova decisione. **HO-020 confermato** — «HO-020: confermo migrazione e import in locale.» — poi confronto della ricerca con la sorgente, verifica a vista, ricattura e nuovo confronto della `1E-W6`. Esito in `docs/qa/confronto/ricerca-E3.md`.
+
+## 53. Round 44 — risposta del 2026-10-14, D66-D69
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-146 | 2026-10-14 | Frase di ricerca fra due paragrafi (D66) | **Opzione A** — blocchi separati da un a capo nel testo visibile, frase cercata dentro un blocco; nuovo import su conferma | B — differenza registrata | «D66=A» | Proprietario | estrazione del testo, ricerca | sì | `ricerca-E3.md` |
+| DR-147 | 2026-10-14 | Contorno di focus nel campo di ricerca (D67) | **Opzione A** — contorno come DR-141 | B — nessun contorno | «D67=A» | Proprietario | testata | sì | `ricerca-E3.md` |
+| DR-148 | 2026-10-14 | Sottomenu nascosti con la testata `sticky` (D68) | **Opzione A** — sottomenu chiusi fuori dal calcolo dell'altezza, stessa dissolvenza | B — testata `fixed` con script | «D68=A» | Proprietario | testata | sì | `ricerca-E3.md` |
+| DR-149 | 2026-10-14 | Spaziatura per pagina `et_pb_gutters` (D69) | **Opzione A** — `_et_pb_gutter_width` importato per contenuto, classe sul `body`, 2 come valore del tema; migrazione e import su conferma | B — regola fissa `gutters2` | «D69=A» | Proprietario | importer, schema, API, sito | sì | `ricerca-E3.md` |
+| DR-150 | 2026-10-14 | Correzione del campo di ricerca e ordine di lavoro | **approvati**: (b), (a), campo, (c), risultati; analisi d'impatto, correzioni, ricattura | — | «Approvo la correzione del campo di ricerca e l'ordine…» | Proprietario | `apps/web`, `apps/api`, `apps/importer` | sì | `ricerca-E3.md` §5 |
+
+## 54. Round 45 — risposta del 2026-10-16, HO-021 e D70
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-151 | 2026-10-16 | Tipografia di WordPress ed emoji nell'estratto (D70) | **Opzione A** — `wptexturize` portato nell'import, estratto contato sulla forma scritta da WordPress | B — solo virgolette; C — difformità | «D70=A» | Proprietario | importer, testi e titoli, estratti | sì | `analisi-impatto-ricerca-E3.md` |
+
+Nella stessa risposta: **HO-021 confermato** (migrazione 0005 e import in locale), poi ripresa della ricattura e confronto della `1E-W6`. Contorno del campo di ricerca: risposta lasciata come «ok/da rivedere», quindi **non decisa**; resta come attuato (DR-147, contorno interno al campo) finché non si sceglie.
+
+## 55. Round 46 — risposta del 2026-10-16, D70 e contorno della ricerca
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-152 | 2026-10-16 | Elenco dei punti di D70 | **approvato**: porto di `wptexturize` nell'import, estratti contati come Divi, HO-022 | — | «approvo l'elenco di D70» | Proprietario | importer, `apps/web` | sì | `analisi-impatto-ricerca-E3.md`, sezione D70 |
+| DR-153 | 2026-10-16 | Contorno del campo di ricerca come attuato (dentro il campo) | **approvato** | da rivedere | «Contorno della ricerca: ok» | Proprietario | testata | sì | DR-147 |
+
+## 56. Round 47 — risposta del 2026-10-16, HO-022 e §7
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-154 | 2026-10-16 | Correzioni dell'esame delle 13 coppie | **approvate**: freccia del menu (`position: relative`), logo (`translate3d`), interlinea `1.7em`, rimisura della maschera della mappa | — | «Approvo le quattro correzioni del §7» | Proprietario | stili del sito, `maschere.json` | sì | `ricerca-E3.md` §7 |
+
+Nella stessa risposta: **HO-022 confermato** (import in locale), poi ricattura, confronto e verifica della tipografia della `1E-W6`.
+
+## 57. Round 48 — risposta del 2026-10-16, D71 e D72
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-155 | 2026-10-16 | Peso delle virgolette negli estratti (D71) | **Opzione A** — l'importer conserva la forma del testo grezzo da cui si conta l'estratto e il sito la usa; i contenuti scritti dal CMS contano i caratteri come sono; migrazione e import su conferma | B — peso 7 per tutte e difformità | «D71=A» | Proprietario | importer, schema, API, estratti di archivio e ricerca | sì | `ricerca-E3.md` §8 |
+| DR-156 | 2026-10-16 | Descrizione del campo di pagamento nei form (D72) | **Opzione A** — testo del bonifico mostrato come nella sorgente, coordinate bancarie dell'associazione pubbliche | B — campo senza descrizione e difformità | «D72=A» | Proprietario | form | sì | `ricerca-E3.md` §8 |
+
+Nella stessa risposta: analisi per famiglie delle coppie fallite, con le altezze peggiorate e migliorate nell'ultimo giro (`analisi-famiglie-DR-154.md`). Verifica successiva su DR-156: il testo è già reso come nella sorgente (compare scegliendo «Bonifico», stessa altezza); nessuna modifica al prodotto, vedi `analisi-famiglie-DR-154.md` §4.
+
+## 58. Round 49 — risposta del 2026-10-16, analisi per famiglie dopo DR-154
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-157 | 2026-10-16 | Correzioni di stile Q, P, N, S, V e ordine di lavoro | **approvati**: Q, P, N, S, V e l'ordine del §6 (stili; importer con D71, R, U1 e un solo import su conferma; resa T, U2–U3) | — | «approvo Q, P, N, S, V e l'ordine del §6» | Proprietario | `apps/web`, `packages/blocks`, `apps/importer` | sì | `analisi-famiglie-DR-154.md` §3, §6 |
+| DR-158 | 2026-10-16 | Punti di attuazione di D71 | **approvati**: D71-1…D71-8 | — | «approvo D71-1…8» | Proprietario | schema, importer, API, sito | sì | `analisi-famiglie-DR-154.md` §4 |
+| DR-159 | 2026-10-16 | Grassetto non chiuso nel testo del bonifico (D73) | **Opzione A** — il sito chiude il tag, difformità approvata | B — riprodurre | «D73=correggi e registra come difformità» | Proprietario | 10 form | sì | `analisi-famiglie-DR-154.md` §3.8 |
+| DR-160 | 2026-10-16 | Articolo 332 nell'archivio (D74) | **Opzione A** — DR-063 invariata, voce in meno nell'archivio registrata come difformità | B — elencarlo | «D74=correggi e registra come difformità» | Proprietario | archivio, ricerca | sì | `analisi-famiglie-DR-154.md` §3.10 |
+| DR-161 | 2026-10-16 | Scheda del pacchetto nei download (D75) | **Opzione A** — scheda come la sorgente, senza contatore dei download (difformità) | B — con contatore; C — solo «Scarica» | «D75=come la sorgente ma senza contatore dei download» | Proprietario | 4 pagine di download | sì | `analisi-famiglie-DR-154.md` §3.10 |
+
+Nella stessa risposta: richiesta di un **report visivo** delle difformità a fine correzioni, con gli screenshot affiancati e la scelta «accettabile / non accettabile» per ciascuna. Interpretazione registrata per D74: «correggi» letto come opzione A (nessun cambio di DR-063, difformità registrata), da confermare nel report.
+
+## 59. Round 50 — scelte del 2026-10-16 nel report «Bozze di parità visiva»
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-162 | 2026-10-16 | Difformità residue della `1E-W6`, indirizzo per indirizzo | **accettabili tutte**: 112 indirizzi su 112 con viste non superate (544 viste a 1440–360 px), nessuno da correggere, nessuna nota | da correggere | scelta «Accettabile» su ogni scheda del report, poi «ho deciso nel report» | Proprietario | sito pubblico, 112 indirizzi | sì | `docs/qa/confronto/decisioni-report-DR-162.csv`, artifact «Bozze di parità visiva» |
+| DR-163 | 2026-10-16 | Captcha aritmetico del modulo di `/contatti/` | **difformità accettata**: il sito non lo mostra, vale il campo esca (ADR-010) | riprodurre il captcha | scheda di `/contatti/` accettata con la nota «Da decidere: captcha» | Proprietario | modulo di contatto | sì | DR-162 |
+| DR-164 | 2026-10-16 | Lettura di «correggi» in D74 | **confermata l'opzione A** (DR-160): voce in meno nell'archivio, DR-063 invariata | — | schede di `/category/news/page/3/` e `/?s=corso` accettate con la nota della difformità | Proprietario | archivio, ricerca | sì | DR-160 |
+
+L'accettazione vale per la `1E-W6`; non è l'approvazione della parità del gate pre-gestionale, che resta da dare esplicitamente in `docs/qa/visual-parity-report.md` dopo `1E-W7` e `1E-W8`.
+
+## 60. Round 51 — risposta del 2026-10-17, chiusura della `1E-W6`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-165 | 2026-10-17 | Chiusura della `1E-W6` e commit delle modifiche | **chiusa**: criteri d'uscita soddisfatti (DR-162…164, 1E-19 4/4), commit autorizzato | tenere aperta la wave | «1E-W6: confermo la chiusura della wave e il commit delle modifiche; poi pianifica la 1E-W7» | Proprietario | Fase 1E | sì | `PROGRESS.md`, DR-162…164 |

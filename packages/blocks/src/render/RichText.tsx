@@ -14,7 +14,7 @@ export function RichText({ block }: RichTextComponentProps) {
   return (
     <div
       className={blockClassName('text', block.props.classes)}
-      style={spacingVariables(block.props.padding)}
+      style={spacingVariables(block.props.padding, block.props.margin)}
       id={block.id}
       dangerouslySetInnerHTML={{ __html: block.props.html }}
     />

@@ -62,6 +62,8 @@ export interface PublicContent {
     readonly showTitle: boolean;
     /** Ex `_et_pb_page_layout` (DR-139). */
     readonly pageLayout: 'right_sidebar' | 'full_width' | 'no_sidebar';
+    /** Ex `_et_pb_gutter_width`; `null` = valore del tema (DR-149). */
+    readonly gutterWidth: number | null;
     readonly excerpt: string | null;
     readonly blocks: BlockDocument;
     readonly featuredMediaId: string | null;
@@ -84,6 +86,8 @@ export interface PublicDocument {
   readonly description: string | null;
   readonly mediaId: string;
   readonly updatedAt: string;
+  readonly publishedAt: string | null;
+  readonly byteSize: number;
 }
 
 export interface MenuItem {
@@ -145,3 +149,7 @@ export function settingString(settings: Record<string, unknown>, key: string): s
   const value = settings[key];
   return typeof value === 'string' ? value : '';
 }
+
+/** Ricerca del sito pubblico (DR-144); 5 risultati per pagina come la sorgente. */
+export const searchContents = (query: string, page: number) =>
+  read<PostPage>(`/public/search?s=${encodeURIComponent(query)}&page=${page}`);

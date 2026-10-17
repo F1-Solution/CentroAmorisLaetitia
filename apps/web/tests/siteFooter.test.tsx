@@ -14,6 +14,13 @@ describe('piè di pagina (DR-117)', () => {
     expect(html).not.toContain('<script');
   });
 
+  it('mette il testo negli involucri del widget della sorgente, che flotta ed è largo quanto il testo (F1)', () => {
+    const html = renderToStaticMarkup(<SiteFooter footerHtml="<p>Testo sintetico</p>" />);
+    expect(html).toContain(
+      '<div class="footer-widget"><div class="widget_text fwidget et_pb_widget widget_custom_html"><div class="textwidget custom-html-widget"><p>Testo sintetico</p></div></div></div>',
+    );
+  });
+
   it('senza testo non rende i widget', () => {
     expect(renderToStaticMarkup(<SiteFooter footerHtml="" />)).not.toContain('footer-widget');
   });

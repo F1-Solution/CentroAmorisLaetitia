@@ -188,7 +188,9 @@ describe('fase documents', () => {
 
   it('un documento pubblico risolto scrive documents.isPrivate=false, media.isPrivate=false e carica nel bucket public', async () => {
     fixture = await createDocumentsFixture({
-      wp_posts: [documentPost(959, 'wpdmpro', 'pubblico-1')],
+      wp_posts: [
+        { ...documentPost(959, 'wpdmpro', 'pubblico-1'), post_date_gmt: '2022-04-05 08:30:00' },
+      ],
       wp_postmeta: [
         {
           post_id: 959,
@@ -220,6 +222,8 @@ describe('fase documents', () => {
       .from(schema.documents)
       .where(eq(schema.documents.legacyId, 959));
     expect(document?.isPrivate).toBe(false);
+    // DR-144: la data del post, per l'ordine della ricerca del sito pubblico.
+    expect(document?.publishedAt?.toISOString()).toBe('2022-04-05T08:30:00.000Z');
 
     const [media] = await testDb.db
       .select()

@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { SiteShell } from '../../components/SiteShell';
-import { ArchiveView, ContentView, DocumentView } from '../../components/Views';
+import { ArchiveView, ContentView, DocumentView, SearchView } from '../../components/Views';
 import {
   getContent,
   getDocument,
   getPosts,
   getSettings,
   getTerm,
+  searchContents,
   settingString,
   type PostPage,
   type PublicContent,
@@ -42,12 +43,26 @@ type Resolved =
       page: number;
       posts: PostPage;
     }
+  | { kind: 'search'; query: string; page: number; posts: PostPage }
   | { kind: 'document'; document: PublicDocument; media: MediaMap }
   | { kind: 'content'; data: PublicContent };
 
 interface Params {
   readonly params: Promise<{ percorso?: string[] }>;
+  readonly searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
+
+/** La frase di `?s=`, come WordPress: il primo valore, senza a capo; `null` se manca. */
+function searchQueryOf(params: Record<string, string | string[] | undefined>): string | null {
+  const raw = params.s;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value === undefined ? null : value.replace(/[\r\n]/g, '').slice(0, 200);
+}
+
+/** AIOSEO della sorgente sulla ricerca: mai indicizzata, e dalla pagina 2 nemmeno seguita. */
+const SEARCH_ROBOTS = 'noindex, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
+const SEARCH_ROBOTS_PAGED =
+  'noindex, nofollow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
 function pathOf(segments: readonly string[] | undefined): string {
   if (!segments || segments.length === 0) return '/';
@@ -55,7 +70,16 @@ function pathOf(segments: readonly string[] | undefined): string {
 }
 
 /** Una sola risoluzione per richiesta, condivisa fra metadati e pagina. */
-const resolve = cache(async (path: string): Promise<Resolved | null> => {
+const resolve = cache(async (path: string, query: string | null): Promise<Resolved | null> => {
+  // Ricerca (DR-144): `?s=` sulla home e sulle sue pagine, come WordPress.
+  const searchPage = /^\/(?:page\/(\d+)\/)?$/.exec(path);
+  if (query !== null && searchPage) {
+    const page = Number(searchPage[1] ?? '1');
+    const posts = page >= 1 ? await searchContents(query, page) : null;
+    if (!posts || (page > 1 && posts.items.length === 0)) return null;
+    return { kind: 'search', query, page, posts };
+  }
+
   const archive = /^(\/category\/[^/]+\/)(?:page\/(\d+)\/)?$/.exec(path);
   if (archive?.[1]) {
     const found = await getTerm(archive[1]);
@@ -86,11 +110,21 @@ const resolve = cache(async (path: string): Promise<Resolved | null> => {
   return data ? { kind: 'content', data } : null;
 });
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const path = pathOf((await params).percorso);
-  const resolved = await resolve(path);
+  const resolved = await resolve(path, searchQueryOf(await searchParams));
   const siteTitle = settingString(await getSettings(), 'site.title');
   if (!resolved) return { title: `404 Non trovato | ${siteTitle}` };
+
+  if (resolved.kind === 'search') {
+    // Come la sorgente: la frase senza markup, poi il sito; suffisso di pagina di DR-040.
+    const words = resolved.query.replace(/<[^>]*>/g, '').trim();
+    const suffix = resolved.page > 1 ? ` - Pagina ${resolved.page}` : '';
+    return {
+      title: `${words} - ${siteTitle}${suffix}`,
+      robots: resolved.page > 1 ? SEARCH_ROBOTS_PAGED : SEARCH_ROBOTS,
+    };
+  }
 
   if (resolved.kind === 'archive') {
     // Suffisso di paginazione in italiano (DR-040: la sorgente scrive « - Page 2»).
@@ -123,15 +157,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-export default async function Page({ params }: Params) {
+export default async function Page({ params, searchParams }: Params) {
   const path = pathOf((await params).percorso);
-  const resolved = await resolve(path);
+  const resolved = await resolve(path, searchQueryOf(await searchParams));
   if (!resolved) notFound();
 
   return (
-    <SiteShell currentPath={path}>
+    <SiteShell
+      currentPath={path}
+      gutterWidth={resolved.kind === 'content' ? resolved.data.content.gutterWidth : null}
+    >
       {resolved.kind === 'archive' ? (
         <ArchiveView term={resolved.term} posts={resolved.posts} page={resolved.page} />
+      ) : resolved.kind === 'search' ? (
+        <SearchView query={resolved.query} posts={resolved.posts} page={resolved.page} />
       ) : resolved.kind === 'document' ? (
         <DocumentView document={resolved.document} media={resolved.media} />
       ) : (

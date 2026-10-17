@@ -68,6 +68,7 @@ async function content(
     excerpt?: string;
     text?: string;
     publishedAt?: string;
+    gutterWidth?: number;
   },
 ): Promise<string> {
   const [row] = await h.db
@@ -80,6 +81,7 @@ async function content(
       title: `Titolo ${key}`,
       excerpt: values.excerpt ?? null,
       contentText: values.text ?? '',
+      gutterWidth: values.gutterWidth ?? null,
       blocks: { schema: 1, blocks: values.blocks ?? [] },
       publishedAt:
         values.status === 'published'
@@ -159,6 +161,11 @@ beforeAll(async () => {
     path: '/home-sintetica/',
     status: 'published',
     excerpt: 'Estratto della home.',
+  });
+  await content('spaziata', {
+    path: '/spaziatura-sintetica/',
+    status: 'published',
+    gutterWidth: 3,
   });
   await content('bozza', { path: '/bozza-sintetica/', status: 'draft' });
   await content('ritirata', { path: '/ritirata-sintetica/', status: 'archived' });
@@ -296,6 +303,12 @@ afterAll(async () => {
 const get = (url: string) => h.app.inject({ method: 'GET', url });
 
 describe('contenuti', () => {
+  it('restituisce la spaziatura propria della pagina (DR-149)', async () => {
+    const response = await get('/public/content?path=/spaziatura-sintetica/');
+    expect(response.statusCode).toBe(200);
+    expect(response.json().content.gutterWidth).toBe(3);
+  });
+
   it('restituisce una pagina pubblicata con media, carosello, documenti e SEO risolto', async () => {
     const response = await get('/public/content?path=/pagina-sintetica/');
     expect(response.statusCode).toBe(200);
@@ -303,6 +316,8 @@ describe('contenuti', () => {
     expect(body.content.title).toBe('Titolo pagina');
     // DR-139: il layout esce con il contenuto; qui il predefinito del tema.
     expect(body.content.pageLayout).toBe('right_sidebar');
+    // DR-149: senza valore proprio, la spaziatura del tema.
+    expect(body.content.gutterWidth).toBeNull();
     expect(body.seo.title).toBe('Titolo pagina - Sito sintetico');
     expect(body.seo.robots).toBe('max-image-preview:large');
     expect(body.seo.description).toMatch(/^Testo di una pagina inventata\./);
@@ -477,6 +492,28 @@ describe('articoli e tassonomie', () => {
 
   it('rifiuta una pagina oltre il tetto', async () => {
     expect((await get('/public/posts?page=201')).statusCode).toBe(400);
+  });
+
+  it('l’inizio del testo per l’estratto viene dalla forma della sorgente, se l’import l’ha scritta (D71)', async () => {
+    const before = (await get(`/public/posts?termIds=${ids.news}`)).json();
+    const textOf = (body: { items: { path: string; textStart: string }[] }, path: string) =>
+      body.items.find((i) => i.path === path)?.textStart;
+    expect(textOf(before, '/articolo-1/')).toBe('uno due tre quattro cinque');
+
+    await h.db
+      .update(schema.contents)
+      .set({ summarySource: 'L&#8217;inizio  sintetico' })
+      .where(eq(schema.contents.id, ids.articolo1 ?? ''));
+    try {
+      const after = (await get(`/public/posts?termIds=${ids.news}`)).json();
+      expect(textOf(after, '/articolo-1/')).toBe('L&#8217;inizio sintetico');
+      expect(textOf(after, '/articolo-0/')).toBe('uno due tre quattro cinque');
+    } finally {
+      await h.db
+        .update(schema.contents)
+        .set({ summarySource: null })
+        .where(eq(schema.contents.id, ids.articolo1 ?? ''));
+    }
   });
 
   it('impagina', async () => {

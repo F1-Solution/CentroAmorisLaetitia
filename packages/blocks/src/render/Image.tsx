@@ -1,6 +1,8 @@
+import { emptySpacing } from '../common';
 import type { ImageBlock } from '../schema/block';
 import { blockClassName } from './class-name';
 import { imageAttributes, type MediaMap } from './media';
+import { spacingVariables } from './spacing';
 
 export interface ImageComponentProps {
   readonly block: ImageBlock;
@@ -22,7 +24,11 @@ export function Image({ block, media }: ImageComponentProps) {
     />
   );
   return (
-    <figure className={blockClassName('image', block.props.classes)} id={block.id}>
+    <figure
+      className={blockClassName('image', block.props.classes)}
+      style={spacingVariables(emptySpacing, block.props.margin)}
+      id={block.id}
+    >
       {linkUrl !== null ? (
         <a
           href={linkUrl}

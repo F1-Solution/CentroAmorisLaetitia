@@ -12,8 +12,8 @@ const SHORTCODE =
   'custom_message="Nome: %%Name%% Messaggio: %%Message%%" success_message="Grazie, ti ricontatteremo."]' +
   '[et_pb_contact_field field_id="Name" field_title="Nome"][/et_pb_contact_field]' +
   '[et_pb_contact_field field_id="Email" field_title="Indirizzo e-mail" field_type="email"][/et_pb_contact_field]' +
-  '[et_pb_contact_field field_id="Phone" field_title="Telefono" required_mark="off"][/et_pb_contact_field]' +
-  '[et_pb_contact_field field_id="Message" field_title="Messaggio" field_type="text"][/et_pb_contact_field]' +
+  '[et_pb_contact_field field_id="Phone" field_title="Telefono" required_mark="off" fullwidth_field="on"][/et_pb_contact_field]' +
+  '[et_pb_contact_field field_id="Message" field_title="Messaggio" field_type="text" fullwidth_field="on"][/et_pb_contact_field]' +
   '[/et_pb_contact_form][/et_pb_column][/et_pb_row][/et_pb_section]';
 
 describe('findDiviContactForms (DR-094)', () => {
@@ -41,8 +41,10 @@ describe('findDiviContactForms (DR-094)', () => {
       ['Message', 'text', 'Messaggio', true, 3],
     ]);
     // Il campo «text» di Divi è un'area di testo su più righe.
-    expect(form!.fields[3]!.options).toEqual({ multiline: true });
+    expect(form!.fields[3]!.options).toEqual({ multiline: true, fullwidth: true });
+    // `fullwidth_field` assente: metà riga, come Divi (T).
     expect(form!.fields[0]!.options).toEqual({});
+    expect(form!.fields[2]!.options).toEqual({ fullwidth: true });
   });
 
   it('una pagina senza modulo non produce nulla', () => {

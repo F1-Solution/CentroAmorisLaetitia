@@ -43,9 +43,11 @@ import {
 import {
   applyMembersRestriction,
   buildPostMetaIndex,
+  deriveGutterWidth,
   derivePageLayout,
   deriveShowTitle,
   parseStickyPostIds,
+  parseTimestamp,
   publicationDateSource,
 } from './meta.js';
 import { writeHomeContentSetting } from './homePage.js';
@@ -57,6 +59,8 @@ import {
   lastSuccessfulRunFinishedAt,
 } from './editorialProtection.js';
 import { provisionalPath, resolveTreePaths } from '../relations/paths.js';
+import { texturizePlain } from '../../convert/shared/wptexturize.js';
+import { summarySource } from '../../convert/shared/summary-source.js';
 
 interface SourceContent {
   readonly id: number;
@@ -82,12 +86,6 @@ function asNumber(value: SqlRow[string] | undefined): number | null {
   return null;
 }
 
-function parseTimestamp(raw: string): Date | null {
-  if (!raw) return null;
-  const d = new Date(raw.replace(' ', 'T') + 'Z');
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 async function loadSourceContents(ctx: StageContext): Promise<readonly SourceContent[]> {
   const rows = await ctx.source.rows('wp_posts');
   const result: SourceContent[] = [];
@@ -107,8 +105,9 @@ async function loadSourceContents(ctx: StageContext): Promise<readonly SourceCon
       type: postType,
       status,
       slug: asString(row['post_name']),
-      title: asString(row['post_title']),
-      excerpt: asString(row['post_excerpt']),
+      // `the_title` e `the_excerpt` della sorgente passavano da `wptexturize()` (DR-151).
+      title: texturizePlain(asString(row['post_title'])),
+      excerpt: texturizePlain(asString(row['post_excerpt'])),
       content: asString(row['post_content']),
       authorLegacyId: asNumber(row['post_author']),
       postDate: publicationDateSource(asString(row['post_date_gmt']), asString(row['post_date'])),
@@ -220,6 +219,8 @@ export const contentsStage: Stage = {
         });
         const contentHtml = serializeBlockDocument(document);
         const contentText = extractContentText(contentHtml);
+        // L'estratto della sorgente si conta sul testo grezzo, non su quello reso (D71, DR-155).
+        const contentSummarySource = summarySource(row.content);
         // La famiglia d'origine si legge sul testo della sorgente, prima di Members e `[catposts]` (DR-136).
         const family = detectContentFamily(row.content);
         byFamily[family] += 1;
@@ -227,6 +228,7 @@ export const contentsStage: Stage = {
 
         const showTitle = deriveShowTitle(meta, row.type);
         const pageLayout = derivePageLayout(meta, row.type);
+        const gutterWidth = deriveGutterWidth(meta);
         const isSticky = stickyIds.has(row.id);
 
         const authorEntityId = row.authorLegacyId
@@ -247,11 +249,13 @@ export const contentsStage: Stage = {
             title: row.title,
             showTitle,
             pageLayout,
+            gutterWidth,
             isSticky,
             excerpt: row.excerpt || null,
             blocks: document,
             contentHtml,
             contentText,
+            summarySource: contentSummarySource,
             publishedAt: publishedAt ?? undefined,
             authorId: authorEntityId,
             legacyId: row.id,
@@ -268,11 +272,13 @@ export const contentsStage: Stage = {
               title: row.title,
               showTitle,
               pageLayout,
+              gutterWidth,
               isSticky,
               excerpt: row.excerpt || null,
               blocks: document,
               contentHtml,
               contentText,
+              summarySource: contentSummarySource,
               publishedAt: publishedAt ?? undefined,
               authorId: authorEntityId,
               legacyId: row.id,

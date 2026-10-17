@@ -1,0 +1,117 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+/                                                  1440: -14 -> -39  1280: -29 -> -29  1024: +10 -> -19  768: +12 -> -19  390: +15 -> +33  360: +18 -> +59
+/10-anni-di-vita-del-centro-per-la-famiglia-amoris-laetitia/ 1440: +867 -> +854  1280: +784 -> +771  1024: +581 -> +568  768: +188 -> +175  390: -127 -> -142  360: -128 -> -170
+/404-url-inesistente/                              1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/affettivita-e-sessualita-il-lungo-viaggio/        1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/attivita-centro-amoris-laetitia/                  1440: -58 -> +0  768: -55 -> +0  390: +6 -> +0
+/attraversare-le-emozioni/                         1440: +24 -> +0  1280: +24 -> +0  1024: +30 -> +0  768: +390 -> +1  390: +396 -> +0  360: +396 -> -27
+/autostima-e-assertivita/                          1440: +12 -> +0  1280: +12 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/bacheca-degli-eventi/                             1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/bacheca/                                          1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/category/news/                                    1440: +0 -> +0  768: +0 -> +0  390: +0 -> +0
+/category/news/page/2/                             1440: +0 -> +0  768: +28 -> +28  390: +0 -> +0
+/category/news/page/3/                             1440: -104 -> -104  768: -74 -> -74  390: -35 -> -35
+/chi-siamo/                                        1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +16 -> +16  390: +16 -> +16  360: +17 -> +17
+/circolo-della-sicurezza/                          1440: +32 -> +0  1280: +32 -> +0  1024: +33 -> +0  768: +59 -> +0  390: +94 -> +0  360: +95 -> +0
+/conosco-il-mio-corpo/                             1440: +0 -> +0  1280: +0 -> +0  1024: +23 -> +23  768: +603 -> +23  390: +603 -> +23  360: +603 -> +23
+/contatti/                                         1440: -22 -> -22  1280: -18 -> -18  1024: +2 -> +2  768: -215 -> -215  390: -252 -> -252  360: -192 -> -192
+/contest-fotografico-selfiemotions/                1440: +31 -> -19  1280: +50 -> +0  1024: +50 -> +0  768: +75 -> +0  390: +48 -> -27  360: +47 -> -28
+/convegno-17-febbraio-2018/                        1440: -11 -> +14  768: -25 -> +0  390: -25 -> +0
+/convegno-17-marzo-2018/                           1440: -11 -> +14  768: -25 -> +0  390: -25 -> +0
+/convegno-26-novembre/                             1440: +752 -> +777  768: +410 -> +435  390: +196 -> +221
+/convegno-comunicare-e-una-necessita-ascoltare-unarte/ 1440: +12 -> +0  1280: +12 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/convegno-diventare-anziani-in-famiglia/           1440: +28 -> +0  1280: +28 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/convegno-genitori-sempre-oltre-la-separazione/    1440: +28 -> +0  1280: +28 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/convegno-imperfetto-dunque-prezioso/              1440: +28 -> +0  1280: +28 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/corsi-2022-2023/                                  1440: +13 -> +24  768: +42 -> +25  390: +46 -> +24
+/corso-caritas-fare-bene-il-bene/                  1440: +28 -> +27  1280: +2 -> +0  1024: +8 -> +0  768: +367 -> +0  390: +403 -> +0  360: +431 -> -27
+/corso-per-consulenti-familiari-vecchia-pagina/    1440: +32 -> +8  1280: +33 -> +10  1024: +65 -> +15  768: +1365 -> +38  390: +1428 -> +38  360: +1403 -> +38
+/corso-per-consulenti-familiari/                   1440: -7 -> +0  1280: -7 -> +0  1024: +21 -> +0  768: -2 -> +0  390: +97 -> +0  360: +129 -> +0
+/corso-per-operatore-centro-dascolto/              1440: +9 -> +9  1280: +10 -> +10  1024: +69 -> +69  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/dal-prossimo-6-dicembre-la-3a-edizione-del-corso-relazioni-efficaci/ 1440: -25 -> +0  768: -25 -> +0  390: -25 -> +0
+/dal-vizioso-al-virtuoso/                          1440: +7 -> -8  1280: +9 -> -8  1024: -14 -> -39  768: +370 -> -39  390: +339 -> -75  360: +308 -> -133
+/dalla-ferita-alla-feritoia/                       1440: +27 -> +0  1280: +27 -> +0  1024: +28 -> +0  768: +54 -> +0  390: +89 -> +0  360: +91 -> +1
+/diventa-socio/                                    1440: +55 -> +117  1280: +55 -> +117  1024: +56 -> +117  768: +28 -> +89  390: +28 -> +90  360: +3 -> +65
+/dove-hai-la-testa-2/                              1440: +23 -> +0  1280: +23 -> +0  1024: +50 -> +27  768: +603 -> +0  390: +605 -> +0  360: +605 -> +0
+/dove-siamo/                                       1440: +14 -> +14  1280: +15 -> +15  1024: +17 -> +17  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/download/modulo-consulenze-a-distanza-per-minori/ 1440: +0 -> +0  768: +0 -> +0  390: -365 -> -365
+/download/modulo-consulenze-per-minori/            1440: +0 -> +0  768: +0 -> +0  390: -318 -> -318
+/download/modulo-per-consulenze-a-distanza/        1440: +0 -> +0  768: +0 -> +0  390: -318 -> -318
+/download/modulo-per-consulenze/                   1440: -36 -> -36  768: +0 -> +0  390: -322 -> -322
+/fatti-non-parole-2/                               1440: +27 -> +27  1280: +0 -> +0  1024: +27 -> +27  768: +610 -> +0  390: +610 -> +0  360: +610 -> +0
+/genitori-si-resta/                                1440: +30 -> +0  1280: +30 -> +0  1024: +31 -> +0  768: +57 -> +0  390: +91 -> +0  360: +39 -> +0
+/giornata-di-studio-per-consulenti-familiari/      1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/giornata-informativa-del-10-ottobre-2018/         1440: -44 -> -19  768: -25 -> +0  390: -25 -> +0
+/i-prossimi-corsi-del-centro/                      1440: -98 -> -73  768: +35 -> +60  390: +34 -> +59
+/i-prossimi-eventi-del-centro/                     1440: -41 -> -16  768: +36 -> +61  390: +36 -> +61
+/i-social-occasione-o-tentazione/                  1440: -21 -> -21  1280: -18 -> -18  1024: -8 -> -8  768: +0 -> +0  390: +1 -> +1  360: +0 -> +0
+/il-contenitore-famiglia/                          1440: +0 -> +0  1280: -3 -> -3  1024: +24 -> +24  768: -3 -> -3  390: -3 -> -3  360: -3 -> -3
+/il-corpo-racconta/                                1440: -49 -> -49  1280: -48 -> -48  1024: -8 -> -8  768: +781 -> -39  390: +746 -> -74  360: +714 -> -106
+/il-litigio-di-coppia/                             1440: -4 -> -8  1280: -3 -> -8  1024: -34 -> -39  768: +546 -> -39  390: +511 -> -74  360: +479 -> -106
+/informativa-privacy/                              1440: +181 -> +97  1280: +160 -> +99  1024: +155 -> +102  768: +218 -> +84  390: +1507 -> +110  360: +1776 -> +110
+/informazioni-sui-cookie/                          1440: -303 -> -303  1280: -358 -> -358  1024: -521 -> -521  768: -1255 -> -1255  390: -1120 -> -1120  360: -1120 -> -1120
+/inizia-il-lungo-viaggio/                          1440: -16 -> +9  768: -25 -> +0  390: -25 -> +0
+/inizio-secondo-anno-corso-consulenti-familiari/   1440: +0 -> +0  768: +0 -> +0  390: -14 -> +0
+/invidia-vergogna-e-senso-di-colpa-nella-consulenza-familiare/ 1440: +28 -> +0  1280: +28 -> +0  1024: +29 -> +0  768: +28 -> +0  390: +35 -> +0  360: +90 -> +0
+/io-e-laltro-imparare-a-stare-insieme/             1440: +28 -> +0  1280: +28 -> +0  1024: +28 -> +0  768: +28 -> +0  390: +28 -> +0  360: +28 -> +0
+/iscrizioni/                                       1440: +0 -> +0  1280: +0 -> +0  1024: +29 -> +0  768: +0 -> +0  390: +64 -> +0  360: +66 -> +0
+/la-bussola-delle-emozioni/                        1440: +39 -> +0  1280: +39 -> +0  1024: +93 -> +54  768: +619 -> +0  390: +619 -> +0  360: +619 -> +0
+/la-fabbrica-del-coraggio/                         1440: +19 -> -1  1280: +19 -> +0  1024: +47 -> +27  768: +20 -> +0  390: +20 -> +0  360: +19 -> +0
+/la-rabbia-in-consulenza-ostacolo-e-possibile-risorsa/ 1440: +28 -> +0  1280: +28 -> +0  1024: +28 -> +0  768: +28 -> +0  390: +28 -> +0  360: +28 -> +0
+/laboratorio-esperienziale-12-maggio-2018/         1440: -12 -> +13  768: -25 -> +0  390: -25 -> +0
+/le-date-dei-prossimi-corsi-del-centro/            1440: -48 -> -23  768: +35 -> +60  390: +35 -> +60
+/le-dipendenze/                                    1440: -21 -> -21  1280: -3 -> -3  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/lequilibrio-che-regge-e-fa-crescere-la-coppia/    1440: +18 -> +0  1280: +19 -> +0  1024: +19 -> +0  768: +18 -> +0  390: +21 -> +0  360: +20 -> +0
+/litighiamo-oggi/                                  1440: +13 -> +0  1280: +13 -> +0  1024: +15 -> +0  768: +40 -> +0  390: +101 -> +0  360: +77 -> +1
+/noi-uomini/                                       1440: -62 -> -35  1280: -55 -> -32  1024: +1 -> +0  768: +361 -> +0  390: +391 -> -1  360: +421 -> +0
+/nuova-proposta-per-coppie-parlarsi-col-cuore/     1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/offerta-formativa-2019-2020/                      1440: +47 -> +72  768: +35 -> +60  390: +35 -> +60
+/parlarsi-con-il-cuore/                            1440: -19 -> -16  1280: -19 -> -16  1024: -16 -> -16  768: +40 -> -16  390: +54 -> -16  360: +84 -> -16
+/parte-il-nuovo-percorso-sguardi-damore-2/         1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/parte-il-nuovo-percorso-sguardi-damore/           1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/pronti-a-ripartire/                               1440: -44 -> -19  768: -25 -> +0  390: -25 -> +0
+/prossimi-corsi/                                   1440: -94 -> -69  768: -25 -> +0  390: -25 -> +0
+/psicologia-perinatale-2/                          1440: +0 -> +0  1280: +0 -> +0  1024: +0 -> +0  768: +0 -> +0  390: +0 -> +0  360: +0 -> +0
+/rampa-di-lancio-e-porto-sicuro-una-sana-relazione-genitori-figli/ 1440: -53 -> -28  768: -25 -> +0  390: -25 -> +0
+/registrazione-corso-attraversare-le-emozioni/     1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -29 -> -8  390: -29 -> -8  360: -2 -> +19
+/registrazione-corso-caritas-fare-bene-il-bene/    1440: -4 -> -4  1280: -4 -> -4  1024: -4 -> -4  768: -4 -> -4  390: -4 -> -4  360: -4 -> -4
+/registrazione-corso-circolo-della-sicurezza/      1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -2 -> +19  390: -2 -> +19  360: -2 -> +19
+/registrazione-corso-consulenti-familiari/         1440: +0 -> +0  1280: -4 -> -4  1024: -4 -> -4  768: +0 -> +0  390: -4 -> -4  360: -4 -> -4
+/registrazione-corso-dal-vizioso-al-virtuoso/      1440: -2 -> +19  1280: -2 -> +19  1024: -2 -> +19  768: -29 -> -9  390: -29 -> -8  360: -1 -> +19
+/registrazione-corso-dalla-ferita-alla-feritoia/   1440: +0 -> +42  1280: +0 -> +42  1024: -1 -> +42  768: -28 -> +14  390: -28 -> +40  360: +1 -> +42
+/registrazione-corso-genitori-si-resta/            1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -2 -> +19  390: -2 -> +19  360: -2 -> +19
+/registrazione-corso-il-litigio-di-coppia/         1440: +0 -> +42  1280: +0 -> +42  1024: -1 -> +42  768: -28 -> +14  390: -28 -> +40  360: +1 -> +42
+/registrazione-corso-noi-uomini/                   1440: -2 -> +19  1280: -2 -> +19  1024: -2 -> +19  768: -29 -> -9  390: -29 -> -9  360: -2 -> +19
+/registrazione-corso-reinventa-la-tua-vita/        1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -2 -> +19  390: -2 -> +19  360: -2 -> +19
+/registrazione-corso-relazion-arti/                1440: -2 -> +19  1280: -2 -> +19  1024: -2 -> +19  768: -2 -> +19  390: -2 -> +19  360: -2 -> +19
+/registrazione-corso-riparare-le-relazioni/        1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -2 -> +19  390: -2 -> +19  360: -2 -> +19
+/registrazione-il-corpo-racconta/                  1440: +1 -> +42  1280: +1 -> +42  1024: +1 -> +42  768: -27 -> +15  390: -26 -> +15  360: +1 -> +42
+/registrazione-laboratorio-litighiamo-oggi/        1440: +28 -> +91  1280: +28 -> +91  1024: +28 -> +91  768: +28 -> +91  390: +28 -> +117  360: +29 -> +91
+/registrazione-parlarsi-con-il-cuore/              1440: -1 -> +19  1280: -1 -> +19  1024: -2 -> +19  768: -29 -> -8  390: -28 -> -8  360: -2 -> +19
+/registrazione-seminario-autostima-e-assertivita/  1440: +471 -> +512  1280: +566 -> +607  1024: +660 -> +701  768: +398 -> +439  390: +791 -> +833  360: +870 -> +911
+/registrazione-seminario-invidia-vergogna-e-senso-di-colpa/ 1440: +27 -> +68  1280: +27 -> +68  1024: +27 -> +68  768: +27 -> +68  390: +27 -> +68  360: +27 -> +68
+/registrazione-seminario-io-e-laltro-imparare-a-stare-insieme/ 1440: +27 -> +68  1280: +27 -> +68  1024: +27 -> +68  768: -1 -> +41  390: -1 -> +40  360: +27 -> +68
+/registrazione-seminario-la-rabbia-in-consulenza/  1440: +27 -> +68  1280: +27 -> +68  1024: +27 -> +68  768: -1 -> +40  390: +0 -> +41  360: +27 -> +68
+/registrazione-seminario-lequilibrio-che-regge-la-coppia/ 1440: -2 -> +19  1280: -2 -> +19  1024: -1 -> +19  768: -29 -> -8  390: -29 -> -8  360: -2 -> +19
+/registrazione-sguardi-damore-2/                   1440: +0 -> +42  1280: +0 -> +42  1024: +0 -> +42  768: -27 -> +15  390: -28 -> +40  360: +1 -> +42
+/registrazione-sguardi-damore/                     1440: -1 -> +42  1280: -1 -> +42  1024: -1 -> +42  768: -28 -> +14  390: -27 -> +41  360: +1 -> +42
+/reinventa-la-tua-vita/                            1440: +16 -> +0  1280: +16 -> +0  1024: +18 -> +0  768: +43 -> +0  390: +78 -> +0  360: +79 -> +0
+/relazionarti/                                     1440: +33 -> +0  1280: +33 -> +0  1024: +34 -> +0  768: +61 -> +0  390: +122 -> +0  360: +97 -> +0
+/ridere-in-coppia-e-una-cosa-seria/                1440: +12 -> +0  1280: +12 -> +0  1024: +12 -> +0  768: +12 -> +0  390: +12 -> +0  360: +12 -> +0
+/riparare-le-relazioni-2018/                       1440: +25 -> +0  1280: +25 -> +0  1024: +53 -> +28  768: +26 -> +0  390: +25 -> +0  360: +25 -> +0
+/riparare-le-relazioni/                            1440: +33 -> +0  1280: +33 -> +0  1024: +34 -> +0  768: +60 -> +0  390: +148 -> +0  360: +97 -> +0
+/riparte-il-circolo-della-sicurezza/               1440: +44 -> +69  768: +63 -> +88  390: +94 -> +119
+/riparte-il-corso-per-consulenti-familiari/        1440: +163 -> +188  768: +109 -> +134  390: +117 -> +142
+/riparte-il-corso-relazion-arti/                   1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/riparte-il-corso-riparare-le-relazioni-2/         1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/riparte-il-corso-riparare-le-relazioni/           1440: +0 -> +0  768: +0 -> +0  390: -55 -> +0
+/ripartiamo-da-noi-stessi/                         1440: -44 -> -19  768: -25 -> +0  390: -25 -> +0
+/seminario-estivo/                                 1440: -18 -> -18  1280: +27 -> +27  1024: +3 -> +3  768: -93 -> -93  390: -70 -> -70  360: -69 -> -69
+/servizi/                                          1440: -37 -> +17  1280: -8 -> +43  1024: -31 -> +10  768: +500 -> +20  390: +500 -> +20  360: +500 -> +20
+/sguardi-damore-2/                                 1440: -19 -> -16  1280: -19 -> -16  1024: -16 -> -16  768: +40 -> -16  390: +54 -> -16  360: +84 -> -16
+/sguardi-damore/                                   1440: -35 -> -16  1280: -35 -> -16  1024: -33 -> -16  768: +24 -> -16  390: +38 -> -16  360: +68 -> -16
+/sostegno-alla-genitorialita/                      1440: +293 -> +13  1280: +294 -> +15  1024: +347 -> +40  768: +334 -> +0  390: +373 -> +0  360: +455 -> +0
+/spazio-alle-paure/                                1440: +21 -> +0  1280: +21 -> +0  1024: +21 -> +0  768: +21 -> +0  390: +21 -> +0  360: +21 -> +0
+/vuoi-diventare-consulente-familiare/              1440: -55 -> +0  768: -55 -> +0  390: -55 -> +0

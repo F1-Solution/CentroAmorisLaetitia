@@ -9,24 +9,32 @@ export interface MediaTextComponentProps {
 }
 
 /**
- * Resa minima: il posizionamento reale dell'immagine (percorso, varianti) è
- * lavoro della Fase 1E, che estrae i design token dal reso (`BLOCK-MODEL.md`
- * §7.3). Qui si rispetta solo la struttura e i dati già noti.
+ * Immagine e contenuto affiancati come `wp-block-media-text`: la griglia sta nel
+ * foglio di stile del sito, qui solo struttura e attributi (V, DR-157).
  */
 export function MediaText({ block, media }: MediaTextComponentProps) {
-  const { mediaId, mediaAlt } = block.props;
+  const { mediaId, mediaAlt, mediaPosition, verticalAlignment } = block.props;
   return (
-    <div className={blockClassName('media-text', block.props.classes)} id={block.id}>
-      {mediaId !== null ? (
-        media?.[mediaId] ? (
-          <img alt={mediaAlt} {...imageAttributes(media[mediaId])} />
-        ) : (
-          <img alt={mediaAlt} data-media-id={mediaId} />
-        )
-      ) : null}
-      {block.children.map((child) => (
-        <BlockRenderer key={child.id} block={child} media={media} />
-      ))}
+    <div
+      className={blockClassName('media-text', block.props.classes)}
+      id={block.id}
+      data-media-position={mediaPosition}
+      data-align={verticalAlignment}
+    >
+      <figure className="blk-media-text-media">
+        {mediaId !== null ? (
+          media?.[mediaId] ? (
+            <img alt={mediaAlt} {...imageAttributes(media[mediaId])} />
+          ) : (
+            <img alt={mediaAlt} data-media-id={mediaId} />
+          )
+        ) : null}
+      </figure>
+      <div className="blk-media-text-content">
+        {block.children.map((child) => (
+          <BlockRenderer key={child.id} block={child} media={media} />
+        ))}
+      </div>
     </div>
   );
 }

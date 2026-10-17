@@ -123,8 +123,13 @@
   "/download/modulo-per-consulenze-a-distanza/ color",
   "/category/news/ color",
   "/category/news/page/2/ color",
-  "/category/news/page/3/ color"
+  "/category/news/page/3/ color",
+  "/?s=corso color"
  ],
  "stiliDelQuadro": [],
- "orizzontali": []
+ "orizzontali": [
+  "/parlarsi-con-il-cuore/ 360 (+15px)",
+  "/sguardi-damore/ 360 (+15px)",
+  "/sguardi-damore-2/ 360 (+15px)"
+ ]
 }

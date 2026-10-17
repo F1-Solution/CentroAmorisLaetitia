@@ -84,6 +84,13 @@ export function bersagli(radice: string): Bersaglio[] {
       viewport: livelloB,
     });
   }
+  // La ricerca della testata (DR-144) porta a una pagina che la matrice non elenca.
+  out.push({
+    url: '/?s=corso',
+    livello: 'aggiunto',
+    origine: 'ricerca (DR-144)',
+    viewport: livelloB,
+  });
   return out;
 }
 

@@ -218,10 +218,12 @@ CREATE TABLE contents (
     show_title    boolean NOT NULL DEFAULT true, -- 1B-W0 §4: sostituisce shk-hide-title e Divi
     is_sticky     boolean NOT NULL DEFAULT false, -- 1B-W0 §8.1
     page_layout   page_layout NOT NULL DEFAULT 'right_sidebar', -- DR-139
+    gutter_width  smallint,                    -- ex _et_pb_gutter_width; vuota = tema (DR-149)
     excerpt       text,
     blocks        jsonb NOT NULL DEFAULT '{"schema":1,"blocks":[]}'::jsonb, -- ADR-005 §3.1
     content_html  text NOT NULL DEFAULT '',    -- cache di resa, rigenerata (ADR-005 §3.6)
     content_text  text NOT NULL DEFAULT '',    -- solo testo, per ricerca e description
+    summary_source text,                       -- forma contata da Divi per l'estratto; vuota per il CMS (D71)
     featured_media_id uuid REFERENCES media(id) ON DELETE SET NULL,
     published_at  timestamptz,
     author_id     uuid REFERENCES users(id) ON DELETE SET NULL,
@@ -238,7 +240,9 @@ CREATE TABLE contents (
         CHECK (status <> 'published' OR published_at IS NOT NULL),
     -- Gli articoli non hanno gerarchia: nella sorgente nessuno ce l'ha.
     CONSTRAINT contents_posts_have_no_parent
-        CHECK (type <> 'post' OR parent_id IS NULL)
+        CHECK (type <> 'post' OR parent_id IS NULL),
+    CONSTRAINT contents_gutter_width_range
+        CHECK (gutter_width BETWEEN 1 AND 4)
 );
 
 CREATE INDEX contents_type_status_idx ON contents (type, status, published_at DESC);
@@ -544,6 +548,7 @@ CREATE TABLE documents (
     -- riservata e NON raggiungibili adesso.
     is_private    boolean NOT NULL DEFAULT false,
     download_count bigint NOT NULL DEFAULT 0,
+    published_at  timestamptz,                 -- data del download, per la ricerca (DR-144)
     legacy_id     bigint,
     legacy_source text,                        -- 'wpdmpro' | 'cuar_private_file'
     created_at    timestamptz NOT NULL DEFAULT now(),

@@ -239,7 +239,7 @@ darebbe l'impressione che un dato esista.
 | Cronologia di WordPress | `_wp_old_date` (1.881), `_wp_desired_post_slug`, `_wp_attachment_backup_sizes` | cronologia interna; il `_wp_old_date` non produce alcun URL |
 | Editing | `_edit_lock`, `_edit_last` | stato transitorio dell'editor |
 | Cache di Divi | `_et_dynamic_cached_shortcodes`, `_et_dynamic_cached_attributes`, `_et_builder_module_features_cache`, `_et_pb_first_image`, `_et_pb_old_content`, `et_enqueued_post_fonts`, `_et_builder_version`, `_et_builder_dynamic_assets_loading_attr_threshold` | cache e stato del page builder che non si porta |
-| Layout di Divi | `_et_pb_side_nav`, `_et_pb_post_hide_nav`, `_et_pb_use_builder`, `_et_pb_built_for_post_type`, `_et_pb_gutter_width`, `_et_gb_content_width`, `_et_pb_truncate_post`, `_et_pb_truncate_post_date`, `_et_pb_custom_css`, `_et_pb_enable_shortcode_tracking`, `_et_pb_show_page_creation` | **da verificare in Fase 1E**: se una di queste cambia la resa, diventa una proprietà del blocco `section`. Finché il confronto visivo non lo dimostra, non si importano. `_et_pb_page_layout` cambia la resa (1E-W6, famiglia G): importata in `contents.page_layout` (DR-139) |
+| Layout di Divi | `_et_pb_side_nav`, `_et_pb_post_hide_nav`, `_et_pb_use_builder`, `_et_pb_built_for_post_type`, `_et_gb_content_width`, `_et_pb_truncate_post`, `_et_pb_truncate_post_date`, `_et_pb_custom_css`, `_et_pb_enable_shortcode_tracking`, `_et_pb_show_page_creation` | **da verificare in Fase 1E**: se una di queste cambia la resa, diventa una proprietà del blocco `section`. Finché il confronto visivo non lo dimostra, non si importano. `_et_pb_page_layout` cambia la resa (1E-W6, famiglia G): importata in `contents.page_layout` (DR-139) |
 | Colori di Divi | `_et_post_bg_layout`, `_et_post_bg_color`, `_et_pb_section_background_color`, `_et_pb_light_text_color`, `_et_pb_dark_text_color`, `_et_pb_content_area_background_color`, `_et_pb_color_palette`, `_global_colors_info` | stesso trattamento: si verificano sul reso, non si copiano alla cieca |
 | Test A/B di Divi | `_et_pb_ab_*`, `_et_pb_enable_ab_testing` | funzione non usata sul sito pubblico |
 | Modelli di pagina | `_wp_page_template`, `slide_template` | i modelli sono componenti del sistema nuovo, non dati |
@@ -253,6 +253,10 @@ darebbe l'impressione che un dato esista.
 | oEmbed | `_oembed_*`, `_oembed_time_*`, `enclosure` | cache di incorporamento di contenuti esterni. Si rigenera |
 | Category Posts | `categoryPosts-shorcode` | configurazione del widget, sostituita dal blocco `post_list` |
 | Altre | `_view_count` | contatore di un plugin disattivato |
+
+`_et_pb_gutter_width` si importa in `contents.gutter_width` (DR-149): cambia il margine del piè di pagina.
+
+`post_content` dà anche `contents.summary_source` (D71, DR-155): l'inizio del testo come lo conta `truncate_post()` di Divi, con le entità di `wptexturize()` per esteso; il sito ne ricava l'estratto di archivio e ricerca. Un salvataggio dal CMS che cambia il testo la azzera.
 
 ### 4.3 Nota sul gruppo «layout e colori di Divi»
 

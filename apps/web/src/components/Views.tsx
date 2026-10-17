@@ -1,6 +1,6 @@
 import { BlocksDocument, type MediaMap } from '@amoris/blocks';
 import type { PostPage, PublicContent, PublicDocument, Term } from '../lib/api';
-import { archiveSummary, postDate } from '../lib/format';
+import { archiveSummary, fileSize, longDate, postDate } from '../lib/format';
 import { featuredImageAttributes } from '../lib/featured';
 import { promoteFirstHeading } from '../lib/headings';
 
@@ -32,7 +32,7 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
     // Le pagine costruite con Divi non mostrano il titolo: lo fa il loro contenuto.
     const { document, hidden } = pageHeading(content, false);
     return (
-      <article id={`post-${content.id}`} className="page type-page et_pb_post">
+      <article id={`post-${content.id}`} className="page type-page">
         {hidden ? <h1 className="screen-reader-text">{content.title}</h1> : null}
         <div className="entry-content">
           <BlocksDocument
@@ -50,7 +50,7 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
   if (builtWithDivi && content.pageLayout === 'full_width') {
     // Articolo Divi a tutta larghezza: sezioni da bordo a bordo, titolo nel contenitore (DR-139).
     return (
-      <article id={`post-${content.id}`} className="post et_pb_post" data-builder="divi">
+      <article id={`post-${content.id}`} className="post et_pb_post single" data-builder="divi">
         <div className="container">
           <PostHeader title={content.title} publishedAt={content.publishedAt} />
         </div>
@@ -70,11 +70,12 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
   const heading = content.type === 'page' ? pageHeading(content, titleShown) : null;
   return (
     <div className="container">
-      <div id="content-area" className="clearfix">
+      <div id="content-area" className="clearfix" data-page-layout={content.pageLayout}>
         <div id="left-area">
+          {/* `page.php` di Divi non dà `et_pb_post` all'articolo di pagina, `single.php` sì. */}
           <article
             id={`post-${content.id}`}
-            className={`${content.type} et_pb_post`}
+            className={content.type === 'page' ? 'page type-page' : 'post et_pb_post single'}
             data-builder={builtWithDivi ? 'divi' : undefined}
           >
             {content.type === 'post' ? (
@@ -131,23 +132,28 @@ function Thumbnail({
   );
 }
 
-export function ArchiveView({
-  term,
+/**
+ * Elenco del modello `index.php` di Divi, comune ad archivio e ricerca: immagine,
+ * titolo, data, inizio del testo, «Post precedenti» verso le pagine più vecchie.
+ */
+function PostListing({
+  heading,
   posts,
   page,
+  pageHref,
 }: {
-  readonly term: Term;
+  readonly heading: string;
   readonly posts: PostPage;
   readonly page: number;
+  readonly pageHref: (n: number) => string;
 }) {
   const pages = Math.max(1, Math.ceil(posts.meta.total / posts.meta.perPage));
-  const pageHref = (n: number) => (n === 1 ? term.path : `${term.path}page/${n}/`);
   return (
     <div className="container">
       <div id="content-area" className="clearfix">
         <div id="left-area">
           {/* La sorgente non ha un titolo nell'archivio: c'è, ma non si vede (A-7). */}
-          <h1 className="screen-reader-text">{term.name}</h1>
+          <h1 className="screen-reader-text">{heading}</h1>
           {posts.items.map((post) => (
             <article key={post.id} id={`post-${post.id}`} className="et_pb_post post">
               {/* Ordine e testo nudo come il modello dell'archivio di Divi (1E-W6). */}
@@ -180,6 +186,69 @@ export function ArchiveView({
   );
 }
 
+export function ArchiveView({
+  term,
+  posts,
+  page,
+}: {
+  readonly term: Term;
+  readonly posts: PostPage;
+  readonly page: number;
+}) {
+  return (
+    <PostListing
+      heading={term.name}
+      posts={posts}
+      page={page}
+      pageHref={(n) => (n === 1 ? term.path : `${term.path}page/${n}/`)}
+    />
+  );
+}
+
+/** Indirizzo di una pagina dei risultati, come la sorgente: `/page/2/?s=…`. */
+export function searchHref(query: string, page: number): string {
+  const s = encodeURIComponent(query).replace(/%20/g, '+');
+  return page === 1 ? `/?s=${s}` : `/page/${page}/?s=${s}`;
+}
+
+/** Risultati della ricerca (DR-144); senza risultati il testo `no-results.php` del tema. */
+export function SearchView({
+  query,
+  posts,
+  page,
+}: {
+  readonly query: string;
+  readonly posts: PostPage;
+  readonly page: number;
+}) {
+  if (posts.items.length === 0) {
+    return (
+      <div className="container">
+        <div id="content-area" className="clearfix">
+          <div id="left-area">
+            <div className="entry">
+              <h1 className="not-found-title">Nessun risultato</h1>
+              <p>
+                La pagina richiesta non è stata trovata. Affina la tua ricerca, o utilizza la barra
+                di navigazione qui sopra per trovare il post.
+              </p>
+            </div>
+          </div>
+          <div id="sidebar" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <PostListing
+      heading={`Risultati della ricerca per: ${query}`}
+      posts={posts}
+      page={page}
+      pageHref={(n) => searchHref(query, n)}
+    />
+  );
+}
+
 export function DocumentView({
   document,
   media,
@@ -192,17 +261,48 @@ export function DocumentView({
     <div className="container">
       <div id="content-area" className="clearfix">
         <div id="left-area">
-          <article className="wpdmpro et_pb_post">
-            <h1 className="entry-title main_title">{document.title}</h1>
+          <article className="wpdmpro et_pb_post single">
+            <PostHeader title={document.title} publishedAt={document.publishedAt} />
             <div className="entry-content">
-              {document.description ? <p>{document.description}</p> : null}
-              {file ? (
-                <p>
-                  <a className="wpdm-download-link" href={file.publicPath}>
-                    Scarica
-                  </a>
-                </p>
-              ) : null}
+              {/* Scheda del pacchetto di Download Manager, senza il contatore dei download (D75, DR-161). */}
+              <div className="w3eden">
+                <div className="row">
+                  <div className="col-md-5">
+                    {file ? (
+                      <div className="wpdm-button-area">
+                        <a className="wpdm-download-link btn" href={file.publicPath}>
+                          Download
+                        </a>
+                      </div>
+                    ) : null}
+                    <ul className="list-group">
+                      <li className="list-group-item">
+                        Dimensioni file <span className="badge">{fileSize(document.byteSize)}</span>
+                      </li>
+                      <li className="list-group-item">
+                        Conteggio file <span className="badge">1</span>
+                      </li>
+                      <li className="list-group-item">
+                        Data di creazione{' '}
+                        <span className="badge">{longDate(document.publishedAt)}</span>
+                      </li>
+                      <li className="list-group-item">
+                        Ultimo aggiornamento{' '}
+                        <span className="badge">{longDate(document.publishedAt)}</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="col-md-7">
+                    {/* Nella sorgente è un secondo `h1`; qui `h2` con lo stesso aspetto, un solo titolo principale (1E-14). */}
+                    <h2 className="mt-0">{document.title}</h2>
+                    {document.description ? (
+                      <div className="wel">
+                        <p>{document.description}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </div>
           </article>
         </div>

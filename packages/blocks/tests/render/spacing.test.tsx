@@ -46,8 +46,22 @@ describe('spaziature come proprietà personalizzate (DR-071)', () => {
     ).toBeUndefined();
   });
 
-  it('l’elenco chiuso ha dodici nomi: quattro lati per tre punti di rottura', () => {
-    expect(SPACING_VARIABLES).toHaveLength(12);
+  it('l’elenco chiuso ha ventiquattro nomi: padding e margini, quattro lati per tre punti di rottura (R)', () => {
+    expect(SPACING_VARIABLES).toHaveLength(24);
+    expect(SPACING_VARIABLES).toContain('--blk-mar-top-t');
+  });
+
+  it('i margini personalizzati diventano variabili `--blk-mar-*` accanto al padding (R)', () => {
+    expect(
+      spacingVariables(
+        { base: box('0px', null), tablet: null, phone: null },
+        { base: box('-23px', null), tablet: null, phone: box(null, '10px') },
+      ),
+    ).toEqual({
+      '--blk-pad-top': '0px',
+      '--blk-mar-top': '-23px',
+      '--blk-mar-bottom-p': '10px',
+    });
   });
 });
 

@@ -1,0 +1,18 @@
+/* Q: padding per dispositivo non ereditato */
+.blk { --blk-pad-top: initial; --blk-pad-right: initial; --blk-pad-bottom: initial; --blk-pad-left: initial;
+  --blk-pad-top-t: initial; --blk-pad-right-t: initial; --blk-pad-bottom-t: initial; --blk-pad-left-t: initial;
+  --blk-pad-top-p: initial; --blk-pad-right-p: initial; --blk-pad-bottom-p: initial; --blk-pad-left-p: initial; }
+/* S: liste come Divi */
+#left-area ul:not(.blk-form *, .blk-post-list *), .entry-content ul:not(.blk-form *, .blk-post-list *, .blk-post-list-items) { margin: 0; padding: 0 0 23px 1em; line-height: 26px; list-style-type: disc; }
+#left-area ol:not(.blk-form *, .blk-post-list *), .entry-content ol:not(.blk-form *, .blk-post-list *) { margin: 0; padding: 0 0 23px; line-height: 26px; list-style-type: decimal; list-style-position: inside; }
+#left-area ul li ul, .entry-content ul li ol { padding: 2px 0 2px 20px; }
+#left-area ol li ul, .entry-content ol li ol { padding: 2px 0 2px 35px; }
+.blk-section .blk-text ul, .blk-section .blk-text ol { padding-bottom: 1em; }
+/* N: colonne Gutenberg senza margine sotto, p:last-of-type sui fratelli */
+.blk-row[data-layout='flex'] { margin: 0; }
+.entry-content > .blk-text:has(~ .blk-text > p) p:last-of-type,
+.blk-row[data-layout='flex'] > .blk-column > .blk-text:has(~ .blk-text > p) p:last-of-type { padding-bottom: 1em; }
+/* P: spaziature dell'articolo singolo */
+#left-area > article.post.et_pb_post:only-of-type { padding-bottom: 25px; }
+#left-area > article.et_pb_post:only-of-type:not([data-builder='divi']) > .entry-content { padding-top: 30px; }
+article.post.et_pb_post[data-builder='divi'] { padding-bottom: 25px; }

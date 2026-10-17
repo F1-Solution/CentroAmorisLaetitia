@@ -12,7 +12,7 @@
   /* Carattere — `body` del tema. */
   --font-body: 'Open Sans', Arial, sans-serif;
   --font-size-base: 16px; /* body */
-  --line-height-base: 1.7; /* body: 1.7em, reso 27.2px */
+  --line-height-base: 1.7em; /* body di Divi: ereditata come 27.2px fissi (DR-154) */
   /*
    * 500 non è fra i pesi caricati (300, 400, 600, 700, 800): il browser sceglie il
    * più vicino, come fa con la sorgente. Va lasciato 500, non «corretto» a 400.

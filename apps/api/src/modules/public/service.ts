@@ -275,6 +275,14 @@ export function fallbackDescription(excerpt: string | null, text: string): strin
   return `${(lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }
 
+/**
+ * L'inizio del testo da cui il sito ricava l'estratto: la forma contata dalla
+ * sorgente quando l'import l'ha scritta, altrimenti il testo com'è (D71, DR-155).
+ */
+export function summaryTextStart(summarySource: string | null, text: string): string {
+  return (summarySource ?? text).replace(/\s+/g, ' ').trim().slice(0, 600);
+}
+
 /** Le direttive per i motori di ricerca, nell'ordine in cui le scrive la sorgente. */
 export function robotsDirectives(
   noindex: boolean,
@@ -301,6 +309,7 @@ const contentColumns = {
   title: schema.contents.title,
   showTitle: schema.contents.showTitle,
   pageLayout: schema.contents.pageLayout,
+  gutterWidth: schema.contents.gutterWidth,
   excerpt: schema.contents.excerpt,
   blocks: schema.contents.blocks,
   contentText: schema.contents.contentText,
@@ -630,6 +639,9 @@ export async function documentsBy(
       description: schema.documents.description,
       mediaId: schema.documents.mediaId,
       updatedAt: schema.documents.updatedAt,
+      // Data e dimensione per la scheda del pacchetto, come WPDM (D75, DR-161).
+      publishedAt: schema.documents.publishedAt,
+      byteSize: schema.media.byteSize,
     })
     .from(schema.documents)
     .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
@@ -774,6 +786,7 @@ export async function publishedPosts(db: Database, query: PostQuery) {
         title: schema.contents.title,
         excerpt: schema.contents.excerpt,
         contentText: schema.contents.contentText,
+        summarySource: schema.contents.summarySource,
         featuredMediaId: schema.contents.featuredMediaId,
         publishedAt: schema.contents.publishedAt,
       })

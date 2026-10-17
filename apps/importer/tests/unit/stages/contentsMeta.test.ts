@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { detectContentFamily } from '../../../src/convert/family.js';
 import {
   applyMembersRestriction,
+  deriveGutterWidth,
   derivePageLayout,
   deriveShowTitle,
   publicationDateSource,
@@ -110,5 +111,24 @@ describe('data di pubblicazione (1E-W6)', () => {
       '2026-05-05 23:30:00',
     );
     expect(publicationDateSource('', '2026-05-05 23:30:00')).toBe('2026-05-05 23:30:00');
+  });
+});
+
+describe('spaziatura della pagina, `_et_pb_gutter_width` (DR-149)', () => {
+  const gutter = (entries: Record<string, string>) => deriveGutterWidth(meta(entries));
+
+  it('il valore registrato, da 1 a 4', () => {
+    expect(gutter({ _et_pb_gutter_width: '3' })).toBe(3);
+    expect(gutter({ _et_pb_gutter_width: '2' })).toBe(2);
+    expect(gutter({ _et_pb_gutter_width: '1' })).toBe(1);
+    expect(gutter({ _et_pb_gutter_width: '4' })).toBe(4);
+  });
+
+  it('assente o fuori scala: vuoto, cioè il valore del tema', () => {
+    expect(gutter({})).toBeNull();
+    expect(gutter({ _et_pb_gutter_width: '' })).toBeNull();
+    expect(gutter({ _et_pb_gutter_width: '5' })).toBeNull();
+    expect(gutter({ _et_pb_gutter_width: '2.5' })).toBeNull();
+    expect(gutter({ _et_pb_gutter_width: 'on' })).toBeNull();
   });
 });

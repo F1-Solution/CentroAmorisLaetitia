@@ -8,6 +8,87 @@
  * del tema, misurato sull'istanza di riferimento (`tokens.css`).
  */
 
+/* Le proprietà personalizzate si ereditano: ogni blocco riparte dai soli valori propri in linea (Q, DR-157). */
+.blk {
+  --blk-pad-top: initial;
+  --blk-pad-right: initial;
+  --blk-pad-bottom: initial;
+  --blk-pad-left: initial;
+  --blk-pad-top-t: initial;
+  --blk-pad-right-t: initial;
+  --blk-pad-bottom-t: initial;
+  --blk-pad-left-t: initial;
+  --blk-pad-top-p: initial;
+  --blk-pad-right-p: initial;
+  --blk-pad-bottom-p: initial;
+  --blk-pad-left-p: initial;
+  --blk-mar-top: initial;
+  --blk-mar-right: initial;
+  --blk-mar-bottom: initial;
+  --blk-mar-left: initial;
+  --blk-mar-top-t: initial;
+  --blk-mar-right-t: initial;
+  --blk-mar-bottom-t: initial;
+  --blk-mar-left-t: initial;
+  --blk-mar-top-p: initial;
+  --blk-mar-right-p: initial;
+  --blk-mar-bottom-p: initial;
+  --blk-mar-left-p: initial;
+}
+
+/* Margini personalizzati di Divi, scritti con `!important`: valgono solo se il blocco li dichiara (R, DR-157). */
+.blk[style*='--blk-mar-top:'] {
+  margin-top: var(--blk-mar-top) !important;
+}
+
+.blk[style*='--blk-mar-right:'] {
+  margin-right: var(--blk-mar-right) !important;
+}
+
+.blk[style*='--blk-mar-bottom:'] {
+  margin-bottom: var(--blk-mar-bottom) !important;
+}
+
+.blk[style*='--blk-mar-left:'] {
+  margin-left: var(--blk-mar-left) !important;
+}
+
+@media (max-width: 980px) {
+  .blk[style*='--blk-mar-top-t:'] {
+    margin-top: var(--blk-mar-top-t) !important;
+  }
+
+  .blk[style*='--blk-mar-right-t:'] {
+    margin-right: var(--blk-mar-right-t) !important;
+  }
+
+  .blk[style*='--blk-mar-bottom-t:'] {
+    margin-bottom: var(--blk-mar-bottom-t) !important;
+  }
+
+  .blk[style*='--blk-mar-left-t:'] {
+    margin-left: var(--blk-mar-left-t) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .blk[style*='--blk-mar-top-p:'] {
+    margin-top: var(--blk-mar-top-p) !important;
+  }
+
+  .blk[style*='--blk-mar-right-p:'] {
+    margin-right: var(--blk-mar-right-p) !important;
+  }
+
+  .blk[style*='--blk-mar-bottom-p:'] {
+    margin-bottom: var(--blk-mar-bottom-p) !important;
+  }
+
+  .blk[style*='--blk-mar-left-p:'] {
+    margin-left: var(--blk-mar-left-p) !important;
+  }
+}
+
 .blk-section,
 .blk-row,
 .blk-column,
@@ -131,11 +212,23 @@
   gap: 2em;
   width: auto;
   max-width: none;
-  margin: 0 0 1.75em;
+
+  /* `:where(.wp-block-columns) { margin-bottom: 1.75em }` della sorgente perde contro il reset di Divi `div { margin: 0 }` (N, DR-157). */
+  margin: 0;
 }
 
 .blk-row[data-layout='flex']::after {
   content: none;
+}
+
+/*
+ * Nel contenuto Gutenberg i paragrafi sono fratelli e `p:last-of-type` vale solo
+ * per l'ultimo della colonna: un blocco di testo seguito da altri paragrafi
+ * conserva lo spazio del suo ultimo (N, DR-157).
+ */
+.entry-content > .blk-text:has(~ .blk-text > p) p:last-of-type,
+.blk-row[data-layout='flex'] > .blk-column > .blk-text:has(~ .blk-text > p) p:last-of-type {
+  padding-bottom: 1em;
 }
 
 .blk-row[data-layout='flex'] > .blk-column {
@@ -633,8 +726,20 @@
   border-radius: 50%;
 }
 
+.blk-form[data-origin='wpforms'] ul {
+  /* WPForms azzera margini e padding, non l'interlinea che le liste prendono da Divi (U3, DR-157). */
+  line-height: 26px;
+}
+
 .blk-form[data-origin='wpforms'] ul li {
   margin-bottom: 5px;
+}
+
+/* Scelte in linea, `wpforms-list-inline` (U2, DR-157). */
+.blk-form[data-origin='wpforms'] .wpforms-list-inline ul li {
+  display: inline-block;
+  margin-right: 20px;
+  vertical-align: top;
 }
 
 .blk-form[data-origin='wpforms'] ul li:last-of-type {
@@ -763,4 +868,176 @@
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Liste nei moduli di testo Divi: `.et_pb_text ul, .et_pb_text ol { padding-bottom: 1em }` (S, DR-157). */
+.entry-content .blk-section .blk-text ul:not(.blk-form *),
+.entry-content .blk-section .blk-text ol:not(.blk-form *) {
+  padding-bottom: 1em;
+}
+
+/* Blocco «media e testo» come `wp-block-media-text` (V, DR-157). */
+.blk-media-text {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 50% 1fr;
+  grid-template-rows: auto;
+}
+
+.blk-media-text[data-media-position='right'] {
+  grid-template-columns: 1fr 50%;
+}
+
+.blk-media-text > .blk-media-text-media,
+.blk-media-text > .blk-media-text-content {
+  align-self: center;
+}
+
+.blk-media-text[data-align='top'] > .blk-media-text-media,
+.blk-media-text[data-align='top'] > .blk-media-text-content {
+  align-self: start;
+}
+
+.blk-media-text[data-align='bottom'] > .blk-media-text-media,
+.blk-media-text[data-align='bottom'] > .blk-media-text-content {
+  align-self: end;
+}
+
+.blk-media-text > .blk-media-text-media {
+  grid-row: 1;
+  grid-column: 1;
+  margin: 0;
+}
+
+.blk-media-text > .blk-media-text-content {
+  grid-row: 1;
+  grid-column: 2;
+  padding: 0 8%;
+  word-break: break-word;
+}
+
+.blk-media-text[data-media-position='right'] > .blk-media-text-media {
+  grid-column: 2;
+}
+
+.blk-media-text[data-media-position='right'] > .blk-media-text-content {
+  grid-column: 1;
+}
+
+.blk-media-text-media img {
+  width: 100%;
+  max-width: unset;
+  height: auto;
+  vertical-align: middle;
+}
+
+@media (max-width: 600px) {
+  .blk-media-text {
+    grid-template-columns: 100% !important;
+  }
+
+  .blk-media-text > .blk-media-text-media {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .blk-media-text > .blk-media-text-content {
+    grid-row: 2;
+    grid-column: 1;
+  }
+}
+
+/* Modulo di contatto di Divi, misurato su `/contatti/` della sorgente (T, DR-157). */
+.et_pb_contact_main_title {
+  position: relative;
+  padding-bottom: 16px;
+  font-weight: 500;
+}
+
+h1.et_pb_contact_main_title {
+  font-size: 26px;
+}
+
+.et_pb_contact {
+  position: relative;
+}
+
+.et_pb_contact_form {
+  margin-left: -3%;
+}
+
+p.et_pb_contact_field {
+  margin-bottom: 3%;
+  padding: 0 0 0 3%;
+}
+
+p.et_pb_contact_field:not(.et_pb_contact_field_last),
+p.et_pb_contact_field.et_pb_contact_field_last + p.et_pb_contact_field.et_pb_contact_field_last,
+p.et_pb_contact_field_half + p.et_pb_contact_field_last:not(.et_pb_contact_field_half) {
+  clear: both;
+}
+
+.et_pb_contact .et_pb_contact_field_half {
+  float: left;
+  width: 50%;
+}
+
+.et_pb_contact_form_label {
+  display: none;
+}
+
+.et_pb_contact p input,
+.et_pb_contact p textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--field-padding);
+  border-width: 0;
+  border-radius: 0;
+  background-color: var(--color-field-background);
+  color: var(--color-field-text);
+  font-family: inherit;
+  font-size: var(--field-font-size);
+  appearance: none;
+}
+
+.et_pb_contact_field textarea.et_pb_contact_message {
+  display: block;
+  min-height: 150px;
+}
+
+.et_contact_bottom_container {
+  display: flex;
+  float: right;
+  margin-top: -1.5%;
+  text-align: right;
+}
+
+.et_pb_contact_submit {
+  display: inline-block;
+  margin: 0 0 0 18px;
+  padding: var(--button-padding);
+  border: var(--button-border);
+  border-radius: var(--button-radius);
+  background-color: transparent;
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: var(--button-font-size);
+  font-weight: 500;
+  line-height: var(--button-line-height);
+  cursor: pointer;
+}
+
+.et_pb_contact_submit:hover {
+  background-color: rgb(0 0 0 / 5%);
+}
+
+@media (max-width: 767px) {
+  .et_pb_contact .et_pb_contact_field_half {
+    width: 100%;
+  }
+}
+
+/* Moduli di testo Divi: `.et_pb_text { overflow-wrap: break-word }`, un indirizzo lungo va a capo. */
+.blk-section .blk-text {
+  overflow-wrap: break-word;
 }

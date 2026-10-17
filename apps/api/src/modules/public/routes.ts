@@ -10,6 +10,7 @@ import {
   postsQuery,
   postsResponse,
   redirectResponse,
+  searchQuery,
   settingsResponse,
   sitemapResponse,
   slugParam,
@@ -19,6 +20,7 @@ import {
   collectRefs,
   documentsBy,
   fallbackDescription,
+  summaryTextStart,
   fileByPublicPath,
   fillTemplate,
   formsByIds,
@@ -36,6 +38,7 @@ import {
   termByPath,
   termsOfContent,
 } from './service.js';
+import { searchPublished } from './search.js';
 import { schema } from '@amoris/db';
 import { eq } from 'drizzle-orm';
 
@@ -53,6 +56,17 @@ async function siteTitle(app: FastifyInstance): Promise<string> {
   const settings = await publicSettings(app.db);
   const value = settings['site.title'];
   return typeof value === 'string' ? value : '';
+}
+
+/** Un documento pubblico con le date in ISO, come lo legge il sito. */
+function publicDocument<T extends { readonly updatedAt: Date; readonly publishedAt: Date | null }>(
+  document: T,
+) {
+  return {
+    ...document,
+    updatedAt: document.updatedAt.toISOString(),
+    publishedAt: iso(document.publishedAt),
+  };
 }
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
@@ -103,6 +117,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           title: content.title,
           showTitle: content.showTitle,
           pageLayout: content.pageLayout,
+          gutterWidth: content.gutterWidth,
           excerpt: content.excerpt,
           blocks: content.blocks,
           featuredMediaId: content.featuredMediaId,
@@ -116,10 +131,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         forms,
         postLists,
         documents: Object.fromEntries(
-          documents.map((document) => [
-            document.id,
-            { ...document, updatedAt: document.updatedAt.toISOString() },
-          ]),
+          documents.map((document) => [document.id, publicDocument(document)]),
         ),
       });
     },
@@ -172,6 +184,39 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
   );
 
   typed.get(
+    '/search',
+    {
+      schema: {
+        tags: ['pubblico'],
+        summary: 'Ricerca fra pagine, articoli e download pubblicati, come la sorgente',
+        querystring: searchQuery,
+        response: { 200: postsResponse, ...errorResponses(400) },
+      },
+    },
+    async (request, reply) => {
+      const { rows, total } = await searchPublished(app.db, request.query);
+      const media = await mediaByIds(
+        app.db,
+        rows.flatMap((row) => (row.featuredMediaId ? [row.featuredMediaId] : [])),
+      );
+      return reply.send({
+        items: rows.map((row) => ({
+          id: row.id,
+          path: row.path,
+          title: row.title,
+          excerpt: row.excerpt,
+          summary: fallbackDescription(row.excerpt, row.contentText),
+          textStart: summaryTextStart(row.summarySource, row.contentText),
+          featuredMediaId: row.featuredMediaId,
+          publishedAt: iso(row.publishedAt),
+        })),
+        media,
+        meta: { total, page: request.query.page, perPage: request.query.perPage },
+      });
+    },
+  );
+
+  typed.get(
     '/posts',
     {
       schema: {
@@ -194,7 +239,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           title: row.title,
           excerpt: row.excerpt,
           summary: fallbackDescription(row.excerpt, row.contentText),
-          textStart: row.contentText.replace(/\s+/g, ' ').trim().slice(0, 600),
+          textStart: summaryTextStart(row.summarySource, row.contentText),
           featuredMediaId: row.featuredMediaId,
           publishedAt: iso(row.publishedAt),
         })),
@@ -249,7 +294,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       const [document] = await documentsBy(app.db, { slug: request.params.slug });
       if (!document) return reply.callNotFound();
       return reply.send({
-        document: { ...document, updatedAt: document.updatedAt.toISOString() },
+        document: publicDocument(document),
         media: await mediaByIds(app.db, [document.mediaId]),
       });
     },

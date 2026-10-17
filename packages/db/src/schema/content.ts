@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -37,6 +38,8 @@ export const contents = pgTable(
     showTitle: boolean().notNull().default(true),
     /** Barra laterale e larghezza della colonna; predefinito del tema `et_right_sidebar` (DR-139). */
     pageLayout: pageLayout().notNull().default('right_sidebar'),
+    /** Ex `_et_pb_gutter_width`; vuota = valore del tema, 2 (DR-149). */
+    gutterWidth: smallint(),
     isSticky: boolean().notNull().default(false),
     excerpt: text(),
     /** Documento a blocchi (ADR-005 §3.1). */
@@ -45,6 +48,8 @@ export const contents = pgTable(
     contentHtml: text().notNull().default(''),
     /** Solo testo, per ricerca e description. */
     contentText: text().notNull().default(''),
+    /** Inizio del testo nella forma che Divi conta per l'estratto, con le entità di `wptexturize`; vuota per i contenuti del CMS (D71, DR-155). */
+    summarySource: text(),
     featuredMediaId: uuid().references(() => media.id, { onDelete: 'set null' }),
     publishedAt: timestamp({ withTimezone: true }),
     authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
@@ -66,6 +71,7 @@ export const contents = pgTable(
     check('contents_published_has_date', sql`status <> 'published' OR published_at IS NOT NULL`),
     check('contents_posts_have_no_parent', sql`type <> 'post' OR parent_id IS NULL`),
     check('contents_path_shape', sql`path ~ '^/([a-z0-9._~%!$&()*+,;=:@-]+/)*$'`),
+    check('contents_gutter_width_range', sql`gutter_width BETWEEN 1 AND 4`),
     check('contents_blocks_have_schema', sql`blocks ? 'schema' AND blocks ? 'blocks'`),
     index('contents_type_status_idx').on(t.type, t.status, t.publishedAt.desc().nullsFirst()),
     index('contents_parent_idx').on(t.parentId, t.position),

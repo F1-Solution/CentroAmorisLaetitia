@@ -17,7 +17,7 @@ export function Row({ block, media, sliders, forms, postLists }: RowComponentPro
   return (
     <div
       className={blockClassName('row', block.props.classes)}
-      style={spacingVariables(block.props.padding)}
+      style={spacingVariables(block.props.padding, block.props.margin)}
       id={block.id}
       data-layout={block.props.layout}
     >

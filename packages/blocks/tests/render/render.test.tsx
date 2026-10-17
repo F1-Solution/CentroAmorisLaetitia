@@ -184,6 +184,33 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
     expect(container.querySelector('img')).not.toBeNull();
   });
 
+  it('MediaText separa immagine e contenuto e dichiara posizione e allineamento (V)', () => {
+    const { container } = render(
+      <MediaText
+        block={{
+          type: 'media_text',
+          id: testBlockId(),
+          props: {
+            mediaId: uuid,
+            mediaAlt: 'alt',
+            mediaVariant: null,
+            mediaPosition: 'right',
+            mediaWidthPercent: null,
+            verticalAlignment: 'top',
+            linkUrl: null,
+            classes: [],
+          },
+          children: [],
+        }}
+      />,
+    );
+    const root = container.firstElementChild;
+    expect(root?.getAttribute('data-media-position')).toBe('right');
+    expect(root?.getAttribute('data-align')).toBe('top');
+    expect(root?.querySelector(':scope > figure.blk-media-text-media > img')).not.toBeNull();
+    expect(root?.querySelector(':scope > div.blk-media-text-content')).not.toBeNull();
+  });
+
   it('Video rende un contenitore con i dati in data-*', () => {
     const { container } = render(
       <Video

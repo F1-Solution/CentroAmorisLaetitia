@@ -7,7 +7,7 @@
   "x": 180,
   "y": 650,
   "w": 1080,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -57,37 +57,37 @@
   "x": 180,
   "y": 275,
   "w": 1080,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "1440",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 711,
-  "y": 558,
-  "w": 190,
-  "h": 107
+  "x": 940,
+  "y": 563,
+  "w": 320,
+  "h": 180
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "1440",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 711,
-  "y": 695,
-  "w": 190,
-  "h": 107
+  "x": 940,
+  "y": 773,
+  "w": 320,
+  "h": 180
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "1440",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 711,
-  "y": 944,
-  "w": 190,
-  "h": 107
+  "x": 940,
+  "y": 1068,
+  "w": 320,
+  "h": 180
  },
  {
   "url": "/contatti/",
@@ -97,7 +97,7 @@
   "x": 128,
   "y": 643,
   "w": 1024,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -125,7 +125,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 344,
-  "y": 1710,
+  "y": 1711,
   "w": 592,
   "h": 333
  },
@@ -147,7 +147,7 @@
   "x": 128,
   "y": 271,
   "w": 1024,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/contatti/",
@@ -155,9 +155,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 102,
-  "y": 644,
+  "y": 695,
   "w": 819,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -165,7 +165,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 102,
-  "y": 1296,
+  "y": 1347,
   "w": 387,
   "h": 218
  },
@@ -175,7 +175,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 535,
-  "y": 1296,
+  "y": 1347,
   "w": 387,
   "h": 218
  },
@@ -185,7 +185,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 275,
-  "y": 1612,
+  "y": 1662,
   "w": 473,
   "h": 266
  },
@@ -195,7 +195,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 679,
-  "y": 137,
+  "y": 187,
   "w": 243,
   "h": 137
  },
@@ -205,9 +205,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 102,
-  "y": 256,
+  "y": 306,
   "w": 819,
-  "h": 87
+  "h": 440
  },
  {
   "url": "/contatti/",
@@ -215,9 +215,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 77,
-  "y": 877,
+  "y": 876,
   "w": 614,
-  "h": 87
+  "h": 350
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -225,17 +225,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 77,
-  "y": 1849,
-  "w": 614,
-  "h": 346
- },
- {
-  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
-  "viewport": "768",
-  "motivo": "Video: copertina/anteprima di un servizio esterno",
-  "selettore": ".blk-video",
-  "x": 77,
-  "y": 2324,
+  "y": 1848,
   "w": 614,
   "h": 346
  },
@@ -245,7 +235,17 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 77,
-  "y": 3157,
+  "y": 2323,
+  "w": 614,
+  "h": 346
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "768",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 77,
+  "y": 3156,
   "w": 614,
   "h": 346
  },
@@ -265,39 +265,39 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 77,
-  "y": 290,
+  "y": 289,
   "w": 614,
-  "h": 87
+  "h": 350
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "768",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 138,
-  "y": 2277,
-  "w": 492,
-  "h": 276
+  "x": 77,
+  "y": 1920,
+  "w": 614,
+  "h": 346
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "768",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 138,
-  "y": 2584,
-  "w": 492,
-  "h": 276
+  "x": 77,
+  "y": 2296,
+  "w": 614,
+  "h": 346
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "768",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 138,
-  "y": 2947,
-  "w": 492,
-  "h": 276
+  "x": 77,
+  "y": 2728,
+  "w": 614,
+  "h": 346
  },
  {
   "url": "/contatti/",
@@ -305,9 +305,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 39,
-  "y": 877,
+  "y": 876,
   "w": 312,
-  "h": 87
+  "h": 200
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -315,17 +315,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 39,
-  "y": 2293,
-  "w": 312,
-  "h": 176
- },
- {
-  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
-  "viewport": "390",
-  "motivo": "Video: copertina/anteprima di un servizio esterno",
-  "selettore": ".blk-video",
-  "x": 39,
-  "y": 2599,
+  "y": 2219,
   "w": 312,
   "h": 176
  },
@@ -335,7 +325,17 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 39,
-  "y": 3289,
+  "y": 2524,
+  "w": 312,
+  "h": 176
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "390",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 39,
+  "y": 3214,
   "w": 312,
   "h": 176
  },
@@ -345,7 +345,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 39,
-  "y": 2176,
+  "y": 2175,
   "w": 312,
   "h": 176
  },
@@ -355,9 +355,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 39,
-  "y": 290,
+  "y": 289,
   "w": 312,
-  "h": 115
+  "h": 200
  },
  {
   "url": "/informazioni-sui-cookie/",
@@ -365,7 +365,7 @@
   "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
   "selettore": "table (cookie)",
   "x": 39,
-  "y": 4416,
+  "y": 4417,
   "w": 312,
   "h": 259
  },
@@ -374,30 +374,30 @@
   "viewport": "390",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 70,
-  "y": 4015,
-  "w": 250,
-  "h": 140
+  "x": 39,
+  "y": 3173,
+  "w": 312,
+  "h": 176
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "390",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 70,
-  "y": 4185,
-  "w": 250,
-  "h": 140
+  "x": 39,
+  "y": 3379,
+  "w": 312,
+  "h": 176
  },
  {
   "url": "/riparte-il-corso-per-consulenti-familiari/",
   "viewport": "390",
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
-  "x": 70,
-  "y": 4440,
-  "w": 250,
-  "h": 140
+  "x": 39,
+  "y": 3669,
+  "w": 312,
+  "h": 176
  },
  {
   "url": "/contatti/",
@@ -405,9 +405,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 36,
-  "y": 961,
+  "y": 960,
   "w": 288,
-  "h": 115
+  "h": 200
  },
  {
   "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
@@ -415,17 +415,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 36,
-  "y": 2333,
-  "w": 288,
-  "h": 162
- },
- {
-  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
-  "viewport": "360",
-  "motivo": "Video: copertina/anteprima di un servizio esterno",
-  "selettore": ".blk-video",
-  "x": 36,
-  "y": 2625,
+  "y": 2264,
   "w": 288,
   "h": 162
  },
@@ -435,7 +425,17 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 36,
-  "y": 3301,
+  "y": 2556,
+  "w": 288,
+  "h": 162
+ },
+ {
+  "url": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "viewport": "360",
+  "motivo": "Video: copertina/anteprima di un servizio esterno",
+  "selettore": ".blk-video",
+  "x": 36,
+  "y": 3232,
   "w": 288,
   "h": 162
  },
@@ -445,7 +445,7 @@
   "motivo": "Video: copertina/anteprima di un servizio esterno",
   "selettore": ".blk-video",
   "x": 36,
-  "y": 2257,
+  "y": 2230,
   "w": 288,
   "h": 162
  },
@@ -455,9 +455,9 @@
   "motivo": "Mappa: tessere/errore di un servizio esterno, mai identiche due volte",
   "selettore": ".blk-map",
   "x": 36,
-  "y": 290,
+  "y": 289,
   "w": 288,
-  "h": 115
+  "h": 200
  },
  {
   "url": "/informazioni-sui-cookie/",
@@ -465,7 +465,7 @@
   "motivo": "DR-120: tabella dei cookie più larga del riquadro, presente anche nella sorgente",
   "selettore": "table (cookie)",
   "x": 36,
-  "y": 4715,
+  "y": 4716,
   "w": 288,
   "h": 259
  }

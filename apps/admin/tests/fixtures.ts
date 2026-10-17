@@ -45,6 +45,7 @@ export const syntheticDocument: BlockDocument = {
             backgroundColor: null,
             backgroundMediaId: null,
             padding: emptySpacing,
+            margin: emptySpacing,
             classes: [],
           },
           children: [
@@ -62,6 +63,7 @@ export const syntheticDocument: BlockDocument = {
                     backgroundLayout: null,
                     border: null,
                     padding: emptySpacing,
+                    margin: emptySpacing,
                     classes: [],
                   },
                   children: [],
@@ -81,6 +83,7 @@ export const syntheticDocument: BlockDocument = {
                     backgroundLayout: null,
                     border: null,
                     padding: emptySpacing,
+                    margin: emptySpacing,
                     classes: [],
                   },
                   children: [],

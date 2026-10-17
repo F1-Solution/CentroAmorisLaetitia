@@ -18,12 +18,14 @@ import { buildHtmlFallbackBlock, type BuiltHtmlBlock } from './html-fallback.js'
 import { normalizeSameSiteUrls } from './url-normalize.js';
 import { richTextClasses } from './classes.js';
 import { wpautop } from './wpautop.js';
+import { wptexturize } from './wptexturize.js';
 
 export interface RichTextExtras {
   readonly textAlign?: RichTextProps['textAlign'];
   readonly backgroundLayout?: RichTextProps['backgroundLayout'];
   readonly border?: RichTextProps['border'];
   readonly padding?: Spacing;
+  readonly margin?: Spacing;
 }
 
 export interface BuiltRichTextBlock {
@@ -45,11 +47,16 @@ export function buildRichTextOrFallback(
   rawHtml: string,
   range: { start: number; end: number },
   extras: RichTextExtras = {},
-  { autop = true }: { readonly autop?: boolean } = {},
+  {
+    autop = true,
+    texturize = true,
+  }: { readonly autop?: boolean; readonly texturize?: boolean } = {},
 ): RichTextOrFallback | null {
-  // `wpautop()` come nella resa della sorgente, una sola volta; WordPress non lo applica ai contenuti con blocchi.
+  // `wptexturize()` e `wpautop()` come nella resa della sorgente, in quest'ordine, una sola volta (DR-151);
+  // WordPress non applica `wpautop()` ai contenuti con blocchi.
+  const texturized = texturize ? wptexturize(rawHtml) : rawHtml;
   const { html: normalizedHtml, count: normalizedCount } = normalizeSameSiteUrls(
-    autop ? wpautop(rawHtml) : rawHtml,
+    autop ? wpautop(texturized) : texturized,
   );
   if (normalizedCount > 0) {
     ctx.push({
@@ -102,6 +109,7 @@ export function buildRichTextOrFallback(
     backgroundLayout,
     border: extras.border ?? null,
     padding: extras.padding,
+    margin: extras.margin,
     classes,
   });
 

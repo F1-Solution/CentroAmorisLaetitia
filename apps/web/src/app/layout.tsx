@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import 'intl-tel-input/styles';
 import '../styles/open-sans.css';
+import '../styles/etmodules.css';
 import '../styles/tokens.css';
 import '../styles/base.css';
 import '../styles/blocks.css';

@@ -7,7 +7,7 @@ import { jsonObjectKeyOrder, parseFormPost } from '../../../src/stages/forms/par
  * sorgente, che `JSON.parse` riordinerebbe. Dati sintetici.
  */
 
-const raw = `{"fields":{"13":{"id":"13","type":"html","code":"<b>Dati</b>"},"1":{"id":"1","type":"name","label":"Nome","required":"1","size":"medium","format":"first-last","label_hide":"1","sublabel_hide":"1","first_placeholder":"Nome","last_placeholder":"Cognome","css":"x"},"9":{"id":"9","type":"radio","label":"Pagamento","choices":{"1":{"label":"Online"},"2":{"label":"Bonifico"}}},"10":{"id":"10","type":"html","code":"<p>Istruzioni</p>","conditional_logic":"1","conditional_type":"show","conditionals":[[{"field":"9","operator":"==","value":"2"}]]},"4":{"id":"4","type":"address","label":"Indirizzo","scheme":"international","address2_hide":"1","country_hide":"1","address1_placeholder":"Indirizzo","city_placeholder":"Città","state_placeholder":"Provincia","postal_placeholder":"CAP"},"6":{"id":"6","type":"email","label":"Email","confirmation":"1","placeholder":"Email","confirmation_placeholder":"Conferma email"},"3":{"id":"3","type":"date-time","label":"Data","date_placeholder":"gg/mm/aaaa","date_format":"d/m/Y"}},"settings":{"form_title":"Sintetico","notifications":{"2":{"notification_name":"Seconda"},"1":{"notification_name":"Prima"}}}}`;
+const raw = `{"fields":{"13":{"id":"13","type":"html","code":"<b>Dati</b>"},"1":{"id":"1","type":"name","label":"Nome","required":"1","size":"medium","format":"first-last","label_hide":"1","sublabel_hide":"1","first_placeholder":"Nome","last_placeholder":"Cognome","css":"x"},"9":{"id":"9","type":"radio","label":"Pagamento","input_columns":"inline","choices":{"1":{"label":"Online"},"2":{"label":"Bonifico"}}},"10":{"id":"10","type":"html","code":"<p>Istruzioni</p>","conditional_logic":"1","conditional_type":"show","conditionals":[[{"field":"9","operator":"==","value":"2"}]]},"4":{"id":"4","type":"address","label":"Indirizzo","scheme":"international","address2_hide":"1","country_hide":"1","address1_placeholder":"Indirizzo","city_placeholder":"Città","state_placeholder":"Provincia","postal_placeholder":"CAP"},"6":{"id":"6","type":"email","label":"Email","confirmation":"1","placeholder":"Email","confirmation_placeholder":"Conferma email"},"3":{"id":"3","type":"date-time","label":"Data","date_placeholder":"gg/mm/aaaa","date_format":"d/m/Y"}},"settings":{"form_title":"Sintetico","notifications":{"2":{"notification_name":"Seconda"},"1":{"notification_name":"Prima"}}}}`;
 
 describe('jsonObjectKeyOrder', () => {
   it('legge le chiavi di un oggetto annidato nell’ordine del testo', () => {
@@ -48,5 +48,7 @@ describe('parseFormPost', () => {
     expect(byId.get('4')).toMatchObject({ address2_hide: '1', city_placeholder: 'Città' });
     expect(byId.get('6')).toMatchObject({ confirmation_placeholder: 'Conferma email' });
     expect(byId.get('3')).toMatchObject({ date_placeholder: 'gg/mm/aaaa' });
+    // Scelte in linea (U1, DR-157).
+    expect(byId.get('9')).toMatchObject({ input_columns: 'inline' });
   });
 });

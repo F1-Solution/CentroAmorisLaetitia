@@ -58,6 +58,7 @@ import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Stage, StageContext } from '../context.js';
 import type { ItemKey, StageResult } from '../types.js';
+import { parseTimestamp, publicationDateSource } from '../contents/meta.js';
 import { forEachItem } from '../../persistence/forEachItem.js';
 import type { Tx } from '../../persistence/tx.js';
 import type { SqlRow } from '../../source/sql/types.js';
@@ -65,6 +66,7 @@ import { checksumFile, type UploadedFile } from '../../source/files/uploads.js';
 import type { PrivateStorageFile } from '../../source/files/privateStorage.js';
 import { phpUnserialize, type PhpValue } from '../../source/php/unserialize.js';
 import type { Bucket } from '../../storage/objectStore.js';
+import { texturizePlain } from '../../convert/shared/wptexturize.js';
 
 type LegacySource = 'wpdmpro' | 'cuar_private_file';
 
@@ -74,6 +76,8 @@ interface DocumentRow {
   readonly slug: string;
   readonly title: string;
   readonly description: string | null;
+  /** Data del post, per la ricerca del sito pubblico (DR-144). */
+  readonly publishedAt: Date | null;
   readonly downloadCount: number;
   readonly categoryTaxonomy: string; // 'wpdmcategory' | 'cuar_private_file_category'
   readonly categoryTermLegacyIds: readonly number[];
@@ -194,8 +198,11 @@ async function loadDocumentRows(ctx: StageContext): Promise<readonly DocumentRow
       legacyId,
       legacySource: postType,
       slug: asString(row['post_name']),
-      title: asString(row['post_title']),
+      title: texturizePlain(asString(row['post_title'])),
       description: description || null,
+      publishedAt: parseTimestamp(
+        publicationDateSource(asString(row['post_date_gmt']), asString(row['post_date'])),
+      ),
       downloadCount: asNumber(meta.get('__wpdm_download_count')),
       categoryTaxonomy: category?.taxonomy ?? '',
       categoryTermLegacyIds: category?.ids ?? [],
@@ -435,6 +442,7 @@ export const documentsStage: Stage = {
             slug: row.slug,
             title: row.title,
             description: row.description,
+            publishedAt: row.publishedAt,
             mediaId,
             isPrivate: row.legacySource === 'cuar_private_file',
             downloadCount: row.downloadCount,
@@ -447,6 +455,7 @@ export const documentsStage: Stage = {
               slug: row.slug,
               title: row.title,
               description: row.description,
+              publishedAt: row.publishedAt,
               mediaId,
               isPrivate: row.legacySource === 'cuar_private_file',
               downloadCount: row.downloadCount,

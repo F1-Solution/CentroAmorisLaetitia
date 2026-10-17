@@ -378,6 +378,122 @@ describe('Form — invio con esito letto dal servizio (DR-108)', () => {
     expect(container.querySelector('.blk-form-trap')).not.toBeNull();
   });
 
+  it('il modulo di contatto Divi ha la struttura del tema: metà riga, area di testo, titolo h1 (T)', () => {
+    const formDivi: FormData = {
+      ...form,
+      title: 'Richiesta informazioni',
+      fields: [
+        {
+          id: 'Name',
+          type: 'text',
+          label: 'Nome',
+          required: true,
+          order: 0,
+          description: null,
+          options: {},
+        },
+        {
+          id: 'Email',
+          type: 'email',
+          label: 'Email',
+          required: true,
+          order: 1,
+          description: null,
+          options: {},
+        },
+        {
+          id: 'Phone',
+          type: 'text',
+          label: 'Telefono',
+          required: false,
+          order: 2,
+          description: null,
+          options: { fullwidth: true },
+        },
+        {
+          id: 'Message',
+          type: 'text',
+          label: 'Messaggio',
+          required: true,
+          order: 3,
+          description: null,
+          options: { multiline: true, fullwidth: true },
+        },
+      ],
+    };
+    const { container } = render(
+      <Form
+        block={{
+          type: 'form',
+          id: testBlockId(),
+          props: {
+            formId: uuid,
+            origin: 'divi',
+            showTitle: true,
+            showDescription: false,
+            classes: [],
+          },
+          children: [],
+        }}
+        form={formDivi}
+      />,
+    );
+    const classes = [...container.querySelectorAll('p.et_pb_contact_field')].map(
+      (p) => p.className,
+    );
+    expect(classes).toEqual([
+      'et_pb_contact_field et_pb_contact_field_half',
+      'et_pb_contact_field et_pb_contact_field_half et_pb_contact_field_last',
+      'et_pb_contact_field et_pb_contact_field_last',
+      'et_pb_contact_field et_pb_contact_field_last',
+    ]);
+    expect(
+      container.querySelector('textarea.et_pb_contact_message')?.getAttribute('placeholder'),
+    ).toBe('Messaggio');
+    expect(container.querySelector('h1.et_pb_contact_main_title')?.textContent).toBe(
+      'Richiesta informazioni',
+    );
+    expect(container.querySelector('button.et_pb_contact_submit')).not.toBeNull();
+  });
+
+  it('un «radio» con `input_columns: inline` porta la classe delle scelte in linea (U2)', () => {
+    const formInLinea: FormData = {
+      ...form,
+      fields: [
+        {
+          id: '13',
+          type: 'radio',
+          label: 'Consenso',
+          required: true,
+          order: 0,
+          description: null,
+          options: {
+            input_columns: 'inline',
+            choices: { '1': { label: 'Sì' }, '2': { label: 'No' } },
+          },
+        },
+      ],
+    };
+    const { container } = render(
+      <Form
+        block={{
+          type: 'form',
+          id: testBlockId(),
+          props: {
+            formId: uuid,
+            origin: 'wpforms',
+            showTitle: false,
+            showDescription: false,
+            classes: [],
+          },
+          children: [],
+        }}
+        form={formInLinea}
+      />,
+    );
+    expect(container.querySelector('.wpforms-field-radio.wpforms-list-inline')).not.toBeNull();
+  });
+
   it('rende le opzioni di un «radio», con le scelte come oggetto a chiavi numeriche (dato reale)', () => {
     const formConScelte: FormData = {
       ...form,

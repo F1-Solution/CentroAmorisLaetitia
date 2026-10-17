@@ -14,16 +14,20 @@ import type { Spacing } from '../common';
 const SIDES = ['top', 'right', 'bottom', 'left'] as const;
 const BREAKPOINTS = { base: '', tablet: '-t', phone: '-p' } as const;
 
+/** Padding e margini personalizzati (`custom_margin`, R di DR-157). */
+const KINDS = { padding: 'pad', margin: 'mar' } as const;
+
 /** L'elenco chiuso dei nomi ammessi in linea (criterio 1E-15). */
-export const SPACING_VARIABLES: readonly string[] = Object.values(BREAKPOINTS).flatMap((suffix) =>
-  SIDES.map((side) => `--blk-pad-${side}${suffix}`),
+export const SPACING_VARIABLES: readonly string[] = Object.values(KINDS).flatMap((kind) =>
+  Object.values(BREAKPOINTS).flatMap((suffix) =>
+    SIDES.map((side) => `--blk-${kind}-${side}${suffix}`),
+  ),
 );
 
 /** Le stesse unità di `CssLength`: lo schema le garantisce già, qui si ricontrolla. */
 const LENGTH = /^-?\d+(\.\d+)?(px|em|rem|%|vh|vw)$/;
 
-export function spacingVariables(spacing: Spacing): CSSProperties | undefined {
-  const out: Record<string, string> = {};
+function variables(spacing: Spacing, kind: string, out: Record<string, string>): void {
   for (const [breakpoint, suffix] of Object.entries(BREAKPOINTS) as [
     keyof typeof BREAKPOINTS,
     string,
@@ -32,8 +36,14 @@ export function spacingVariables(spacing: Spacing): CSSProperties | undefined {
     if (!box) continue;
     for (const side of SIDES) {
       const value = box[side];
-      if (value !== null && LENGTH.test(value)) out[`--blk-pad-${side}${suffix}`] = value;
+      if (value !== null && LENGTH.test(value)) out[`--blk-${kind}-${side}${suffix}`] = value;
     }
   }
+}
+
+export function spacingVariables(padding: Spacing, margin?: Spacing): CSSProperties | undefined {
+  const out: Record<string, string> = {};
+  variables(padding, KINDS.padding, out);
+  if (margin) variables(margin, KINDS.margin, out);
   return Object.keys(out).length > 0 ? (out as CSSProperties) : undefined;
 }

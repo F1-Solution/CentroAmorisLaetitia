@@ -341,9 +341,23 @@ describe('determinismo (§6.4)', () => {
 });
 
 describe('extractContentText (§6.1)', () => {
-  it('toglie i tag e riduce gli spazi', () => {
+  it('toglie i tag e riduce gli spazi; i blocchi vanno a capo (DR-146)', () => {
     const html = '<div class="blk blk-section" id="b_1"><p>Ciao   mondo</p>\n<p>Altro</p></div>';
-    expect(extractContentText(html)).toBe('Ciao mondo Altro');
+    expect(extractContentText(html)).toBe('Ciao mondo\nAltro');
+  });
+
+  it('una frase non attraversa due paragrafi, una parola in grassetto sì (DR-146)', () => {
+    const text = extractContentText(
+      '<p>Iscrizioni al corso</p><p>Per informazioni <strong>scrivere</strong></p>',
+    );
+    expect(text).toBe('Iscrizioni al corso\nPer informazioni scrivere');
+    expect(text.toLowerCase()).not.toContain('corso per');
+  });
+
+  it('a capo anche per righe di elenco, celle e interruzioni di riga', () => {
+    expect(extractContentText('<ul><li>uno</li><li>due</li></ul>')).toBe('uno\ndue');
+    expect(extractContentText('<table><tr><td>a</td><td>b</td></tr></table>')).toBe('a\nb');
+    expect(extractContentText('<p>riga<br>seguente</p>')).toBe('riga\nseguente');
   });
 
   it('decodifica le entità di base', () => {

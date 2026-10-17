@@ -580,7 +580,9 @@ significherebbe tenerne due copie sincronizzate, e ADR-005 §3.6 avverte proprio
 questo. Le proprietà si confrontano su `blocks`, che è la verità.
 
 `content_text` (`database-schema.md` §4.4) si ottiene da `content_html` togliendo i
-tag e riducendo gli spazi: una funzione sola, applicata dopo.
+tag e riducendo gli spazi: una funzione sola, applicata dopo. I tag di blocco
+(paragrafi, titoli, righe di elenco, celle, `br`) diventano un a capo, quelli in
+linea uno spazio, così una frase cercata non attraversa due paragrafi (DR-146).
 
 ### 6.2 Involucro di ogni tipo
 

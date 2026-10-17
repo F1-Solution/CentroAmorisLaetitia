@@ -6,6 +6,7 @@ import { blockClassName } from './class-name';
 import type { FormData } from './data-maps';
 import { isAllowedUrl } from '../sanitize';
 import { visibleFieldIds, type FieldValue } from '../form/logic';
+import { DiviContactField, diviContactLayout, isDiviContactField } from './DiviContactField';
 import { FormField } from './FormField';
 
 export interface FormComponentProps {
@@ -117,33 +118,13 @@ export function Form({ block, form }: FormComponentProps) {
     );
   }
 
-  return (
-    <form
-      className={className}
-      id={block.id}
-      data-form-id={block.props.formId}
-      data-origin={block.props.origin}
-      onSubmit={handleSubmit}
-      noValidate
-    >
-      {block.props.showTitle ? (
-        // Il modulo di contatto di Divi rende il suo titolo come `h1` (criterio 1E-14).
-        block.props.origin === 'divi' ? (
-          <h1 className="blk-form-title et_pb_contact_main_title">{form.title}</h1>
-        ) : (
-          <h2 className="blk-form-title">{form.title}</h2>
-        )
-      ) : null}
-      {fields
-        .filter((field) => visible.has(field.id))
-        .map((field) => (
-          <FormField
-            key={field.id}
-            field={field}
-            value={values[field.id]}
-            onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
-          />
-        ))}
+  const submitLabel =
+    status === 'sending'
+      ? (form.submitTextProcessing ?? 'Invio in corso…')
+      : (form.submitText ?? 'Invia');
+
+  const antiSpam = (
+    <>
       {/* Campo esca: invisibile a chi vede la pagina, compilato solo da invii automatici. */}
       <label className="blk-form-trap" aria-hidden="true">
         Non compilare questo campo
@@ -161,11 +142,83 @@ export function Form({ block, form }: FormComponentProps) {
           {errorMessage}
         </p>
       ) : null}
+    </>
+  );
+
+  if (block.props.origin === 'divi') {
+    // Struttura del modulo di contatto di Divi (T, DR-157), titolo `h1` come la sorgente (1E-14); niente captcha aritmetico, vale il campo esca.
+    return (
+      <div
+        className={`${className} et_pb_contact_form_container clearfix`}
+        id={block.id}
+        data-form-id={block.props.formId}
+        data-origin={block.props.origin}
+      >
+        {block.props.showTitle ? (
+          <h1 className="blk-form-title et_pb_contact_main_title">{form.title}</h1>
+        ) : null}
+        <div className="et_pb_contact">
+          <form className="et_pb_contact_form clearfix" onSubmit={handleSubmit} noValidate>
+            {diviContactLayout(fields.filter((field) => visible.has(field.id))).map(
+              ({ field, half, last }) =>
+                isDiviContactField(field) ? (
+                  <DiviContactField
+                    key={field.id}
+                    field={field}
+                    half={half}
+                    last={last}
+                    value={values[field.id]}
+                    onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
+                  />
+                ) : (
+                  <FormField
+                    key={field.id}
+                    field={field}
+                    value={values[field.id]}
+                    onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
+                  />
+                ),
+            )}
+            {antiSpam}
+            <div className="et_contact_bottom_container">
+              <button
+                type="submit"
+                className="et_pb_contact_submit et_pb_button"
+                disabled={status === 'sending'}
+              >
+                {submitLabel}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className={className}
+      id={block.id}
+      data-form-id={block.props.formId}
+      data-origin={block.props.origin}
+      onSubmit={handleSubmit}
+      noValidate
+    >
+      {block.props.showTitle ? <h2 className="blk-form-title">{form.title}</h2> : null}
+      {fields
+        .filter((field) => visible.has(field.id))
+        .map((field) => (
+          <FormField
+            key={field.id}
+            field={field}
+            value={values[field.id]}
+            onChange={(next) => setValues((prev) => ({ ...prev, [field.id]: next }))}
+          />
+        ))}
+      {antiSpam}
       <div className="wpforms-submit-container">
         <button type="submit" className="wpforms-submit" disabled={status === 'sending'}>
-          {status === 'sending'
-            ? (form.submitTextProcessing ?? 'Invio in corso…')
-            : (form.submitText ?? 'Invia')}
+          {submitLabel}
         </button>
       </div>
     </form>

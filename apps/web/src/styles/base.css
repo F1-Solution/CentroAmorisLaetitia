@@ -30,6 +30,16 @@ a {
   text-decoration: none;
 }
 
+/* Un link dentro un titolo ha il colore del titolo, come `style.css` di Divi. */
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
+  color: inherit;
+}
+
 p {
   margin: 0;
   padding-bottom: 1em;
@@ -37,6 +47,34 @@ p {
 
 p:last-of-type {
   padding-bottom: 0;
+}
+
+/* Liste del contenuto come `style-cpt.css` di Divi (S, DR-157); form ed elenco degli articoli hanno le proprie. */
+#left-area ul:not(.blk-form *, .blk-post-list *),
+.entry-content ul:not(.blk-form *, .blk-post-list *, .blk-post-list-items) {
+  margin: 0;
+  padding: 0 0 23px 1em;
+  line-height: 26px;
+  list-style-type: disc;
+}
+
+#left-area ol:not(.blk-form *, .blk-post-list *),
+.entry-content ol:not(.blk-form *, .blk-post-list *) {
+  margin: 0;
+  padding: 0 0 23px;
+  line-height: 26px;
+  list-style-type: decimal;
+  list-style-position: inside;
+}
+
+#left-area ul li ul:not(.blk-form *),
+.entry-content ul li ol:not(.blk-form *) {
+  padding: 2px 0 2px 20px;
+}
+
+#left-area ol li ul:not(.blk-form *),
+.entry-content ol li ol:not(.blk-form *) {
+  padding: 2px 0 2px 35px;
 }
 
 h1,

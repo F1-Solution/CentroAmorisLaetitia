@@ -36,6 +36,8 @@ export const rowPropsSchema = z
     backgroundColor: ColorValue.nullable().default(null),
     backgroundMediaId: EntityRef.nullable().default(null),
     padding: Spacing.default(emptySpacing),
+    /** `custom_margin` di Divi (R, DR-157). */
+    margin: Spacing.default(emptySpacing),
     classes: classesField,
   })
   .strict();

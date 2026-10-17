@@ -55,6 +55,19 @@ export function derivePageLayout(
   return stored === 'no_sidebar' && !builder ? 'full_width' : stored;
 }
 
+/** `_et_pb_gutter_width` se è 1…4; altrimenti `null`, cioè il valore del tema (DR-149). */
+export function deriveGutterWidth(meta: ReadonlyMap<string, string>): number | null {
+  const stored = meta.get('_et_pb_gutter_width') ?? '';
+  return /^[1-4]$/.test(stored) ? Number(stored) : null;
+}
+
+/** Una data di `wp_posts` letta come UTC; `null` se vuota o non valida. */
+export function parseTimestamp(raw: string): Date | null {
+  if (!raw) return null;
+  const d = new Date(raw.replace(' ', 'T') + 'Z');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /** `post_date_gmt` è UTC, `post_date` è l'ora locale del sito: si legge la prima, se valorizzata. */
 export function publicationDateSource(postDateGmt: string, postDate: string): string {
   return postDateGmt && !postDateGmt.startsWith('0000') ? postDateGmt : postDate;

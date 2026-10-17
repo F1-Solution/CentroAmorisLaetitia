@@ -23,17 +23,17 @@ function flag(options: Options, key: string): boolean {
   return value === '1' || value === true;
 }
 
-/** Segnaposto ed etichetta di ogni sotto-campo, come la sorgente. */
+/** Segnaposto ed etichetta di ogni sotto-campo, come la sorgente; quelle dell'indirizzo misurate sulla pagina resa (U3, DR-157). */
 const PART_TEXT: Readonly<Record<string, { placeholderKey: string; sublabel: string }>> = {
   first: { placeholderKey: 'first_placeholder', sublabel: 'Nome' },
   last: { placeholderKey: 'last_placeholder', sublabel: 'Cognome' },
   primary: { placeholderKey: 'placeholder', sublabel: 'Email' },
   secondary: { placeholderKey: 'confirmation_placeholder', sublabel: 'Conferma email' },
-  address1: { placeholderKey: 'address1_placeholder', sublabel: 'Indirizzo' },
+  address1: { placeholderKey: 'address1_placeholder', sublabel: 'Indirizzo (linea 1)' },
   address2: { placeholderKey: 'address2_placeholder', sublabel: 'Indirizzo (riga 2)' },
-  city: { placeholderKey: 'city_placeholder', sublabel: 'Città' },
-  state: { placeholderKey: 'state_placeholder', sublabel: 'Provincia' },
-  postal: { placeholderKey: 'postal_placeholder', sublabel: 'CAP' },
+  city: { placeholderKey: 'city_placeholder', sublabel: 'Località' },
+  state: { placeholderKey: 'state_placeholder', sublabel: 'Stato / Provincia / Regione' },
+  postal: { placeholderKey: 'postal_placeholder', sublabel: 'Codice postale' },
   country: { placeholderKey: 'country_placeholder', sublabel: 'Paese' },
 };
 
@@ -80,9 +80,19 @@ function sizeClass(options: Options): string {
   return size ? ` wpforms-field-${size}` : '';
 }
 
+/** `input_columns` di WPForms: scelte in linea o su due o tre colonne (U2, DR-157). */
+function listClass(options: Options): string {
+  const columns = text(options, 'input_columns');
+  if (columns === 'inline') return ' wpforms-list-inline';
+  return columns === '2' || columns === '3' ? ` wpforms-list-${columns}-columns` : '';
+}
+
 function Container({ field, children }: { field: FormFieldData; children: ReactNode }) {
   return (
-    <div className={`wpforms-field wpforms-field-${field.type}`} data-field-type={field.type}>
+    <div
+      className={`wpforms-field wpforms-field-${field.type}${listClass(field.options)}`}
+      data-field-type={field.type}
+    >
       {children}
     </div>
   );
