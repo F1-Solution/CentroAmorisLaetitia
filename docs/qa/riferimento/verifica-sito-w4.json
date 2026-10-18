@@ -124,12 +124,15 @@
   "/category/news/ color",
   "/category/news/page/2/ color",
   "/category/news/page/3/ color",
-  "/?s=corso color"
+  "/?s=corso color",
+  "/download-category/moduli-consulenze/ color"
  ],
  "stiliDelQuadro": [],
  "orizzontali": [
+  "/parlarsi-con-il-cuore/ 390 (+17px)",
+  "/sguardi-damore/ 390 (+17px)",
   "/parlarsi-con-il-cuore/ 360 (+15px)",
-  "/sguardi-damore/ 360 (+15px)",
+  "/sguardi-damore/ 360 (+44px)",
   "/sguardi-damore-2/ 360 (+15px)"
  ]
 }

@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| **Stato** | **in corso**. Parità **non raggiunta**: il sito nuovo non esiste ancora. Nessuna dichiarazione di parità è possibile prima dell'approvazione dell'utente (condizione 13 del gate) |
+| **Stato** | **in attesa della UAT** (2026-10-18). Confronto e verifiche eseguiti, difformità residue approvate dall'utente, audit in [`AUDIT.md`](../../.planning/phases/1E/AUDIT.md). La parità **non è dichiarata**: la approva solo l'utente, nel §12 (condizione 13 del gate) |
 | **Piano** | [`visual-regression-plan.md`](visual-regression-plan.md), approvato con DR-110 |
 | **Criteri** | [`acceptance-criteria.md`](acceptance-criteria.md) §4 e §6 |
 | **Immagini** | `docs/qa/screenshots/`, **fuori da Git** (DR-106): ogni immagine si riconosce dalla sua impronta SHA-256 nelle tabelle di `docs/qa/riferimento/` |
 
-Le sezioni 1–6 sono l'esito della `1E-W1`, la cattura del riferimento. Il
-confronto con il sito nuovo comincia con la `1E-W6`.
+Le sezioni 1–6 sono l'esito della `1E-W1`, la cattura del riferimento; il §10 quello
+del confronto della `1E-W6`; il §11 quello delle verifiche della `1E-W7`; il §12 è la UAT.
 
 ---
 
@@ -111,10 +111,13 @@ automatico è quindi lo **0 %**: supera da solo solo il confronto identico al pi
 **Rientro:** nella `1E-W6` ogni confronto che fallisce si ricattura una volta, nelle
 stesse condizioni, prima di essere classificato.
 
-## 5. Aree non deterministiche — maschere da approvare nella `1E-W6`
+## 5. Aree non deterministiche — maschere
 
-Non sono ancora maschere: sono proposte, con l'area misurata. Si approvano voce per
-voce, come vuole il criterio 1E-5.
+Proposte nella `1E-W1` con l'area misurata, **approvate** voce per voce in HO-015
+(DR-124…128, criterio 1E-5): banner dei cookie, mappa `.blk-map`, video `.blk-video`,
+tabella dei cookie a 390 e 360 px. Le coordinate si calcolano a ogni cattura
+(`tests/visual/maschere.ts`); 29 viste dell'ultimo confronto ne hanno almeno una. La
+domanda di controllo di `/contatti/` non è più una maschera: il sito non la mostra (DR-163).
 
 | Area | Dove | Perché cambia | Previsto dal piano |
 |---|---|---|---|
@@ -235,4 +238,61 @@ campo esca (DR-163); mappa e video a copertina (HO-015); tabella dei cookie che 
 sorgente. Elenco completo, indirizzo per indirizzo: `docs/qa/confronto/decisioni-report-DR-162.csv`.
 
 **Questa sezione non è l'approvazione della parità pixel-perfect richiesta dal gate**:
-quella si dà esplicitamente qui, dopo le verifiche manuali della `1E-W7` e la `1E-W8`.
+quella si dà esplicitamente nel §12, dopo le verifiche manuali della `1E-W7` e l'audit.
+
+## 11. Esito della `1E-W7` e stato finale del confronto (2026-10-18)
+
+Verifiche non visive e manuali sugli indirizzi della matrice, piano in
+[`W7-PLAN.md`](../../.planning/phases/1E/W7-PLAN.md), esiti in `docs/qa/verifiche/`
+([`riepilogo.md`](verifiche/riepilogo.md), [`audit-1E-W7.md`](verifiche/audit-1E-W7.md)).
+
+| Criterio | Esito |
+|---|---|
+| 1E-8 metadati | 117 URL, 0 difformi (5 identici, 112 con sole correzioni DR-040) |
+| 1E-9 redirect | 181/181 regole, 0 inversioni su 293 indirizzi |
+| 1E-6 verifiche manuali | 81 URL: menu e mobile 79/79, form 24/24; scarti residui accettati (DR-197, DR-204) |
+| 1E-17 console e rete | 486/486 misure a zero |
+| A-1…A-8 | A-1, A-3, A-4, A-5, A-6 79/79; difetti ereditati in A-2, A-7, A-8, da correggere dopo la UAT (DR-115, DR-169) |
+| 1E-19 | 4/4 contenuti salvati senza modifiche con pagina pubblica identica |
+
+Le correzioni della `1E-W7` (dati strutturati, description, sitemap, immagini con le
+stesse dimensioni della sorgente, video, hover del menu, menu mobile da tastiera,
+etichetta della ricerca) hanno richiesto una ricattura integrale. **Ultimo confronto: 591
+righe (585 viste distinte), 40 superate, 3 da esaminare, 548 fallite**; nessuna vista
+peggiorata rispetto allo stato accettato con DR-162. Le 50 viste cambiate e la pagina
+nuova `/download-category/moduli-consulenze/` sono state esaminate nel report «Bozze di
+parità 1E-W7» e **accettate tutte** (DR-203, `verifiche/decisioni-report-1E-W7.csv`).
+
+### 11.1 Indice delle difformità accettate
+
+| Decisione | Che cosa | Elenco |
+|---|---|---|
+| DR-162 | 112 indirizzi, 544 viste non superate dopo la `1E-W6` | `confronto/decisioni-report-DR-162.csv` |
+| DR-203 | 25 indirizzi, 50 viste cambiate dopo la `1E-W7` | `verifiche/decisioni-report-1E-W7.csv` |
+| DR-124…128 | banner dei cookie, mappa e video a copertina, tabella dei cookie, suffisso «- Pagina N» | HO-015 |
+| DR-120 | tabella dei cookie che scorre a 390 e 360 | — |
+| DR-159…161, DR-164 | refuso «IBAN» chiuso; articolo non elencato nell'archivio; scheda dei download | — |
+| DR-163 | captcha di `/contatti/` sostituito dal campo esca | — |
+| DR-197 | 2 immagini più piccole a 390 e 360 su `/servizi/` e `/sostegno-alla-genitorialita/` | — |
+| DR-204 | sfondo del link «Iscrizioni» al passaggio in 4 pagine | — |
+| DR-115, DR-169 | colori sotto il contrasto A-8 e difetti di accessibilità ereditati che cambiano la resa | da correggere dopo la UAT |
+
+### 11.2 Strumenti dell'ultima misura
+
+Invariati rispetto al §1: Playwright 1.63.0, Chromium 153.0.8010.12, `pixelmatch` 7.2.0,
+`pngjs` 7.0.0. Sito nuovo con `next start` su `127.0.0.1:3200` e
+`SITE_URL=http://127.0.0.1:3200`, codice del commit `3d0d651` (CI verde, run
+39162695632).
+
+## 12. UAT di parità
+
+Prova dell'utente secondo [HO-016](../handoff/HO-016-uat-di-parita-1E-W8.md): lettura di
+questo rapporto, confronto a vista delle pagine principali alle larghezze del computer e
+del telefono, prova di un form con dati inventati (la compilazione si cancella dopo, su
+conferma: DR-208).
+
+La risposta si registra qui con le parole dell'utente. Per valere come condizione del
+gate, l'approvazione usa la formula di DR-209: «approvo la parità pixel-perfect del sito
+pubblico, con le difformità accettate elencate nel rapporto».
+
+**Risposta dell'utente:** non ancora data.
