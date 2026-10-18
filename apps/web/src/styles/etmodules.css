@@ -1,8 +1,9 @@
 /*
  * ETmodules, il font delle icone del tema della sorgente, ridotto ai soli glifi
- * usati dal sito: `3` freccia dei sottomenu, `U` ricerca, `M` chiusura della
- * ricerca, `a` menu del telefono (DR-143). Licenza da verificare da una persona
- * prima del rilascio: `public/fonts/etmodules/LEGGIMI.txt`.
+ * usati dal sito: `3` freccia dei sottomenu, `5` freccia del bottone «Invia»
+ * (DR-194), `U` ricerca, `M` chiusura della ricerca, `a` menu del telefono
+ * (DR-143). Licenza da verificare da una persona prima del rilascio:
+ * `public/fonts/etmodules/LEGGIMI.txt`.
  */
 @font-face {
   font-family: ETmodules;

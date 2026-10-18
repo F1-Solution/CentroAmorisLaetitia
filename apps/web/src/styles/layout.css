@@ -108,6 +108,24 @@ span.logo_helper {
   color: rgba(0, 0, 0, 0.6);
   font-weight: var(--font-weight-menu);
   line-height: 1em;
+  transition: all 0.4s ease-in-out;
+}
+
+/* Hover del menu con i selettori di Divi, così la precedenza resta quella della sorgente (I1). */
+#top-menu-nav > ul > li > a:hover {
+  opacity: 0.7;
+  transition: all 0.4s ease-in-out;
+}
+
+.et_mobile_menu li a,
+.nav li li a {
+  transition: all 0.2s ease-in-out;
+}
+
+.et_mobile_menu li a:hover,
+.nav ul li a:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  opacity: 0.7;
 }
 
 #top-menu .current-menu-item > a,
@@ -526,6 +544,21 @@ span.et_close_search_field::after {
   .et_pb_post {
     margin-bottom: 42px;
   }
+}
+
+/* L'archivio dei download della sorgente non carica la regola del blog: voci senza spazio; non la pagina del documento (DR-181). */
+.et_pb_post.wpdmpro:not(.single) {
+  margin-bottom: 0;
+}
+
+.et_pb_post.wpdmpro:not(.single) .post-meta {
+  margin-bottom: 0;
+}
+
+/* Più specifica delle regole al telefono dell'elenco del blog, che lì la sorgente non carica. */
+.et_pb_post.wpdmpro:not(.single) h2 {
+  padding-bottom: 10px;
+  font-size: var(--font-size-h2);
 }
 
 /* Titoli dell'elenco di `index.php` al telefono, come la sorgente. */

@@ -123,6 +123,8 @@ export const contentResponse = z.object({
     featuredMediaId: z.string().nullable(),
     publishedAt: z.string().nullable(),
     updatedAt: z.string(),
+    /** Ultima modifica (DR-186): `post_modified_gmt` della sorgente o salvataggio dal CMS. */
+    modifiedAt: z.string(),
   }),
   seo: seoSchema,
   terms: z.array(termSchema),
@@ -220,6 +222,16 @@ export const termResponse = z.object({
 
 export const documentResponse = z.object({
   document: documentSchema,
+  media: z.record(z.string(), mediaSchema),
+  /** Le categorie dei download del documento, per le briciole (DR-181). */
+  terms: z.array(termSchema),
+});
+
+export const documentsQuery = z.object({ termId: z.string().uuid() });
+
+/** I documenti pubblici di una categoria dei download, i più recenti prima (DR-181). */
+export const documentsResponse = z.object({
+  items: z.array(documentSchema),
   media: z.record(z.string(), mediaSchema),
 });
 

@@ -24,7 +24,7 @@ WordPress, per la UAT di parità.
 | `1E-W4` | **Template e rotte.** Intestazione, menu a tre livelli, piè di pagina; pagina, articolo, archivio di categoria con paginazione e suffisso in italiano, 404, `robots.txt`, sitemap; titolo principale per le 29 pagine di DR-040; resa sul server a ogni richiesta, senza cache intermedia (DR-105); redirect e 301 serviti dall'applicazione | Ogni URL della matrice risponde con lo stato atteso; menu anonimo di 41 voci (1E-7); 1E-12, 1E-13, 1E-14 eseguiti; nessuno scroll orizzontale alle viewport del piano |
 | `1E-W5` | **Blocchi dinamici e form.** Resa vera di `slider`, `video`, `map`, `post_list`, `form`; richiesta d'invio dei form salvata nel database, senza email (DR-108); rimando di pagamento di DR-039; nessuna chiamata a terzi: video e mappa al clic con copertina, nessuna analisi né popup (DR-107) | Ogni blocco ha prove di resa; i form si inviano solo con dati sintetici e l'esito si legge dal servizio; nessuna email parte; nessuna chiamata a terzi oltre quelle decise |
 | `1E-W6` | **Confronto e correzione.** Catture del sito nuovo nello stesso ambiente della `1E-W1`; diff con la soglia dichiarata; classificazione di ogni differenza con tutti i campi richiesti; correzioni, a ciclo, senza degradare l'editabilità | 1E-2, 1E-3, 1E-4, 1E-5 eseguiti; nessuna differenza `bloccante` o `maggiore` aperta, oppure elencata per l'approvazione; 1E-19 eseguito dopo ogni giro di correzioni |
-| `1E-W7` | **Verifiche non visive e manuali.** Metadati su 117 URL; 180 redirect nei due sensi; verifiche manuali sugli 81 URL ad alta priorità (menu, hover, fuoco, form, navigazione mobile, caratteri, immagini, embed); A-1…A-8; console e rete | 1E-6, 1E-8, 1E-9, 1E-17 e A-1…A-8 registrati per URL |
+| `1E-W7` | **Verifiche non visive e manuali** — piano di dettaglio in [`W7-PLAN.md`](W7-PLAN.md). Metadati su 117 URL; 180 redirect nei due sensi; verifiche manuali sugli 81 URL ad alta priorità (menu, hover, fuoco, form, navigazione mobile, caratteri, immagini, embed); A-1…A-8; console e rete | 1E-6, 1E-8, 1E-9, 1E-17 e A-1…A-8 registrati per URL |
 | `1E-W8` | **Rapporto e audit.** `docs/qa/visual-parity-report.md` con ambiente, soglia, maschere, differenze e il loro stato; `AUDIT.md` con i criteri del `CONTEXT.md` §7 eseguiti uno per uno | Ogni criterio ha un esito eseguito; poi **stop** e richiesta della UAT all'utente. Nessuna dichiarazione di parità |
 
 ## 2. Chi esegue, che cosa tocca
@@ -151,9 +151,9 @@ Quarto round, aperto il 2026-10-10 nella `1E-W4`:
 | ~~**D50**~~ | chiusa | **DR-121**: Google Maps dopo il clic | — |
 | ~~**D51**~~ | chiusa | **DR-122**: `youtube-nocookie.com` dopo il clic | — |
 | ~~**D52**~~ | chiusa | **DR-123**: verifica del carosello tolta dal piano del confronto | — |
-| **D53** | bloccante per D | Significato di `offset` nell'elenco della home: come la sorgente (dal più recente) o salto del più recente | `docs/qa/confronto/analisi-impatto-A-D.md` |
-| **D54** | differibile, entro la ricattura | `/bacheca/`: messaggio del plugin della sorgente | idem |
-| **D55** | differibile, entro la correzione dello stile dei form | Campo telefono con bandiera | idem |
-| **D56** | bloccante per C | Forma dei valori inviati per nome, email con conferma e indirizzo | idem |
-| **D57** | bloccante per B | Geometria delle colonne che vengono da Gutenberg | idem |
+| ~~**D53**~~ | chiusa | **DR-130**: `offset` come la sorgente, dal più recente | — |
+| ~~**D54**~~ | chiusa | **DR-131**: `/bacheca/` con lo stesso testo della sorgente | — |
+| ~~**D55**~~ | chiusa | **DR-132**: campo telefono con bandiera | — |
+| ~~**D56**~~ | chiusa | **DR-133**: un oggetto per campo composto | — |
+| ~~**D57**~~ | chiusa | **DR-134**: righe Gutenberg in flex, passaggio a 781 px | — |
 

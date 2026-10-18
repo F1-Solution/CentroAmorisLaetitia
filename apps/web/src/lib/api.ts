@@ -69,6 +69,8 @@ export interface PublicContent {
     readonly featuredMediaId: string | null;
     readonly publishedAt: string | null;
     readonly updatedAt: string;
+    /** Ultima modifica: `post_modified` della sorgente, poi le modifiche dal CMS (DR-186). */
+    readonly modifiedAt: string;
   };
   readonly seo: Seo;
   readonly terms: readonly Term[];
@@ -135,9 +137,16 @@ export const getTerm = (path: string) =>
 export const getPosts = (termIds: readonly string[], page: number, perPage: number) =>
   read<PostPage>(`/public/posts?termIds=${termIds.join(',')}&page=${page}&perPage=${perPage}`);
 
+/** Un documento con le sue categorie `wpdmcategory` (`/download-category/<slug>/`). */
 export const getDocument = (slug: string) =>
-  read<{ document: PublicDocument; media: MediaMap }>(
+  read<{ document: PublicDocument; media: MediaMap; terms: readonly Term[] }>(
     `/public/documents/${encodeURIComponent(slug)}`,
+  );
+
+/** I documenti pubblici di una categoria dei download (DR-181). */
+export const getDocuments = (termId: string) =>
+  read<{ items: readonly PublicDocument[]; media: MediaMap }>(
+    `/public/documents?termId=${encodeURIComponent(termId)}`,
   );
 
 export const getSitemap = async () =>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { siteUrl } from '../lib/site';
 import 'intl-tel-input/styles';
 import '../styles/open-sans.css';
 import '../styles/etmodules.css';
@@ -13,9 +14,10 @@ import '../styles/layout.css';
  * riferimento e lingua italiana (criterio A-6). Titolo e metadati li scrive ogni
  * pagina dalla lettura pubblica.
  */
-export const metadata: Metadata = {
-  title: 'Centro Amoris Laetitia',
-};
+export function generateMetadata(): Metadata {
+  // DR-188: canonical, og:url e og:image assoluti; letto alla richiesta, non alla compilazione (DR-196).
+  return { title: 'Centro Amoris Laetitia', metadataBase: new URL(`${siteUrl()}/`) };
+}
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

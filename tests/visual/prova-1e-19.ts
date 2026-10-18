@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { blockDocumentSchema, extractContentText, serializeBlockDocument } from '@amoris/blocks';
 import postgres from 'postgres';
 
 /**
@@ -11,7 +12,9 @@ import postgres from 'postgres';
  * dimostrare che l'editor non altera la resa di ciò che non ha toccato.
  *
  * Non tocca testo: PATCH con lo stesso `blocks`, `title`, `excerpt` letti da
- * GET. Account locale sintetico creato per la prova (`qa-1e-w6@locale.invalid`,
+ * GET, più HTML e testo calcolati dai blocchi come fa l'editor (DR-199): senza
+ * testo l'API azzererebbe la description importata (DR-180). Controlla anche
+ * che `modified_at` e `description_source` restino invariate. Account locale sintetico creato per la prova (`qa-1e-w6@locale.invalid`,
  * ruolo `editor`), nessun dato reale modificato.
  *
  *   API=http://127.0.0.1:3002 SITO=http://127.0.0.1:3200 \
@@ -80,11 +83,12 @@ interface Campione {
 async function campione(): Promise<Campione[]> {
   const sql = postgres(DATABASE_URL, { max: 1 });
   try {
-    // Campione rappresentativo: la home (post_list), pagine con `show_title`
+    // Campione rappresentativo: la home (post_list, servita a `/`), pagine con `show_title`
     // falso (Divi Builder, DR-119), una pagina con form, e per il resto un
     // contenuto per tipo pubblicato — non solo i due estremi.
     const righe = await sql<Campione[]>`
-      (select id::text, path, type from contents where path = '/' limit 1)
+      (select c.id::text, '/' as path, c.type from contents c
+        join settings s on s.key = 'site.home_content_id' and c.id = (s.value #>> '{}')::uuid)
       union all
       (select id::text, path, type from contents
         where status = 'published' and show_title = false and path is not null
@@ -100,6 +104,7 @@ async function campione(): Promise<Campione[]> {
         where status = 'published' and path is not null and blocks -> 'blocks' <> '[]'::jsonb
         order by type, updated_at desc)
     `;
+    if (!righe.some((r) => r.path === '/')) throw new Error('home assente dal campione');
     const visti = new Set<string>();
     return righe.filter((r) => (visti.has(r.id) ? false : (visti.add(r.id), true)));
   } finally {
@@ -107,15 +112,35 @@ async function campione(): Promise<Campione[]> {
   }
 }
 
+/** `modified_at` e `description_source`: un salvataggio identico non le tocca (DR-186, DR-180). */
+async function campiSalvati(id: string): Promise<string> {
+  const sql = postgres(DATABASE_URL, { max: 1 });
+  try {
+    const [riga] = await sql<{ modified_at: Date | null; description_source: string | null }[]>`
+      select modified_at, description_source from contents where id = ${id}`;
+    return JSON.stringify(riga ?? null);
+  } finally {
+    await sql.end();
+  }
+}
+
+/**
+ * Il payload RSC di Next.js (`self.__next_f.push`) cambia ordine a ogni lettura anche
+ * senza salvataggi: si confronta l'HTML che il visitatore riceve, `<head>` compreso (DR-202).
+ */
+const PAYLOAD_RSC = /<script>self\.__next_f\.push\([\s\S]*?\)<\/script>/g;
+
 async function paginaPubblica(p: string): Promise<string> {
   const risposta = await fetch(`${SITO}${p}`, { redirect: 'manual' });
-  return `${risposta.status}\n${await risposta.text()}`;
+  return `${risposta.status}\n${(await risposta.text()).replace(PAYLOAD_RSC, '')}`;
 }
 
 async function main(): Promise<void> {
   const { cookie, csrf } = await accedi();
   const scelti = await campione();
-  console.log(`campione: ${scelti.length} contenuti, uno per tipo`);
+  console.log(
+    `campione: ${scelti.length} contenuti (home, pagine senza titolo, form, uno per tipo)`,
+  );
 
   const esiti: { path: string; type: string; identica: boolean; nota?: string }[] = [];
   for (const c of scelti) {
@@ -131,9 +156,15 @@ async function main(): Promise<void> {
       title: string;
       excerpt: string | null;
       showTitle: boolean;
-      contentHtml: string;
-      contentText: string;
     };
+    // Lo stesso carico di `savePayloadOf` dell'editor (`apps/admin/src/lib/editor/roundtrip.ts`).
+    const documento = blockDocumentSchema.safeParse(corpo.blocks);
+    if (!documento.success) {
+      esiti.push({ path: c.path, type: c.type, identica: false, nota: 'blocchi non validi' });
+      continue;
+    }
+    const contentHtml = serializeBlockDocument(documento.data);
+    const campiPrima = await campiSalvati(c.id);
 
     const salvato = await fetch(`${API}/contents/${c.id}`, {
       method: 'PATCH',
@@ -143,8 +174,8 @@ async function main(): Promise<void> {
         title: corpo.title,
         excerpt: corpo.excerpt,
         showTitle: corpo.showTitle,
-        contentHtml: corpo.contentHtml,
-        contentText: corpo.contentText,
+        contentHtml,
+        contentText: extractContentText(contentHtml),
       }),
     });
     if (!salvato.ok) {
@@ -153,7 +184,14 @@ async function main(): Promise<void> {
     }
 
     const dopo = await paginaPubblica(c.path);
-    esiti.push({ path: c.path, type: c.type, identica: prima === dopo });
+    const campiDopo = await campiSalvati(c.id);
+    const campiUguali = campiPrima === campiDopo;
+    esiti.push({
+      path: c.path,
+      type: c.type,
+      identica: prima === dopo && campiUguali,
+      ...(campiUguali ? {} : { nota: 'modified_at o description_source cambiate' }),
+    });
   }
 
   const falliti = esiti.filter((e) => !e.identica);

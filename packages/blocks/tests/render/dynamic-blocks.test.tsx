@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Slider } from '../../src/render/Slider.js';
 import { Video } from '../../src/render/Video.js';
@@ -731,5 +731,84 @@ describe('telefono — prefisso del paese scelto con la bandiera (ADR-011)', () 
     expect(phoneWithDialCode('+33 6 12', { iso2: 'ch', dialCode: '41' })).toBe('+33 6 12');
     expect(phoneWithDialCode('', { iso2: 'ch', dialCode: '41' })).toBe('');
     expect(phoneWithDialCode('333', null)).toBe('333');
+  });
+});
+
+describe('telefono internazionale — valore inviato (F1, 1E-W7)', () => {
+  // intl-tel-input riscrive il campo dal proprio ascoltatore `input`, che parte
+  // prima di quello delegato di React: senza un ascoltatore nativo il numero non
+  // entrava mai nei valori inviati e 22 form su 23 rispondevano VALIDATION_FAILED.
+  const formConTelefono = (required: boolean): FormData => ({
+    id: uuid,
+    slug: 'telefono-sintetico',
+    title: 'Telefono',
+    confirmationMessage: 'Grazie.',
+    requiresPayment: false,
+    fields: [
+      {
+        id: '5',
+        type: 'phone',
+        label: 'Telefono',
+        required,
+        order: 0,
+        description: null,
+        options: { format: 'smart' },
+      },
+    ],
+    payment: null,
+  });
+
+  async function inviaTelefono(required: boolean, numero: string) {
+    const originalFetch = global.fetch;
+    const corpi: unknown[] = [];
+    global.fetch = (async (_url: unknown, init?: RequestInit) => {
+      corpi.push(JSON.parse(String(init?.body)));
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          confirmationMessage: 'Ricevuto!',
+          payment: { required: false, amount: null, url: null },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }) as typeof fetch;
+    try {
+      const { container, getByText, findByText } = render(
+        <Form
+          block={{
+            type: 'form',
+            id: testBlockId(),
+            props: {
+              formId: uuid,
+              origin: 'wpforms',
+              showTitle: false,
+              showDescription: false,
+              classes: [],
+            },
+            children: [],
+          }}
+          form={formConTelefono(required)}
+        />,
+      );
+      await waitFor(() => expect(container.querySelector('.iti')).not.toBeNull());
+      const campo = container.querySelector<HTMLInputElement>('input[type="tel"]');
+      if (!campo) throw new Error('campo telefono assente');
+      fireEvent.input(campo, { target: { value: numero } });
+      fireEvent.click(getByText('Invia'));
+      await findByText('Ricevuto!');
+      return corpi[0] as { values: Record<string, unknown> };
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
+
+  it('invia il numero di un telefono obbligatorio', async () => {
+    const corpo = await inviaTelefono(true, '3330000000');
+    expect(corpo.values['5']).toBe('3330000000');
+  });
+
+  it('invia il numero anche se il telefono non è obbligatorio', async () => {
+    const corpo = await inviaTelefono(false, '3331112222');
+    expect(corpo.values['5']).toBe('3331112222');
   });
 });

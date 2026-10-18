@@ -59,9 +59,12 @@ export function fakeObjectStore(): ObjectStore & {
       puts.push(`${bucket}/${key}`);
       objects.set(`${bucket}/${key}`, body);
     },
-    async get(bucket, key) {
-      const body = objects.get(`${bucket}/${key}`);
-      return body ? { body: Readable.from(body), contentLength: body.length } : null;
+    async get(bucket, key, range) {
+      const stored = objects.get(`${bucket}/${key}`);
+      if (!stored) return null;
+      // Come lo storage vero, con un intervallo restituisce solo quei byte.
+      const body = range ? stored.subarray(range.start, range.end + 1) : stored;
+      return { body: Readable.from(body), contentLength: body.length };
     },
     async remove(bucket, key) {
       objects.delete(`${bucket}/${key}`);

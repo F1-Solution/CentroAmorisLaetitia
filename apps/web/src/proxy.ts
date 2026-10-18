@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { FEED_ITEMS, renderFeed } from './lib/feed';
+import { siteUrl } from './lib/site';
 
 /**
  * Ciò che si risponde prima di rendere una pagina.
@@ -18,8 +19,6 @@ const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ??
   'http://localhost:3002'
 ).replace(/\/$/, '');
-
-const SITE_URL = (process.env.SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 interface Rule {
   readonly targetPath: string;
@@ -49,7 +48,7 @@ async function feed(prefix: string): Promise<NextResponse | null> {
     );
     if (!term) return null;
     termIds = term.term.id;
-    title = `${term.term.name} – ${siteTitle}`;
+    title = `${term.term.name} - ${siteTitle}`;
   }
   const posts = await api<{
     items: { title: string; path: string; publishedAt: string | null; summary: string | null }[];
@@ -57,7 +56,7 @@ async function feed(prefix: string): Promise<NextResponse | null> {
   if (!posts) return null;
   return new NextResponse(
     renderFeed({
-      siteUrl: SITE_URL,
+      siteUrl: siteUrl(),
       title,
       description: siteDescription,
       path: prefix,

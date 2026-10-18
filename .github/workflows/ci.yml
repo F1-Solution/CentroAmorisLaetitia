@@ -51,6 +51,9 @@ jobs:
     env:
       DATABASE_URL: postgres://amoris:sviluppo-locale@localhost:5432/amoris
       NODE_ENV: test
+      # Indirizzo del sito pubblico delle prove end-to-end (`tests/e2e/support/ambiente.ts`):
+      # in produzione è obbligatorio (DR-196).
+      SITE_URL: http://127.0.0.1:3100
       # Valori **sintetici**, validi solo dentro questa esecuzione usa e getta:
       # la stessa natura dei segnaposto di `.env.example`, che è in Git per lo
       # stesso motivo. In produzione se ne generano di nuovi e non si scrivono

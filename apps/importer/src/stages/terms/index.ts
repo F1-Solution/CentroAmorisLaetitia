@@ -97,6 +97,9 @@ function orderByDepth(rows: readonly TermRow[]): readonly TermRow[] {
   return [...rows].sort((a, b) => depthOf(a) - depthOf(b));
 }
 
+/** Base pubblica della tassonomia nella sorgente, dove diversa dal nome (DR-181, DR-193). */
+const TAXONOMY_BASE: Readonly<Record<string, string>> = { wpdmcategory: 'download-category' };
+
 export const termsStage: Stage = {
   name: 'terms',
   dependsOn: ['preflight'],
@@ -122,7 +125,7 @@ export const termsStage: Stage = {
         // Il prefisso di tassonomia è obbligatorio: `moduli-consulenze` esiste
         // sia in `wpdmcategory` sia in `cuar_private_file_category` (DR-061),
         // e senza prefisso i due percorsi collidono su `terms_path_unique`.
-        const path = `/${row.taxonomy}${parentPath}/${row.slug}/`;
+        const path = `/${TAXONOMY_BASE[row.taxonomy] ?? row.taxonomy}${parentPath}/${row.slug}/`;
         pathByTermId.set(row.termId, `${parentPath}/${row.slug}`);
 
         const existingId = await ctx.ids.find(tx, 'wp_terms', row.termId, 'term');

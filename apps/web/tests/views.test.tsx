@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { blockDocumentSchema, type BlockDocument } from '@amoris/blocks';
 import type { PublicContent } from '../src/lib/api';
-import { ContentView, DocumentView } from '../src/components/Views';
+import { ContentView, DocumentView, DownloadCategoryView } from '../src/components/Views';
 
 /**
  * Layout della pagina come `_et_pb_page_layout` della sorgente (DR-139, famiglia
@@ -138,5 +138,76 @@ describe('scheda del pacchetto nei download (D75)', () => {
   it('prova negativa: nessun contatore dei download', () => {
     expect(html).not.toMatch(/>\s*Download\s*<span/);
     expect(html.match(/list-group-item/g)).toHaveLength(4);
+  });
+});
+
+describe('categoria dei download (DR-181)', () => {
+  const documento = (n: number, giorno: string) => ({
+    id: `doc-${n}`,
+    slug: `modulo-sintetico-${n}`,
+    title: `Modulo sintetico ${n}`,
+    description: null,
+    mediaId: `m-${n}`,
+    updatedAt: '2026-10-16T09:00:00Z',
+    publishedAt: giorno,
+    byteSize: 1000,
+  });
+  const html = renderToStaticMarkup(
+    <DownloadCategoryView
+      term={{
+        id: 't-1',
+        taxonomy: 'wpdmcategory',
+        slug: 'moduli-sintetici',
+        name: 'Moduli sintetici',
+        path: '/download-category/moduli-sintetici/',
+      }}
+      documents={[documento(2, '2022-04-05T10:00:00Z'), documento(1, '2022-04-04T10:00:00Z')]}
+    />,
+  );
+
+  it('un articolo del tema per documento, con titolo collegato e data, nell’ordine ricevuto', () => {
+    expect(html.match(/<article /g)).toHaveLength(2);
+    expect(html).toContain(
+      '<h2 class="entry-title"><a href="/download/modulo-sintetico-2/">Modulo sintetico 2</a></h2>',
+    );
+    expect(html).toContain('<p class="post-meta"><span class="published">5 Apr 2022</span></p>');
+    expect(html.indexOf('Modulo sintetico 2')).toBeLessThan(html.indexOf('Modulo sintetico 1'));
+  });
+
+  it('classi di Download Manager sugli articoli, come la sorgente', () => {
+    expect(html).toContain(
+      'class="et_pb_post wpdmpro type-wpdmpro status-publish hentry wpdmcategory-moduli-sintetici"',
+    );
+  });
+
+  it('struttura dell’archivio del tema: colonna, titolo nascosto, paginazione vuota, filetto', () => {
+    expect(html).toContain('id="left-area"');
+    expect(html).toContain('<h1 class="screen-reader-text">Moduli sintetici</h1>');
+    expect(html).toContain(
+      '<div class="pagination clearfix"><div class="alignleft"></div><div class="alignright"></div></div>',
+    );
+    expect(html).toContain('id="sidebar"');
+  });
+
+  it('prova negativa: nessun estratto né immagine, come la sorgente', () => {
+    expect(html).not.toContain('entry-featured-image-url');
+    expect(html).not.toContain('<img');
+  });
+
+  it('categoria senza documenti: solo la struttura', () => {
+    const vuota = renderToStaticMarkup(
+      <DownloadCategoryView
+        term={{
+          id: 't-1',
+          taxonomy: 'wpdmcategory',
+          slug: 'vuota',
+          name: 'Vuota',
+          path: '/download-category/vuota/',
+        }}
+        documents={[]}
+      />,
+    );
+    expect(vuota).not.toContain('<article');
+    expect(vuota).toContain('id="left-area"');
   });
 });

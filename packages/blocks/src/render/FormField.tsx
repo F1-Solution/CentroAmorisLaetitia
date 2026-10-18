@@ -252,9 +252,17 @@ function PhoneField({ field, value, onChange }: FieldProps) {
           country.current = data ? { iso2: data.iso2, dialCode: data.dialCode } : null;
           latest.current.onChange(phoneWithDialCode(latest.current.typed, country.current));
         };
+        // La libreria riscrive il campo prima di React, che allora non chiama onChange (F1, 1E-W7).
+        const onInput = () => {
+          latest.current.typed = element.value;
+          setTyped(element.value);
+          latest.current.onChange(phoneWithDialCode(element.value, country.current));
+        };
         element.addEventListener('countrychange', onCountry);
+        element.addEventListener('input', onInput);
         destroy = () => {
           element.removeEventListener('countrychange', onCountry);
+          element.removeEventListener('input', onInput);
           instance.destroy();
         };
       })

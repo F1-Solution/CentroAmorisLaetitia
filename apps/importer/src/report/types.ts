@@ -93,6 +93,7 @@ export type IssueCode =
   | 'unclassified-capabilities'
   | 'settings-value-missing'
   | 'home-content-missing'
+  | 'seo-title-variable-unresolved'
   | 'document-file-unresolved'
   | 'redirect-self-loop'
   | 'redirect-unresolved-target'

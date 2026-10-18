@@ -1,9 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
+import { z } from 'zod';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import {
   contentResponse,
   documentResponse,
+  documentsQuery,
+  documentsResponse,
   keyParam,
   menuResponse,
   pathQuery,
@@ -19,6 +22,8 @@ import {
 import {
   collectRefs,
   documentsBy,
+  downloadCategoriesOf,
+  downloadCategoryById,
   fallbackDescription,
   summaryTextStart,
   fileByPublicPath,
@@ -41,6 +46,7 @@ import {
 import { searchPublished } from './search.js';
 import { schema } from '@amoris/db';
 import { eq } from 'drizzle-orm';
+import { parseByteRange } from '../../lib/objectStore.js';
 
 /**
  * Modulo `public` (DR-104): la lettura che il sito pubblico fa senza accesso.
@@ -123,6 +129,8 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           featuredMediaId: content.featuredMediaId,
           publishedAt: iso(content.publishedAt),
           updatedAt: content.updatedAt.toISOString(),
+          // DR-186: la modifica della sorgente o del CMS; prima dell'import, l'aggiornamento.
+          modifiedAt: (content.modifiedAt ?? content.updatedAt).toISOString(),
         },
         seo,
         terms,
@@ -296,6 +304,34 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         document: publicDocument(document),
         media: await mediaByIds(app.db, [document.mediaId]),
+        terms: await downloadCategoriesOf(app.db, document.id),
+      });
+    },
+  );
+
+  typed.get(
+    '/documents',
+    {
+      schema: {
+        tags: ['pubblico'],
+        summary:
+          'I documenti pubblici di una categoria dei download, come l’archivio della sorgente',
+        querystring: documentsQuery,
+        response: { 200: documentsResponse, ...errorResponses(400, 404) },
+      },
+    },
+    async (request, reply) => {
+      const term = await downloadCategoryById(app.db, request.query.termId);
+      if (!term) return reply.callNotFound();
+      const documents = await documentsBy(app.db, { termId: term.id });
+      // Senza documenti pubblici la categoria non esiste per il sito, come nella sitemap.
+      if (documents.length === 0) return reply.callNotFound();
+      return reply.send({
+        items: documents.map(publicDocument),
+        media: await mediaByIds(
+          app.db,
+          documents.map((document) => document.mediaId),
+        ),
       });
     },
   );
@@ -310,7 +346,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (_request, reply) => {
-      const { contents, terms } = await sitemapEntries(app.db);
+      const { contents, terms, documents, downloadCategories } = await sitemapEntries(app.db);
       return reply.send({
         entries: [
           ...contents.map((row) => ({
@@ -321,6 +357,16 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
           ...terms.map((row) => ({
             path: row.path,
             kind: 'category',
+            updatedAt: row.updatedAt.toISOString(),
+          })),
+          ...documents.map((row) => ({
+            path: `/download/${row.slug}/`,
+            kind: 'document',
+            updatedAt: (row.publishedAt ?? row.updatedAt).toISOString(),
+          })),
+          ...downloadCategories.map((row) => ({
+            path: row.path,
+            kind: 'download_category',
             updatedAt: row.updatedAt.toISOString(),
           })),
         ],
@@ -347,6 +393,8 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
         summary: 'Il file di un media pubblico o di una sua dimensione derivata',
         response: {
           304: noContent.describe('Non modificato: la copia del client è ancora valida'),
+          206: z.unknown().describe('La parte del file chiesta con Range (DR-189)'),
+          416: noContent.describe('Intervallo di byte fuori dal file (DR-189)'),
           ...errorResponses(404),
         },
       },
@@ -357,10 +405,25 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
       if (!file) return reply.callNotFound();
 
       const etag = `"${file.checksum.toString('hex')}"`;
+      const lastModified = file.updatedAt.toUTCString();
+      // DR-189: le richieste a intervalli si dichiarano su ogni risposta.
+      void reply.header('accept-ranges', 'bytes');
       if (request.headers['if-none-match'] === etag) {
         return reply.code(304).header('etag', etag).send(null);
       }
-      const object = await app.objectStore.get(app.objectStore.publicBucket, file.storageKey);
+      const ifRange = request.headers['if-range'];
+      const range =
+        ifRange === undefined || ifRange === etag || ifRange === lastModified
+          ? parseByteRange(request.headers.range, file.byteSize)
+          : null;
+      if (range === 'unsatisfiable') {
+        return reply.code(416).header('content-range', `bytes */${file.byteSize}`).send(null);
+      }
+      const object = await app.objectStore.get(
+        app.objectStore.publicBucket,
+        file.storageKey,
+        range ?? undefined,
+      );
       if (!object) {
         // Le intestazioni del file non si scrivono prima di averlo: un 404 in JSON
         // con il tipo di un'immagine non si potrebbe inviare.
@@ -373,10 +436,15 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
       void reply
         .header('content-type', file.mimeType)
         .header('etag', etag)
-        .header('last-modified', file.updatedAt.toUTCString())
+        .header('last-modified', lastModified)
         .header('x-content-type-options', 'nosniff');
       if (ACTIVE_TYPES.has(file.mimeType)) {
         void reply.header('content-security-policy', "default-src 'none'; sandbox");
+      }
+      if (range) {
+        void reply
+          .code(206)
+          .header('content-range', `bytes ${range.start}-${range.end}/${file.byteSize}`);
       }
       if (object.contentLength !== undefined) {
         void reply.header('content-length', String(object.contentLength));

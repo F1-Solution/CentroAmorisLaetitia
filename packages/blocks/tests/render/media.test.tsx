@@ -163,3 +163,139 @@ describe('immagini risolte dalla mappa dei media', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toBeNull();
   });
 });
+
+/**
+ * I2 (DR-183, DR-195): i filtri `et_filter_wp_calculate_image_srcset` e
+ * `et_filter_wp_calculate_image_sizes` di Divi. Le derivate Divi si riconoscono
+ * dalla larghezza (480, 980, 1280) e dalla proporzione dell'originale; quando ci
+ * sono, il `srcset` contiene solo quelle non più larghe dell'immagine mostrata,
+ * più la mostrata se supera la chiave più grande, in ordine decrescente come il
+ * `krsort` di Divi, e `sizes` è a fasce. Una sola sorgente: niente `srcset`, e
+ * WordPress allora non scrive nemmeno `sizes`.
+ */
+describe('derivate Divi (I2)', () => {
+  it('caso A: una sola sorgente utile, niente srcset né sizes (misurato su /genitori-si-resta/)', () => {
+    const poster = {
+      publicPath: '/media/p.jpg',
+      width: 1131,
+      height: 1600,
+      altText: null,
+      variants: [
+        { publicPath: '/media/p-212x300.jpg', width: 212, height: 300 },
+        { publicPath: '/media/p-480x679.jpg', width: 480, height: 679 },
+        { publicPath: '/media/p-724x1024.jpg', width: 724, height: 1024 },
+        { publicPath: '/media/p-768x1086.jpg', width: 768, height: 1086 },
+        { publicPath: '/media/p-980x1386.jpg', width: 980, height: 1386 },
+      ],
+    };
+    expect(imageAttributes(poster, '724x1024')).toEqual({
+      src: '/media/p-724x1024.jpg',
+      width: 724,
+      height: 1024,
+    });
+  });
+
+  it('caso C: originale oltre 1280, quattro sorgenti e sizes a fasce Divi (misurato su /servizi/)', () => {
+    const square = {
+      publicPath: '/media/s.png',
+      width: 3543,
+      height: 3543,
+      altText: null,
+      variants: [300, 480, 768, 980, 1024, 1280, 1536, 2048].map((w) => ({
+        publicPath: `/media/s-${w}x${w}.png`,
+        width: w,
+        height: w,
+      })),
+    };
+    expect(imageAttributes(square)).toEqual({
+      src: '/media/s.png',
+      srcSet:
+        '/media/s.png 3543w, /media/s-1280x1280.png 1280w, /media/s-980x980.png 980w, /media/s-480x480.png 480w',
+      sizes:
+        '(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) and (max-width: 1280px) 1280px, (min-width: 1281px) 3543px, 100vw',
+      width: 3543,
+      height: 3543,
+    });
+  });
+
+  it('originale di 886 px con la sola derivata 480: due sorgenti e due fasce', () => {
+    const narrow = {
+      publicPath: '/media/n.jpg',
+      width: 886,
+      height: 1250,
+      altText: null,
+      variants: [
+        { publicPath: '/media/n-150x150.jpg', width: 150, height: 150 },
+        { publicPath: '/media/n-480x677.jpg', width: 480, height: 677 },
+        { publicPath: '/media/n-768x1084.jpg', width: 768, height: 1084 },
+      ],
+    };
+    expect(imageAttributes(narrow)).toEqual({
+      src: '/media/n.jpg',
+      srcSet: '/media/n.jpg 886w, /media/n-480x677.jpg 480w',
+      sizes: '(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) 886px, 100vw',
+      width: 886,
+      height: 1250,
+    });
+  });
+
+  it('immagine mostrata più stretta di 480: nessuna derivata Divi utile, niente srcset', () => {
+    const square = {
+      publicPath: '/media/q.png',
+      width: 2000,
+      height: 2000,
+      altText: null,
+      variants: [300, 480, 980, 1280].map((w) => ({
+        publicPath: `/media/q-${w}x${w}.png`,
+        width: w,
+        height: w,
+      })),
+    };
+    expect(imageAttributes(square, '300x300')).toEqual({
+      src: '/media/q-300x300.png',
+      width: 300,
+      height: 300,
+    });
+  });
+
+  it('a 480 px con proporzione diversa non è una derivata Divi: resta la regola di WordPress', () => {
+    const wide = {
+      publicPath: '/media/w.jpg',
+      width: 1200,
+      height: 600,
+      altText: null,
+      variants: [
+        { publicPath: '/media/w-480x480.jpg', width: 480, height: 480 },
+        { publicPath: '/media/w-768x384.jpg', width: 768, height: 384 },
+      ],
+    };
+    expect(imageAttributes(wide).srcSet).toBe('/media/w-768x384.jpg 768w, /media/w.jpg 1200w');
+    expect(imageAttributes(wide).sizes).toBe('(max-width: 1200px) 100vw, 1200px');
+  });
+});
+
+describe('caso B: a parità di larghezza (misurato su /le-dipendenze/)', () => {
+  const sameWidth = {
+    publicPath: '/media/d.jpg',
+    width: 1024,
+    height: 500,
+    altText: null,
+    variants: [
+      { publicPath: '/media/d-300x146.jpg', width: 300, height: 146 },
+      { publicPath: '/media/d-1024x500.jpg', width: 1024, height: 500 },
+      { publicPath: '/media/d-768x375.jpg', width: 768, height: 375 },
+    ],
+  };
+
+  it('vince l’originale sulla derivata della stessa larghezza', () => {
+    expect(imageAttributes(sameWidth).srcSet).toBe(
+      '/media/d-300x146.jpg 300w, /media/d-768x375.jpg 768w, /media/d.jpg 1024w',
+    );
+  });
+
+  it('con la derivata mostrata, vince la mostrata', () => {
+    expect(imageAttributes(sameWidth, '1024x500').srcSet).toBe(
+      '/media/d-300x146.jpg 300w, /media/d-1024x500.jpg 1024w, /media/d-768x375.jpg 768w',
+    );
+  });
+});

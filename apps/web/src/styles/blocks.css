@@ -1013,6 +1013,7 @@ p.et_pb_contact_field_half + p.et_pb_contact_field_last:not(.et_pb_contact_field
 }
 
 .et_pb_contact_submit {
+  position: relative;
   display: inline-block;
   margin: 0 0 0 18px;
   padding: var(--button-padding);
@@ -1025,10 +1026,38 @@ p.et_pb_contact_field_half + p.et_pb_contact_field_last:not(.et_pb_contact_field
   font-weight: 500;
   line-height: var(--button-line-height);
   cursor: pointer;
+  transition: all 0.2s;
 }
 
+/* Hover e freccia `:after` (glifo `5` di ETmodules) come `.et_pb_button` di Divi (DR-194). */
 .et_pb_contact_submit:hover {
+  padding: 0.3em 2em 0.3em 0.7em;
+  border-color: transparent;
   background-color: rgb(0 0 0 / 5%);
+}
+
+.et_pb_contact_submit::after {
+  position: absolute;
+  margin-left: -1em;
+  content: '5';
+  opacity: 0;
+  font-family: ETmodules;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 400;
+  font-variant: none;
+  font-feature-settings: 'kern' off;
+  line-height: 1em;
+  text-transform: none;
+  text-shadow: none;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  transition: all 0.2s;
+}
+
+.et_pb_contact_submit:hover::after {
+  margin-left: 0;
+  opacity: 1;
 }
 
 @media (max-width: 767px) {

@@ -91,6 +91,13 @@ export function bersagli(radice: string): Bersaglio[] {
     origine: 'ricerca (DR-144)',
     viewport: livelloB,
   });
+  // L'elenco dei moduli (DR-181) è nella sitemap della sorgente ma non nella matrice.
+  out.push({
+    url: '/download-category/moduli-consulenze/',
+    livello: 'aggiunto',
+    origine: 'categoria dei download (DR-181)',
+    viewport: livelloB,
+  });
   return out;
 }
 

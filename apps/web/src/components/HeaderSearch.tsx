@@ -91,6 +91,8 @@ export function HeaderSearchForm() {
             defaultValue=""
             name="s"
             title="Cerca:"
+            // A5-1 (DR-205): nome accessibile esplicito, la resa resta quella della sorgente.
+            aria-label="Cerca"
           />
         </form>
         <span

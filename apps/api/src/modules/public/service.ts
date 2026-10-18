@@ -218,6 +218,10 @@ export const PUBLIC_SETTING_KEYS = [
   // DR-117: logo e piè di pagina, importati dal tema e modificabili dal CMS.
   'site.logo_media_id',
   'site.footer_html',
+  // DR-185: dati dell'organizzazione per i dati strutturati, modificabili dal CMS.
+  'contact.address',
+  'contact.phone',
+  'social.profiles',
 ] as const;
 
 export async function publicSettings(db: Database): Promise<Record<string, unknown>> {
@@ -267,12 +271,33 @@ export function fillTemplate(template: string, values: Record<string, string>): 
  * `seo-rendered-baseline.csv` nella `1E-W7`.
  */
 export function fallbackDescription(excerpt: string | null, text: string): string | null {
-  const source = (excerpt?.trim() || text.replace(/\s+/g, ' ').trim()).trim();
+  return cutDescription(excerpt?.trim() || text.replace(/\s+/g, ' ').trim());
+}
+
+/** Il taglio a 160 caratteri su un confine di parola, con «…» (DR-171). */
+function cutDescription(text: string): string | null {
+  const source = text.trim();
   if (source === '') return null;
   if (source.length <= 160) return source;
   const cut = source.slice(0, 160);
   const lastSpace = cut.lastIndexOf(' ');
   return `${(lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/**
+ * Description dei metadati (DR-179, DR-180): quella calcolata all'import come All
+ * in One SEO; altrimenti articoli dall'estratto, pagine dal testo (vuoto → estratto).
+ */
+export function metaDescription(
+  type: 'page' | 'post',
+  descriptionSource: string | null,
+  excerpt: string | null,
+  text: string,
+): string | null {
+  if (descriptionSource !== null) return cutDescription(descriptionSource.replace(/\s+/g, ' '));
+  const fromExcerpt = excerpt?.replace(/\s+/g, ' ').trim() ?? '';
+  const fromText = text.replace(/\s+/g, ' ').trim();
+  return cutDescription(type === 'post' ? fromExcerpt || fromText : fromText || fromExcerpt);
 }
 
 /**
@@ -313,9 +338,11 @@ const contentColumns = {
   excerpt: schema.contents.excerpt,
   blocks: schema.contents.blocks,
   contentText: schema.contents.contentText,
+  descriptionSource: schema.contents.descriptionSource,
   featuredMediaId: schema.contents.featuredMediaId,
   publishedAt: schema.contents.publishedAt,
   updatedAt: schema.contents.updatedAt,
+  modifiedAt: schema.contents.modifiedAt,
 };
 
 /**
@@ -363,6 +390,7 @@ export async function seoForContent(
     title: string;
     excerpt: string | null;
     contentText: string;
+    descriptionSource: string | null;
     isHome: boolean;
   },
   siteTitle: string,
@@ -379,13 +407,14 @@ export async function seoForContent(
     .where(eq(schema.contentSeo.contentId, content.id))
     .limit(1);
   const values = { title: content.title, site_title: siteTitle };
+  // Anche il title di sovrascrittura ha i segnaposto del modello (DR-174, DR-191).
+  const overrideTitle = override?.title?.trim() ? fillTemplate(override.title, values) : '';
   const title =
-    override?.title?.trim() ||
-    fillTemplate(template?.titleTemplate ?? '{title} - {site_title}', values);
+    overrideTitle || fillTemplate(template?.titleTemplate ?? '{title} - {site_title}', values);
   const description =
     override?.description?.trim() ||
     (template?.descriptionTemplate ? fillTemplate(template.descriptionTemplate, values) : '') ||
-    fallbackDescription(content.excerpt, content.contentText);
+    metaDescription(content.type, content.descriptionSource, content.excerpt, content.contentText);
   const ogImage = override?.ogImageId ? await mediaByIds(db, [override.ogImageId]) : {};
   return {
     title,
@@ -625,27 +654,81 @@ export async function postListsByRefs(
 /** I documenti pubblici fra quelli chiesti: riservati, o con il file riservato, non escono. */
 export async function documentsBy(
   db: Database,
-  where: { ids: Iterable<string> } | { slug: string },
+  where: { ids: Iterable<string> } | { slug: string } | { termId: string },
 ) {
   const ids = 'ids' in where ? [...new Set(where.ids)] : [];
   if ('ids' in where && ids.length === 0) return [];
   const filter =
-    'slug' in where ? eq(schema.documents.slug, where.slug) : inArray(schema.documents.id, ids);
+    'slug' in where
+      ? eq(schema.documents.slug, where.slug)
+      : 'termId' in where
+        ? inArray(
+            schema.documents.id,
+            db
+              .select({ id: schema.documentTerms.documentId })
+              .from(schema.documentTerms)
+              .where(eq(schema.documentTerms.termId, where.termId)),
+          )
+        : inArray(schema.documents.id, ids);
+  return (
+    db
+      .select({
+        id: schema.documents.id,
+        slug: schema.documents.slug,
+        title: schema.documents.title,
+        description: schema.documents.description,
+        mediaId: schema.documents.mediaId,
+        updatedAt: schema.documents.updatedAt,
+        // Data e dimensione per la scheda del pacchetto, come WPDM (D75, DR-161).
+        publishedAt: schema.documents.publishedAt,
+        byteSize: schema.media.byteSize,
+      })
+      .from(schema.documents)
+      .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
+      .where(and(filter, eq(schema.documents.isPrivate, false), eq(schema.media.isPrivate, false)))
+      // L'ordine dell'archivio della categoria nella sorgente: i più recenti prima (DR-181).
+      .orderBy(
+        sql`${schema.documents.publishedAt} desc nulls last`,
+        asc(schema.documents.title),
+        asc(schema.documents.id),
+      )
+  );
+}
+
+/** Le tassonomie con un archivio pubblico: la categoria dei file riservati non c'è. */
+const PUBLIC_TAXONOMIES = ['category', 'wpdmcategory'];
+
+const termColumns = {
+  id: schema.terms.id,
+  taxonomy: schema.terms.taxonomy,
+  slug: schema.terms.slug,
+  name: schema.terms.name,
+  path: schema.terms.path,
+};
+
+/** Una categoria dei download per identificativo; nessun'altra tassonomia (DR-181). */
+export async function downloadCategoryById(db: Database, id: string) {
+  const [term] = await db
+    .select(termColumns)
+    .from(schema.terms)
+    .where(and(eq(schema.terms.id, id), eq(schema.terms.taxonomy, 'wpdmcategory')))
+    .limit(1);
+  return term ?? null;
+}
+
+/** Le categorie dei download di un documento, per le briciole di `/download/<slug>/`. */
+export async function downloadCategoriesOf(db: Database, documentId: string) {
   return db
-    .select({
-      id: schema.documents.id,
-      slug: schema.documents.slug,
-      title: schema.documents.title,
-      description: schema.documents.description,
-      mediaId: schema.documents.mediaId,
-      updatedAt: schema.documents.updatedAt,
-      // Data e dimensione per la scheda del pacchetto, come WPDM (D75, DR-161).
-      publishedAt: schema.documents.publishedAt,
-      byteSize: schema.media.byteSize,
-    })
-    .from(schema.documents)
-    .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
-    .where(and(filter, eq(schema.documents.isPrivate, false), eq(schema.media.isPrivate, false)));
+    .select(termColumns)
+    .from(schema.documentTerms)
+    .innerJoin(schema.terms, eq(schema.terms.id, schema.documentTerms.termId))
+    .where(
+      and(
+        eq(schema.documentTerms.documentId, documentId),
+        eq(schema.terms.taxonomy, 'wpdmcategory'),
+      ),
+    )
+    .orderBy(asc(schema.terms.name));
 }
 
 // ── Menu ─────────────────────────────────────────────────────────────────────
@@ -744,9 +827,13 @@ export async function termByPath(db: Database, path: string) {
       path: schema.terms.path,
     })
     .from(schema.terms)
-    .where(eq(schema.terms.path, path))
+    .where(and(eq(schema.terms.path, path), inArray(schema.terms.taxonomy, PUBLIC_TAXONOMIES)))
     .limit(1);
-  return term ?? null;
+  if (!term) return null;
+  // Una categoria dei download con soli documenti riservati non si mostra, nemmeno il nome.
+  if (term.taxonomy === 'wpdmcategory' && (await documentsBy(db, { termId: term.id })).length === 0)
+    return null;
+  return term;
 }
 
 export interface PostQuery {
@@ -881,7 +968,11 @@ export async function sitemapEntries(db: Database) {
       id: schema.contents.id,
       path: schema.contents.path,
       type: schema.contents.type,
-      updatedAt: schema.contents.updatedAt,
+      // DR-186: la data di modifica della sorgente o del CMS, non quella dell'import.
+      updatedAt:
+        sql<Date>`coalesce(${schema.contents.modifiedAt}, ${schema.contents.updatedAt})`.mapWith(
+          schema.contents.updatedAt,
+        ),
     })
     .from(schema.contents)
     .leftJoin(schema.contentSeo, eq(schema.contentSeo.contentId, schema.contents.id))
@@ -910,5 +1001,38 @@ export async function sitemapEntries(db: Database) {
       ),
     )
     .orderBy(asc(schema.terms.path));
-  return { contents, terms };
+  // DR-177, DR-181: i documenti pubblici e le categorie dei download che ne hanno.
+  const publicDocument = and(
+    eq(schema.documents.isPrivate, false),
+    eq(schema.media.isPrivate, false),
+  );
+  const documents = await db
+    .select({
+      slug: schema.documents.slug,
+      publishedAt: schema.documents.publishedAt,
+      updatedAt: schema.documents.updatedAt,
+    })
+    .from(schema.documents)
+    .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
+    .where(publicDocument)
+    .orderBy(asc(schema.documents.slug));
+  const downloadCategories = await db
+    .select({ path: schema.terms.path, updatedAt: schema.terms.updatedAt })
+    .from(schema.terms)
+    .where(
+      and(
+        eq(schema.terms.taxonomy, 'wpdmcategory'),
+        inArray(
+          schema.terms.id,
+          db
+            .select({ id: schema.documentTerms.termId })
+            .from(schema.documentTerms)
+            .innerJoin(schema.documents, eq(schema.documents.id, schema.documentTerms.documentId))
+            .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
+            .where(publicDocument),
+        ),
+      ),
+    )
+    .orderBy(asc(schema.terms.path));
+  return { contents, terms, documents, downloadCategories };
 }

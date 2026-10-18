@@ -53,7 +53,7 @@ function buildOptions(overrides: readonly SqlRow[] = OPTIONS_ROWS) {
 const OPTIONS = { only: null, forceContentIds: [], verbose: false } as const;
 
 describe('fase settings', () => {
-  it('crea 15 impostazioni e 6 template SEO alla prima esecuzione', async () => {
+  it('crea 17 impostazioni e 6 template SEO alla prima esecuzione', async () => {
     const runId = await newApplyRunId(testDb.db);
     const issues = createIssueSink(testDb.db, 'apply', runId);
     const result = await runStage(settingsStage, {
@@ -66,18 +66,22 @@ describe('fase settings', () => {
       options: OPTIONS,
     });
 
-    expect(result.created).toBe(21);
+    expect(result.created).toBe(23);
     expect(result.updated).toBe(0);
     expect(result.errors).toBe(0);
 
     const settingsRows = await testDb.db.select().from(schema.settings);
-    expect(settingsRows).toHaveLength(15);
+    expect(settingsRows).toHaveLength(17);
 
     const seoRows = await testDb.db.select().from(schema.seoTemplates);
     expect(seoRows).toHaveLength(6);
 
     const title = settingsRows.find((r) => r.key === 'site.title');
     expect(title?.value).toBe('Centro per la Famiglia');
+
+    // DR-185: telefono e profili social nascono vuoti, la sorgente non li ha.
+    expect(settingsRows.find((r) => r.key === 'contact.phone')?.value).toBe('');
+    expect(settingsRows.find((r) => r.key === 'social.profiles')?.value).toEqual([]);
 
     const categoryTemplate = seoRows.find((r) => r.scope === 'category');
     expect(categoryTemplate?.titleTemplate).toBe('{term_title} - {site_title}');
@@ -104,10 +108,10 @@ describe('fase settings', () => {
     });
 
     expect(result.created).toBe(0);
-    expect(result.updated).toBe(21);
+    expect(result.updated).toBe(23);
 
     const settingsRows = await testDb.db.select().from(schema.settings);
-    expect(settingsRows).toHaveLength(15);
+    expect(settingsRows).toHaveLength(17);
     const seoRows = await testDb.db.select().from(schema.seoTemplates);
     expect(seoRows).toHaveLength(6);
   });
@@ -152,7 +156,7 @@ describe('fase settings', () => {
       });
 
       // Il conteggio è vero (la transazione ha scritto per davvero prima di annullarsi).
-      expect(result.created).toBe(21);
+      expect(result.created).toBe(23);
 
       const after = await fresh.db.select().from(schema.settings);
       expect(after).toHaveLength(0);

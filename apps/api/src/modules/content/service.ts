@@ -107,9 +107,16 @@ export async function create(db: Database, input: CreateInput, authorId: string)
   return row.id;
 }
 
+/** Un contenuto con titolo non può perderlo; la home importata senza titolo resta salvabile (DR-201). */
+export function assertTitleAllowed(next: string | undefined, current: string): void {
+  if (next !== undefined && next.trim() === '' && current.trim() !== '')
+    throw Object.assign(new Error('il titolo non può essere vuoto'), { statusCode: 400 });
+}
+
 export async function update(db: Database, id: string, input: UpdateInput) {
   const current = await findById(db, id);
   if (!current) return null;
+  assertTitleAllowed(input.title, current.title);
 
   const slug = input.slug ?? current.slug;
   const parentId = input.parentId === undefined ? current.parentId : (input.parentId ?? null);
@@ -129,14 +136,71 @@ export async function update(db: Database, id: string, input: UpdateInput) {
     // Il testo cambiato dal CMS (spazi esclusi) si conta com'è: la forma della sorgente non vale più (D71, DR-155).
     changes.summarySource = sql`case when regexp_replace(${schema.contents.contentText}, '\\s+', ' ', 'g') is distinct from regexp_replace(${input.contentText}, '\\s+', ' ', 'g') then null else ${schema.contents.summarySource} end`;
   }
+  if (input.contentText !== undefined || input.excerpt !== undefined) {
+    // Estratto o testo cambiati dal CMS: la description calcolata all'import non vale più (DR-180).
+    const textChanged =
+      input.contentText === undefined
+        ? sql`false`
+        : sql`regexp_replace(${schema.contents.contentText}, '\\s+', ' ', 'g') is distinct from regexp_replace(${input.contentText}, '\\s+', ' ', 'g')`;
+    const excerptChanged =
+      input.excerpt === undefined
+        ? sql`false`
+        : sql`${schema.contents.excerpt} is distinct from ${input.excerpt}::text`;
+    changes.descriptionSource = sql`case when ${textChanged} or ${excerptChanged} then null else ${schema.contents.descriptionSource} end`;
+  }
+  // Blocchi senza testo: il testo non si può confrontare, la description importata non vale più.
+  if (input.blocks !== undefined && input.contentText === undefined)
+    changes.descriptionSource = null;
   if (input.slug !== undefined || input.parentId !== undefined) {
     changes.slug = slug;
     changes.parentId = parentId;
     changes.path = await pathFor(db, parentId, slug);
   }
 
+  // DR-186: la data di modifica cambia solo se cambia un campo, non a un salvataggio identico (1E-19).
+  const differs = changedFields(input, slug, parentId);
+  changes.modifiedAt =
+    differs.length === 0
+      ? sql`${schema.contents.modifiedAt}`
+      : sql`case when ${sql.join(differs, sql` or `)} then ${databaseNow()} else ${schema.contents.modifiedAt} end`;
+
   await db.update(schema.contents).set(changes).where(eq(schema.contents.id, id));
   return findById(db, id);
+}
+
+/** Le condizioni «il valore inviato è diverso da quello salvato», una per campo inviato. */
+function changedFields(input: UpdateInput, slug: string, parentId: string | null): SQL[] {
+  const c = schema.contents;
+  const differs: SQL[] = [];
+  const add = (sent: unknown, condition: SQL) => {
+    if (sent !== undefined) differs.push(condition);
+  };
+  add(input.title, sql`${c.title} is distinct from ${input.title ?? null}::text`);
+  add(input.excerpt, sql`${c.excerpt} is distinct from ${input.excerpt ?? null}::text`);
+  add(input.showTitle, sql`${c.showTitle} is distinct from ${input.showTitle ?? null}::boolean`);
+  add(
+    input.pageLayout,
+    sql`${c.pageLayout}::text is distinct from ${input.pageLayout ?? null}::text`,
+  );
+  add(input.isSticky, sql`${c.isSticky} is distinct from ${input.isSticky ?? null}::boolean`);
+  add(
+    input.featuredMediaId,
+    sql`${c.featuredMediaId} is distinct from ${input.featuredMediaId ?? null}::uuid`,
+  );
+  add(
+    input.blocks,
+    sql`${c.blocks} is distinct from ${JSON.stringify(input.blocks ?? null)}::jsonb`,
+  );
+  add(
+    input.contentText,
+    sql`regexp_replace(${c.contentText}, '\\s+', ' ', 'g') is distinct from regexp_replace(${input.contentText ?? null}::text, '\\s+', ' ', 'g')`,
+  );
+  if (input.slug !== undefined || input.parentId !== undefined) {
+    differs.push(
+      sql`(${c.slug} is distinct from ${slug}::text or ${c.parentId} is distinct from ${parentId}::uuid)`,
+    );
+  }
+  return differs;
 }
 
 /** Pubblicazione e ritiro sono due stati, non due campi: il vincolo di schema lo impone. */

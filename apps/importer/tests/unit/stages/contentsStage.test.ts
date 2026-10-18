@@ -527,6 +527,99 @@ describe('fase contents', () => {
     }
   });
 
+  it('description della sorgente e data di modifica (DR-180, DR-186), senza esporre le pagine riservate', async () => {
+    const fresh = await createTestDatabase('amoris_importer_contents_description');
+    try {
+      const posts: SqlRow[] = [
+        {
+          ID: 200,
+          post_author: 1,
+          post_title: 'Pagina con apici',
+          post_content: `<p>L'incontro "aperto"</p><p>di prova</p>`,
+          post_excerpt: 'Estratto copiato da un’altra pagina',
+          post_status: 'publish',
+          post_name: 'pagina-con-apici',
+          post_type: 'page',
+          post_date: '2020-01-10 09:00:00',
+          post_modified: '2021-03-04 11:12:13',
+          post_modified_gmt: '2021-03-04 10:12:13',
+          post_parent: 0,
+          menu_order: 0,
+        },
+        {
+          ID: 201,
+          post_author: 1,
+          post_title: 'Articolo con estratto',
+          post_content: '<p>Corpo</p>',
+          post_excerpt: `L'estratto "grezzo"`,
+          post_status: 'publish',
+          post_name: 'articolo-con-estratto',
+          post_type: 'post',
+          post_date: '2020-02-20 09:00:00',
+          post_parent: 0,
+          menu_order: 0,
+        },
+        {
+          ID: 202,
+          post_author: 1,
+          post_title: 'Pagina riservata',
+          post_content: '<p>Contenuto riservato sintetico</p>',
+          post_excerpt: 'Estratto riservato sintetico',
+          post_status: 'publish',
+          post_name: 'pagina-riservata',
+          post_type: 'page',
+          post_date: '2020-02-20 09:00:00',
+          post_parent: 0,
+          menu_order: 0,
+        },
+        {
+          ID: 203,
+          post_author: 1,
+          post_title: 'Pagina Divi vuota',
+          post_content: '[et_pb_section][et_pb_text]Solo moduli[/et_pb_text][/et_pb_section]',
+          post_excerpt: '',
+          post_status: 'publish',
+          post_name: 'pagina-divi-vuota',
+          post_type: 'page',
+          post_date: '2020-02-20 09:00:00',
+          post_parent: 0,
+          menu_order: 0,
+        },
+      ];
+      const postmeta: SqlRow[] = [
+        { meta_id: 1, post_id: 202, meta_key: '_members_access_role', meta_value: 'socio' },
+      ];
+      const runId = await newApplyRunId(fresh.db);
+      await runStage(contentsStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: buildContentsSource(posts, postmeta),
+        runId,
+        mode: 'apply',
+        issues: createIssueSink(fresh.db, 'apply', runId),
+        options: OPTIONS,
+      });
+      const rows = await fresh.db.select().from(schema.contents);
+      const bySlug = (slug: string) => rows.find((r) => r.slug === slug);
+
+      // Pagina: il testo grezzo, apici dritti e tag tolti senza spazi; il titolo resta tipografico.
+      expect(bySlug('pagina-con-apici')?.descriptionSource).toBe(`L'incontro "aperto"di prova`);
+      expect(bySlug('pagina-con-apici')?.modifiedAt?.toISOString()).toBe('2021-03-04T10:12:13.000Z');
+      // Articolo: l'estratto grezzo, accanto a quello tipografico per gli elenchi.
+      expect(bySlug('articolo-con-estratto')?.descriptionSource).toBe(`L'estratto "grezzo"`);
+      expect(bySlug('articolo-con-estratto')?.excerpt).toBe('L’estratto “grezzo”');
+      // Riservata: solo il messaggio di Members.
+      const restricted = bySlug('pagina-riservata')?.descriptionSource ?? '';
+      expect(restricted).toBe('Sorry, but you do not have permission to view this content.');
+      expect(restricted).not.toContain('riservat');
+      // Nessuna description nella sorgente: null, e decide l'API.
+      expect(bySlug('pagina-divi-vuota')?.descriptionSource).toBeNull();
+      expect(bySlug('pagina-divi-vuota')?.modifiedAt).toBeNull();
+    } finally {
+      await fresh.teardown();
+    }
+  });
+
   describe('pagina iniziale (DR-114)', () => {
     const run = async (db: Database, options: readonly SqlRow[]) => {
       const runId = await newApplyRunId(db);

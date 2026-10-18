@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
-import { keyParam, settingSchema, updateBody } from './schemas.js';
+import { SETTING_VALUE_SCHEMAS, keyParam, settingSchema, updateBody } from './schemas.js';
 import { list, update, type findByKey } from './service.js';
 
 /**
@@ -57,6 +57,19 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      // `Object.hasOwn`: una chiave come `constructor` non deve trovare un valore ereditato.
+      const valueSchema = Object.hasOwn(SETTING_VALUE_SCHEMAS, request.params.key)
+        ? SETTING_VALUE_SCHEMAS[request.params.key]
+        : undefined;
+      if (valueSchema && !valueSchema.safeParse(request.body.value).success) {
+        return reply.code(400).send({
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Il valore non ha la forma prevista per questa impostazione.',
+            requestId: request.id,
+          },
+        });
+      }
       const row = await update(
         app.db,
         request.params.key,

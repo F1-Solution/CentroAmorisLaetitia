@@ -89,6 +89,8 @@ export function ambienteDeiServer(): Record<string, string> {
     API_PORT: String(PORTE.api),
     CORS_ORIGINS: [WEB_URL, ADMIN_URL].join(','),
     NEXT_PUBLIC_API_URL: API_URL,
+    // `next start` gira in produzione, dove il sito pretende il proprio indirizzo (DR-196).
+    SITE_URL: WEB_URL,
     // Le prove non devono aspettare mezzo secondo per ogni accesso.
     LOGIN_UNIFORM_MS: '0',
     LOGIN_DELAY_STEP_MS: '0',

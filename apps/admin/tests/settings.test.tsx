@@ -65,9 +65,9 @@ const impostazioni = [
     updatedAt: '2026-01-10T10:00:00.000Z',
   },
   {
-    key: 'seo.sitemap_enabled',
+    key: 'site.avviso_inventato',
     value: true,
-    label: 'Sitemap attiva',
+    label: 'Avviso inventato attivo',
     description: null,
     isSecret: false,
     updatedAt: '2026-01-10T10:00:00.000Z',
@@ -86,6 +86,22 @@ const impostazioni = [
     label: 'Valore riservato inventato',
     description: null,
     isSecret: true,
+    updatedAt: '2026-01-10T10:00:00.000Z',
+  },
+  {
+    key: 'seo.robots_txt',
+    value: 'User-agent: *',
+    label: 'Contenuto di robots.txt',
+    description: null,
+    isSecret: false,
+    updatedAt: '2026-01-10T10:00:00.000Z',
+  },
+  {
+    key: 'seo.sitemap_enabled',
+    value: true,
+    label: 'Sitemap attiva',
+    description: null,
+    isSecret: false,
     updatedAt: '2026-01-10T10:00:00.000Z',
   },
 ];
@@ -116,7 +132,7 @@ describe('impostazioni globali', () => {
   it('il campo si deduce dal valore', async () => {
     renderSettings();
     expect(await screen.findByLabelText('Titolo del sito')).toHaveValue('Sito inventato');
-    expect(screen.getByRole('checkbox', { name: 'Sitemap attiva' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Avviso inventato attivo' })).toBeChecked();
     expect(screen.getByLabelText('Articoli per pagina')).toHaveValue('10');
   });
 
@@ -125,6 +141,25 @@ describe('impostazioni globali', () => {
     await screen.findByLabelText('Titolo del sito');
     expect(screen.queryByLabelText('Valore riservato inventato')).not.toBeInTheDocument();
     expect(screen.getByText(/Il valore è riservato/)).toBeInTheDocument();
+  });
+
+  it('DR-192: robots.txt e sitemap non compaiono tra le impostazioni modificabili', async () => {
+    renderSettings();
+    await screen.findByLabelText('Titolo del sito');
+    expect(screen.queryByLabelText('Contenuto di robots.txt')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Sitemap attiva' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Contenuto di robots.txt')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sitemap attiva')).not.toBeInTheDocument();
+  });
+
+  it('DR-192: con le sole impostazioni nascoste, la schermata dice che non ce ne sono', async () => {
+    apiMock.mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/settings' ? impostazioni.filter((s) => s.key.startsWith('seo.')) : {},
+      ),
+    );
+    renderSettings();
+    expect(await screen.findByText('Nessuna impostazione')).toBeInTheDocument();
   });
 
   it('modifica una stringa', async () => {
@@ -147,12 +182,12 @@ describe('impostazioni globali', () => {
     const user = userEvent.setup();
     renderSettings();
     await screen.findByLabelText('Titolo del sito');
-    await user.click(screen.getByRole('checkbox', { name: 'Sitemap attiva' }));
-    await user.click(screen.getByRole('button', { name: 'Salva «Sitemap attiva»' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Avviso inventato attivo' }));
+    await user.click(screen.getByRole('button', { name: 'Salva «Avviso inventato attivo»' }));
 
     await waitFor(() => {
       expect(writes()).toContainEqual({
-        path: '/settings/seo.sitemap_enabled',
+        path: '/settings/site.avviso_inventato',
         options: { method: 'PUT', body: { value: false } },
       });
     });

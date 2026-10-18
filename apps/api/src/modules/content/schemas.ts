@@ -93,7 +93,9 @@ export const createBody = z.object({
   blocks: blockDocument.optional(),
 });
 
+/** Il titolo vuoto è ammesso solo se il contenuto lo ha già vuoto (DR-201): lo verifica il servizio. */
 export const updateBody = createBody.partial().extend({
+  title: z.string().max(500).optional(),
   isSticky: z.boolean().optional(),
   featuredMediaId: z.string().uuid().nullable().optional(),
   contentHtml: z.string().optional(),
@@ -109,7 +111,7 @@ export const idParam = z.object({ id: z.string().uuid() });
  * cambiato sotto e pubblicare la copia sovrascriverebbe il lavoro di un altro.
  */
 export const draftBody = z.object({
-  title: z.string().min(1).max(500),
+  title: z.string().max(500),
   excerpt: z.string().max(5000).nullable().optional(),
   blocks: blockDocument,
   baseUpdatedAt: z.string(),

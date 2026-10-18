@@ -1,16 +1,16 @@
 [
  {
+  "path": "/",
+  "type": "page",
+  "identica": true
+ },
+ {
   "path": "/attraversare-le-emozioni/",
   "type": "page",
   "identica": true
  },
  {
   "path": "/chi-siamo/",
-  "type": "page",
-  "identica": true
- },
- {
-  "path": "/seminario-estivo/",
   "type": "page",
   "identica": true
  },

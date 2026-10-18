@@ -305,7 +305,8 @@ describe('fase terms', () => {
 
       const wpdm = terms.find((t) => t.taxonomy === 'wpdmcategory');
       const cuar = terms.find((t) => t.taxonomy === 'cuar_private_file_category');
-      expect(wpdm?.path).toBe('/wpdmcategory/moduli-consulenze/');
+      // DR-181, DR-193: la categoria dei download al percorso pubblico della sorgente.
+      expect(wpdm?.path).toBe('/download-category/moduli-consulenze/');
       expect(cuar?.path).toBe('/cuar_private_file_category/moduli-consulenze/');
       expect(wpdm?.path).not.toBe(cuar?.path);
     } finally {

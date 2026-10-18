@@ -61,6 +61,7 @@ import {
 import { provisionalPath, resolveTreePaths } from '../relations/paths.js';
 import { texturizePlain } from '../../convert/shared/wptexturize.js';
 import { summarySource } from '../../convert/shared/summary-source.js';
+import { metaDescriptionSource } from '../../convert/shared/meta-description.js';
 
 interface SourceContent {
   readonly id: number;
@@ -69,9 +70,12 @@ interface SourceContent {
   readonly slug: string;
   readonly title: string;
   readonly excerpt: string;
+  /** `post_excerpt` senza `wptexturize`, per la description di All in One SEO (DR-180). */
+  readonly rawExcerpt: string;
   readonly content: string;
   readonly authorLegacyId: number | null;
   readonly postDate: string;
+  readonly modifiedDate: string;
   readonly position: number;
   readonly parentLegacyId: number;
 }
@@ -108,9 +112,14 @@ async function loadSourceContents(ctx: StageContext): Promise<readonly SourceCon
       // `the_title` e `the_excerpt` della sorgente passavano da `wptexturize()` (DR-151).
       title: texturizePlain(asString(row['post_title'])),
       excerpt: texturizePlain(asString(row['post_excerpt'])),
+      rawExcerpt: asString(row['post_excerpt']),
       content: asString(row['post_content']),
       authorLegacyId: asNumber(row['post_author']),
       postDate: publicationDateSource(asString(row['post_date_gmt']), asString(row['post_date'])),
+      modifiedDate: publicationDateSource(
+        asString(row['post_modified_gmt']),
+        asString(row['post_modified']),
+      ),
       position: asNumber(row['menu_order']) ?? 0,
       parentLegacyId: asNumber(row['post_parent']) ?? 0,
     });
@@ -209,6 +218,14 @@ export const contentsStage: Stage = {
         }
 
         const meta = postMetaIndex.get(row.id) ?? new Map<string, string>();
+        // Description dal testo dopo Members: una pagina riservata non espone né testo né estratto (privacy).
+        const restricted = meta.has('_members_access_role');
+        const descriptionSource = metaDescriptionSource({
+          type: row.type,
+          excerpt: restricted ? '' : row.rawExcerpt,
+          content: applyMembersRestriction(row.content, meta),
+        });
+        const modifiedAt = parseTimestamp(row.modifiedDate);
         const { document } = convertContent({
           legacyContentId: row.id,
           postContent: applyMembersRestriction(
@@ -256,7 +273,9 @@ export const contentsStage: Stage = {
             contentHtml,
             contentText,
             summarySource: contentSummarySource,
+            descriptionSource,
             publishedAt: publishedAt ?? undefined,
+            modifiedAt,
             authorId: authorEntityId,
             legacyId: row.id,
             legacyType: row.type,
@@ -279,7 +298,9 @@ export const contentsStage: Stage = {
               contentHtml,
               contentText,
               summarySource: contentSummarySource,
+              descriptionSource,
               publishedAt: publishedAt ?? undefined,
+              modifiedAt,
               authorId: authorEntityId,
               legacyId: row.id,
               legacyType: row.type,

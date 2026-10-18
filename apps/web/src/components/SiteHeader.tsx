@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import type { MenuItem } from '../lib/api';
 import { HeaderSearchForm, HeaderSearchIcon, HeaderSearchState } from './HeaderSearch';
+import { MobileNavDetails } from './MobileNav';
 
 /**
  * Intestazione del sito, nella forma che il tema rende con lo stile «centrato» e
@@ -9,7 +10,7 @@ import { HeaderSearchForm, HeaderSearchIcon, HeaderSearchState } from './HeaderS
  * regole misurate (`docs/design/public-site-tokens.md`) si leggano sul markup.
  *
  * Sotto i 981px il menu diventa la barra «Seleziona una pagina»: un `<details>`,
- * che si apre e si chiude da tastiera senza script (criterio A-3).
+ * che si apre e si chiude con Invio e Spazio senza script; Esc lo chiude (A-3).
  */
 
 interface SiteHeaderProps {
@@ -93,7 +94,7 @@ export function SiteHeader({ siteTitle, logoPath, menu, currentPath }: SiteHeade
               <MenuList items={menu} currentPath={currentPath} className="nav" id="top-menu" />
             </nav>{' '}
             <HeaderSearchIcon />
-            <details id="et_mobile_nav_menu">
+            <MobileNavDetails>
               <summary className="mobile_nav">
                 <span className="select_page">Seleziona una pagina</span>
                 <span className="mobile_menu_bar" aria-hidden="true" />
@@ -101,7 +102,7 @@ export function SiteHeader({ siteTitle, logoPath, menu, currentPath }: SiteHeade
               <nav aria-label="Menu principale per telefono">
                 <MenuList items={menu} currentPath={currentPath} className="et_mobile_menu" />
               </nav>
-            </details>
+            </MobileNavDetails>
           </div>
         </div>
         <HeaderSearchForm />

@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import type { Database } from '@amoris/db';
-import { seoStage } from '../../../src/stages/seo/index.js';
+import { seoStage, translateAioseoTitle } from '../../../src/stages/seo/index.js';
 import { runStage } from '../../../src/stages/runStage.js';
 import { createIssueSink } from '../../../src/persistence/issueSink.js';
 import { createRun } from '../../../src/persistence/importRuns.js';
@@ -241,5 +241,86 @@ describe('fase seo', () => {
     } finally {
       await fresh.teardown();
     }
+  });
+
+  it('traduce le variabili di All in One SEO nel modello del sito e tiene la riga (DR-174, DR-191)', async () => {
+    const fresh = await createTestDatabase('amoris_importer_seo_variables');
+    try {
+      await seedContent(fresh.db, 300, 'pagina-con-variabili');
+      const runId = await newApplyRunId(fresh.db);
+      const issues = createIssueSink(fresh.db, 'apply', runId);
+      const result = await runStage(seoStage, {
+        db: fresh.db,
+        storage: fakeObjectStore(),
+        source: fakeSourceReader({
+          wp_aioseo_posts: [
+            {
+              id: 30,
+              post_id: 300,
+              title: '#separator_sa #separator_sa #post_title #separator_sa #site_title',
+              description: '',
+              canonical_url: '',
+              robots_default: '1',
+              robots_noindex: '0',
+              robots_nofollow: '0',
+            },
+          ],
+          wp_options: [
+            {
+              option_id: 1,
+              option_name: 'aioseo_options',
+              option_value: JSON.stringify({
+                searchAppearance: { global: { separator: '&#45;' } },
+              }),
+            },
+            { option_id: 2, option_name: 'blogdescription', option_value: '' },
+          ],
+        }),
+        runId,
+        mode: 'apply',
+        issues,
+        options: OPTIONS,
+      });
+      expect(result.created).toBe(1);
+      const [row] = await fresh.db.select().from(schema.contentSeo);
+      expect(row?.title).toBe('{title} - {site_title}');
+      expect(issues.collected.filter((i) => i.stage === 'seo')).toHaveLength(0);
+    } finally {
+      await fresh.teardown();
+    }
+  });
+});
+
+describe('translateAioseoTitle', () => {
+  const options = { separator: '-', tagline: '' };
+
+  it('un titolo senza variabili resta com’è', () => {
+    expect(translateAioseoTitle('Home - Centro Amoris Laetitia', options)).toEqual({
+      title: 'Home - Centro Amoris Laetitia',
+      unknown: [],
+      taglineMissing: false,
+    });
+  });
+
+  it('toglie i separatori vuoti in testa e in coda', () => {
+    expect(translateAioseoTitle('#separator_sa #post_title #separator_sa', options).title).toBe(
+      '{title}',
+    );
+  });
+
+  it('#tagline: il testo dello slogan se c’è, altrimenti vuoto e segnalato', () => {
+    expect(
+      translateAioseoTitle('#site_title #separator_sa #tagline', { separator: '|', tagline: 'Slogan' })
+        .title,
+    ).toBe('{site_title} | Slogan');
+    const missing = translateAioseoTitle('#site_title #separator_sa #tagline', options);
+    expect(missing.title).toBe('{site_title}');
+    expect(missing.taglineMissing).toBe(true);
+  });
+
+  it('una variabile sconosciuta resta scritta ed è riportata', () => {
+    const result = translateAioseoTitle('#post_title #separator_sa #categoria_ignota', options);
+    expect(result.title).toBe('{title} - #categoria_ignota');
+    expect(result.unknown).toEqual(['categoria_ignota']);
   });
 });

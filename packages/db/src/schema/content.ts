@@ -50,6 +50,8 @@ export const contents = pgTable(
     contentText: text().notNull().default(''),
     /** Inizio del testo nella forma che Divi conta per l'estratto, con le entità di `wptexturize`; vuota per i contenuti del CMS (D71, DR-155). */
     summarySource: text(),
+    /** Description dei metadati calcolata all'import come All in One SEO; vuota dopo una modifica dal CMS (DR-180). */
+    descriptionSource: text(),
     featuredMediaId: uuid().references(() => media.id, { onDelete: 'set null' }),
     publishedAt: timestamp({ withTimezone: true }),
     authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
@@ -59,6 +61,8 @@ export const contents = pgTable(
     legacyFormat: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** Ultima modifica del contenuto: `post_modified_gmt` all'import, poi l'ora della modifica dal CMS (DR-186). */
+    modifiedAt: timestamp({ withTimezone: true }),
     /** Ricerca full-text in italiano. Colonna generata: non può divergere. */
     searchVector: tsvector().generatedAlwaysAs(
       sql`setweight(to_tsvector('italian', coalesce(title, '')), 'A') || setweight(to_tsvector('italian', coalesce(excerpt, '')), 'B') || setweight(to_tsvector('italian', coalesce(content_text, '')), 'C')`,

@@ -8,7 +8,7 @@
  * - **derivate da `wp_options`**: 8 chiavi, un valore preso da una riga della
  *   sorgente. Se la riga manca, la fase registra un `import_issues` di
  *   gravità `warning` e salta quella sola chiave — non inventa un valore.
- * - **nuove, senza equivalente in `wp_options`**: 7 chiavi che il sistema
+ * - **nuove, senza equivalente in `wp_options`**: 9 chiavi (le ultime due da DR-185) che il sistema
  *   nuovo richiede e che WordPress non aveva. Non hanno una riga sorgente:
  *   si seminano con un valore predefinito prudente, dichiarato qui.
  *
@@ -170,5 +170,24 @@ export const SETTINGS_DEFINITIONS: readonly SettingsDefinition[] = [
     source: { kind: 'default', syntheticId: 7 },
     parse: identity,
     defaultValue: null,
+  },
+  {
+    key: 'contact.phone',
+    label: 'Telefono del Centro',
+    description: 'Per i dati strutturati (DR-185); la sorgente non lo ha: richiede compilazione manuale.',
+    isSecret: false,
+    source: { kind: 'default', syntheticId: 8 },
+    parse: identity,
+    defaultValue: '',
+  },
+  {
+    key: 'social.profiles',
+    label: 'Profili social',
+    description:
+      'Indirizzi completi dei profili, uno per voce (DR-185); la sorgente non ne ha: elenco vuoto.',
+    isSecret: false,
+    source: { kind: 'default', syntheticId: 9 },
+    parse: identity,
+    defaultValue: [],
   },
 ];

@@ -29,6 +29,7 @@ import { sectionClasses, rowClasses, imageClasses, mapClasses } from '../shared/
 import { deriveDiviColumnWidth } from '../shared/column-width.js';
 import { normalizeSameSiteUrlValue } from '../shared/url-normalize.js';
 import { convertNonDiviShortcode } from '../shared/non-divi-shortcodes.js';
+import { rewriteUploadsReferences } from '../../stages/rewrite/urlRewrite.js';
 import {
   diviBool,
   isValidColor,
@@ -497,7 +498,8 @@ function convertVideo(node: ParsedShortcode, ctx: ConvertContext) {
 
   const props = videoPropsSchema.parse({
     src: src || '(assente)',
-    provider: deriveVideoProvider(src || ''),
+    // Il tipo si calcola sull'indirizzo che il sito servirà, già in `/media/` (DR-184).
+    provider: deriveVideoProvider(rewriteUploadsReferences(src || '')),
     posterMediaId: null,
     posterSrc: posterSrc || null,
     classes: [],

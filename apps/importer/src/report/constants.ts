@@ -13,10 +13,10 @@ export const EXPECTED_COUNTS: Readonly<Record<ReportRowName, number | null>> = {
    * `settings` è l'unica riga del rapporto che **non** compare nei volumi
    * attesi di `database-schema.md` §6 — cioè non ha una fonte autorevole.
    * Il numero vero è la dimensione del catalogo delle impostazioni
-   * (`stages/settings/definitions.ts`), misurata a 15. I 6 template SEO non
+   * (`stages/settings/definitions.ts`), misurata a 15, 17 dal 2026-10-18 (DR-185). I 6 template SEO non
    * stanno qui: sono una tabella diversa, senza una riga nel rapporto.
    */
-  settings: 15,
+  settings: 17,
   users: 1,
   media: 170,
   media_variants: null, // "~1376": stima, non un intero fisso — IMPORTER-DESIGN.md §3.9

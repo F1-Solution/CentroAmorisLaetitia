@@ -46,10 +46,33 @@ test.describe('sito pubblico', () => {
     }
   });
 
+  test('serve dati strutturati JSON-LD validi, con il sito nel grafo (DR-170)', async ({
+    page,
+  }) => {
+    await page.goto(PAGINA);
+    const blocchi = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((nodi) => nodi.map((n) => n.textContent ?? ''));
+    expect(blocchi).toHaveLength(1);
+    const dati = JSON.parse(blocchi[0]!) as {
+      '@context'?: string;
+      '@graph'?: { '@type'?: string; url?: string }[];
+    };
+    expect(dati['@context']).toBe('https://schema.org');
+    const sito = dati['@graph']?.find((nodo) => nodo['@type'] === 'WebSite');
+    expect(sito, 'il grafo contiene il nodo WebSite').toBeDefined();
+    // DR-188: indirizzi assoluti, dall'indirizzo del sito.
+    expect(sito?.url).toMatch(/^https?:\/\/\S+\/$/);
+    expect(dati['@graph']?.some((nodo) => nodo['@type'] === 'Person')).toBe(false);
+  });
+
   test('esclude l’area amministrativa dai motori di ricerca', async ({ request }) => {
     const risposta = await request.get('/robots.txt');
     expect(risposta.ok()).toBeTruthy();
-    expect(await risposta.text()).toContain('Disallow: /admin');
+    const testo = await risposta.text();
+    expect(testo).toContain('Disallow: /admin');
+    // DR-176: la sitemap si dichiara con l'indirizzo assoluto.
+    expect(testo).toMatch(/^Sitemap: https?:\/\/\S+\/sitemap\.xml$/m);
   });
 });
 

@@ -3,7 +3,7 @@ etmodules-subset.woff
 Sottoinsieme di `modules.woff` (versione 2.4) del tema Divi di Elegant Themes,
 dall'installazione WordPress sorgente del 2026-09-13
 (`wp-content/themes/Divi/core/admin/fonts/modules/all/`), ridotto con fontTools
-ai glifi 3, U, M, a (DR-143).
+ai glifi 3, 5, U, M, a (DR-143; il 5, freccia del bottone «Invia», da DR-194).
 
 Il tema dichiara GPL v2 in `style.css`; il file del font non contiene
 informazioni di licenza. La licenza va verificata da una persona prima del

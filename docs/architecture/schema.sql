@@ -224,6 +224,7 @@ CREATE TABLE contents (
     content_html  text NOT NULL DEFAULT '',    -- cache di resa, rigenerata (ADR-005 §3.6)
     content_text  text NOT NULL DEFAULT '',    -- solo testo, per ricerca e description
     summary_source text,                       -- forma contata da Divi per l'estratto; vuota per il CMS (D71)
+    description_source text,                   -- description calcolata all'import come All in One SEO (DR-180)
     featured_media_id uuid REFERENCES media(id) ON DELETE SET NULL,
     published_at  timestamptz,
     author_id     uuid REFERENCES users(id) ON DELETE SET NULL,
@@ -232,6 +233,7 @@ CREATE TABLE contents (
     legacy_format text,                        -- 'gutenberg', 'divi', 'html' — 1B-W0 §1
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now(),
+    modified_at   timestamptz,                 -- post_modified_gmt all'import, poi modifica dal CMS (DR-186)
     CONSTRAINT contents_path_unique      UNIQUE (path),
     CONSTRAINT contents_legacy_id_unique UNIQUE (legacy_id),
     CONSTRAINT contents_slug_parent_unique UNIQUE (parent_id, slug),

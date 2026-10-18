@@ -311,6 +311,48 @@ export function DocumentView({
   );
 }
 
+/** Archivio `wpdmcategory` del tema come nella sorgente: titolo e data per documento, paginazione vuota (DR-181). */
+export function DownloadCategoryView({
+  term,
+  documents,
+}: {
+  readonly term: Term;
+  readonly documents: readonly PublicDocument[];
+}) {
+  return (
+    <div className="container">
+      <div id="content-area" className="clearfix">
+        <div id="left-area">
+          {/* Come l'archivio di categoria: titolo presente ma nascosto (A-7). */}
+          <h1 className="screen-reader-text">{term.name}</h1>
+          {documents.map((document) => {
+            const href = `/download/${document.slug}/`;
+            return (
+              <article
+                key={document.id}
+                id={`post-${document.id}`}
+                className={`et_pb_post wpdmpro type-wpdmpro status-publish hentry wpdmcategory-${term.slug}`}
+              >
+                <h2 className="entry-title">
+                  <a href={href}>{document.title}</a>
+                </h2>
+                <p className="post-meta">
+                  <span className="published">{postDate(document.publishedAt)}</span>
+                </p>
+              </article>
+            );
+          })}
+          <div className="pagination clearfix">
+            <div className="alignleft" />
+            <div className="alignright" />
+          </div>
+        </div>
+        <div id="sidebar" />
+      </div>
+    </div>
+  );
+}
+
 export function NotFoundView() {
   return (
     <div className="container">

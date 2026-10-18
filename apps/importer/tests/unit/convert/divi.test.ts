@@ -200,6 +200,21 @@ describe('convertContent — famiglia Divi', () => {
     expect(result.issues.some((i) => i.code === 'same-site-url-normalized')).toBe(true);
   });
 
+  it('et_pb_video con un .mp4 dello stesso sito: provider «file», calcolato sull’indirizzo riscritto (DR-184)', () => {
+    const result = convertContent({
+      legacyContentId: 108,
+      postContent:
+        '[et_pb_section][et_pb_row][et_pb_column type="4_4"][et_pb_video src="https://www.centroamorislaetitia.it/wp-content/uploads/2026/09/prova.mp4"][/et_pb_video][/et_pb_column][/et_pb_row][/et_pb_section]',
+    });
+    const section = result.document.blocks[0]!;
+    if (section.type !== 'section') throw new Error('atteso section');
+    const video = section.children[0]!.children[0]!.children[0]!;
+    if (video.type !== 'video') throw new Error('atteso video');
+    expect(video.props.provider).toBe('file');
+    // L'indirizzo resta quello originale: lo riscrive la fase `rewrite`.
+    expect(video.props.src).toContain('/wp-content/uploads/2026/09/prova.mp4');
+  });
+
   it('et_pb_map conserva i segnaposto come proprietà, non come blocchi', () => {
     const result = convertContent({ legacyContentId: 107, postContent: mapSample });
     const section = result.document.blocks[0]!;

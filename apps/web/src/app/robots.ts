@@ -1,16 +1,18 @@
 import type { MetadataRoute } from 'next';
+import { siteUrl } from '../lib/site';
 
 /**
- * L'area amministrativa non va indicizzata (ADR-008 §3.3 regola 2). Qui viene
- * esclusa anche dal `robots.txt` del sito, che e' la prima cosa che un crawler
- * legge.
- *
- * Le regole vere del sito — sitemap compresa — si scrivono in Fase 1D, quando i
- * contenuti esistono: il `robots.txt` della sorgente e' un dato da migrare, non
- * una scelta da fare adesso.
+ * `robots.txt` del sito (DR-176): l'area amministrativa resta esclusa
+ * (ADR-008 §3.3 regola 2) e la sitemap si dichiara con l'indirizzo assoluto;
+ * nessuna regola sui percorsi WordPress, che il sito non ha.
  */
+
+// Letto a ogni richiesta, come la sitemap: `SITE_URL` è quello dell'avvio, non della compilazione.
+export const dynamic = 'force-dynamic';
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [{ userAgent: '*', disallow: '/admin' }],
+    sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

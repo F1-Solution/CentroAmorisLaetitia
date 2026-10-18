@@ -1,5 +1,5 @@
 import { schema, type Database } from '@amoris/db';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 
 /** Servizio del dominio `settings`. */
 
@@ -37,7 +37,8 @@ export async function update(
   await db
     .update(schema.settings)
     .set({
-      value: input.value,
+      // `null` di JavaScript diventa il `null` di JSON: la colonna è `jsonb NOT NULL`.
+      value: input.value === null ? sql`'null'::jsonb` : input.value,
       label: input.label ?? current.label,
       description: input.description === undefined ? current.description : input.description,
       updatedAt: new Date(),

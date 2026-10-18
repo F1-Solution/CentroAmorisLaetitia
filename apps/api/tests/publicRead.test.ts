@@ -647,3 +647,340 @@ describe('eliminazione di un media citato per indirizzo (DR-109)', () => {
     expect(response.statusCode).toBe(204);
   });
 });
+
+describe('metadati, documenti e mappa del sito della T7 (DR-179…193)', () => {
+  const longText = `Inizio ${'parola '.repeat(40)}fine`;
+
+  beforeAll(async () => {
+    await content('conDescription', {
+      path: '/con-description/',
+      status: 'published',
+      excerpt: 'Estratto copiato da un’altra pagina',
+      text: 'Testo “tipografico” della pagina',
+    });
+    await h.db
+      .update(schema.contents)
+      .set({
+        descriptionSource: `Il corso "Prova" dell'anno 🎉`,
+        modifiedAt: new Date('2021-03-04T10:12:13Z'),
+      })
+      .where(eq(schema.contents.id, ids.conDescription ?? ''));
+    await content('descriptionLunga', { path: '/description-lunga/', status: 'published' });
+    await h.db
+      .update(schema.contents)
+      .set({ descriptionSource: longText })
+      .where(eq(schema.contents.id, ids.descriptionLunga ?? ''));
+    await content('paginaCms', {
+      path: '/pagina-cms/',
+      status: 'published',
+      excerpt: 'Estratto della pagina',
+      text: 'Testo della pagina scritto dal CMS',
+    });
+    await content('articoloCms', {
+      path: '/articolo-cms/',
+      status: 'published',
+      type: 'post',
+      excerpt: 'Estratto dell’articolo',
+      text: 'Testo dell’articolo',
+    });
+    await content('conVariabili', { path: '/con-variabili/', status: 'published' });
+    await h.db
+      .insert(schema.contentSeo)
+      .values({ contentId: ids.conVariabili ?? '', title: '{title} - {site_title}' });
+    await h.db
+      .insert(schema.seoTemplates)
+      .values({ scope: 'post', titleTemplate: '{title} - {site_title}' });
+
+    const terms = await h.db
+      .insert(schema.terms)
+      .values([
+        {
+          taxonomy: 'wpdmcategory',
+          slug: 'moduli-sintetici',
+          name: 'Moduli sintetici',
+          path: '/download-category/moduli-sintetici/',
+        },
+        {
+          taxonomy: 'wpdmcategory',
+          slug: 'categoria-vuota',
+          name: 'Categoria senza documenti pubblici',
+          path: '/download-category/categoria-vuota/',
+        },
+        {
+          taxonomy: 'cuar_private_file_category',
+          slug: 'moduli-sintetici',
+          name: 'File riservati sintetici',
+          path: '/cuar_private_file_category/moduli-sintetici/',
+        },
+      ])
+      .returning({ id: schema.terms.id, slug: schema.terms.slug, taxonomy: schema.terms.taxonomy });
+    for (const t of terms) ids[`${t.taxonomy}:${t.slug}`] = t.id;
+    const moduli = ids['wpdmcategory:moduli-sintetici'] ?? '';
+    const vuota = ids['wpdmcategory:categoria-vuota'] ?? '';
+    const riservati = ids['cuar_private_file_category:moduli-sintetici'] ?? '';
+
+    const docs = await h.db
+      .insert(schema.documents)
+      .values([
+        {
+          slug: 'modulo-vecchio',
+          title: 'A modulo vecchio',
+          mediaId: ids.pubblico ?? '',
+          publishedAt: new Date('2022-01-01T10:00:00Z'),
+        },
+        {
+          slug: 'modulo-nuovo',
+          title: 'B modulo nuovo',
+          mediaId: ids.pubblico ?? '',
+          publishedAt: new Date('2022-02-01T10:00:00Z'),
+        },
+        {
+          slug: 'modulo-categoria-riservato',
+          title: 'Modulo riservato in categoria',
+          mediaId: ids.pubblico ?? '',
+          isPrivate: true,
+        },
+      ])
+      .returning({ id: schema.documents.id, slug: schema.documents.slug });
+    for (const d of docs) ids[d.slug] = d.id;
+    await h.db.insert(schema.documentTerms).values([
+      { documentId: ids['modulo-vecchio'] ?? '', termId: moduli },
+      { documentId: ids['modulo-nuovo'] ?? '', termId: moduli },
+      { documentId: ids['modulo-categoria-riservato'] ?? '', termId: moduli },
+      { documentId: ids['modulo-file-riservato'] ?? '', termId: moduli },
+      { documentId: ids['modulo-riservato'] ?? '', termId: vuota },
+      { documentId: ids['modulo-vecchio'] ?? '', termId: riservati },
+    ]);
+  });
+
+  describe('description dei metadati (DR-179, DR-180)', () => {
+    it('vale la description calcolata all’import, con apici dritti ed emoji, anche per og:description', async () => {
+      const body = (await get('/public/content?path=/con-description/')).json();
+      expect(body.seo.description).toBe(`Il corso "Prova" dell'anno 🎉`);
+      expect(body.seo.ogDescription).toBe(`Il corso "Prova" dell'anno 🎉`);
+      // Il titolo non si tocca (DR-179).
+      expect(body.seo.title).toBe('Titolo conDescription - Sito sintetico');
+    });
+
+    it('la description lunga si taglia a 160 con «…», come prima', async () => {
+      const body = (await get('/public/content?path=/description-lunga/')).json();
+      expect(body.seo.description.endsWith('…')).toBe(true);
+      expect(body.seo.description.length).toBeLessThanOrEqual(161);
+      expect(longText.startsWith(body.seo.description.slice(0, -1))).toBe(true);
+    });
+
+    it('senza description dell’import: pagina dal testo, non dall’estratto', async () => {
+      const body = (await get('/public/content?path=/pagina-cms/')).json();
+      expect(body.seo.description).toBe('Testo della pagina scritto dal CMS');
+    });
+
+    it('senza description dell’import: articolo dall’estratto', async () => {
+      const body = (await get('/public/content?path=/articolo-cms/')).json();
+      expect(body.seo.description).toBe('Estratto dell’articolo');
+    });
+
+    it('pagina senza testo: l’estratto', async () => {
+      const body = (await get('/public/content?path=/')).json();
+      expect(body.seo.description).toBe('Estratto della home.');
+    });
+  });
+
+  describe('data di modifica (DR-186)', () => {
+    it('esce come modifiedAt in ISO, o la data di aggiornamento se manca', async () => {
+      const withDate = (await get('/public/content?path=/con-description/')).json();
+      expect(withDate.content.modifiedAt).toBe('2021-03-04T10:12:13.000Z');
+      const without = (await get('/public/content?path=/pagina-cms/')).json();
+      expect(without.content.modifiedAt).toBe(without.content.updatedAt);
+    });
+
+    it('è anche la data della mappa del sito, non quella dell’import', async () => {
+      const entries: { path: string; updatedAt: string }[] = (await get('/public/sitemap')).json()
+        .entries;
+      expect(entries.find((e) => e.path === '/con-description/')?.updatedAt).toBe(
+        '2021-03-04T10:12:13.000Z',
+      );
+    });
+  });
+
+  describe('title di sovrascrittura (DR-174, DR-191)', () => {
+    it('i segnaposto del title importato si riempiono come quelli del modello', async () => {
+      const body = (await get('/public/content?path=/con-variabili/')).json();
+      expect(body.seo.title).toBe('Titolo conVariabili - Sito sintetico');
+    });
+  });
+
+  describe('impostazioni dell’organizzazione (DR-185)', () => {
+    it('indirizzo, telefono e profili social sono pubblici', async () => {
+      await h.db.insert(schema.settings).values([
+        { key: 'contact.address', value: 'Via Sintetica 1', label: 'Indirizzo' },
+        { key: 'contact.phone', value: '+39 000 0000000', label: 'Telefono' },
+        {
+          key: 'social.profiles',
+          value: ['https://social.example.invalid/centro'],
+          label: 'Social',
+        },
+      ]);
+      const body = (await get('/public/settings')).json();
+      expect(body['contact.address']).toBe('Via Sintetica 1');
+      expect(body['contact.phone']).toBe('+39 000 0000000');
+      expect(body['social.profiles']).toEqual(['https://social.example.invalid/centro']);
+      expect(body['analytics.ga4_measurement_id']).toBeUndefined();
+    });
+  });
+
+  describe('categoria dei download (DR-181, DR-193)', () => {
+    it('una categoria dei download si risolve per percorso', async () => {
+      const response = await get('/public/terms?path=/download-category/moduli-sintetici/');
+      expect(response.statusCode).toBe(200);
+      expect(response.json().term.taxonomy).toBe('wpdmcategory');
+    });
+
+    it('prova negativa: la categoria dei file riservati non si risolve', async () => {
+      const response = await get(
+        '/public/terms?path=/cuar_private_file_category/moduli-sintetici/',
+      );
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('elenca solo i documenti pubblici della categoria, i più recenti prima', async () => {
+      const response = await get(
+        `/public/documents?termId=${ids['wpdmcategory:moduli-sintetici']}`,
+      );
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.items.map((d: { slug: string }) => d.slug)).toEqual([
+        'modulo-nuovo',
+        'modulo-vecchio',
+      ]);
+      expect(body.media[ids.pubblico ?? '']).toBeDefined();
+    });
+
+    it('prova negativa: riservati, con file riservato, categorie riservate o inesistenti', async () => {
+      const text = (await get(`/public/documents?termId=${ids['wpdmcategory:moduli-sintetici']}`))
+        .body;
+      expect(text).not.toContain('modulo-categoria-riservato');
+      expect(text).not.toContain('modulo-file-riservato');
+      // Una categoria senza documenti pubblici non esiste per il sito, come nella sitemap.
+      const vuota = await get(`/public/documents?termId=${ids['wpdmcategory:categoria-vuota']}`);
+      expect(vuota.statusCode).toBe(404);
+      expect((await get('/public/terms?path=/download-category/categoria-vuota/')).statusCode).toBe(
+        404,
+      );
+      const riservata = await get(
+        `/public/documents?termId=${ids['cuar_private_file_category:moduli-sintetici']}`,
+      );
+      expect(riservata.statusCode).toBe(404);
+      expect((await get('/public/documents?termId=non-un-uuid')).statusCode).toBe(400);
+      expect(
+        (await get('/public/documents?termId=00000000-0000-4000-8000-000000000000')).statusCode,
+      ).toBe(404);
+    });
+
+    it('il documento porta con sé le sue categorie pubbliche, per le briciole', async () => {
+      const body = (await get('/public/documents/modulo-vecchio')).json();
+      expect(body.terms.map((t: { path: string }) => t.path)).toEqual([
+        '/download-category/moduli-sintetici/',
+      ]);
+    });
+  });
+
+  describe('mappa del sito con i documenti (DR-177, DR-181)', () => {
+    it('elenca i documenti pubblici e le categorie dei download che ne hanno', async () => {
+      const entries: { path: string; kind: string; updatedAt: string }[] = (
+        await get('/public/sitemap')
+      ).json().entries;
+      const byPath = new Map(entries.map((e) => [e.path, e]));
+      expect(byPath.get('/download/modulo-nuovo/')).toEqual({
+        path: '/download/modulo-nuovo/',
+        kind: 'document',
+        updatedAt: '2022-02-01T10:00:00.000Z',
+      });
+      expect(byPath.get('/download/modulo-pubblico/')?.kind).toBe('document');
+      expect(byPath.get('/download-category/moduli-sintetici/')?.kind).toBe('download_category');
+    });
+
+    it('prova negativa: documenti riservati, categorie senza pubblici e file riservati mai', async () => {
+      const paths = (await get('/public/sitemap'))
+        .json()
+        .entries.map((e: { path: string }) => e.path);
+      for (const escluso of [
+        '/download/modulo-riservato/',
+        '/download/modulo-file-riservato/',
+        '/download/modulo-categoria-riservato/',
+        '/download-category/categoria-vuota/',
+        '/cuar_private_file_category/moduli-sintetici/',
+      ]) {
+        expect(paths).not.toContain(escluso);
+      }
+    });
+  });
+
+  describe('richieste a intervalli sui media (DR-189)', () => {
+    const range = (value: string, extra: Record<string, string> = {}) =>
+      h.app.inject({
+        method: 'GET',
+        url: '/media/2026/01/pubblico.png',
+        headers: { range: value, ...extra },
+      });
+
+    it('senza Range: 200 intero e Accept-Ranges', async () => {
+      const response = await get('/media/2026/01/pubblico.png');
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['accept-ranges']).toBe('bytes');
+    });
+
+    it('bytes=a-b, a- e -n rispondono 206 con la parte giusta', async () => {
+      const cases: [string, number, number][] = [
+        ['bytes=1-3', 1, 3],
+        ['bytes=2-', 2, PNG.length - 1],
+        ['bytes=-3', PNG.length - 3, PNG.length - 1],
+        ['bytes=4-999', 4, PNG.length - 1],
+      ];
+      for (const [header, start, end] of cases) {
+        const response = await range(header);
+        expect(response.statusCode).toBe(206);
+        expect(response.headers['content-range']).toBe(`bytes ${start}-${end}/${PNG.length}`);
+        expect(response.headers['content-length']).toBe(String(end - start + 1));
+        expect(response.headers['accept-ranges']).toBe('bytes');
+        expect(response.rawPayload.equals(PNG.subarray(start, end + 1))).toBe(true);
+      }
+    });
+
+    it('un intervallo fuori dal file risponde 416 con la dimensione', async () => {
+      const outside = [
+        `bytes=${PNG.length}-`,
+        'bytes=-0',
+        `bytes=${PNG.length + 5}-${PNG.length + 9}`,
+      ];
+      for (const header of outside) {
+        const response = await range(header);
+        expect(response.statusCode).toBe(416);
+        expect(response.headers['content-range']).toBe(`bytes */${PNG.length}`);
+        expect(response.headers['accept-ranges']).toBe('bytes');
+      }
+    });
+
+    it('Range malformato, di altra unità o con più intervalli: 200 intero', async () => {
+      for (const header of ['bytes=3-1', 'items=0-1', 'bytes=0-1,3-4', 'bytes=abc']) {
+        const response = await range(header);
+        expect(response.statusCode).toBe(200);
+        expect(response.rawPayload.equals(PNG)).toBe(true);
+      }
+    });
+
+    it('If-Range con un’impronta diversa: 200 intero; con la stessa: 206', async () => {
+      const etag = String((await get('/media/2026/01/pubblico.png')).headers.etag);
+      expect((await range('bytes=0-1', { 'if-range': '"altra"' })).statusCode).toBe(200);
+      expect((await range('bytes=0-1', { 'if-range': etag })).statusCode).toBe(206);
+    });
+
+    it('prova negativa: un media riservato resta 404 anche con Range', async () => {
+      const response = await h.app.inject({
+        method: 'GET',
+        url: '/media/2026/01/riservato.png',
+        headers: { range: 'bytes=0-1' },
+      });
+      expect(response.statusCode).toBe(404);
+    });
+  });
+});

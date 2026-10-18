@@ -1,0 +1,6 @@
+voce,sorgente,sito,esito,nota
+robots.txt,allow: /wp-admin/admin-ajax.php ; disallow: /wp-admin/ ; disallow: /wp-content/uploads/wpforms/ ; sitemap: /sitemap.rss ; sitemap: /sitemap.xml ; user-agent: *,disallow: /admin ; sitemap: /sitemap.xml ; user-agent: *,correzione DR-176,solo sorgente: allow: /wp-admin/admin-ajax.php ; disallow: /wp-admin/ ; disallow: /wp-content/uploads/wpforms/ ; sitemap: /sitemap.rss | solo sito: disallow: /admin
+sitemap: figlie,5,0,correzione DR-177,
+sitemap: percorsi,113,113,identico,
+feed /feed/: elementi,10,10,identico,
+feed /category/news/feed/: elementi,10,10,identico,

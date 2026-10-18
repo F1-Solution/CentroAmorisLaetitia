@@ -14,6 +14,7 @@ import {
   updateBody,
 } from './schemas.js';
 import {
+  assertTitleAllowed,
   create,
   discardDraft,
   findById,
@@ -206,6 +207,7 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const content = await findById(app.db, request.params.id);
       if (!content) return reply.callNotFound();
+      assertTitleAllowed(request.body.title, content.title);
 
       const row = await saveDraft(
         app.db,

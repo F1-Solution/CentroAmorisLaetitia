@@ -1406,3 +1406,116 @@ L'accettazione vale per la `1E-W6`; non è l'approvazione della parità del gate
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-165 | 2026-10-17 | Chiusura della `1E-W6` e commit delle modifiche | **chiusa**: criteri d'uscita soddisfatti (DR-162…164, 1E-19 4/4), commit autorizzato | tenere aperta la wave | «1E-W6: confermo la chiusura della wave e il commit delle modifiche; poi pianifica la 1E-W7» | Proprietario | Fase 1E | sì | `PROGRESS.md`, DR-162…164 |
+
+## 61. Round 52 — risposta del 2026-10-17, metodo della `1E-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-166 | 2026-10-17 | Verifiche manuali del §8 (D76) | **Opzione A** — misura automatica su sito e riferimento, catture degli stati giudicate dall'utente in un report | B — solo automatica; C — a mano con una lista | «D76=A» | Proprietario | 81 URL ad alta priorità | sì | `W7-PLAN.md` §7 |
+| DR-167 | 2026-10-17 | Dove vivono gli script della `1E-W7` (D77) | **Opzione A** — `tests/visual/` sui dati reali in locale; deviazione da `PLAN.md` §2 | B — `tests/e2e/` (seme sintetico) | «D77=A» | Proprietario | `tests/visual/`, `docs/qa/verifiche/` | sì | `W7-PLAN.md` §7 |
+| DR-168 | 2026-10-17 | «Senza salti» da 1440 a 360 px (D78) | **Opzione A** — passo di 10 px su sito e riferimento: nessuno scorrimento orizzontale, stesse larghezze di passaggio dei layout | B — solo sito; C — anche altezza con tolleranza | «D78=A» | Proprietario | §8 voce 7 | sì | `W7-PLAN.md` §7 |
+| DR-169 | 2026-10-17 | Difetti di accessibilità ereditati (D79) | **Opzione A** — subito ciò che non cambia la resa; alt mancanti elencati per il redattore, non inventati; dopo la UAT ciò che cambia la resa | B — solo registrare; C — tutto ora | «D79=A» | Proprietario | A-1…A-8 | sì | `W7-PLAN.md` §7, DR-115 |
+
+Nella stessa risposta l'utente ha confermato il push di `1a107c0`, eseguito il 2026-10-17.
+
+## 62. Round 53 — risposta del 2026-10-17, difformità dei metadati della `1E-W7` (T1)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-170 | 2026-10-17 | M1 dati strutturati Schema.org | **Opzione A** — JSON-LD equivalente alla sorgente per tipo di contenuto | B — minimo; C — nessuno | raccomandazione accettata nella pagina delle domande | Proprietario | sito pubblico, 113 URL | sì | `docs/qa/verifiche/decisioni-metadati-M1-M8.md` |
+| DR-171 | 2026-10-17 | M2 description troncata | **Opzione A** — taglio a 160 caratteri con «…», correzione voluta | B — lunghezza della sorgente; C — senza «…» | idem | Proprietario | 37 URL | sì | idem |
+| DR-172 | 2026-10-17 | M3 apici e lineette nei metadati | **Opzione A** — dritti nei metadati, tipografici solo nel corpo | B — tipografici ovunque | idem | Proprietario | 9 URL, feed | sì | idem |
+| DR-173 | 2026-10-17 | M4 description diversa | **Opzione C** — description dei metadati dal testo, estratto invariato negli elenchi; normalizzazione dei 7 casi minori | A — anche negli elenchi; B — solo segnalazione al redattore | idem | Proprietario | 9 URL | sì | idem |
+| DR-174 | 2026-10-17 | M5 segnaposto SEO non risolti | **Opzione A** — variabili tradotte all'import, title corretto (DR-040); import su conferma | B — riprodurre; C — correzione manuale | idem | Proprietario | importer, 1 URL | sì | idem |
+| DR-175 | 2026-10-17 | M6 paginazione dell'archivio | **Opzione B** — canonical autoreferenziale e indicizzabile, correzione DR-040 | A — come la sorgente; C — noindex, follow | idem | Proprietario | 2 URL | sì | idem |
+| DR-176 | 2026-10-17 | M7 `robots.txt` | **Opzione A** — `Disallow: /admin` e riga `Sitemap:` assoluta | B — anche le regole WordPress; C — invariato | idem | Proprietario | `robots.txt` | sì | idem |
+| DR-177 | 2026-10-17 | M8 sitemap | **Opzione A** — sitemap unica con i 5 percorsi mancanti (113/113) | B — indice con figlie; C — invariata | idem | Proprietario | `sitemap.xml` | sì | idem |
+| DR-178 | 2026-10-17 | Accesso al CMS e vecchio `/wp-admin/` | **Opzione A** — CMS su `/admin`; `/wp-admin/` e `/wp-login.php` 404 | B — 301 al login; C — 301 temporaneo | «L'accesso al backend del nuovo CMS deve diventare /admin e non /wp-admin/»; raccomandazione accettata | Proprietario | proxy, sito, handoff ai redattori | sì | idem, T2 |
+
+Le correzioni si attuano nella T7 dopo l'analisi d'impatto approvata; nessuna è attuata con questa registrazione.
+
+## 63. Round 54 — risposta del 2026-10-18, analisi d'impatto della T7 (`1E-W7`)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-179 | 2026-10-18 | Apici e lineette nei title (D80); **supera in parte DR-172** | **Opzione A** — dritti solo in `description`, `og:description` e titolo del feed; title tipografici come la sorgente | B — DR-172 alla lettera, title compresi | «D80=A» | Proprietario | metadati, 9 URL e feed | sì | `docs/qa/verifiche/analisi-impatto-T7.md` §1, DR-172 |
+| DR-180 | 2026-10-18 | Description per tipo di contenuto (D81); **supera in parte DR-173** | **Opzione A** — come All in One SEO: articoli dall'estratto, pagine dal testo; estratto negli elenchi invariato | B — estratto sempre ignorato | «D81=A» | Proprietario | metadati, importer, API | sì | idem, DR-173 |
+| DR-181 | 2026-10-18 | `/download-category/moduli-consulenze/` (D82) | **Opzione A** — pagina vera con l'elenco dei moduli pubblici, in sitemap, con cattura e confronto | B — 301 e fuori sitemap; C — 404 e fuori sitemap | «D82=A» | Proprietario | API, sito, matrice di parità | sì | idem, DR-177 |
+| DR-182 | 2026-10-18 | `Person` nei dati strutturati (D83) | **Opzione A** — esclusa; difformità registrata come correzione voluta di DR-170 | B — riprodotta con Gravatar e pagina d'autore; C — autore = organizzazione | «D83=A» | Proprietario | JSON-LD dei 29 articoli | sì | idem, DR-170 |
+| DR-183 | 2026-10-18 | Riconoscimento delle derivate Divi (D84) | **Opzione A** — euristica per larghezza (480/980/1280, stessa proporzione) nel renderer, senza import | B — `size_name` con migrazione e import | «D84=A» | Proprietario | `packages/blocks`, 26 URL da ricatturare | sì | idem §3 I2 |
+
+Nella stessa risposta l'utente ha approvato l'elenco dei punti da toccare di
+`analisi-impatto-T7.md` e chiesto l'attuazione del gruppo 1 (F1, A3-1, I1 senza freccia, M2, M6, M7).
+
+## 64. Round 55 — risposta del 2026-10-18, T7 della `1E-W7` (round 2)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-184 | 2026-10-18 | Dove si corregge I3, video `.mp4` (D85) | **Opzione A** — nell'importer: tipo calcolato dopo la riscrittura in `/media/`; blocchi rigenerati con l'import `contents` di M3/M4 | B — eccezione nel renderer; C — modifica manuale dei 4 blocchi | «D85=A» | Proprietario | importer, 2 pagine | sì | `analisi-impatto-T7.md` §3 I3 |
+| DR-185 | 2026-10-18 | Campi dell'organizzazione nel JSON-LD (D88) | **Opzione B** — oltre a `name` e `url`: logo, indirizzo, telefono e profili social, da impostazioni del CMS | A — solo `name` e `url` come la sorgente | «D88=B» | Proprietario | impostazioni, importer, sito | sì | idem §1 M1, DR-170 |
+| DR-186 | 2026-10-18 | `dateModified` (D89) | **Opzione B** — colonna con il `post_modified` della sorgente nella migrazione 0007 e nello stesso import; poi aggiornata dalle modifiche dal CMS | A — data dell'import; C — non dichiarata | «D89=B» | Proprietario | DB, importer, API, sito | sì | idem |
+| DR-187 | 2026-10-18 | `CollectionPage`, `SearchResultsPage`, 404 nel JSON-LD (D90) | **Opzione A** — inclusi, come la sorgente | B — solo i tipi elencati in DR-170 | «D90=A» | Proprietario | sito | sì | idem, DR-170 |
+| DR-188 | 2026-10-18 | Canonical, `og:url`, `og:image` assoluti (D91) | **Opzione A** — assoluti con `metadataBase` da `SITE_URL` | B — relativi | «D91=A» | Proprietario | metadati di tutte le pagine | sì | idem |
+
+## 65. Round 56 — risposta del 2026-10-18, T7 della `1E-W7` (round 3)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-189 | 2026-10-18 | Richieste a intervalli per i media (D86) | **Opzione A** — subito: `206 Partial Content` e `Accept-Ranges` nella rotta dei media e nella lettura dallo storage | B — nella Fase 1F | «D86=A» | Proprietario | API, video `.mp4` | sì | `analisi-impatto-T7.md` §3 I3, DR-184 |
+| DR-190 | 2026-10-18 | Ambito di Esc sul menu per telefono (D87) | **Opzione A** — solo con il fuoco nel menu, come già attuato | B — da qualunque punto della pagina | «D87=A» | Proprietario | testata | sì | idem §4 A3-1 |
+| DR-191 | 2026-10-18 | Riga di sovrascrittura del title di M5 (D92) | **Opzione A** — tenuta, tradotta in `{title} - {site_title}`; righe SEO importate 2 | B — non importata perché uguale al modello | «D92=A» | Proprietario | importer `seo` | sì | idem §1 M5, DR-174 |
+| DR-192 | 2026-10-18 | Impostazioni `seo.robots_txt` e `seo.sitemap_enabled` (D93) | **Opzione A** — nascoste nel CMS, dato conservato; `robots.txt` fissato da DR-176 | B — rese attive; C — visibili con etichetta «non in uso» | «D93=A» | Proprietario | CMS, impostazioni | sì | idem §1 M7, DR-176 |
+| DR-193 | 2026-10-18 | Percorso della categoria dei moduli (D94) | **Opzione A** — nell'importer: termine salvato come `/download-category/…` con l'import di M3/M4 | B — traduzione nell'API a ogni lettura | «D94=A» | Proprietario | importer `terms`, pagina di DR-181 | sì | idem §1 M8, DR-181 |
+
+Nella stessa conversazione: il form visibile su `/registrazione-seminario-autostima-e-assertivita/`
+(commentato nella sorgente), emerso nella T3, non si richiede: è già accettato in DR-162.
+
+## 66. Round 57 — risposta del 2026-10-18, T7 della `1E-W7` (round 4)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-194 | 2026-10-18 | Differenze minori dell'hover (D95) | **Opzione A** — freccia, bordo e spaziatura del bottone «Invia» come Divi, glifo `5` aggiunto al sottoinsieme del font; sfondo bianco dei 4 link accettato | B — accettare entrambe; C — riprodurre entrambe allentando il sanitizer | «D95=A» | Proprietario | CSS, font locale, `/contatti/` | sì | `analisi-impatto-T7.md` §3 I1, DR-143 |
+| DR-195 | 2026-10-18 | Blocchi con la regola Divi di `srcset`/`sizes` (D96) | **Opzione A** — tutte le immagini con derivate Divi, come il filtro globale della sorgente | B — solo immagini e media+testo | «D96=A» | Proprietario | `packages/blocks`, ricattura delle viste toccate | sì | idem §3 I2, DR-183 |
+| DR-196 | 2026-10-18 | `SITE_URL` in produzione (D97) | **Opzione A** — errore chiaro alla prima richiesta se manca, non alla compilazione; variabile nell'ambiente di e2e e CI | B — predefinito con avviso | «D97=A» | Proprietario | sito, e2e, CI, deploy | sì | idem §1 M7, DR-188 |
+| DR-197 | 2026-10-18 | Caso D di I2 (D99) | **Opzione B** — accettato come difformità: 2 immagini su `/servizi/` e `/sostegno-alla-genitorialita/`, solo a 390 e 360 px | A — indicatore all'import | «D99=B» | Proprietario | 2 immagini | sì | idem §3 I2 |
+
+Nella stessa risposta l'utente ha chiesto l'attuazione dei gruppi 2 e 3 e l'handoff della migrazione 0007 e dell'import.
+
+## 67. Round 58 — risposta del 2026-10-18, testi delle briciole e conferma di HO-025
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-198 | 2026-10-18 | Testi delle briciole di ricerca e 404 nel JSON-LD (D100) | **Opzione A** — «Risultati della ricerca per «…»» e «404 - Pagina non trovata», correzione voluta (estensione di DR-040) | B — testi inglesi della sorgente | «D100=A» | Proprietario | JSON-LD di ricerca e 404 | sì | `analisi-impatto-T7.md` §9 |
+
+Nella stessa risposta l'utente ha confermato HO-025 (migrazione 0007 e import in locale), per una sola esecuzione.
+| DR-199 | 2026-10-18 | Correzione della prova 1E-19 (D101) | **Opzione A** — la prova invia il testo calcolato dai blocchi come il CMS; corretta l'espressione regolare degli spazi nel confronto della data di modifica | B — l'API confronta l'HTML con blocchi senza testo | «D101=A» | Proprietario | prova 1E-19, API contenuti | sì | `analisi-1E-19-HO-026.md` |
+| DR-200 | 2026-10-18 | Ripristino della description di `/corsi-2022-2023/` (D102) | **Opzione A** — un solo aggiornamento del campo col valore della copia di HO-026, in transazione | B — `pg_restore --clean` dell'intera copia | «D102=A» | Proprietario | database locale | sì | HO-027 |
+
+Nella stessa risposta l'utente ha confermato HO-027 (ripristino e nuova prova 1E-19 in locale) e la ripresa della voce 4 con cancellazione delle compilazioni sintetiche.
+| DR-201 | 2026-10-18 | Salvataggio di contenuti col titolo vuoto (D103) | **Opzione A** — in modifica l'API accetta il titolo vuoto solo per i contenuti che già lo hanno vuoto | B — titolo vuoto per tutti · C — titolo obbligatorio chiesto dall'editor | «D103=A» | Proprietario | API contenuti | sì | `analisi-1E-19-HO-026.md` §6.2 |
+| DR-202 | 2026-10-18 | Confronto della prova 1E-19 (D104) | **Opzione A** — HTML senza gli script del payload RSC, più `<head>`, più `modified_at` e `description_source` nel database | B — payload deterministico · C — screenshot | «D104=A» | Proprietario | prova 1E-19 | sì | `analisi-1E-19-HO-026.md` §6.1 |
+
+Nella stessa risposta l'utente ha confermato HO-028: nuova esecuzione di 1E-19, ripresa della voce 4 con cancellazione delle compilazioni sintetiche, e2e, riavvio del sito e report visivo.
+
+## 68. Round 59 — scelte del report «Bozze di parità 1E-W7», 2026-10-18
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-203 | 2026-10-18 | Viste cambiate dopo la T7 (DR-183, DR-195) e pagina nuova di DR-181 | **accettabili tutte**: 25 indirizzi su 25, 50 viste cambiate (48 non superate), nessuna da correggere, nessuna nota | da correggere | scelta «Accettabile» su ogni scheda del report, poi «ho deciso nel report 1E-W7» | Proprietario | sito pubblico, 25 indirizzi | sì | `docs/qa/verifiche/decisioni-report-1E-W7.csv`, artifact «Bozze di parità 1E-W7», DR-162 |
+
+Nella stessa risposta l'utente ha chiesto la ripresa della voce 4 con cancellazione delle compilazioni sintetiche, le prove e2e, il riavvio del sito e la chiusura dell'audit.
+
+## 69. Round 60 — risposta del 2026-10-18, ultime difformità dell'audit della `1E-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-204 | 2026-10-18 | Sfondo bianco del link «Iscrizioni» al passaggio in 4 pagine (D105) | **Opzione A** — difformità accettata, invisibile sul bianco | B — conservare `background-color` in linea sui link, con reimport | «D105=A» | Proprietario | 4 pagine, hover | sì | HO-029, `analisi-impatto-T7.md` §3 I1 |
+| DR-205 | 2026-10-18 | Etichetta accessibile del campo di ricerca (D106) | **Opzione A** — etichetta nascosta «Cerca» ora, con prova; A-5 rimisurata | B — dopo la UAT | «D106=A» | Proprietario | testata del sito, A-5 | sì | HO-029, DR-169 |
+
+Nella stessa risposta l'utente ha chiesto la correzione di D106 con prova, la nuova misura di A-5 e la proposta di chiusura della `1E-W7` e del commit.
+
+## 70. Round 61 — risposta del 2026-10-18, chiusura della `1E-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-206 | 2026-10-18 | Chiusura della `1E-W7` e commit delle modifiche | **chiusa**: audit eseguito, difformità approvate o corrette (DR-203…205), commit autorizzato senza push | tenere aperta la wave | «1E-W7: confermo la chiusura della wave e il commit delle modifiche; poi pianifica la 1E-W8» | Proprietario | Fase 1E | sì | `docs/qa/verifiche/audit-1E-W7.md`, `PROGRESS.md` |

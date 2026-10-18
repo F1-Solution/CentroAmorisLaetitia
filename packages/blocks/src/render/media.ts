@@ -25,7 +25,8 @@ export interface ImageAttributes {
 /**
  * `src`, `srcset` e `sizes` come li scrive WordPress per un'immagine a piena
  * larghezza: le dimensioni derivate (ADR-004 §3.2, mai rigenerate) più
- * l'originale, e `sizes` pari alla larghezza dell'originale.
+ * l'originale, e `sizes` pari alla larghezza dell'originale; con le derivate
+ * Divi valgono i filtri del tema (I2, DR-183, DR-195).
  */
 export function imageAttributes(media: RenderMedia, variant?: string | null): ImageAttributes {
   const chosen = variant
@@ -36,31 +37,99 @@ export function imageAttributes(media: RenderMedia, variant?: string | null): Im
     width: media.width ?? 0,
     height: media.height ?? 0,
   };
-  const all = [
-    ...media.variants,
-    ...(media.width && media.height
-      ? [{ publicPath: media.publicPath, width: media.width, height: media.height }]
-      : []),
-  ];
-  // Come `wp_calculate_image_srcset`: stessa proporzione, niente oltre 2048 px salvo l'immagine mostrata, una per larghezza (famiglia K).
-  const seen = new Set<number>();
-  const candidates = all
-    .filter((c) => {
-      if (!shown.width || !shown.height) return false;
-      if (c.width > MAX_SRCSET_WIDTH && c.publicPath !== shown.publicPath) return false;
-      if (!matchesRatio(shown.width, shown.height, c.width, c.height) || seen.has(c.width))
-        return false;
-      seen.add(c.width);
-      return true;
-    })
-    .map((c) => `${c.publicPath} ${c.width}w`);
+  const dimensions = {
+    ...(shown.width ? { width: shown.width } : {}),
+    ...(shown.height ? { height: shown.height } : {}),
+  };
+  const divi = diviResponsiveVariants(media);
+  if (divi.length > 0 && shown.width) {
+    return { src: shown.publicPath, ...diviSrcsetAndSizes(shown, divi), ...dimensions };
+  }
+  const candidates = wordpressCandidates(media, shown).map((c) => `${c.publicPath} ${c.width}w`);
   return {
     src: shown.publicPath,
     ...(candidates.length > 1 ? { srcSet: candidates.join(', ') } : {}),
-    ...(shown.width
-      ? { sizes: `(max-width: ${shown.width}px) 100vw, ${shown.width}px`, width: shown.width }
-      : {}),
-    ...(shown.height ? { height: shown.height } : {}),
+    ...(shown.width ? { sizes: `(max-width: ${shown.width}px) 100vw, ${shown.width}px` } : {}),
+    ...dimensions,
+  };
+}
+
+interface Source {
+  readonly publicPath: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Come `wp_calculate_image_srcset`: stessa proporzione, niente oltre 2048 px salvo la mostrata, una per larghezza (famiglia K). */
+function wordpressCandidates(media: RenderMedia, shown: Source): Source[] {
+  if (!shown.width || !shown.height) return [];
+  const original =
+    media.width && media.height
+      ? [{ publicPath: media.publicPath, width: media.width, height: media.height }]
+      : [];
+  const all = [...media.variants, ...original];
+  const eligible = (c: Source) =>
+    (c.width <= MAX_SRCSET_WIDTH || c.publicPath === shown.publicPath) &&
+    matchesRatio(shown.width, shown.height, c.width, c.height);
+  // A parità di larghezza vince la mostrata, poi l'originale (caso B di I2).
+  const byPriority = [
+    ...all.filter((c) => c.publicPath === shown.publicPath),
+    ...original,
+    ...media.variants,
+  ];
+  const winners = new Map<number, string>();
+  for (const c of byPriority) {
+    if (eligible(c) && !winners.has(c.width)) winners.set(c.width, c.publicPath);
+  }
+  const emitted = new Set<number>();
+  return all.filter((c) => {
+    if (winners.get(c.width) !== c.publicPath || emitted.has(c.width)) return false;
+    emitted.add(c.width);
+    return true;
+  });
+}
+
+/** Larghezze delle taglie `et-pb-image--responsive--*` di Divi (telefono, tablet, desktop). */
+const DIVI_RESPONSIVE_WIDTHS: readonly number[] = [480, 980, 1280];
+
+/** Derivate Divi riconosciute per larghezza e proporzione dell'originale (DR-183), in ordine crescente. */
+function diviResponsiveVariants(media: RenderMedia): Source[] {
+  const { width, height } = media;
+  if (!width || !height) return [];
+  const byWidth = new Map<number, Source>();
+  for (const v of media.variants) {
+    if (DIVI_RESPONSIVE_WIDTHS.includes(v.width) && matchesRatio(width, height, v.width, v.height))
+      byWidth.set(v.width, v);
+  }
+  return [...byWidth.values()].sort((a, b) => a.width - b.width);
+}
+
+/** Porto di `et_filter_wp_calculate_image_srcset` e `et_filter_wp_calculate_image_sizes`; con una sola sorgente WordPress non scrive né `srcset` né `sizes`. */
+function diviSrcsetAndSizes(
+  shown: Source,
+  responsive: readonly Source[],
+): Pick<ImageAttributes, 'srcSet' | 'sizes'> {
+  const included = responsive.filter((v) => v.width <= shown.width);
+  const largestKey = responsive[responsive.length - 1]?.width ?? 0;
+  const sources: Source[] = [...included];
+  if (included.length > 0 && shown.width > largestKey) sources.push(shown);
+  if (sources.length < 2) return {};
+  const bands: string[] = [];
+  let previous = 0;
+  for (const v of included) {
+    bands.push(
+      `(min-width: ${previous ? previous + 1 : 0}px) and (max-width: ${v.width}px) ${v.width}px`,
+    );
+    previous = v.width;
+  }
+  if (shown.width > previous) bands.push(`(min-width: ${previous + 1}px) ${shown.width}px`);
+  bands.push('100vw');
+  return {
+    srcSet: [...sources]
+      .reverse()
+      .map((s) => `${s.publicPath} ${s.width}w`)
+      .join(', '),
+    sizes: bands.join(', '),
   };
 }
 

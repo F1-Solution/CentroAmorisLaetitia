@@ -29,6 +29,12 @@ export interface Setting {
   readonly updatedAt: string;
 }
 
+/** Impostazioni conservate ma nascoste da questa schermata, perché il sito non le legge (DR-192, DR-176). */
+export const HIDDEN_SETTING_KEYS: ReadonlySet<string> = new Set([
+  'seo.robots_txt',
+  'seo.sitemap_enabled',
+]);
+
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
     ? caught.fullMessage
@@ -160,7 +166,8 @@ export function SiteSettings(): React.JSX.Element {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setRows(await api<Setting[]>('/settings'));
+      const all = await api<Setting[]>('/settings');
+      setRows(all.filter((setting) => !HIDDEN_SETTING_KEYS.has(setting.key)));
       setError(null);
     } catch (caught) {
       setError(messageOf(caught));
