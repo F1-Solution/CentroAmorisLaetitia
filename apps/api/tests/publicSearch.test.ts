@@ -171,9 +171,9 @@ describe('ricerca pubblica (DR-144)', () => {
     expect((await search(`s=${encodeURIComponent("l'altro")}`)).items.map((i) => i.path)).toEqual([
       '/io-e-l-altro/',
     ]);
-    expect(
-      (await search(`s=${encodeURIComponent('"Noi due"')}`)).items.map((i) => i.path),
-    ).toEqual(['/io-e-l-altro/']);
+    expect((await search(`s=${encodeURIComponent('"Noi due"')}`)).items.map((i) => i.path)).toEqual(
+      ['/io-e-l-altro/'],
+    );
   });
 
   it('più parole: la frase intera nel titolo viene prima di tutte le parole sparse', async () => {

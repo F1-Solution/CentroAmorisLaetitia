@@ -310,8 +310,10 @@ describe('translateAioseoTitle', () => {
 
   it('#tagline: il testo dello slogan se c’è, altrimenti vuoto e segnalato', () => {
     expect(
-      translateAioseoTitle('#site_title #separator_sa #tagline', { separator: '|', tagline: 'Slogan' })
-        .title,
+      translateAioseoTitle('#site_title #separator_sa #tagline', {
+        separator: '|',
+        tagline: 'Slogan',
+      }).title,
     ).toBe('{site_title} | Slogan');
     const missing = translateAioseoTitle('#site_title #separator_sa #tagline', options);
     expect(missing.title).toBe('{site_title}');

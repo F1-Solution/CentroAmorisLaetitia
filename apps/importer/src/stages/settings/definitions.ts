@@ -174,7 +174,8 @@ export const SETTINGS_DEFINITIONS: readonly SettingsDefinition[] = [
   {
     key: 'contact.phone',
     label: 'Telefono del Centro',
-    description: 'Per i dati strutturati (DR-185); la sorgente non lo ha: richiede compilazione manuale.',
+    description:
+      'Per i dati strutturati (DR-185); la sorgente non lo ha: richiede compilazione manuale.',
     isSecret: false,
     source: { kind: 'default', syntheticId: 8 },
     parse: identity,

@@ -37,7 +37,10 @@ export function descriptionFromContent(content: string): string {
 /** `WpContext::getDescriptionFromContent()`. */
 function getDescriptionFromContent(content: string): string {
   const withoutMedia = content
-    .replace(/(<figure.*?\/figure>|<img.*?\/>|<div.*?class="wp-block-embed__wrapper".*?>.*?<\/div>)/gs, '')
+    .replace(
+      /(<figure.*?\/figure>|<img.*?\/>|<div.*?class="wp-block-embed__wrapper".*?>.*?<\/div>)/gs,
+      '',
+    )
     .replaceAll(']]>', ']]&gt;');
   return wpTrimWords(wpStripAllTags(stripShortcodes(withoutMedia)).trim(), 55);
 }
@@ -229,9 +232,10 @@ const OTHERS =
 
 export const HTML401_ENTITIES: ReadonlyMap<string, number> = new Map([
   ...LATIN1.map((name, i): [string, number] => [name, 160 + i]),
-  ...GREEK_UPPER.filter((name) => name !== '_').map(
-    (name): [string, number] => [name, 913 + GREEK_UPPER.indexOf(name)],
-  ),
+  ...GREEK_UPPER.filter((name) => name !== '_').map((name): [string, number] => [
+    name,
+    913 + GREEK_UPPER.indexOf(name),
+  ]),
   ...GREEK_LOWER.map((name, i): [string, number] => [name, 945 + i]),
   ...OTHERS.map((pair): [string, number] => {
     const [name, code] = pair.split(':');

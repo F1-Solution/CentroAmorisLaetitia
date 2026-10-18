@@ -4,7 +4,10 @@ import {
   metaDescriptionSource,
   phpStripTags,
 } from '../../../src/convert/shared/meta-description.js';
-import { MEMBERS_ACCESS_MESSAGE, applyMembersRestriction } from '../../../src/stages/contents/meta.js';
+import {
+  MEMBERS_ACCESS_MESSAGE,
+  applyMembersRestriction,
+} from '../../../src/stages/contents/meta.js';
 
 /**
  * Porto dell'algoritmo di All in One SEO 5.0.1.1 per la description (DR-179, DR-180):
@@ -87,7 +90,13 @@ describe('metaDescriptionSource', () => {
   });
 
   it('nulla da dire: null, non una stringa vuota', () => {
-    expect(metaDescriptionSource({ type: 'page', excerpt: '', content: '[et_pb_section][/et_pb_section]' })).toBeNull();
+    expect(
+      metaDescriptionSource({
+        type: 'page',
+        excerpt: '',
+        content: '[et_pb_section][/et_pb_section]',
+      }),
+    ).toBeNull();
   });
 });
 
@@ -133,7 +142,9 @@ describe('descriptionFromContent', () => {
 
   it('strip_shortcodes toglie lo shortcode registrato con il suo contenuto, lascia gli altri', () => {
     expect(
-      descriptionFromContent('Uno [catposts name="News"] due [et_pb_text]via[/et_pb_text] tre [non_registrato] quattro'),
+      descriptionFromContent(
+        'Uno [catposts name="News"] due [et_pb_text]via[/et_pb_text] tre [non_registrato] quattro',
+      ),
     ).toBe('Uno due tre [non_registrato] quattro');
   });
 

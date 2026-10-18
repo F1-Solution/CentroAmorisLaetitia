@@ -1519,3 +1519,13 @@ Nella stessa risposta l'utente ha chiesto la correzione di D106 con prova, la nu
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-206 | 2026-10-18 | Chiusura della `1E-W7` e commit delle modifiche | **chiusa**: audit eseguito, difformità approvate o corrette (DR-203…205), commit autorizzato senza push | tenere aperta la wave | «1E-W7: confermo la chiusura della wave e il commit delle modifiche; poi pianifica la 1E-W8» | Proprietario | Fase 1E | sì | `docs/qa/verifiche/audit-1E-W7.md`, `PROGRESS.md` |
+
+## 71. Round 62 — risposta del 2026-10-18, piano della `1E-W8`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-207 | 2026-10-18 | Criteri rieseguiti nell'audit della fase (D107) | **Opzione A** — verifiche brevi rieseguite, quelle lunghe citate con data e commit | B — tutto rieseguito | «D107=A» | Proprietario | `AUDIT.md` della 1E | sì | `W8-PLAN.md` §7 |
+| DR-208 | 2026-10-18 | Prova del form nella UAT (D108) | **Opzione A** — l'utente invia un form con dati inventati; la compilazione si cancella dopo, su conferma | B — nessun invio · C — database sintetico degli e2e | «D108=A» | Proprietario | HO-016, database locale | sì | idem, HO-024 |
+| DR-209 | 2026-10-18 | Formula dell'approvazione della UAT (D109) | **Opzione A** — «approvo la parità pixel-perfect del sito pubblico, con le difformità accettate elencate nel rapporto» | B — formula attuale più conferma separata | «D109=A» | Proprietario | HO-016, rapporto, gate | sì | idem, `deployment-gate` |
+
+Nella stessa risposta l'utente ha chiesto l'esecuzione della T1 e ha confermato il commit di formattazione e il push.

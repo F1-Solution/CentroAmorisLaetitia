@@ -200,7 +200,8 @@ export const seoStage: Stage = {
 
         const translated = row.title ? translateAioseoTitle(row.title, titleOptions) : null;
         if (translated) {
-          const separatorGuessed = separator === null && (row.title ?? '').includes('#separator_sa');
+          const separatorGuessed =
+            separator === null && (row.title ?? '').includes('#separator_sa');
           await recordTitleIssues(ctx, row.aioseoId, translated, separatorGuessed);
         }
         const title = translated?.title || null;

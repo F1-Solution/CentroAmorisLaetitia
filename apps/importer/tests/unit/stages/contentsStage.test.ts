@@ -604,7 +604,9 @@ describe('fase contents', () => {
 
       // Pagina: il testo grezzo, apici dritti e tag tolti senza spazi; il titolo resta tipografico.
       expect(bySlug('pagina-con-apici')?.descriptionSource).toBe(`L'incontro "aperto"di prova`);
-      expect(bySlug('pagina-con-apici')?.modifiedAt?.toISOString()).toBe('2021-03-04T10:12:13.000Z');
+      expect(bySlug('pagina-con-apici')?.modifiedAt?.toISOString()).toBe(
+        '2021-03-04T10:12:13.000Z',
+      );
       // Articolo: l'estratto grezzo, accanto a quello tipografico per gli elenchi.
       expect(bySlug('articolo-con-estratto')?.descriptionSource).toBe(`L'estratto "grezzo"`);
       expect(bySlug('articolo-con-estratto')?.excerpt).toBe('L’estratto “grezzo”');
