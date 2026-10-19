@@ -1535,3 +1535,12 @@ Nella stessa risposta l'utente ha chiesto l'esecuzione della T1 e ha confermato 
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-210 | 2026-10-18 | UAT di parità visiva del sito pubblico (condizione 13 del gate) | **approvata**: «HO-016: approvo la parità pixel-perfect del sito pubblico, con le difformità accettate elencate nel rapporto. Form inviato alle 23:46 ora locale» | non approvare, con elenco di differenze | formula di DR-209 | Proprietario | sito pubblico, gate | sì (una nuova voce può superarla) | `docs/qa/visual-parity-report.md` §12, HO-016, DR-162, DR-203 |
+
+## 73. Round 64 — risposta del 2026-10-19, chiusura della Fase 1E
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-211 | 2026-10-19 | Chiudere la Fase 1E | **chiusa** sulle prove di `AUDIT.md` (27 criteri: 24 superati, 3 approvati con difformità) e sulla UAT di DR-210; CI `39201139144` verde | tenere aperta la fase | «Confermo la chiusura della Fase 1E (aggiornamenti di AUDIT, ROADMAP, phase-plan, PROGRESS), commit e push» | Proprietario | Fase 1E, `ROADMAP.md`, gate (condizioni 6, 9, 10, 13) | sì | `.planning/phases/1E/AUDIT.md`, DR-210 |
+| DR-212 | 2026-10-19 | Momento della distruzione dell'istanza di riferimento (HO-017) | **rinviata a dopo la Fase 1G** | distruggerla alla chiusura della 1E | «HO-017 rimandato a dopo la 1G» | Proprietario | istanza di riferimento locale | sì | HO-017, DR-025 |
+
+Nella stessa risposta l'utente ha confermato commit e push e ha chiesto di avviare la pianificazione della Fase 1G.

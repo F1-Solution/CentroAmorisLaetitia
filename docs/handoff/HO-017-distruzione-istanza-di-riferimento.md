@@ -1,7 +1,7 @@
 # HO-017 — Distruzione dell'istanza WordPress di riferimento (fine Fase 1E)
 
-Fase 1E, a chiusura. Scritto il 2026-10-12. **Non ancora attivo:** si apre solo
-dopo la UAT approvata (HO-016). È una **cancellazione**, quindi chiede la tua
+Fase 1E, a chiusura. Scritto il 2026-10-12. **Rinviato a dopo la Fase 1G** (DR-212,
+2026-10-19): l'istanza resta disponibile come riferimento durante il collaudo del CMS. È una **cancellazione**, quindi chiede la tua
 conferma puntuale (PLAN §7, conferma n. 5; DR-025).
 
 ## 1. Che cosa si distrugge

@@ -168,3 +168,4 @@ PHASE:1E WAVE:1E-W7 STATUS:complete TS:2026-10-18T19:50:53Z
 <!-- 1E-W8 2026-10-19: compilazione di prova della UAT cancellata (COMMIT, 1 riga) dopo la copia amoris-prima-UAT-2026-10-18.dump verificata (34 tabelle, 426 compilazioni); ora 0 senza legacy_id, 425 importate. Chiusura della wave e commit in attesa di conferma. -->
 <!-- 1E-W8 2026-10-19: chiusura della wave confermata dall utente; commit e push. -->
 PHASE:1E WAVE:1E-W8 STATUS:complete TS:2026-10-19T04:45:42Z
+<!-- 1E 2026-10-19: FASE 1E CHIUSA (DR-211); AUDIT, ROADMAP, phase-plan e registro aggiornati; HO-017 rinviato a dopo la 1G (DR-212). Commit e push confermati dall utente. -->

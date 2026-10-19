@@ -29,7 +29,7 @@ gate non è superato per intero. Le 15 condizioni sono elencate in
 | # | Milestone | Fasi | Stato |
 |---|---|---|---|
 | M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
-| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A, 1B e 1C approvate |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A…1E approvate; prossima 1G |
 | M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
 
 ---
@@ -127,7 +127,13 @@ contenuti, tassonomie, SEO e redirect, CMS minimo, report di completezza.
 | `1D-W11` | Esecuzione reale dell'import in locale e rapporto di completezza — **chiusa il 2026-10-04** | `docs/migration/import-completeness-report.md` |
 | `1D-W12` | Audit della fase — **chiusa il 2026-10-09** | `.planning/phases/1D/AUDIT.md` |
 
-### Fase 1E — Ricostruzione React e parità visiva
+### Fase 1E — Ricostruzione React e parità visiva — **APPROVATA 2026-10-19**
+
+Nove wave, audit eseguito (`.planning/phases/1E/AUDIT.md`): 27 criteri, 24 superati
+alla misura e 3 approvati con difformità; UAT di parità approvata il 2026-10-18
+(DR-210, `docs/qa/visual-parity-report.md` §12); CI `39201139144` verde. Chiusura
+decisa dall'utente con DR-211. HO-017 (distruzione dell'istanza di riferimento)
+rinviato a dopo la Fase 1G (DR-212).
 
 Design token dal sito originale, tutte le route e i template, responsive,
 screenshot e visual diff Playwright, chiusura delle difformità, report QA in
@@ -152,7 +158,8 @@ e `PLAN.md`; D33…D39 chiuse da DR-104…DR-110.
 
 Verifica che contenuti, articoli, media, menu, SEO, redirect e impostazioni siano
 **realmente** modificabili dall'interfaccia. Richiesta dalla condizione 7 del gate.
-Si svolge in parallelo alla 1E.
+Prevista in parallelo alla 1E, parte dopo la sua chiusura: pianificazione avviata il
+2026-10-19 (`1G-W0`).
 
 ### Fase 1F — Staging e produzione
 

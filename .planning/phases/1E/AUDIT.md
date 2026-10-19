@@ -1,9 +1,9 @@
 # AUDIT — Fase 1E
 
-**Stato: audit eseguito il 2026-10-18, prima della UAT; UAT approvata dall'utente lo stesso giorno (DR-210).** Ogni criterio di uscita di
-[`CONTEXT.md`](CONTEXT.md) §7 ha un esito **eseguito**. La fase **non** è chiusa: si
-chiude con la UAT dell'utente, registrata in `docs/qa/visual-parity-report.md` §12
-(condizione 13 del gate).
+**Stato: FASE CHIUSA il 2026-10-19 (DR-211).** Audit eseguito il 2026-10-18, prima
+della UAT; UAT approvata dall'utente lo stesso giorno (DR-210), registrata in
+`docs/qa/visual-parity-report.md` §12 (condizione 13 del gate). Ogni criterio di uscita
+di [`CONTEXT.md`](CONTEXT.md) §7 ha un esito **eseguito**.
 
 Metodo deciso da **DR-207**: le verifiche brevi si sono rieseguite il 2026-10-18 sul
 commit pubblicato `3d0d651`. Le verifiche lunghe si citano con data e commit: dopo di
@@ -105,7 +105,8 @@ runtime.
 
 | Passo | Riferimento |
 |---|---|
-| UAT di parità dell'utente | HO-016, formula di DR-209, prova del form di DR-208 |
-| Distruzione dell'istanza di riferimento, dopo la UAT approvata | HO-017, su conferma (DR-025) |
+| ~~UAT di parità dell'utente~~ | ✅ approvata il 2026-10-18 (DR-210); compilazione di prova cancellata il 2026-10-19 |
+| ~~Chiusura della fase~~ | ✅ 2026-10-19 (DR-211) |
+| Distruzione dell'istanza di riferimento | HO-017, rinviata a dopo la Fase 1G (DR-212), su conferma (DR-025) |
 | Correzioni dei difetti ereditati che cambiano la resa | dopo la UAT, DR-115 e DR-169 |
 | Gate gestionale | non superato: dopo la UAT serve il deploy verificato (Fase 1F, `deployment-gate`) |

@@ -28,33 +28,37 @@ creazione è oggetto della domanda **D4**.
 
 | | Fase |
 |---|---|
-| Precedente | — |
-| **Corrente** | **Fase 0 — Discovery, sola lettura: completata, in attesa di approvazione** |
-| Successiva | Fase 1A — Audit WordPress, sola lettura |
+| Precedente | Fase 1E — Ricostruzione React e parità visiva: **approvata il 2026-10-19** (DR-211) |
+| **Corrente** | **Fase 1G — Collaudo redazionale del CMS: pianificazione avviata il 2026-10-19** |
+| Successiva | Fase 1F — Staging e produzione |
+
+Aggiornato il 2026-10-19. Fasi 0, 1A, 1B, 1C, 1D e 1E approvate; stato per wave in
+`PROGRESS.md`.
 
 ---
 
 ## 3. Stato del gate di Fase 1
 
-**NON SUPERATO.** Nessuna delle 15 condizioni è soddisfatta.
+**NON SUPERATO.** Aggiornato il 2026-10-19, alla chiusura della Fase 1E: 12 condizioni
+soddisfatte, 3 aperte (7, 14, 15).
 
 | # | Condizione | Stato |
 |---|---|---|
-| 1 | Audit read-only della sorgente | non iniziato |
-| 2 | Inventario di pagine, articoli, CPT, media, tassonomie, menu, widget, opzioni, URL | non iniziato |
-| 3 | Copertura di bozze, private, protette, gerarchie, contenuti non a menu | non iniziato |
-| 4 | Importer idempotente con dry-run, report, mapping ID, errori isolati | non iniziato |
-| 5 | Import in PostgreSQL di contenuti, menu, SEO, media, URL, redirect | non iniziato |
-| 6 | Frontend React fedele a layout, componenti, font, colori, spacing, responsive | non iniziato |
-| 7 | CMS che consenta davvero di modificare contenuti, media, menu, SEO, redirect, impostazioni | non iniziato |
-| 8 | Matrice URL completa | non iniziata |
-| 9 | Screenshot desktop/tablet/mobile con visual regression e report | non iniziato |
-| 10 | Difformità residue documentate e approvate | non iniziato |
-| 11 | Verifica di redirect, sitemap, robots, canonical, Open Graph, 404, form | non iniziata |
-| 12 | Build, test, lint, typecheck verdi | nessun codice esistente |
-| 13 | UAT di parità firmata dall'utente | non iniziata |
-| 14 | Piano di produzione approvato | non iniziato |
-| 15 | Deploy su staging e produzione verificati, rollback testato | non iniziato |
+| 1 | Audit read-only della sorgente | soddisfatta — Fase 1A |
+| 2 | Inventario di pagine, articoli, CPT, media, tassonomie, menu, widget, opzioni, URL | soddisfatta — Fase 1A |
+| 3 | Copertura di bozze, private, protette, gerarchie, contenuti non a menu | soddisfatta — Fasi 1A e 1D |
+| 4 | Importer idempotente con dry-run, report, mapping ID, errori isolati | soddisfatta — Fase 1D |
+| 5 | Import in PostgreSQL di contenuti, menu, SEO, media, URL, redirect | soddisfatta in locale — Fase 1D, `import-completeness-report.md` |
+| 6 | Frontend React fedele a layout, componenti, font, colori, spacing, responsive | soddisfatta — Fase 1E, DR-210 |
+| 7 | CMS che consenta davvero di modificare contenuti, media, menu, SEO, redirect, impostazioni | **aperta** — CMS costruito in 1D, collaudo redazionale in Fase 1G |
+| 8 | Matrice URL completa | soddisfatta — Fasi 1A e 1E |
+| 9 | Screenshot desktop/tablet/mobile con visual regression e report | soddisfatta — Fase 1E, `visual-parity-report.md` |
+| 10 | Difformità residue documentate e approvate | soddisfatta — DR-162, DR-203 e decisioni nominative |
+| 11 | Verifica di redirect, sitemap, robots, canonical, Open Graph, 404, form | soddisfatta in locale — Fase 1E (1E-8, 1E-9, form 24/24); si ripete in 1F |
+| 12 | Build, test, lint, typecheck verdi | soddisfatta — CI `39201139144` su `ca9e39b` |
+| 13 | UAT di parità firmata dall'utente | soddisfatta — DR-210, 2026-10-18 |
+| 14 | Piano di produzione approvato | **aperta** — Fase 1F |
+| 15 | Deploy su staging e produzione verificati, rollback testato | **aperta** — Fase 1F |
 
 Nessuna fase gestionale può essere **pianificata**, avviata o rilasciata prima che
 il gate sia superato per intero.
@@ -164,7 +168,8 @@ Verifiche manuali obbligatorie, non sostituibili dalla diff: interazioni, hover,
 menu, form, navigazione mobile, caricamento dei font, immagini, breakpoint, embed,
 accessibilità di base.
 
-Esito: **stop** e richiesta di **UAT esplicita**.
+Esito: **stop** e richiesta di **UAT esplicita**. UAT approvata il 2026-10-18 (DR-210),
+fase chiusa il 2026-10-19 (DR-211).
 
 ---
 
