@@ -169,3 +169,7 @@ PHASE:1E WAVE:1E-W7 STATUS:complete TS:2026-10-18T19:50:53Z
 <!-- 1E-W8 2026-10-19: chiusura della wave confermata dall utente; commit e push. -->
 PHASE:1E WAVE:1E-W8 STATUS:complete TS:2026-10-19T04:45:42Z
 <!-- 1E 2026-10-19: FASE 1E CHIUSA (DR-211); AUDIT, ROADMAP, phase-plan e registro aggiornati; HO-017 rinviato a dopo la 1G (DR-212). Commit e push confermati dall utente. -->
+<!-- 1G-W0 2026-10-19: decisioni D110-D118 registrate (DR-213…221), .planning/phases/1G/DECISIONI-1G.md e schema; CONTEXT.md e PLAN.md da scrivere. Nessun codice, nessun commit. -->
+<!-- 1G-W0 2026-10-19: CONTEXT.md e PLAN.md scritti (11 wave, criteri 1G-1…1G-28); D119-D122 aperte; ROADMAP aggiornata. In attesa di approvazione del piano; nessun codice, nessun commit. -->
+<!-- 1G-W0 2026-10-19: piano approvato (DR-222); D119-D122 chiuse (DR-223…226); HO-006 assorbito nella 1G-W8. Commit e push confermati dall utente. -->
+PHASE:1G WAVE:1G-W0 STATUS:complete TS:2026-10-19T20:58:30Z

@@ -159,7 +159,22 @@ e `PLAN.md`; D33…D39 chiuse da DR-104…DR-110.
 Verifica che contenuti, articoli, media, menu, SEO, redirect e impostazioni siano
 **realmente** modificabili dall'interfaccia. Richiesta dalla condizione 7 del gate.
 Prevista in parallelo alla 1E, parte dopo la sua chiusura: pianificazione avviata il
-2026-10-19 (`1G-W0`).
+2026-10-19 (`1G-W0`): `.planning/phases/1G/DECISIONI-1G.md`, `CONTEXT.md`, `PLAN.md`;
+D110…D122 chiuse da DR-213…DR-226; piano approvato (DR-222).
+
+| Wave | Attività |
+|---|---|
+| `1G-W0` | Pianificazione e decisioni |
+| `1G-W1` | Account e ruoli, revisione di sicurezza |
+| `1G-W2` | Registro delle operazioni |
+| `1G-W3` | Slug e genitore con redirect automatico |
+| `1G-W4` | Estratto, immagine in evidenza, categorie, eliminazione |
+| `1G-W5` | Media e anteprima della bozza sul sito |
+| `1G-W6` | Documenti scaricabili e caroselli |
+| `1G-W7` | Non regressione e preparazione del collaudo |
+| `1G-W8` | Collaudo con l'utente |
+| `1G-W9` | Correzione dei difetti e nuovo collaudo |
+| `1G-W10` | Rapporto, audit, richiesta di approvazione |
 
 ### Fase 1F — Staging e produzione
 

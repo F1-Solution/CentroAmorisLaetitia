@@ -1,0 +1,369 @@
+<!--
+Argomento: Fase 1G — Collaudo redazionale del CMS (diagramma, v2).
+Domande riflesse (tutte risposte):
+  q1 D110 = B — prima si colmano le lacune necessarie, poi collaudo, correzione difetti e ricollaudo
+  q2 D111 = A — collaudi tu come redattore, un handoff per compito
+  q3 D112 = A — database di collaudo amoris_1g separato, con API e sito dedicati
+  q4 D113 = A,B,C,D — registro leggibile + «ultima modifica», anteprima bozza, rigenerazione media, slug e genitore con redirect
+  q5 D114 = A,B,C,D — estratto e immagine in evidenza, categorie, eliminazione contenuti, tipi di file ammessi
+  q6 D115 = B — documenti scaricabili e caroselli modificabili; il resto fuori perimetro; sorte delle voci 404 decisa dopo l'elenco
+  q7 D116 = B — «Persone e permessi» minima: elenco, crea, disattiva, reimposta password
+  q8 D117 = B — due ruoli: redazione e amministrazione, nuovo permesso users.manage
+  q9 D118 = C — tempo registrato per compito, non vincolante; oltre 10 minuti difetto di usabilità
+Regioni assunte: nessuna.
+Il collegamento dell'area amministrativa all'API di collaudo è dedotto dalla struttura apps/admin, apps/api, apps/web e va confermato nel piano.
+Novità di questa versione (v2): tolti tratteggi "assunto", pulsanti di evidenziazione e pannello "cosa cambia";
+ogni elemento porta il suo tag Dn; tolta la fase aggiuntiva fantasma (D110 = B); lacune colmate secondo D113-D116;
+ruoli D117 con prova negativa; nota D118 sul collaudo; riquadro "fuori perimetro in Fase 1 (D115)".
+-->
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flusso Fase 1G</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --ink:#1d1f23; --muted:#5d636d; --line:#9aa1ab; --soft:#eceef1;
+  --ok:#2f7d4f; --lock:#8a8f98;
+  --tag:#2459c9; --tagbg:#eaf0fd;
+  --neg:#b3261e; --negbg:#fbeaea;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181c; --panel:#1f2228; --ink:#e7e9ec; --muted:#a3a9b3; --line:#6b727d; --soft:#2a2e35;
+    --ok:#5fbf86; --lock:#7d838d;
+    --tag:#7aa2ff; --tagbg:#1d2740;
+    --neg:#f28b82; --negbg:#3a1d1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181c; --panel:#1f2228; --ink:#e7e9ec; --muted:#a3a9b3; --line:#6b727d; --soft:#2a2e35;
+  --ok:#5fbf86; --lock:#7d838d;
+  --tag:#7aa2ff; --tagbg:#1d2740;
+  --neg:#f28b82; --negbg:#3a1d1b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 4px}
+h2{font-size:15px;margin:0 0 10px;letter-spacing:.01em}
+.sub{color:var(--muted);margin:0 0 16px}
+section{background:var(--panel);border:1px solid var(--soft);border-radius:10px;padding:14px 16px 16px;margin:0 0 16px;max-width:1280px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:26px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1.5px solid var(--line)}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--tag);color:var(--tag);background:var(--tagbg);white-space:nowrap}
+.chip.neg{border-color:var(--neg);color:var(--neg);background:var(--negbg)}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+svg .t{font-size:14px;font-weight:650}
+svg .s{font-size:12px;fill:var(--muted)}
+svg .e{font-size:11.5px;fill:var(--muted);font-style:italic}
+svg .g{font-size:11.5px;font-weight:650;fill:var(--ink)}
+svg .lane{fill:var(--soft);opacity:.55}
+svg .lanet{font-size:12px;font-weight:650;fill:var(--muted)}
+svg .box{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+svg .done{stroke:var(--ok)}
+svg .lock{stroke:var(--lock);stroke-dasharray:2 3;fill:var(--soft)}
+svg .gate{fill:var(--panel);stroke:var(--ink);stroke-width:2}
+svg .edge{stroke:var(--line);stroke-width:1.6;fill:none}
+svg .edge.loop{stroke:var(--tag)}
+svg .ah{fill:var(--line)}
+svg .tag{fill:var(--tag);font-size:11px;font-weight:650}
+svg .now{fill:var(--ink);font-size:11px;font-weight:700}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+.card.neg{border-color:var(--neg);background:var(--negbg)}
+.card.out{border-style:dotted;border-color:var(--lock);background:var(--soft)}
+.card h3{font-size:13.5px;margin:0 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card ul{margin:0;padding-left:18px}
+.card li{margin:3px 0}
+.note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.scroll{overflow-x:auto}
+.scroll svg{min-width:760px}
+</style>
+</head>
+<body>
+
+<h1>Fase 1G — Collaudo redazionale del CMS</h1>
+<p class="sub">Tutte le decisioni D110–D118 sono prese: ogni elemento porta il tag della decisione da cui deriva.</p>
+
+<section>
+  <div class="legend">
+    <span><span class="sw" style="border-color:var(--ok)"></span>fatto o già approvato</span>
+    <span><span class="sw"></span>passo della 1G</span>
+    <span><span class="chip">D110 · B</span> decisione e opzione scelta</span>
+    <span><span class="chip neg">prova negativa</span></span>
+    <span><span class="sw" style="border-style:dotted;border-color:var(--lock);background:var(--soft)"></span>bloccata dal gate o fuori perimetro</span>
+  </div>
+</section>
+
+<!-- 1. Posizione della fase -->
+<section>
+  <h2>1 · Dove si colloca la 1G</h2>
+  <div class="scroll">
+  <svg viewBox="0 0 1240 150" role="img" aria-label="Sequenza delle fasi: 1E approvata, 1G in corso, 1F, gate, gestionale bloccata">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    </defs>
+    <rect x="10" y="40" width="200" height="86" rx="8" class="box done"/>
+    <text x="24" y="66" class="t">1E · Parità del sito</text>
+    <text x="24" y="86" class="s">UAT approvata (DR-210)</text>
+    <text x="24" y="104" class="s">fase chiusa dopo l'audit</text>
+    <path d="M210,83 H262" class="edge" marker-end="url(#ar)"/>
+    <text x="214" y="74" class="s">base</text>
+    <rect x="266" y="30" width="230" height="106" rx="8" class="box" style="stroke:var(--ink);stroke-width:2.5"/>
+    <text x="280" y="22" class="now">◆ FASE CORRENTE (in pianificazione)</text>
+    <text x="280" y="58" class="t">1G · Collaudo redazionale</text>
+    <text x="280" y="78" class="s">compiti 1G-1…1G-10</text>
+    <text x="280" y="96" class="s">criteri 1D-28…1D-37</text>
+    <text x="280" y="122" class="tag">D110 · B — lacune colmate dentro la 1G</text>
+    <path d="M496,83 H560" class="edge" marker-end="url(#ar)"/>
+    <text x="500" y="74" class="s">cond. 7</text>
+    <rect x="564" y="40" width="210" height="86" rx="8" class="box"/>
+    <text x="578" y="66" class="t">1F · Staging e produzione</text>
+    <text x="578" y="86" class="s">deploy, release report,</text>
+    <text x="578" y="104" class="s">smoke test in docs/deploy/</text>
+    <path d="M774,83 H836" class="edge" marker-end="url(#ar)"/>
+    <text x="778" y="74" class="s">verificato</text>
+    <polygon points="900,28 962,83 900,138 838,83" class="gate"/>
+    <text x="900" y="80" class="t" text-anchor="middle">GATE</text>
+    <text x="900" y="97" class="s" text-anchor="middle">parità + produzione</text>
+    <path d="M962,83 H1018" class="edge" marker-end="url(#ar)"/>
+    <text x="966" y="74" class="s">superato</text>
+    <rect x="1022" y="40" width="208" height="86" rx="8" class="box lock"/>
+    <text x="1036" y="66" class="t">Gestionale</text>
+    <text x="1036" y="86" class="s">bloccata: non si pianifica</text>
+    <text x="1036" y="104" class="s">prima del gate</text>
+  </svg>
+  </div>
+</section>
+
+<!-- 2. Flusso della 1G -->
+<section>
+  <h2>2 · Flusso della 1G</h2>
+  <div class="scroll">
+  <svg viewBox="0 0 1240 830" role="img" aria-label="Flusso della fase 1G su due corsie, agente e redattore">
+    <defs>
+      <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    </defs>
+    <rect x="0" y="40" width="1240" height="520" class="lane"/>
+    <rect x="0" y="570" width="1240" height="240" class="lane"/>
+    <text x="10" y="60" class="lanet">AGENTE</text>
+    <text x="10" y="590" class="lanet">REDATTORE</text>
+    <text x="10" y="606" class="tag">D111 · A: tu</text>
+
+    <!-- N1 lacune colmate -->
+    <rect x="20" y="72" width="300" height="476" rx="8" class="box"/>
+    <text x="34" y="96" class="t">1 · Colmare le lacune decise</text>
+    <text x="270" y="96" class="tag">D110 · B</text>
+
+    <text x="34" y="122" class="tag">D113 · A B C D</text>
+    <text x="34" y="140" class="s">• registro operazioni leggibile</text>
+    <text x="44" y="156" class="s">+ «ultima modifica» → 1G-9</text>
+    <text x="34" y="174" class="s">• anteprima della bozza sul sito → 1G-10</text>
+    <text x="34" y="192" class="s">• rigenerazione delle dimensioni</text>
+    <text x="44" y="208" class="s">derivate dei media → 1G-5</text>
+    <text x="34" y="226" class="s">• slug e genitore modificabili,</text>
+    <text x="44" y="242" class="s">con redirect automatico</text>
+
+    <text x="34" y="268" class="tag">D114 · A B C D</text>
+    <text x="34" y="286" class="s">• estratto e immagine in evidenza</text>
+    <text x="34" y="304" class="s">• categorie (assegnare, creare, rinominare)</text>
+    <text x="34" y="322" class="s">• eliminazione dei contenuti</text>
+    <text x="34" y="340" class="s">• tipi di file ammessi per i media</text>
+
+    <text x="34" y="366" class="tag">D115 · B</text>
+    <text x="34" y="384" class="s">• documenti scaricabili modificabili</text>
+    <text x="34" y="402" class="s">• caroselli modificabili</text>
+
+    <text x="34" y="428" class="tag">D116 · B</text>
+    <text x="34" y="446" class="s">• «Persone e permessi» minima:</text>
+    <text x="44" y="462" class="s">elenco, crea, disattiva,</text>
+    <text x="44" y="478" class="s">reimposta password</text>
+    <text x="34" y="496" class="s">• revisione di sicurezza</text>
+    <text x="34" y="530" class="e">ruoli e accesso: vedi sezione 4 (D117)</text>
+
+    <path d="M320,130 H342" class="edge" marker-end="url(#ar2)"/>
+
+    <!-- N2 preparare -->
+    <rect x="346" y="72" width="210" height="120" rx="8" class="box"/>
+    <text x="360" y="96" class="t">2 · Preparare il collaudo</text>
+    <text x="360" y="118" class="s">• ambiente amoris_1g pronto</text>
+    <text x="360" y="136" class="s">• un handoff per compito</text>
+    <text x="360" y="160" class="tag">D112 · A</text>
+    <text x="430" y="160" class="tag">D111 · A</text>
+    <text x="360" y="180" class="e">ripristino su tua conferma</text>
+    <path d="M451,192 V610" class="edge" marker-end="url(#ar2)"/>
+    <text x="458" y="400" class="s">handoff</text>
+
+    <!-- N3 collaudo -->
+    <rect x="346" y="614" width="210" height="182" rx="8" class="box"/>
+    <text x="360" y="638" class="t">3 · Collaudo dei compiti</text>
+    <text x="360" y="656" class="s">1G-1…1G-10 e 1D-28…1D-37</text>
+    <text x="360" y="672" class="s">dall'interfaccia, come redattore,</text>
+    <text x="360" y="688" class="s">senza assistenza</text>
+    <text x="360" y="706" class="e">un intervento dell'agente</text>
+    <text x="360" y="720" class="e">= compito non superato</text>
+    <text x="360" y="742" class="s">tempo registrato per compito,</text>
+    <text x="360" y="758" class="s">non vincolante; oltre 10 minuti →</text>
+    <text x="360" y="774" class="s">difetto di usabilità da esaminare</text>
+    <text x="360" y="790" class="tag">D111 · A</text>
+    <text x="430" y="790" class="tag">D118 · C</text>
+    <path d="M556,680 H620 V200" class="edge" marker-end="url(#ar2)"/>
+    <text x="564" y="672" class="s">esiti sul sito</text>
+
+    <!-- N4 osservare -->
+    <rect x="586" y="72" width="210" height="124" rx="8" class="box"/>
+    <text x="600" y="96" class="t">4 · Osservare e registrare</text>
+    <text x="600" y="118" class="s">verifica sul sito di collaudo</text>
+    <text x="600" y="138" class="s">esito e tempo per compito:</text>
+    <text x="600" y="156" class="s">superato · difetto · lacuna</text>
+    <text x="600" y="184" class="tag">D111 · A · D118 · C</text>
+    <path d="M796,120 H848" class="edge" marker-end="url(#ar2)"/>
+    <text x="800" y="110" class="s">difetti</text>
+
+    <!-- N5 correzione -->
+    <rect x="852" y="72" width="190" height="100" rx="8" class="box"/>
+    <text x="866" y="96" class="t">5 · Correzione difetti</text>
+    <text x="866" y="118" class="s">nel codice, con prove</text>
+    <text x="866" y="136" class="s">automatiche come rete</text>
+    <text x="866" y="160" class="tag">D110 · B</text>
+    <path d="M947,172 V610" class="edge loop" marker-end="url(#ar2)"/>
+    <text x="954" y="400" class="s">correzione pronta</text>
+
+    <!-- N6 ricollaudo -->
+    <rect x="852" y="614" width="190" height="100" rx="8" class="box"/>
+    <text x="866" y="638" class="t">6 · Ricollaudo</text>
+    <text x="866" y="660" class="s">solo i compiti con difetto,</text>
+    <text x="866" y="678" class="s">di nuovo da te</text>
+    <text x="866" y="702" class="tag">D110 · B · D111 · A</text>
+    <path d="M852,690 H700 V196" class="edge loop" marker-end="url(#ar2)"/>
+    <text x="708" y="682" class="s">nuovo esito</text>
+
+    <!-- top route -->
+    <path d="M691,72 V52 H1140 V72" class="edge" marker-end="url(#ar2)"/>
+    <text x="830" y="46" class="s">tutti i compiti superati</text>
+
+    <!-- N7 audit -->
+    <rect x="1070" y="76" width="160" height="96" rx="8" class="box"/>
+    <text x="1084" y="100" class="t">7 · Audit della fase</text>
+    <text x="1084" y="122" class="s">prove, rapporto,</text>
+    <text x="1084" y="140" class="s">verifica dei criteri</text>
+    <path d="M1150,172 V610" class="edge" marker-end="url(#ar2)"/>
+    <text x="1156" y="400" class="s">rapporto</text>
+
+    <!-- N8 approvazione -->
+    <rect x="1070" y="614" width="160" height="100" rx="8" class="box"/>
+    <text x="1084" y="638" class="t">8 · Approvazione</text>
+    <text x="1084" y="660" class="s">esplicita, tua</text>
+    <text x="1084" y="678" class="s">condizione 7 del gate</text>
+    <text x="1084" y="696" class="s">soddisfatta → 1F</text>
+  </svg>
+  </div>
+</section>
+
+<!-- 3. Ambiente -->
+<section>
+  <h2>3 · Ambiente di collaudo</h2>
+  <div class="scroll">
+  <svg viewBox="0 0 1240 290" role="img" aria-label="Database di sviluppo copiato in amoris_1g, servito da API e sito dedicati">
+    <defs>
+      <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    </defs>
+    <rect x="10" y="40" width="250" height="140" rx="8" class="box done"/>
+    <text x="24" y="66" class="t">Database di sviluppo</text>
+    <text x="24" y="88" class="s">import reale dalla sorgente</text>
+    <text x="24" y="106" class="s">base della parità (DR-210)</text>
+    <text x="24" y="124" class="s">425 compilazioni dei form</text>
+    <text x="24" y="150" class="tag">D112 · A: resta intatto</text>
+    <text x="24" y="168" class="e">nessuna modifica del collaudo</text>
+
+    <path d="M260,110 H340" class="edge" marker-end="url(#ar3)"/>
+    <text x="266" y="100" class="s">copia</text>
+    <text x="266" y="128" class="e">su tua conferma</text>
+
+    <rect x="344" y="30" width="270" height="160" rx="8" class="box"/>
+    <text x="358" y="56" class="t">Database di collaudo amoris_1g</text>
+    <text x="358" y="78" class="s">stessi contenuti importati</text>
+    <text x="358" y="96" class="s">(Gutenberg, Divi convertite,</text>
+    <text x="358" y="112" class="s">blocchi di riserva reali)</text>
+    <text x="358" y="134" class="s">compilazioni dei form svuotate</text>
+    <text x="358" y="152" class="s">ripristinabile per ricominciare</text>
+    <text x="358" y="178" class="tag">D112 · A</text>
+    <path d="M614,110 H690" class="edge" marker-end="url(#ar3)"/>
+    <text x="620" y="100" class="s">lettura e</text>
+    <text x="620" y="128" class="s">scrittura</text>
+
+    <rect x="694" y="50" width="200" height="120" rx="8" class="box"/>
+    <text x="708" y="76" class="t">API di collaudo</text>
+    <text x="708" y="98" class="s">porta dedicata</text>
+    <text x="708" y="116" class="s">registro operazioni (1G-9)</text>
+    <text x="708" y="134" class="s">ruoli e users.manage</text>
+    <text x="708" y="156" class="tag">D112 · A · D117 · B</text>
+    <path d="M894,90 H970" class="edge" marker-end="url(#ar3)"/>
+    <text x="900" y="80" class="s">contenuti</text>
+    <path d="M970,150 H894" class="edge" marker-end="url(#ar3)"/>
+    <text x="900" y="168" class="s">modifiche</text>
+
+    <rect x="974" y="30" width="256" height="72" rx="8" class="box"/>
+    <text x="988" y="56" class="t">Sito di collaudo</text>
+    <text x="988" y="76" class="s">porta dedicata · esiti e anteprima</text>
+    <text x="988" y="92" class="s">della bozza (1G-10)  <tspan class="tag">D112 · A</tspan></text>
+    <rect x="974" y="118" width="256" height="72" rx="8" class="box"/>
+    <text x="988" y="144" class="t">Area amministrativa</text>
+    <text x="988" y="164" class="s">collegata all'API di collaudo</text>
+    <text x="988" y="180" class="e">da confermare nel piano</text>
+
+    <rect x="974" y="222" width="256" height="50" rx="25" class="box"/>
+    <text x="1102" y="244" class="t" text-anchor="middle">Redattore (tu)</text>
+    <text x="1102" y="262" class="s" text-anchor="middle">lavora nell'area amministrativa · <tspan class="tag">D111 · A</tspan></text>
+    <path d="M1102,222 V194" class="edge" marker-end="url(#ar3)"/>
+  </svg>
+  </div>
+</section>
+
+<!-- 4. Ruoli e perimetro -->
+<section>
+  <h2>4 · Ruoli e perimetro della Fase 1</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>Ruolo «redazione» <span class="chip">D117 · B</span></h3>
+      <ul>
+        <li>contenuti</li>
+        <li>media</li>
+        <li>menu</li>
+        <li>SEO</li>
+        <li>redirect</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Ruolo «amministrazione» <span class="chip">D117 · B</span></h3>
+      <ul>
+        <li>impostazioni del sito</li>
+        <li>Persone e permessi <span class="chip">D116 · B</span></li>
+        <li>registro delle operazioni</li>
+        <li>nuovo permesso <code>users.manage</code></li>
+      </ul>
+    </div>
+    <div class="card neg">
+      <h3>Prova negativa <span class="chip neg">D117 · B</span></h3>
+      <ul>
+        <li>la redazione non entra in Persone e permessi, nemmeno via URL o API</li>
+      </ul>
+    </div>
+    <div class="card out">
+      <h3>Fuori perimetro in Fase 1 <span class="chip">D115 · B</span></h3>
+      <ul>
+        <li>revisioni</li>
+        <li>programmazione</li>
+        <li>contenuti privati</li>
+        <li>form e compilazioni</li>
+        <li>widget della barra laterale</li>
+      </ul>
+      <p class="note">Sorte delle voci di menu che danno 404: si decide dopo averne visto l'elenco.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

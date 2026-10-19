@@ -13,7 +13,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-003 | [Rimozione della pagina `phpinfo()` dalla produzione](HO-003-rimozione-phpinfo-produzione.md) | 1B | ✅ **risposto** — l'utente sceglie la protezione con password (DR-042). Prosegue in HO-005 |
 | HO-004 | [Scelta del design dell'area amministrativa](HO-004-scelta-ui-ux-area-amministrativa.md) | 1B | ✅ **chiuso** 2026-09-15 — DR-044…DR-048 |
 | HO-005 | [Protezione con password della pagina di diagnostica](HO-005-protezione-con-password-della-pagina-di-diagnostica.md) | 1C | ✅ **chiuso** 2026-09-15 — DR-049 |
-| HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — seme sintetico e sei schermate da guardare |
+| HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — assorbito nel collaudo della `1G-W8` (DR-226) |
 | HO-007 | [Eseguire a mano le suite della `1D-W10`](HO-007-eseguire-le-suite-della-1D-W10.md) | 1D | ✅ **chiuso** 2026-09-30 — tutti i test passati |
 | HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ✅ **chiuso** 2026-10-04 — `apply` due volte, esito `success`; `import-completeness-report.md` |
 | HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ✅ **chiuso** 2026-10-09 — l'utente è entrato nell'area amministrativa locale |
