@@ -1529,3 +1529,9 @@ Nella stessa risposta l'utente ha chiesto la correzione di D106 con prova, la nu
 | DR-209 | 2026-10-18 | Formula dell'approvazione della UAT (D109) | **Opzione A** — «approvo la parità pixel-perfect del sito pubblico, con le difformità accettate elencate nel rapporto» | B — formula attuale più conferma separata | «D109=A» | Proprietario | HO-016, rapporto, gate | sì | idem, `deployment-gate` |
 
 Nella stessa risposta l'utente ha chiesto l'esecuzione della T1 e ha confermato il commit di formattazione e il push.
+
+## 72. Round 63 — risposta del 2026-10-18, UAT di parità (HO-016)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-210 | 2026-10-18 | UAT di parità visiva del sito pubblico (condizione 13 del gate) | **approvata**: «HO-016: approvo la parità pixel-perfect del sito pubblico, con le difformità accettate elencate nel rapporto. Form inviato alle 23:46 ora locale» | non approvare, con elenco di differenze | formula di DR-209 | Proprietario | sito pubblico, gate | sì (una nuova voce può superarla) | `docs/qa/visual-parity-report.md` §12, HO-016, DR-162, DR-203 |

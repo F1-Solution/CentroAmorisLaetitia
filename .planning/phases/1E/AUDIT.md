@@ -1,6 +1,6 @@
 # AUDIT — Fase 1E
 
-**Stato: audit eseguito il 2026-10-18, prima della UAT.** Ogni criterio di uscita di
+**Stato: audit eseguito il 2026-10-18, prima della UAT; UAT approvata dall'utente lo stesso giorno (DR-210).** Ogni criterio di uscita di
 [`CONTEXT.md`](CONTEXT.md) §7 ha un esito **eseguito**. La fase **non** è chiusa: si
 chiude con la UAT dell'utente, registrata in `docs/qa/visual-parity-report.md` §12
 (condizione 13 del gate).

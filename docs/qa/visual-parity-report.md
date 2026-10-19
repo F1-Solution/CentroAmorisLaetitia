@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Stato** | **in attesa della UAT** (2026-10-18). Confronto e verifiche eseguiti, difformità residue approvate dall'utente, audit in [`AUDIT.md`](../../.planning/phases/1E/AUDIT.md). La parità **non è dichiarata**: la approva solo l'utente, nel §12 (condizione 13 del gate) |
+| **Stato** | **UAT approvata dall'utente il 2026-10-18** (§12, DR-210), con le difformità accettate elencate nel §11.1. Audit in [`AUDIT.md`](../../.planning/phases/1E/AUDIT.md). Il gate resta chiuso fino al deploy in produzione verificato |
 | **Piano** | [`visual-regression-plan.md`](visual-regression-plan.md), approvato con DR-110 |
 | **Criteri** | [`acceptance-criteria.md`](acceptance-criteria.md) §4 e §6 |
 | **Immagini** | `docs/qa/screenshots/`, **fuori da Git** (DR-106): ogni immagine si riconosce dalla sua impronta SHA-256 nelle tabelle di `docs/qa/riferimento/` |
@@ -295,4 +295,11 @@ La risposta si registra qui con le parole dell'utente. Per valere come condizion
 gate, l'approvazione usa la formula di DR-209: «approvo la parità pixel-perfect del sito
 pubblico, con le difformità accettate elencate nel rapporto».
 
-**Risposta dell'utente:** non ancora data.
+**Risposta dell'utente, 2026-10-18 (DR-210):**
+
+> HO-016: approvo la parità pixel-perfect del sito pubblico, con le difformità accettate elencate nel rapporto. Form inviato alle 23:46 ora locale
+
+Esito: **UAT approvata** dal Proprietario con la formula di DR-209. La condizione 13 del
+gate è soddisfatta; resta la condizione del deploy in produzione eseguito e verificato
+(Fase 1F, `deployment-gate`). Prova del form: 1 compilazione ricevuta alle 21:46:24 UTC
+sul modulo di contatto, nessuna email inviata.

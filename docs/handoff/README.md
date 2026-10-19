@@ -23,7 +23,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-013 | [Conferma della riesecuzione dell'import](HO-013-conferma-riesecuzione-import-1E-W5.md) | 1E | ✅ **chiuso** 2026-10-13 — confermato (round 35), import eseguito, esito `success` |
 | HO-014 | [Liberare memoria per la ricattura](HO-014-liberare-memoria-per-la-ricattura-1E-W6.md) | 1E | ✅ **chiuso** 2026-10-13 — 9,3 GB liberi (round 35), ricattura integrale fatta |
 | HO-015 | [Approvazione di maschere e difformità](HO-015-approvazione-maschere-e-difformita-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: 5 voci approvate (DR-124…128) |
-| HO-016 | [UAT di parità visiva](HO-016-uat-di-parita-1E-W8.md) | 1E | 🕓 **non ancora attivo** — dopo il rapporto della `1E-W8` |
+| HO-016 | [UAT di parità visiva](HO-016-uat-di-parita-1E-W8.md) | 1E | ✅ fatto il 2026-10-18: UAT approvata (DR-210); compilazione di prova cancellata il 2026-10-19 |
 | HO-017 | [Distruzione dell'istanza di riferimento](HO-017-distruzione-istanza-di-riferimento.md) | 1E | 🕓 **non ancora attivo** — dopo la UAT approvata |
 | HO-018 | [Conferma della riesecuzione dell'import (famiglie A–D)](HO-018-conferma-riesecuzione-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: import `success`, esito in §7 |
 | HO-019 | [Migrazione e import in locale (famiglie G, D58, D59)](HO-019-migrazione-e-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-14: migrazione 0003, import `success` |
@@ -31,6 +31,12 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-021 | [Migrazione e import in locale (spaziatura D69, testo D66)](HO-021-migrazione-e-import-spaziatura-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: migrazione 0005, import `success`, `/chi-siamo/` con spaziatura 3 |
 | HO-022 | [Import in locale (tipografia D70)](HO-022-import-tipografia-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: import `success`, tipografia da 1.258 a 67 scarti |
 | HO-023 | [Migrazione 0006 e import in locale (famiglie dopo DR-154)](HO-023-migrazione-e-import-famiglie-1E-W6.md) | 1E | ✅ fatto il 2026-10-16: migrazione 0006, import `success` 57/47/4, `summary_source` 108/108 |
+| HO-024 | [Cancellazione delle compilazioni sintetiche](HO-024-cancellazione-compilazioni-sintetiche-1E-W7.md) | 1E | ✅ fatto il 2026-10-18: 2 compilazioni sintetiche cancellate, 425 importate invariate |
+| HO-025 | [Migrazione 0007 e import in locale](HO-025-migrazione-0007-e-import-1E-W7.md) | 1E | ✅ fatto il 2026-10-18: migrazione 0007, import `success` |
+| HO-026 | [Scritture locali dell'audit](HO-026-scritture-dell-audit-1E-W7.md) | 1E | ✅ fatto il 2026-10-18: 1E-19 e voce 4 dei form (24/24), compilazioni sintetiche cancellate |
+| HO-027 | [Ripristino della description e 1E-19](HO-027-ripristino-description-e-1E-19-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-199, DR-200) |
+| HO-028 | [Home senza titolo e confronto di 1E-19](HO-028-home-senza-titolo-e-confronto-1E-19-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-201, DR-202), 1E-19 4/4 |
+| HO-029 | [Ultime difformità dell'audit](HO-029-ultime-difformita-dell-audit-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-204, DR-205) |
 
 ## Chiuse nel Round 3 del 2026-09-14
 
