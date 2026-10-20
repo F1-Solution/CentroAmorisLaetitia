@@ -51,6 +51,10 @@ export const WRAPPER_FILES = [
   'modules/auth/routes.ts',
   'modules/auth/schemas.ts',
   'modules/auth/service.ts',
+  // Wave 1G-W1: il modulo degli account crea credenziali e revoca sessioni, quindi si conta.
+  'modules/accounts/routes.ts',
+  'modules/accounts/schemas.ts',
+  'modules/accounts/service.ts',
 ] as const;
 
 /**

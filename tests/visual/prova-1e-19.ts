@@ -55,8 +55,7 @@ async function accedi(): Promise<{ cookie: string; csrf: string }> {
   const csrf = leggiCookie(risposta.headers, 'amoris_csrf');
   const cookie = `amoris_sessione=${sessione}; amoris_csrf=${csrf}`;
 
-  // Il ruolo `editor` vale per due aree («redazione», «impostazioni»): il
-  // login non sceglie da solo, va scelta la veste di `redazione`.
+  // Dalla wave 1G-W1 `editor` porta alla sola area «redazione» (DR-227), ma chi ha più vesti la sceglie dopo l'accesso: si sceglie `redazione` se non è già attiva.
   const corpo = (await risposta.json()) as {
     activeArea: string | null;
     rolesHeld: { roleId: string; areas: string[] }[];

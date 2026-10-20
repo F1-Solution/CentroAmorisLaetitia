@@ -52,6 +52,29 @@ describe('createLocalAccount', () => {
     expect(roles.map((r) => r.key)).toEqual(['editor']);
   });
 
+  it('accetta il ruolo di amministrazione, seminato dalla migrazione (DR-227)', async () => {
+    const result = await createLocalAccount(harness.db, harness.config, {
+      email: 'persone@esempio.invalid',
+      fullName: 'Persone locali',
+      password: PASSWORD,
+      roleKey: 'amministrazione',
+    });
+    const roles = await harness.db
+      .select({ key: schema.roles.key })
+      .from(schema.userRoles)
+      .innerJoin(schema.roles, eq(schema.roles.id, schema.userRoles.roleId))
+      .where(eq(schema.userRoles.userId, result.userId));
+    expect(roles.map((r) => r.key)).toEqual(['amministrazione']);
+    expect(
+      parseLocalAccountInput({
+        ACCOUNT_EMAIL: 'x@esempio.invalid',
+        ACCOUNT_NAME: 'X',
+        ACCOUNT_PASSWORD: PASSWORD,
+        ACCOUNT_ROLE: 'amministrazione',
+      }).roleKey,
+    ).toBe('amministrazione');
+  });
+
   it('non sovrascrive un account con lo stesso indirizzo', async () => {
     await expect(
       createLocalAccount(harness.db, harness.config, {

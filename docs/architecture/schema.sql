@@ -63,12 +63,13 @@ CREATE TABLE users (
     CONSTRAINT users_legacy_id_unique UNIQUE (legacy_id)
 );
 
--- Ruoli. In Fase 1 esiste il solo 'editor', ma la struttura e' quella
--- definitiva: RU-02 chiede piu' ruoli sulla stessa persona e aggiungere
--- la relazione dopo costerebbe una migrazione su dati reali.
+-- Ruoli. Dalla wave 1G-W1 (DR-220, DR-229) sono 'editor', etichetta
+-- «Redazione», e 'amministrazione'; la struttura e' quella definitiva:
+-- RU-02 chiede piu' ruoli sulla stessa persona e aggiungere la relazione
+-- dopo costerebbe una migrazione su dati reali.
 CREATE TABLE roles (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    key         text NOT NULL,                 -- 'editor', 'administrator', ...
+    key         text NOT NULL,                 -- 'editor', 'amministrazione', ...
     label       text NOT NULL,
     description text,
     is_system   boolean NOT NULL DEFAULT false,-- i ruoli di sistema non si cancellano
@@ -86,7 +87,9 @@ CREATE TABLE user_roles (
 );
 
 -- Le autorizzazioni si esprimono come permessi, mai come confronti sul
--- nome del ruolo (ADR-007 §3.2).
+-- nome del ruolo (ADR-007 §3.2). Otto permessi (DR-227): content.read,
+-- content.write, content.publish, media.write, settings.write della
+-- redazione; users.manage, audit.read, site.settings.write dell'amministrazione.
 CREATE TABLE permissions (
     key         text PRIMARY KEY,              -- 'content.publish', 'media.write', ...
     label       text NOT NULL,

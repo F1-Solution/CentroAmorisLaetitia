@@ -14,6 +14,7 @@ export interface Credentials {
   readonly fullName: string;
   readonly passwordHash: string | null;
   readonly isActive: boolean;
+  readonly mustChangePassword: boolean;
 }
 
 export async function findByEmail(db: Database, email: string): Promise<Credentials | null> {
@@ -24,6 +25,7 @@ export async function findByEmail(db: Database, email: string): Promise<Credenti
       fullName: schema.users.fullName,
       passwordHash: schema.users.passwordHash,
       isActive: schema.users.isActive,
+      mustChangePassword: schema.users.mustChangePassword,
     })
     .from(schema.users)
     .where(eq(schema.users.email, email.trim()))

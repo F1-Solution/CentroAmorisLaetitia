@@ -18,10 +18,10 @@ declare module 'fastify' {
     sessionToken: string | null;
   }
   interface FastifyInstance {
-    requireSession(request: FastifyRequest, reply: FastifyReply): Promise<void>;
+    requireSession(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply | undefined>;
     requirePermission(
       permission: Permission,
-    ): (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    ): (request: FastifyRequest, reply: FastifyReply) => Promise<FastifyReply | undefined>;
   }
 }
 
@@ -33,6 +33,24 @@ function notAuthenticated(request: FastifyRequest, reply: FastifyReply): void {
       requestId: request.id,
     },
   });
+}
+
+/**
+ * Cambio password obbligatorio in sospeso: rifiuto per difetto di ogni rotta
+ * autenticata che non dichiari `allowWithPendingPasswordChange` (S3, wave 1G-W1).
+ * Restituisce `true` se ha già risposto e il gestore non deve proseguire.
+ */
+function refusedUntilPasswordChanged(request: FastifyRequest, reply: FastifyReply): boolean {
+  if (!request.auth?.user.mustChangePassword) return false;
+  if (request.routeOptions.config.allowWithPendingPasswordChange) return false;
+  void reply.code(403).send({
+    error: {
+      code: 'PASSWORD_CHANGE_REQUIRED',
+      message: 'Prima di proseguire devi cambiare la password.',
+      requestId: request.id,
+    },
+  });
+  return true;
 }
 
 /**
@@ -84,32 +102,32 @@ export function registerAuth(app: FastifyInstance): void {
     request.auth = await resolveSession(app.db, app.config, token);
   });
 
-  app.decorate('requireSession', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!request.auth) {
-      notAuthenticated(request, reply);
-      return;
-    }
-    wrongArea(request, reply);
-  });
+  /** Vero se ha già risposto: sessione assente, cambio password in sospeso o area sbagliata. */
+  const refused = (request: FastifyRequest, reply: FastifyReply): boolean => {
+    if (request.auth)
+      return refusedUntilPasswordChanged(request, reply) || wrongArea(request, reply);
+    notAuthenticated(request, reply);
+    return true;
+  };
+
+  // Un hook asincrono che ha risposto restituisce `reply`, altrimenti Fastify esegue comunque il gestore (S13).
+  app.decorate('requireSession', async (request: FastifyRequest, reply: FastifyReply) =>
+    refused(request, reply) ? reply : undefined,
+  );
 
   app.decorate('requirePermission', (permission: Permission) => {
     return async (request: FastifyRequest, reply: FastifyReply) => {
-      if (!request.auth) {
-        notAuthenticated(request, reply);
-        return;
-      }
-      if (wrongArea(request, reply)) return;
-      if (!request.auth.permissions.has(permission)) {
-        // Stesso principio del controllo 9: il messaggio non dice quale
-        // permesso manchi, perché sarebbe una mappa dei permessi.
-        await reply.code(403).send({
-          error: {
-            code: 'NOT_AUTHORIZED',
-            message: 'Operazione non consentita.',
-            requestId: request.id,
-          },
-        });
-      }
+      if (refused(request, reply)) return reply;
+      if (request.auth?.permissions.has(permission)) return undefined;
+      // Stesso principio del controllo 9: il messaggio non dice quale
+      // permesso manchi, perché sarebbe una mappa dei permessi.
+      return reply.code(403).send({
+        error: {
+          code: 'NOT_AUTHORIZED',
+          message: 'Operazione non consentita.',
+          requestId: request.id,
+        },
+      });
     };
   });
 }

@@ -1,19 +1,20 @@
 import { expect, type Page } from '@playwright/test';
-import { ACCESSO, ADMIN_URL } from './ambiente';
+import { ACCESSO, ACCESSO_AMMINISTRAZIONE, ADMIN_URL } from './ambiente';
 
 /**
- * Entra nell'area amministrativa e sceglie una veste.
+ * Entra nell'area amministrativa nella veste richiesta.
  *
- * La persona del seme sintetico possiede **due** vesti — Redazione e
- * Impostazioni, perché il suo ruolo ha tutti e cinque i permessi — quindi la
- * schermata di scelta compare davvero (`ux-proposals.md` §4.3). Passare da lì
- * fa parte del flusso, non è un passo da saltare.
+ * Dopo DR-227 ogni persona del seme ha una sola veste: la redazione entra in
+ * Redazione, l'amministrazione in Impostazioni. L'accesso usa quindi la persona
+ * giusta per l'area, e la schermata di scelta compare solo a chi ha entrambi i
+ * ruoli (`ux-proposals.md` §4.3).
  */
 export async function entra(page: Page, area: 'Redazione' | 'Impostazioni'): Promise<void> {
+  const accesso = area === 'Impostazioni' ? ACCESSO_AMMINISTRAZIONE : ACCESSO;
   await page.goto(`${ADMIN_URL}/admin/accesso`);
 
-  await page.getByLabel('Indirizzo di posta').fill(ACCESSO.email);
-  await page.getByLabel('Password').fill(ACCESSO.password);
+  await page.getByLabel('Indirizzo di posta').fill(accesso.email);
+  await page.getByLabel('Password').fill(accesso.password);
   await page.getByRole('button', { name: 'Entra' }).click();
 
   await page.waitForURL(/\/admin\/(scelta-area|redazione|impostazioni)/);
@@ -46,7 +47,12 @@ export async function intestazioniApi(page: Page): Promise<Record<string, string
 
 /** Esce, e verifica che l'uscita riporti davvero alla schermata di accesso. */
 export async function esci(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /Redazione di prova/ }).click();
+  // Il menu della persona è il solo pulsante-menu col nome; i pulsanti di riga
+  // di «Persone e permessi» portano lo stesso nome ma non aprono un menu.
+  await page
+    .locator('button[aria-haspopup="menu"]')
+    .filter({ hasText: /di prova/ })
+    .click();
   await page.getByRole('menuitem', { name: 'Disconnetti' }).click();
   await page.waitForURL(/\/admin\/accesso/);
 }

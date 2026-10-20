@@ -69,6 +69,10 @@ export function AreaShell({
       router.replace('/accesso');
       return;
     }
+    if (user.mustChangePassword) {
+      router.replace('/password');
+      return;
+    }
     if (!user.activeArea) {
       router.replace('/scelta-area');
       return;
@@ -80,7 +84,7 @@ export function AreaShell({
     if (user.activeArea !== area) router.replace('/scelta-area');
   }, [loading, user, area, router]);
 
-  if (loading || !user || user.activeArea !== area) return null;
+  if (loading || !user || user.mustChangePassword || user.activeArea !== area) return null;
 
   const definition = AREA_DEFINITIONS[area];
   const ownedAreas = [...new Set(vestments.map((vestment) => vestment.area))];

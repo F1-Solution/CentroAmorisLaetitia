@@ -33,7 +33,7 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
   typed.get(
     '/settings',
     {
-      onRequest: app.requirePermission(PERMISSIONS.contentRead),
+      onRequest: app.requirePermission(PERMISSIONS.siteSettingsWrite),
       schema: {
         tags: ['impostazioni'],
         summary: 'Elenca le impostazioni globali',
@@ -46,7 +46,7 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
   typed.put(
     '/settings/:key',
     {
-      onRequest: app.requirePermission(PERMISSIONS.settingsWrite),
+      onRequest: app.requirePermission(PERMISSIONS.siteSettingsWrite),
       config: { audit: { action: 'setting.update', entityType: ENTITY } },
       schema: {
         tags: ['impostazioni'],

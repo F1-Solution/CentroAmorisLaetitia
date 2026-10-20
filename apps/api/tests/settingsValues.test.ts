@@ -1,7 +1,13 @@
 import { schema } from '@amoris/db';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createHarness, signIn, type Harness, type Signed } from './_support/harness.js';
+import {
+  ADMIN_EMAIL,
+  createHarness,
+  signIn,
+  type Harness,
+  type Signed,
+} from './_support/harness.js';
 
 /**
  * Valori delle impostazioni dell'organizzazione (DR-185): il CMS le modifica, il
@@ -13,7 +19,7 @@ let signed: Signed;
 
 beforeAll(async () => {
   harness = await createHarness('api_valori_impostazioni');
-  signed = await signIn(harness, { area: 'impostazioni' });
+  signed = await signIn(harness, { email: ADMIN_EMAIL, area: 'impostazioni' });
   await harness.db.insert(schema.settings).values([
     { key: 'contact.address', value: sql`'null'::jsonb`, label: 'Indirizzo' },
     { key: 'contact.phone', value: '', label: 'Telefono' },

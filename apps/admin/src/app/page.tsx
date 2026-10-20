@@ -17,6 +17,7 @@ export default function Home(): null {
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace('/accesso');
+    else if (user.mustChangePassword) router.replace('/password');
     else if (user.activeArea) router.replace(AREA_DEFINITIONS[user.activeArea].href);
     else router.replace('/scelta-area');
   }, [loading, user, router]);

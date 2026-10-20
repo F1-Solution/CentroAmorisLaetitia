@@ -25,6 +25,8 @@ declare module 'fastify' {
      * la scelta della veste, lo stato del servizio e la specifica.
      */
     area?: AdminArea;
+    /** Ammessa anche con il cambio password obbligatorio in sospeso: tutte le altre rotte autenticate lo rifiutano. */
+    allowWithPendingPasswordChange?: true;
   }
 }
 

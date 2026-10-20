@@ -1,7 +1,13 @@
 import { schema } from '@amoris/db';
 import { desc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createHarness, signIn, type Harness } from './_support/harness.js';
+import {
+  ADMIN_EMAIL,
+  BOTH_EMAIL,
+  createHarness,
+  signIn,
+  type Harness,
+} from './_support/harness.js';
 
 /**
  * Criterio di uscita 24, riscritto il 2026-09-20 da **DR-067**, che attua
@@ -14,9 +20,8 @@ import { createHarness, signIn, type Harness } from './_support/harness.js';
  * ed è la ragione per cui la riservatezza torna a essere una separazione di
  * ambiente e non un filtro.
  *
- * La persona di prova possiede il solo ruolo `editor` con tutti e cinque i
- * permessi di ADR-007 §3.2, `settings.write` compreso: ogni rifiuto qui sotto
- * è dovuto all'**area**, mai a un permesso mancante.
+ * La persona con entrambi i ruoli (DR-227) ha in mano tutti i permessi: ogni
+ * rifiuto qui sotto è dovuto all'**area**, mai a un permesso mancante.
  */
 
 let harness: Harness;
@@ -31,16 +36,9 @@ afterAll(async () => {
 
 describe('la sessione è vincolata all’area', () => {
   it('in Redazione le impostazioni sono respinte, pur avendone il permesso', async () => {
-    const signed = await signIn(harness, { area: 'redazione' });
+    const signed = await signIn(harness, { email: BOTH_EMAIL, area: 'redazione' });
 
-    const permessi = await harness.app.inject({
-      method: 'GET',
-      url: '/auth/me',
-      headers: { cookie: signed.cookie },
-    });
-    // Il permesso c'è: è il presupposto del test, non un dettaglio.
-    expect(permessi.json().permissions).toContain('settings.write');
-
+    // Dal ruolo attivo (editor) il permesso non c'è: è l'area a chiudere l'altro ruolo.
     const risposta = await harness.app.inject({
       method: 'GET',
       url: '/settings',
@@ -50,7 +48,7 @@ describe('la sessione è vincolata all’area', () => {
   });
 
   it('in Impostazioni le stesse impostazioni si leggono', async () => {
-    const signed = await signIn(harness, { area: 'impostazioni' });
+    const signed = await signIn(harness, { email: BOTH_EMAIL, area: 'impostazioni' });
     const risposta = await harness.app.inject({
       method: 'GET',
       url: '/settings',
@@ -59,8 +57,8 @@ describe('la sessione è vincolata all’area', () => {
     expect(risposta.statusCode).toBe(200);
   });
 
-  it('e in Impostazioni i contenuti sono respinti, sempre con il permesso in mano', async () => {
-    const signed = await signIn(harness, { area: 'impostazioni' });
+  it('e in Impostazioni i contenuti sono respinti, anche a chi ha entrambi i ruoli', async () => {
+    const signed = await signIn(harness, { email: BOTH_EMAIL, area: 'impostazioni' });
     const risposta = await harness.app.inject({
       method: 'GET',
       url: '/contents',
@@ -85,7 +83,7 @@ describe('la sessione è vincolata all’area', () => {
 
 describe('finché la veste non è scelta, non si autorizza nulla', () => {
   it('senza area attiva nessuna rotta di dominio risponde', async () => {
-    const signed = await signIn(harness, { area: null });
+    const signed = await signIn(harness, { email: BOTH_EMAIL, area: null });
     for (const url of ['/contents', '/settings', '/media']) {
       const risposta = await harness.app.inject({
         method: 'GET',
@@ -97,7 +95,7 @@ describe('finché la veste non è scelta, non si autorizza nulla', () => {
   });
 
   it('ma la schermata di scelta sa già che cosa offrire', async () => {
-    const signed = await signIn(harness, { area: null });
+    const signed = await signIn(harness, { email: BOTH_EMAIL, area: null });
     const risposta = await harness.app.inject({
       method: 'GET',
       url: '/auth/me',
@@ -106,9 +104,12 @@ describe('finché la veste non è scelta, non si autorizza nulla', () => {
     const corpo = risposta.json();
     expect(corpo.activeArea).toBeNull();
     expect(corpo.permissions).toEqual([]);
-    // Un ruolo, due aree: due vesti, quindi la scelta esiste davvero.
-    expect(corpo.rolesHeld).toHaveLength(1);
-    expect(corpo.rolesHeld[0].areas).toEqual(['impostazioni', 'redazione']);
+    // Due ruoli, un'area ciascuno: due vesti, quindi la scelta esiste davvero.
+    expect(corpo.rolesHeld).toHaveLength(2);
+    expect(corpo.rolesHeld.flatMap((ruolo: { areas: string[] }) => ruolo.areas).sort()).toEqual([
+      'impostazioni',
+      'redazione',
+    ]);
   });
 
   it('una veste che non si possiede non si indossa', async () => {
@@ -148,12 +149,12 @@ describe('il registro delle operazioni dice in quale veste', () => {
       .limit(1);
 
     expect(riga?.actorArea).toBe('redazione');
-    expect(riga?.actorRoleLabel).toBe('Redattore');
+    expect(riga?.actorRoleLabel).toBe('Redazione');
     expect(riga?.actorRoleId).not.toBeNull();
   });
 
   it('il cambio di veste lascia la sua riga', async () => {
-    await signIn(harness, { area: 'impostazioni' });
+    await signIn(harness, { email: ADMIN_EMAIL, area: 'impostazioni' });
     const [riga] = await harness.db
       .select({ actorArea: schema.auditLog.actorArea })
       .from(schema.auditLog)

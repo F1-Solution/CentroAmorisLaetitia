@@ -30,16 +30,18 @@ export function identifierDigest(identifier: string): string {
 
 export const IDENTIFIER_ENTITY = 'auth.identifier';
 
+/** `action` distingue i fallimenti contati: l'accesso, o il cambio password che verifica la password attuale. */
 export async function evaluateAttempts(
   db: Database,
   config: Config,
   identifier: string,
   ipHash: Buffer | null,
+  action: string = AUTH_ACTIONS.login,
 ): Promise<AttemptVerdict> {
   const since = new Date(Date.now() - config.LOGIN_WINDOW_MINUTES * 60_000);
 
   const failed = and(
-    eq(schema.auditLog.action, AUTH_ACTIONS.login),
+    eq(schema.auditLog.action, action),
     eq(schema.auditLog.outcome, 'failure'),
     gte(schema.auditLog.occurredAt, since),
   );

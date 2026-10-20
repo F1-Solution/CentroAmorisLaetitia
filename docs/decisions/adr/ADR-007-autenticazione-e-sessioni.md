@@ -13,6 +13,7 @@
 | Data | Che cosa è cambiato |
 |---|---|
 | 2026-09-14 | Prima stesura, approvata in blocco con DR-038. |
+| 2026-10-20 | **Gestione minima degli account, revisione dichiarata da DR-224** (wave `1G-W1`). L'area Impostazioni ha «Persone e permessi» (DR-219): elenco, creazione, disattivazione, riattivazione, ruoli, reimpostazione della password. Nuovo ruolo `amministrazione` con i permessi `users.manage`, `audit.read` e `site.settings.write` (DR-220, DR-227). La password temporanea è generata dal sistema, mostrata una sola volta, e impone il cambio al primo accesso (DR-228). Il controllo 11 esclude ancora il recupero in autonomia: la reimpostazione da parte dell'amministrazione **è** la reimpostazione manuale che ammette. I 12 controlli del §3.1 restano invariati; §3.2 e §5 aggiornati. Righe rimisurate: **nucleo 469** su 500, **totale 1298**, deroga di DR-066 invariata per il totale. |
 | 2026-09-21 | **La soglia del §6 contromisura 3 passa da 300 a 500 righe**, decisione **DR-070**, che supera DR-066 sul punto della soglia e non sulla deroga. Con la soglia nuova il **nucleo la rispetta** (437) e il **totale la supera ancora** (859): la deroga di DR-066 resta in vigore per la lettura del totale. La regola di conteggio non cambia. |
 | 2026-09-20 | **Due correzioni dichiarate, entrambe da decisioni registrate.** §6 contromisura 3: la soglia delle 300 righe è stata misurata e superata, e **DR-066** la risolve con una **deroga motivata** invece che con l'adozione di Better Auth. §3.2: la scelta fra «un ruolo attivo per volta» e «unione dei permessi», che questa ADR dichiarava di non decidere, è stata decisa da DR-050 e attuata per intero da **DR-067**. Nessuna delle due tocca i 12 controlli del §3.1, che restano invariati. |
 
@@ -129,6 +130,15 @@ entrambe.
 > prevista proprio per questo, e resta compatibile con entrambe le letture. Cambia
 > che cosa la sessione porta con sé.
 
+> **Aggiornata il 2026-10-20 — DR-224.** I ruoli non sono più il solo `editor`. Ci
+> sono `editor`, rietichettato «Redazione» (DR-229), e `amministrazione` (DR-220).
+> I permessi diventano otto: ai cinque sopra si aggiungono `users.manage`,
+> `audit.read` e `site.settings.write` (DR-227). `settings.write` resta per SEO e
+> redirect, nell'area Redazione; i tre nuovi portano solo all'area Impostazioni.
+> L'amministrazione assegna soltanto questi due ruoli, e gli altri ruoli di una
+> persona non li tocca. Il meccanismo non cambia: permessi come dati, un ruolo
+> attivo per volta.
+
 ### 3.3 Riesame obbligatorio
 
 Prima della prima fase gestionale, questa ADR va riaperta. Quando arriveranno
@@ -162,6 +172,15 @@ finché il perimetro resta quello del §3.2; smette di esserlo quando arriva la 
 gestionale, ed è la ragione del riesame del §3.3.
 
 **Nuove dipendenze:** una libreria per Argon2id. Nient'altro.
+
+> **Aggiornata il 2026-10-20 — DR-224.** Gli account si gestiscono dall'area
+> Impostazioni, non più solo da riga di comando su database locale. Ne seguono
+> tre obblighi, attuati e provati: non si resta mai senza un'amministrazione
+> attiva; finché il cambio della password è in sospeso, ogni rotta autenticata è
+> rifiutata tranne `/auth/me`, `/auth/password` e `/auth/logout`; disattivazione,
+> ruolo tolto e reimpostazione chiudono subito le sessioni della persona. Il
+> primo account con `amministrazione` di un database nuovo si crea dopo la
+> migrazione `0008`, con la procedura di `docs/handoff/HO-030-migrazione-0008-1G-W1.md`.
 
 ## 6. Rischio dichiarato
 

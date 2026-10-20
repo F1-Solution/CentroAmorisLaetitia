@@ -505,10 +505,19 @@ describe('controllo 11 — recupero password, dichiarato fuori perimetro in Fase
     const specifica = (await harness.app.inject({ method: 'GET', url: '/openapi.json' })).json();
     const percorsi = Object.keys(specifica.paths as Record<string, unknown>);
 
-    const sospetti = percorsi.filter((percorso) =>
-      /recover|reset|forgot|dimenticata|recupero/i.test(percorso),
+    // La reimpostazione fatta dall'amministrazione (1G-W1, DR-228) non è un canale di
+    // recupero: sta in Impostazioni e senza sessione è respinta.
+    const sospetti = percorsi.filter(
+      (percorso) =>
+        /recover|reset|forgot|dimenticata|recupero/i.test(percorso) &&
+        percorso !== '/accounts/{id}/password-reset',
     );
     expect(sospetti).toEqual([]);
+    const anonima = await harness.app.inject({
+      method: 'POST',
+      url: `/accounts/${crypto.randomUUID()}/password-reset`,
+    });
+    expect([401, 403]).toContain(anonima.statusCode);
 
     // E le richieste plausibili non rispondono comunque.
     for (const percorso of ['/auth/password-reset', '/auth/forgot-password', '/auth/recover']) {

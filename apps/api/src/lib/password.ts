@@ -1,4 +1,5 @@
 import { hash, verify, type Algorithm } from '@node-rs/argon2';
+import { randomBytes } from 'node:crypto';
 import type { Config } from '../config.js';
 
 /**
@@ -38,4 +39,22 @@ export async function verifyPassword(expectedHash: string, password: string): Pr
     // Un hash malformato a database non deve far entrare nessuno, né esplodere.
     return false;
   }
+}
+
+/** Senza caratteri che si confondono a voce o a occhio: niente 0/O/o, 1/l/I. */
+const TEMPORARY_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+export const TEMPORARY_PASSWORD_LENGTH = 20;
+
+/** Password temporanea (DR-228): byte crittograficamente sicuri, senza distorsione del modulo. */
+export function generateTemporaryPassword(): string {
+  const limit = 256 - (256 % TEMPORARY_ALPHABET.length);
+  let password = '';
+  while (password.length < TEMPORARY_PASSWORD_LENGTH) {
+    for (const byte of randomBytes(TEMPORARY_PASSWORD_LENGTH)) {
+      if (byte < limit && password.length < TEMPORARY_PASSWORD_LENGTH) {
+        password += TEMPORARY_ALPHABET.charAt(byte % TEMPORARY_ALPHABET.length);
+      }
+    }
+  }
+  return password;
 }

@@ -1,4 +1,5 @@
 import { schema, type Database } from '@amoris/db';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { createRequire } from 'node:module';
@@ -8,7 +9,7 @@ import postgres from 'postgres';
 import { buildApp } from '../../src/app.js';
 import { loadConfig, type Config } from '../../src/config.js';
 import type { AdminArea } from '../../src/auth/areas.js';
-import { ALL_PERMISSIONS } from '../../src/auth/permissions.js';
+import { PERMISSIONS } from '../../src/auth/permissions.js';
 import { hashPassword } from '../../src/lib/password.js';
 import type { ObjectStore } from '../../src/lib/objectStore.js';
 
@@ -35,9 +36,23 @@ function urlForDatabase(name: string): string {
   return parsed.toString();
 }
 
+/** I cinque permessi che il ruolo `editor` ha sempre avuto. */
+const EDITOR_PERMISSIONS = [
+  PERMISSIONS.contentRead,
+  PERMISSIONS.contentWrite,
+  PERMISSIONS.contentPublish,
+  PERMISSIONS.mediaWrite,
+  PERMISSIONS.settingsWrite,
+] as const;
+
 export const TEST_EMAIL = 'redattore.sintetico@esempio.invalid';
 export const TEST_PASSWORD = 'password-sintetica-di-prova';
 export const TEST_FULL_NAME = 'Redattore Sintetico';
+
+/** Persona con il solo ruolo `amministrazione` (DR-227). */
+export const ADMIN_EMAIL = 'amministrazione.sintetica@esempio.invalid';
+/** Persona con entrambi i ruoli. */
+export const BOTH_EMAIL = 'entrambi.sintetici@esempio.invalid';
 
 /**
  * Archivio a oggetti finto: registra le chiamate, non tocca alcun bucket.
@@ -113,38 +128,52 @@ export async function createHarness(
   const app = await buildApp(config, { objectStore: store });
   await app.ready();
 
-  // Un ruolo, i cinque permessi di ADR-007 §3.2, una persona.
+  // Il ruolo `editor` con i cinque permessi storici; permessi e ruolo `amministrazione`
+  // arrivano dalla migrazione (DR-227).
   const [role] = await app.db
     .insert(schema.roles)
-    .values({ key: 'editor', label: 'Redattore', isSystem: true })
+    .values({ key: 'editor', label: 'Redazione', isSystem: true })
     .returning({ id: schema.roles.id });
   if (!role) throw new Error('ruolo di prova non creato');
-
-  await app.db
-    .insert(schema.permissions)
-    .values(ALL_PERMISSIONS.map((key) => ({ key, label: key })));
   await app.db
     .insert(schema.rolePermissions)
-    .values(ALL_PERMISSIONS.map((key) => ({ roleId: role.id, permissionKey: key })));
+    .values(EDITOR_PERMISSIONS.map((key) => ({ roleId: role.id, permissionKey: key })));
 
-  const [user] = await app.db
+  const [adminRole] = await app.db
+    .select({ id: schema.roles.id })
+    .from(schema.roles)
+    .where(eq(schema.roles.key, 'amministrazione'));
+  if (!adminRole) throw new Error('il ruolo amministrazione manca: lo semina la migrazione');
+
+  const passwordHash = await hashPassword(TEST_PASSWORD, config);
+  const people = await app.db
     .insert(schema.users)
-    .values({
-      email: TEST_EMAIL,
-      fullName: TEST_FULL_NAME,
-      passwordHash: await hashPassword(TEST_PASSWORD, config),
-    })
-    .returning({ id: schema.users.id });
-  if (!user) throw new Error('persona di prova non creata');
+    .values([
+      { email: TEST_EMAIL, fullName: TEST_FULL_NAME, passwordHash },
+      { email: ADMIN_EMAIL, fullName: 'Amministrazione Sintetica', passwordHash },
+      { email: BOTH_EMAIL, fullName: 'Entrambi Sintetici', passwordHash },
+    ])
+    .returning({ id: schema.users.id, email: schema.users.email });
+  const idOf = (email: string): string => {
+    const found = people.find((person) => person.email === email);
+    if (!found) throw new Error('persona di prova non creata');
+    return found.id;
+  };
+  const userId = idOf(TEST_EMAIL);
 
-  await app.db.insert(schema.userRoles).values({ userId: user.id, roleId: role.id });
+  await app.db.insert(schema.userRoles).values([
+    { userId, roleId: role.id },
+    { userId: idOf(ADMIN_EMAIL), roleId: adminRole.id },
+    { userId: idOf(BOTH_EMAIL), roleId: role.id },
+    { userId: idOf(BOTH_EMAIL), roleId: adminRole.id },
+  ]);
 
   return {
     app,
     db: app.db,
     config,
     store,
-    userId: user.id,
+    userId,
     async teardown() {
       await app.close();
       await admin.unsafe(`drop database if exists "${name}" with (force)`);
@@ -166,10 +195,9 @@ export interface SignInOptions {
   readonly email?: string;
   readonly password?: string;
   /**
-   * Veste da indossare dopo l'accesso. La persona di prova possiede il ruolo
-   * `editor`, che fa entrare in **due** aree: quindi non c'è scelta automatica
-   * e senza questo passo la sessione non è in alcuna area, come per una persona
-   * vera ferma sulla schermata di scelta (`ux-proposals.md` §4.3).
+   * Veste da indossare dopo l'accesso. Chi ha entrambi i ruoli può entrare in
+   * **due** aree: non c'è scelta automatica e senza questo passo la sessione non
+   * è in alcuna area (`ux-proposals.md` §4.3).
    */
   readonly area?: AdminArea | null;
 }

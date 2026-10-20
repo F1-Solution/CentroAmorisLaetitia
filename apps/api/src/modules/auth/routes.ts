@@ -184,7 +184,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         userId: candidate.userId,
         email: candidate.email,
         fullName: candidate.fullName,
-        mustChangePassword: false,
+        mustChangePassword: candidate.mustChangePassword,
         permissions: [...permissions],
         activeRoleId: only?.roleId ?? null,
         activeArea: only?.area ?? null,
@@ -247,6 +247,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/me',
     {
       onRequest: app.requireSession,
+      config: { allowWithPendingPasswordChange: true },
       schema: {
         tags: ['autenticazione'],
         summary: 'Chi è la sessione in corso',
@@ -269,6 +270,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/logout',
     {
       onRequest: app.requireSession,
+      config: { allowWithPendingPasswordChange: true },
       schema: {
         tags: ['autenticazione'],
         summary: 'Chiude la sessione in corso',
@@ -295,15 +297,37 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/password',
     {
       onRequest: app.requireSession,
+      config: { allowWithPendingPasswordChange: true },
       schema: {
         tags: ['autenticazione'],
         summary: 'Cambia la password della sessione in corso',
         body: changePasswordBody,
-        response: { 200: acknowledged, ...errorResponses(400, 401, 403) },
+        response: { 200: acknowledged, ...errorResponses(400, 401, 403, 429) },
       },
     },
     async (request, reply) => {
       const session = sessionOf(request);
+      // La risposta porta i cookie della sessione rinnovata: non va in cache.
+      reply.header('Cache-Control', 'no-store');
+      const ipHash = ipOf(request.ip);
+      // Controllo 8 come per l'accesso: i fallimenti si contano per account e per indirizzo.
+      const attempts = await evaluateAttempts(
+        app.db,
+        app.config,
+        session.user.email,
+        ipHash,
+        AUTH_ACTIONS.passwordChanged,
+      );
+      if (attempts.delayMs > 0) await pause(attempts.delayMs);
+      if (attempts.blocked) {
+        return reply.code(429).send({
+          error: {
+            code: 'TOO_MANY_ATTEMPTS',
+            message: 'Troppi tentativi. Riprovare più tardi.',
+            requestId: request.id,
+          },
+        });
+      }
       const owner = await findByEmail(app.db, session.user.email);
       const ok = await checkPassword(owner, request.body.currentPassword, app.config);
 
@@ -313,8 +337,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
           outcome: 'failure',
           actorUserId: session.user.userId,
           actorLabel: session.user.fullName,
+          // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
+          entityType: IDENTIFIER_ENTITY,
+          entityId: identifierDigest(session.user.email),
           sessionId: session.sessionId,
-          ipHash: ipOf(request.ip),
+          ipHash,
         });
         return reply.code(403).send({
           error: {

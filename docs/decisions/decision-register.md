@@ -1570,3 +1570,13 @@ Nella stessa risposta l'utente ha confermato commit e push e ha chiesto di avvia
 | DR-226 | 2026-10-19 | HO-006 aperto dalla 1D (D122) | **Opzione A** — assorbito nel collaudo della `1G-W8` e chiuso lì | B — eseguito prima, a parte | «D122=A» | Proprietario | HO-006, `1G-W8` | sì | DR-214 |
 
 Nella stessa risposta l'utente ha chiesto di chiudere la `1G-W0` con commit e push e di scrivere il piano di dettaglio della `1G-W1`.
+
+## 76. Round 67 — risposta del 2026-10-20, decisioni della `1G-W1`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-227 | 2026-10-20 | Permessi che attuano DR-220 (D123) | **Opzione A** — `users.manage`, `audit.read`, `site.settings.write` nuovi; `settings.write` resta per SEO e redirect e porta solo all'area Redazione; la redazione perde «Impostazioni del sito» | B — solo `users.manage` · C — `users.manage` e `audit.read` | «D123=A» | Proprietario | permessi, aree, `1G-W1` | sì | `W1-PLAN.md` §3, DR-220 |
+| DR-228 | 2026-10-20 | Reimpostazione della password senza email (D124) | **Opzione A** — password temporanea generata dal sistema, mostrata una sola volta, sessioni revocate, cambio obbligatorio al primo accesso | B — scritta dall'amministrazione · C — collegamento monouso | «D124=A» | Proprietario | account, `1G-W1` | sì | idem, DR-219 |
+| DR-229 | 2026-10-20 | Chiavi dei ruoli (D125) | **Opzione A** — chiave `editor` mantenuta e rietichettata «Redazione»; nuovo ruolo `amministrazione`; seme sintetico allineato | B — rinominare `editor` in `redazione` | «D125=A» | Proprietario | ruoli, seme, `1G-W1` | sì | idem |
+
+Nella stessa risposta l'utente ha chiesto l'esecuzione della `1G-W1` secondo `W1-PLAN.md`, con fermata alle conferme previste.

@@ -1,0 +1,73 @@
+/* Persone e permessi. */
+
+.amoris-accounts__form,
+.amoris-accounts__password {
+  display: grid;
+  gap: var(--amoris-space-3);
+  max-width: 36rem;
+  margin: var(--amoris-space-4) 0;
+  padding: var(--amoris-space-4);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+}
+
+.amoris-accounts__password {
+  border-left-width: 2px;
+}
+
+.amoris-accounts__password:focus {
+  outline: 2px solid var(--amoris-focus-ring);
+  outline-offset: 2px;
+}
+
+.amoris-accounts__form-title,
+.amoris-accounts__password-title {
+  margin: 0;
+  font-size: var(--amoris-text-base-size);
+  font-weight: 600;
+}
+
+.amoris-accounts__password-value {
+  margin: 0;
+  font-size: var(--amoris-text-lg-size);
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.amoris-accounts__password-warning {
+  margin: 0;
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}
+
+.amoris-accounts__roles {
+  display: grid;
+  gap: var(--amoris-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.amoris-accounts__roles legend {
+  padding: 0;
+  margin-bottom: var(--amoris-space-2);
+  font-size: var(--amoris-text-sm-size);
+  font-weight: 600;
+}
+
+.amoris-accounts__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-accounts__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-1);
+}
+
+.amoris-accounts__error {
+  margin-bottom: var(--amoris-space-3);
+}

@@ -42,7 +42,7 @@ export function registerCsrf(app: FastifyInstance): void {
       constantTimeEquals(cookie, expected);
 
     if (!valid) {
-      await reply.code(403).send({
+      return reply.code(403).send({
         error: {
           code: 'CSRF_TOKEN_INVALID',
           message: 'La richiesta non porta un token valido.',

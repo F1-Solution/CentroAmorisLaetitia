@@ -38,7 +38,7 @@ export async function ensureSystemRole(tx: Tx): Promise<string> {
     (
       await tx
         .insert(schema.roles)
-        .values({ key: SYSTEM_ROLE_KEY, label: 'Redattore', isSystem: true })
+        .values({ key: SYSTEM_ROLE_KEY, label: 'Redazione', isSystem: true })
         .returning({ id: schema.roles.id })
     )[0]?.id;
 

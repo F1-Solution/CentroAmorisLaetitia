@@ -1,0 +1,8 @@
+'use client';
+
+import { AccountsScreen } from '../../../components/accounts/AccountsScreen';
+
+/** Persone e permessi: gli account e i loro ruoli. */
+export default function PersonePage(): React.JSX.Element {
+  return <AccountsScreen />;
+}

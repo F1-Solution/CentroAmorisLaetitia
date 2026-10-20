@@ -6,13 +6,19 @@ export const loginBody = z.object({
   password: z.string().min(1).max(1024),
 });
 
-export const changePasswordBody = z.object({
-  currentPassword: z.string().min(1).max(1024),
-  newPassword: z
-    .string()
-    .min(12, 'la nuova password è troppo corta: almeno 12 caratteri')
-    .max(1024),
-});
+export const changePasswordBody = z
+  .object({
+    currentPassword: z.string().min(1).max(1024),
+    newPassword: z
+      .string()
+      .min(12, 'la nuova password è troppo corta: almeno 12 caratteri')
+      .max(1024),
+  })
+  // Una password temporanea non si «cambia» con sé stessa: resterebbe nota a chi l'ha reimpostata (DR-228).
+  .refine((body) => body.newPassword !== body.currentPassword, {
+    message: 'la nuova password deve essere diversa da quella attuale',
+    path: ['newPassword'],
+  });
 
 /** Una veste offerta dal commutatore: un ruolo posseduto e le sue aree. */
 export const roleHeld = z.object({

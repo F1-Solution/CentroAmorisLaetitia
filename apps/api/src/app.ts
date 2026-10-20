@@ -15,6 +15,7 @@ import {
 import type { AdminArea } from './auth/areas.js';
 import type { Config } from './config.js';
 import { createObjectStore, type ObjectStore } from './lib/objectStore.js';
+import { accountRoutes } from './modules/accounts/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { contentRoutes } from './modules/content/routes.js';
 import { mediaRoutes } from './modules/media/routes.js';
@@ -67,6 +68,8 @@ async function registerArea(
 export interface BuildOptions {
   /** Archivio a oggetti alternativo: i test non parlano con un bucket vero. */
   readonly objectStore?: ObjectStore;
+  /** Destinazione alternativa dei log: le prove la catturano per cercarvi dati che non devono esserci. */
+  readonly logStream?: NodeJS.WritableStream;
 }
 
 /**
@@ -97,6 +100,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
       level: config.LOG_LEVEL,
       // Nei log non entrano intestazioni di autenticazione né cookie.
       redact: ['req.headers.authorization', 'req.headers.cookie'],
+      ...(options.logStream ? { stream: options.logStream } : {}),
     },
     // Il proxy davanti è Caddy (ADR-003): l'indirizzo del client arriva da lui.
     trustProxy: true,
@@ -163,6 +167,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
         { name: 'redirect', description: 'Reindirizzamenti, che sono dati' },
         { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
         { name: 'impostazioni', description: 'Impostazioni globali del sito' },
+        { name: 'account', description: 'Persone e permessi' },
         { name: 'pubblico', description: 'Lettura senza accesso, per il sito pubblico' },
       ],
     },
@@ -229,7 +234,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     redirectRoutes,
     roleRoutes,
   );
-  await registerArea(app, 'impostazioni', settingsRoutes);
+  await registerArea(app, 'impostazioni', settingsRoutes, accountRoutes);
 
   // Lettura pubblica (DR-104): fuori da ogni area, senza permessi, sola lettura.
   await app.register(publicRoutes, { prefix: '/public' });

@@ -28,13 +28,24 @@ import {
   serializeBlockDocument,
 } from '@amoris/blocks/model';
 import { createDatabase, schema } from '@amoris/db';
-import { count, isNotNull, sql } from 'drizzle-orm';
+import { count, eq, isNotNull, sql } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import { loadConfig } from '../src/config.js';
-import { ALL_PERMISSIONS } from '../src/auth/permissions.js';
+import { PERMISSIONS } from '../src/auth/permissions.js';
 import { hashPassword } from '../src/lib/password.js';
 
 const SYNTHETIC_EMAIL = 'redazione@esempio.invalid';
+const ADMINISTRATION_EMAIL = 'amministrazione@esempio.invalid';
+const BOTH_ROLES_EMAIL = 'entrambi@esempio.invalid';
+
+/** I cinque permessi storici del ruolo `editor`. */
+const EDITOR_PERMISSIONS = [
+  PERMISSIONS.contentRead,
+  PERMISSIONS.contentWrite,
+  PERMISSIONS.contentPublish,
+  PERMISSIONS.mediaWrite,
+  PERMISSIONS.settingsWrite,
+] as const;
 
 /** Un PNG di un pixel: basta a esistere come file, e non raffigura nulla. */
 const ONE_PIXEL_PNG = Buffer.from(
@@ -86,32 +97,46 @@ try {
    * successiva. È la stessa regola che l'importer applica a ogni fase.
    */
   await db.transaction(async (tx) => {
-    // --- Ruoli, permessi, persona -------------------------------------------
+    // --- Ruoli, permessi, persone ---------------------------------------------
+    // Permessi e ruolo `amministrazione` arrivano dalla migrazione (DR-227).
     const roles = await tx
       .insert(schema.roles)
       .values([
-        { key: 'redazione', label: 'Redazione', isSystem: true },
+        { key: 'editor', label: 'Redazione', isSystem: true },
         { key: 'segreteria', label: 'Segreteria', isSystem: false },
       ])
       .returning({ id: schema.roles.id, key: schema.roles.key });
-    const redazione = roles.find((role) => role.key === 'redazione');
-    if (!redazione) throw new Error('ruolo di redazione non creato');
+    const editor = roles.find((role) => role.key === 'editor');
+    if (!editor) throw new Error('ruolo di redazione non creato');
+    const [administration] = await tx
+      .select({ id: schema.roles.id })
+      .from(schema.roles)
+      .where(eq(schema.roles.key, 'amministrazione'));
+    if (!administration) throw new Error('ruolo amministrazione assente: applica le migrazioni');
 
-    await tx.insert(schema.permissions).values(ALL_PERMISSIONS.map((key) => ({ key, label: key })));
     await tx
       .insert(schema.rolePermissions)
-      .values(ALL_PERMISSIONS.map((key) => ({ roleId: redazione.id, permissionKey: key })));
+      .values(EDITOR_PERMISSIONS.map((key) => ({ roleId: editor.id, permissionKey: key })));
 
-    const [person] = await tx
+    const passwordHash = await hashPassword(password, config);
+    const people = await tx
       .insert(schema.users)
-      .values({
-        email: SYNTHETIC_EMAIL,
-        fullName: 'Redazione di prova',
-        passwordHash: await hashPassword(password, config),
-      })
-      .returning({ id: schema.users.id });
-    if (!person) throw new Error('persona di prova non creata');
-    await tx.insert(schema.userRoles).values({ userId: person.id, roleId: redazione.id });
+      .values([
+        { email: SYNTHETIC_EMAIL, fullName: 'Redazione di prova', passwordHash },
+        { email: ADMINISTRATION_EMAIL, fullName: 'Amministrazione di prova', passwordHash },
+        { email: BOTH_ROLES_EMAIL, fullName: 'Persona con due ruoli di prova', passwordHash },
+      ])
+      .returning({ id: schema.users.id, email: schema.users.email });
+    const person = people.find((entry) => entry.email === SYNTHETIC_EMAIL);
+    const administrator = people.find((entry) => entry.email === ADMINISTRATION_EMAIL);
+    const both = people.find((entry) => entry.email === BOTH_ROLES_EMAIL);
+    if (!person || !administrator || !both) throw new Error('persone di prova non create');
+    await tx.insert(schema.userRoles).values([
+      { userId: person.id, roleId: editor.id },
+      { userId: administrator.id, roleId: administration.id },
+      { userId: both.id, roleId: editor.id },
+      { userId: both.id, roleId: administration.id },
+    ]);
 
     // --- Impostazioni globali (criterio 1D-35) --------------------------------
     await tx.insert(schema.settings).values([
@@ -288,7 +313,7 @@ try {
         label: 'Avvisi',
         termId: term.id,
         visibility: 'roles' as const,
-        visibleToRoles: ['redazione'],
+        visibleToRoles: ['editor'],
       },
       {
         menuId: menu.id,
@@ -318,14 +343,15 @@ try {
         isActive: false,
       },
     ]);
-
   });
 
   console.error(
     [
       'Seme sintetico scritto.',
-      `Persona: ${SYNTHETIC_EMAIL} — la password è quella che hai passato in SEED_PASSWORD.`,
-      'Ruolo: Redazione, con tutti e cinque i permessi.',
+      'Account, tutti con la password passata in SEED_PASSWORD:',
+      `- ${SYNTHETIC_EMAIL}: Redazione, con i cinque permessi della redazione;`,
+      `- ${ADMINISTRATION_EMAIL}: Amministrazione (persone e permessi, registro, impostazioni del sito);`,
+      `- ${BOTH_ROLES_EMAIL}: entrambi i ruoli, sceglie l’area dopo l’accesso.`,
       'Dentro: 2 media, 2 contenuti, 1 categoria, 1 menu con i quattro casi di visibilità,',
       '2 redirect, 6 impostazioni, 4 template SEO.',
       'I file dei media non sono nell’archivio a oggetti: le righe sì, i byte no.',

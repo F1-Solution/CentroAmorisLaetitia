@@ -29,6 +29,8 @@ declare module 'fastify' {
     matchedRoute: string | null;
     /** Azione dichiarata dalla rotta, annotata all'ingresso per lo stesso motivo. */
     declaredAudit: { action: string; entityType?: string } | null;
+    /** Entità toccata e dettaglio non personale, quando il gestore li conosce solo a lavoro fatto. */
+    auditTarget: { entityId: string; detail?: Record<string, unknown> } | null;
   }
 }
 
@@ -44,6 +46,7 @@ function activeRoleLabel(request: FastifyRequest): string | undefined {
 export function registerAuditHook(app: FastifyInstance): void {
   app.decorateRequest('matchedRoute', null);
   app.decorateRequest('declaredAudit', null);
+  app.decorateRequest('auditTarget', null);
 
   app.addHook('onRequest', async (request) => {
     request.matchedRoute = request.routeOptions.url ?? null;
@@ -71,9 +74,14 @@ export function registerAuditHook(app: FastifyInstance): void {
         actorUserId: request.auth?.user.userId ?? null,
         actorLabel: request.auth?.user.fullName ?? null,
         entityType: declared?.entityType ?? null,
-        entityId: params?.id ?? params?.key ?? params?.scope ?? null,
+        entityId:
+          request.auditTarget?.entityId ?? params?.id ?? params?.key ?? params?.scope ?? null,
         outcome: reply.statusCode < 400 ? 'success' : 'failure',
-        detail: { status: reply.statusCode, method: request.method },
+        detail: {
+          ...request.auditTarget?.detail,
+          status: reply.statusCode,
+          method: request.method,
+        },
         ipHash: hashAddress(request.ip, app.config.IP_HASH_SALT),
         sessionId: request.auth?.sessionId ?? null,
         // «Registrato da Rosalba, area Tesoreria»: l'atto resta attribuito

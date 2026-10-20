@@ -30,6 +30,10 @@ export default function AccessoPage(): React.JSX.Element {
   // Chi ha già una sessione non vede la schermata di accesso.
   useEffect(() => {
     if (loading || !user) return;
+    if (user.mustChangePassword) {
+      router.replace('/password');
+      return;
+    }
     router.replace(user.activeArea ? AREA_DEFINITIONS[user.activeArea].href : '/scelta-area');
   }, [loading, user, router]);
 
@@ -39,6 +43,10 @@ export default function AccessoPage(): React.JSX.Element {
     setError(null);
     try {
       const next = await signIn(email, password);
+      if (next.mustChangePassword) {
+        router.replace('/password');
+        return;
+      }
       // Chi possiede una sola veste non incontra la domanda: entra e basta
       // (`ux-proposals.md` §4.3). Il servizio ha già scelto per lui.
       const only = vestmentsOf(next).length === 1 && next.activeArea;

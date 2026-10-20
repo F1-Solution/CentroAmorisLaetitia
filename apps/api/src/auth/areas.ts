@@ -13,9 +13,8 @@
  * un valore dichiarato qui sarebbe una pianificazione.
  *
  * L'area non si deriva dal permesso, si dichiara sulla rotta. I due assi non
- * coincidono: SEO e redirect stanno in Redazione (`design-system.md` §7.2) ma
- * usano `settings.write`, perché ADR-007 §3.2 fissa cinque permessi e non se
- * ne aggiungono di iniziativa.
+ * coincidono: SEO e redirect stanno in Redazione (`design-system.md` §7.2) e
+ * usano `settings.write`; le impostazioni del sito hanno un permesso proprio (DR-227).
  */
 export const ADMIN_AREAS = ['redazione', 'impostazioni'] as const;
 

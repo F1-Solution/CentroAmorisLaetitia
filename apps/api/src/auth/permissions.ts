@@ -2,17 +2,18 @@
  * Permessi. ADR-007 §3.2: le autorizzazioni si esprimono come permessi, **mai**
  * come confronti sul nome del ruolo.
  *
- * L'elenco è esattamente quello che ADR-007 §3.2 nomina per la Fase 1: non ne
- * viene aggiunto nessuno, perché ruoli e autorizzazioni non si decidono di
- * iniziativa. I moduli nuovi di questa wave si appoggiano ai cinque esistenti
- * secondo la mappa qui sotto, che è una scelta di attuazione e non un permesso
- * nuovo:
+ * L'elenco è quello di ADR-007 §3.2 più tre permessi dell'amministrazione
+ * (DR-227): ruoli e autorizzazioni non si decidono di iniziativa. I moduli si
+ * appoggiano ai permessi secondo la mappa qui sotto, che è una scelta di
+ * attuazione:
  *
  * | Modulo | Lettura | Scrittura |
  * |---|---|---|
  * | `content`, `terms`, `menu` | `content.read` | `content.write`, più `content.publish` per pubblicare e ritirare |
  * | `media` | `content.read` | `media.write` |
- * | `seo`, `redirects`, `settings` | `content.read` | `settings.write` |
+ * | `seo`, `redirects` | `content.read` | `settings.write` |
+ * | `settings` | `site.settings.write` | `site.settings.write` |
+ * | `accounts` | `users.manage` | `users.manage` |
  *
  * Una divisione più fine è un cambio di dati — righe in `role_permissions` — non
  * un cambio di codice.
@@ -23,6 +24,9 @@ export const PERMISSIONS = {
   contentPublish: 'content.publish',
   mediaWrite: 'media.write',
   settingsWrite: 'settings.write',
+  usersManage: 'users.manage',
+  auditRead: 'audit.read',
+  siteSettingsWrite: 'site.settings.write',
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

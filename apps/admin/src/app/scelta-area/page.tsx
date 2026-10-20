@@ -2,9 +2,9 @@
 
 import '../accesso/accesso.css';
 
-import { AreaChoiceScreen } from '@amoris/ui';
+import { Alert, AreaChoiceScreen } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
 import { AREA_DEFINITIONS } from '../../lib/areas';
 import { useSession, vestmentsOf, type Vestment } from '../../lib/session';
@@ -24,8 +24,13 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
   const { user, loading, chooseVestment } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const autoChosen = useRef(false);
 
   const vestments = vestmentsOf(user);
+  const only = useMemo(() => {
+    const owned = vestmentsOf(user);
+    return owned.length === 1 ? owned[0] : undefined;
+  }, [user]);
 
   useEffect(() => {
     if (loading) return;
@@ -33,10 +38,23 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
       router.replace('/accesso');
       return;
     }
-    if (vestments.length === 1 && user.activeArea) {
-      router.replace(AREA_DEFINITIONS[user.activeArea].href);
+    if (user.mustChangePassword) {
+      router.replace('/password');
+      return;
     }
-  }, [loading, user, vestments.length, router]);
+    if (only && user.activeArea) {
+      router.replace(AREA_DEFINITIONS[user.activeArea].href);
+      return;
+    }
+    // Dopo il cambio obbligatorio della password la sessione rinnovata non ha
+    // veste: con una sola possibile la si indossa, senza mostrare una scelta.
+    if (only && !autoChosen.current) {
+      autoChosen.current = true;
+      void chooseVestment(only)
+        .then(() => router.replace(AREA_DEFINITIONS[only.area].href))
+        .catch(() => setError('Non è stato possibile contattare il servizio.'));
+    }
+  }, [loading, user, only, chooseVestment, router]);
 
   if (loading || !user) return null;
 
@@ -72,6 +90,12 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
         loading={busy}
         {...(error ? { errorText: error } : {})}
       />
+      {/* Con una sola area la schermata di scelta non si disegna: l'errore va detto qui. */}
+      {error && vestments.length === 1 ? (
+        <Alert variant="error" title="Non è stato possibile entrare">
+          {error}
+        </Alert>
+      ) : null}
     </main>
   );
 }

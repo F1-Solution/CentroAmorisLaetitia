@@ -1,15 +1,15 @@
 {
-  "misuratoIl": "2026-09-24",
+  "misuratoIl": "2026-10-20",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
   "soglia": 500,
   "sogliaPrecedente": 300,
   "sogliaModificataIl": "2026-09-21",
-  "nucleo": 439,
-  "totale": 861,
+  "nucleo": 469,
+  "totale": 1298,
   "esitoNucleo": "rispettata",
   "esitoTotale": "superata",
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "ADR-007 §6 contromisura 3. La soglia è stata portata da 300 a 500 il 2026-09-21 da DR-070, che supera DR-066. Con la soglia nuova il nucleo la rispetta (439 su 500) e il totale la supera ancora (861 su 500): la deroga di DR-066 resta quindi necessaria per la lettura del totale, e non è stata revocata. La regola di conteggio non è cambiata e nessuna riga di logica è stata aggiunta: le due righe in più sono l'effetto della formattazione con Prettier di auth/sessions.ts, che nella wave 1D-W10 è passato da 188 a 190 righe eseguibili senza che il codice cambiasse.",
+  "conseguenza": "Misura del 2026-10-20 (wave 1G-W1, T6, correzioni della revisione di sicurezza): nucleo 469 su 500, totale 1298; deroga di DR-066 per il totale invariata, soglia di DR-070. ADR-007 §6 contromisura 3. Precedente (T3): nucleo 472, totale 1263.",
   "misuraPrecedente": {
     "misuratoIl": "2026-09-20",
     "nucleo": 437,
@@ -18,17 +18,20 @@
   },
   "perFile": {
     "lib/crypto.ts": 18,
-    "lib/password.ts": 19,
+    "lib/password.ts": 33,
     "auth/areas.ts": 9,
-    "auth/areaMap.ts": 7,
+    "auth/areaMap.ts": 10,
     "auth/audit.ts": 37,
-    "auth/loginAttempts.ts": 42,
-    "auth/permissions.ts": 14,
+    "auth/loginAttempts.ts": 43,
+    "auth/permissions.ts": 17,
     "auth/sessions.ts": 190,
-    "plugins/auth.ts": 73,
+    "plugins/auth.ts": 82,
     "plugins/csrf.ts": 30,
-    "modules/auth/routes.ts": 326,
-    "modules/auth/schemas.ts": 41,
-    "modules/auth/service.ts": 55
+    "modules/auth/routes.ts": 350,
+    "modules/auth/schemas.ts": 46,
+    "modules/auth/service.ts": 57,
+    "modules/accounts/routes.ts": 169,
+    "modules/accounts/schemas.ts": 8,
+    "modules/accounts/service.ts": 199
   }
 }

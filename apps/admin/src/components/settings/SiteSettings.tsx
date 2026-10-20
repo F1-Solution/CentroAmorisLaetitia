@@ -157,7 +157,7 @@ function SettingRow({ setting, canWrite, onSaved }: RowProps): React.JSX.Element
 
 export function SiteSettings(): React.JSX.Element {
   const { user } = useSession();
-  const canWrite = user?.permissions.includes('settings.write') ?? false;
+  const canWrite = user?.permissions.includes('site.settings.write') ?? false;
 
   const [rows, setRows] = useState<readonly Setting[]>([]);
   const [loading, setLoading] = useState(true);

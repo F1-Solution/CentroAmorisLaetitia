@@ -66,6 +66,18 @@ export const ACCESSO = {
   password: 'password-sintetica-end-to-end',
 } as const;
 
+/** La persona con il solo ruolo `amministrazione` (DR-227), stessa password del seme. */
+export const ACCESSO_AMMINISTRAZIONE = {
+  email: 'amministrazione@esempio.invalid',
+  password: ACCESSO.password,
+} as const;
+
+/** La persona con entrambi i ruoli: dopo l'accesso vede la scelta dell'area. */
+export const ACCESSO_ENTRAMBI = {
+  email: 'entrambi@esempio.invalid',
+  password: ACCESSO.password,
+} as const;
+
 /** Indirizzo del database di servizio, da cui si deriva quello dell'end-to-end. */
 export function urlPerDatabase(nome: string): string {
   const base =

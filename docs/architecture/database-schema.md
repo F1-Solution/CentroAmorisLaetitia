@@ -61,8 +61,8 @@ rispetta.
 | Tabella | Requisito o decisione | Perché esiste |
 |---|---|---|
 | `users` | RU-01, DR-033 | Il primo rilascio ha un CMS: serve chi vi accede |
-| `roles`, `user_roles` | **RU-02** | Più ruoli sulla stessa persona. In Fase 1 il ruolo è uno, ma la relazione esiste già: aggiungerla dopo costerebbe una migrazione su dati reali |
-| `permissions`, `role_permissions` | RU-01 | Le autorizzazioni si esprimono come permessi, mai confrontando il nome del ruolo (ADR-007 §3.2) |
+| `roles`, `user_roles` | **RU-02** | Più ruoli sulla stessa persona. Dalla wave `1G-W1` i ruoli sono due: `editor`, etichetta «Redazione», e `amministrazione` (DR-220, DR-229, migrazione `0008`). La relazione esisteva già: aggiungerla dopo costerebbe una migrazione su dati reali |
+| `permissions`, `role_permissions` | RU-01 | Le autorizzazioni si esprimono come permessi, mai confrontando il nome del ruolo (ADR-007 §3.2). Otto permessi (DR-227): `content.read`, `content.write`, `content.publish`, `media.write`, `settings.write` della redazione; `users.manage`, `audit.read`, `site.settings.write` dell'amministrazione |
 | `sessions` | ADR-007 | Sessioni opache revocabili; si conserva il digest, mai il token |
 | `audit_log` | **RU-05, RN-03** | Obbligatorio dal primo giorno. Append-only |
 | `media` | RC-03, ADR-004 | 170 allegati |

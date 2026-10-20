@@ -94,12 +94,14 @@ describe('fase users', () => {
     const roles = await testDb.db.select().from(schema.roles).where(eq(schema.roles.key, 'editor'));
     expect(roles).toHaveLength(1);
     expect(roles[0]?.isSystem).toBe(true);
+    expect(roles[0]?.label).toBe('Redazione');
 
+    // Otto permessi e tre per `amministrazione` li semina la migrazione (DR-227); i cinque di `editor` la fase.
     const permissions = await testDb.db.select().from(schema.permissions);
-    expect(permissions).toHaveLength(5);
+    expect(permissions).toHaveLength(8);
 
     const rolePermissions = await testDb.db.select().from(schema.rolePermissions);
-    expect(rolePermissions).toHaveLength(5);
+    expect(rolePermissions).toHaveLength(8);
 
     const userRoles = await testDb.db.select().from(schema.userRoles);
     expect(userRoles).toHaveLength(1);
@@ -193,8 +195,9 @@ describe('fase users', () => {
 
       const users = await fresh.db.select().from(schema.users);
       expect(users).toHaveLength(0);
+      // Resta il solo ruolo seminato dalla migrazione: `editor` non è stato scritto.
       const roles = await fresh.db.select().from(schema.roles);
-      expect(roles).toHaveLength(0);
+      expect(roles.map((role) => role.key)).toEqual(['amministrazione']);
       const idMapRows = await fresh.db.select().from(schema.importIdMap);
       expect(idMapRows).toHaveLength(0);
     } finally {

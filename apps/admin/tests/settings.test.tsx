@@ -37,7 +37,7 @@ vi.mock('../src/lib/session', async () => {
         email: 'direzione@esempio.invalid',
         fullName: 'Impostazioni di prova',
         mustChangePassword: false,
-        permissions: ['content.read', 'settings.write'],
+        permissions: ['site.settings.write'],
         activeRoleId: 'r1',
         activeArea: 'impostazioni',
         rolesHeld: [
