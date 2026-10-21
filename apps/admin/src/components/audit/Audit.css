@@ -1,0 +1,44 @@
+/* Registro delle operazioni. */
+
+.amoris-audit__views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+  margin-bottom: var(--amoris-space-3);
+}
+
+.amoris-audit__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--amoris-space-3);
+  align-items: end;
+  margin-bottom: var(--amoris-space-4);
+  padding: var(--amoris-space-4);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+}
+
+.amoris-audit__filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-audit__more {
+  margin-top: var(--amoris-space-3);
+}
+
+.amoris-audit__error {
+  margin-bottom: var(--amoris-space-3);
+}
+
+.amoris-audit__options {
+  margin: var(--amoris-space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amoris-audit__picked {
+  display: grid;
+  gap: var(--amoris-space-1);
+}

@@ -1580,3 +1580,21 @@ Nella stessa risposta l'utente ha chiesto di chiudere la `1G-W0` con commit e pu
 | DR-229 | 2026-10-20 | Chiavi dei ruoli (D125) | **Opzione A** — chiave `editor` mantenuta e rietichettata «Redazione»; nuovo ruolo `amministrazione`; seme sintetico allineato | B — rinominare `editor` in `redazione` | «D125=A» | Proprietario | ruoli, seme, `1G-W1` | sì | idem |
 
 Nella stessa risposta l'utente ha chiesto l'esecuzione della `1G-W1` secondo `W1-PLAN.md`, con fermata alle conferme previste.
+
+## 77. Round 68 — risposta del 2026-10-20, decisioni della `1G-W2`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-230 | 2026-10-20 | Che cosa mostra il registro delle operazioni (D126) | **Opzione A** — tutte le righe scritte (modifiche, accessi, cambi d'area, invii dei form del sito, operazioni rifiutate), con filtri e vista predefinita «Modifiche al sito» | B — solo modifiche dall'area amministrativa · C — senza invii dei form | «D126=A» | Proprietario | registro, `1G-W2` | sì | `W2-PLAN.md` §3 |
+| DR-231 | 2026-10-20 | Fonte di «ultima modifica di X il Y» (D127) | **Opzione A** — dal registro: ultima operazione riuscita fra creazione, modifica, pubblicazione, ritiro e titolo SEO; copie di lavoro escluse; altrimenti data della sorgente | B — colonna `updated_by` | «D127=A» | Proprietario | editor, `1G-W2` | sì | idem |
+| DR-232 | 2026-10-20 | Conservazione delle righe del registro (D128) | **Opzione A** — non decisa nella `1G-W2`; registro append-only senza scadenza; durata portata alla 1F con il parere di chi segue la privacy del Centro | B — durata decisa ora | «D128=A» | Proprietario | registro, privacy, Fase 1F | sì | idem, `CLAUDE.md` §Privacy |
+
+Nella stessa risposta l'utente ha chiesto l'esecuzione della `1G-W2` secondo `W2-PLAN.md`, con fermata alle conferme previste.
+
+## 78. Round 69 — risposta del 2026-10-21, chiusura della `1G-W2`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-233 | 2026-10-21 | Copie di lavoro nella vista «Modifiche al sito» del registro (D129) | **Opzione B** — i salvataggi e gli scarti delle copie di lavoro escono dalla vista predefinita; restano in «Tutte le operazioni» e con il filtro per operazione | A — lasciarli nella vista predefinita (`W2-PLAN.md` §5) | «D129=B» | Proprietario | registro, `1G-W3` (termine: `1G-W7`) | sì | DR-230, `W2-PLAN.md` §5 |
+
+Nella stessa risposta l'utente ha confermato commit e push della `1G-W2` e chiesto il piano di dettaglio della `1G-W3`.

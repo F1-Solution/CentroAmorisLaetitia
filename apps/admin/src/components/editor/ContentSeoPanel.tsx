@@ -82,12 +82,15 @@ export interface ContentSeoPanelProps {
   /** Percorso pubblico del contenuto, mostrato nell'anteprima del risultato. */
   readonly path: string;
   readonly disabled: boolean;
+  /** Chiamata dopo un salvataggio riuscito. */
+  readonly onSaved?: () => void;
 }
 
 export function ContentSeoPanel({
   contentId,
   path,
   disabled,
+  onSaved,
 }: ContentSeoPanelProps): React.JSX.Element {
   const [draft, setDraft] = useState(EMPTY);
   const touched = useRef(new Set<keyof SeoDraft>());
@@ -185,6 +188,7 @@ export function ContentSeoPanel({
       setExists(true);
       setSaved(true);
       touched.current.clear();
+      onSaved?.();
     } catch (caught) {
       setError(messageOf(caught));
     } finally {

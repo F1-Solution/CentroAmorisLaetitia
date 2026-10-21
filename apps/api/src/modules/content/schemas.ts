@@ -1,3 +1,4 @@
+import { lastChangeSchema } from '@amoris/contracts';
 import { blockDocumentSchema } from '@amoris/blocks/model';
 import { z } from 'zod';
 
@@ -68,6 +69,9 @@ export const contentDetail = contentSummary.extend({
   featuredMediaId: z.string().nullable(),
   legacyFormat: z.string().nullable(),
 });
+
+/** Solo la lettura di un contenuto porta l'ultima modifica (D127). */
+export const contentDetailWithChange = contentDetail.extend({ lastChange: lastChangeSchema });
 
 export const listResponse = z.object({
   items: z.array(contentSummary),

@@ -25,6 +25,12 @@ import {
   type BlockDocument,
 } from '@amoris/blocks';
 
+/** Ultima modifica di un contenuto: `GET /contents/:id` (wave 1G-W2). */
+export type LastChange =
+  | { readonly actorLabel: string; readonly occurredAt: string }
+  | { readonly importedAt: string }
+  | null;
+
 /** Layout della pagina (DR-139). */
 export type PageLayout = 'right_sidebar' | 'full_width' | 'no_sidebar';
 
@@ -42,6 +48,8 @@ export interface ContentDetail {
   readonly contentHtml: string;
   readonly updatedAt: string;
   readonly publishedAt: string | null;
+  /** Ultima modifica dal registro, o data della sorgente importata (D127). */
+  readonly lastChange?: LastChange;
 }
 
 export interface EditorState {

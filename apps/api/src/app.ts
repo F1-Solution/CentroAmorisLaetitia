@@ -27,6 +27,7 @@ import { roleRoutes } from './modules/roles/routes.js';
 import { seoRoutes } from './modules/seo/routes.js';
 import { settingsRoutes } from './modules/settings/routes.js';
 import { termRoutes } from './modules/terms/routes.js';
+import { auditRoutes } from './modules/audit/routes.js';
 import { registerAuditHook } from './plugins/audit.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerCsrf } from './plugins/csrf.js';
@@ -168,6 +169,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
         { name: 'ruoli', description: 'Elenco dei ruoli, di sola lettura' },
         { name: 'impostazioni', description: 'Impostazioni globali del sito' },
         { name: 'account', description: 'Persone e permessi' },
+        { name: 'registro', description: 'Registro delle operazioni, di sola lettura' },
         { name: 'pubblico', description: 'Lettura senza accesso, per il sito pubblico' },
       ],
     },
@@ -234,7 +236,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     redirectRoutes,
     roleRoutes,
   );
-  await registerArea(app, 'impostazioni', settingsRoutes, accountRoutes);
+  await registerArea(app, 'impostazioni', settingsRoutes, accountRoutes, auditRoutes);
 
   // Lettura pubblica (DR-104): fuori da ogni area, senza permessi, sola lettura.
   await app.register(publicRoutes, { prefix: '/public' });

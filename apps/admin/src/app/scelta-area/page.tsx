@@ -6,8 +6,14 @@ import { Alert, AreaChoiceScreen } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
-import { AREA_DEFINITIONS } from '../../lib/areas';
+import { AREA_DEFINITIONS, type AreaId } from '../../lib/areas';
+import { readReturnParam, safeReturnPath } from '../../lib/returnPath';
 import { useSession, vestmentsOf, type Vestment } from '../../lib/session';
+
+/** Meta dopo la scelta: il percorso di arrivo se è dell'area scelta, altrimenti la home dell'area. */
+function destinationFor(area: AreaId): string {
+  return safeReturnPath(readReturnParam(), area) ?? AREA_DEFINITIONS[area].href;
+}
 
 /**
  * Scelta della veste. `ux-proposals.md` §4.3: **chi ne possiede una sola non
@@ -43,7 +49,7 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
       return;
     }
     if (only && user.activeArea) {
-      router.replace(AREA_DEFINITIONS[user.activeArea].href);
+      router.replace(destinationFor(user.activeArea));
       return;
     }
     // Dopo il cambio obbligatorio della password la sessione rinnovata non ha
@@ -51,7 +57,7 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
     if (only && !autoChosen.current) {
       autoChosen.current = true;
       void chooseVestment(only)
-        .then(() => router.replace(AREA_DEFINITIONS[only.area].href))
+        .then(() => router.replace(destinationFor(only.area)))
         .catch(() => setError('Non è stato possibile contattare il servizio.'));
     }
   }, [loading, user, only, chooseVestment, router]);
@@ -65,7 +71,7 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
     setError(null);
     try {
       await chooseVestment(vestment);
-      router.replace(AREA_DEFINITIONS[vestment.area].href);
+      router.replace(destinationFor(vestment.area));
     } catch (caught) {
       setError(
         caught instanceof ApiError

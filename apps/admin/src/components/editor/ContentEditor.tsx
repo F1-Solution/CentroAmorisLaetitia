@@ -87,6 +87,23 @@ function timeOf(iso: string): string {
   return new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 }
 
+function dayOf(iso: string): string {
+  return new Date(iso).toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/** «Ultima modifica di X il Y» dal registro, o la data della sorgente importata (D127). */
+function lastChangeText(change: ContentDetail['lastChange']): string | null {
+  if (!change) return null;
+  if ('importedAt' in change) {
+    return `Importato dalla sorgente, ultima modifica il ${dayOf(change.importedAt)}`;
+  }
+  return `Ultima modifica di ${change.actorLabel} il ${dayOf(change.occurredAt)} alle ${timeOf(change.occurredAt)}`;
+}
+
 export interface ContentEditorProps {
   readonly contentId: string;
   readonly sectionId: string;
@@ -279,6 +296,20 @@ export function ContentEditor({
     await load();
   }
 
+  /** Rilegge solo «ultima modifica»: lo stato dell'editor non si tocca. */
+  const refreshLastChange = useCallback(async () => {
+    try {
+      const fresh = await api<ContentDetail>(`/contents/${contentId}`);
+      const { lastChange } = fresh;
+      if (lastChange === undefined) return;
+      setContent((current) => (current ? { ...current, lastChange } : current));
+    } catch {
+      // La riga resta quella già mostrata: il salvataggio è comunque riuscito.
+    }
+  }, [contentId]);
+
+  const lastChange = lastChangeText(content?.lastChange);
+
   const statusText = (() => {
     if (!content || !state) return 'Caricamento in corso…';
     if (pending) return 'Modifiche non ancora salvate nella copia di lavoro.';
@@ -350,6 +381,8 @@ export function ContentEditor({
           : {})}
       />
 
+      {lastChange ? <p className="amoris-editor__last-change">{lastChange}</p> : null}
+
       {loadError ? (
         <Alert variant="error" title="Il contenuto non si apre">
           {loadError}
@@ -391,11 +424,19 @@ export function ContentEditor({
               contentId={contentId}
               initial={content.pageLayout}
               disabled={readOnly}
-              onSaved={(pageLayout) => setContent({ ...content, pageLayout })}
+              onSaved={(pageLayout) => {
+                setContent({ ...content, pageLayout });
+                void refreshLastChange();
+              }}
             />
           ) : null}
           {tab === 'seo' ? (
-            <ContentSeoPanel contentId={contentId} path={content?.path ?? ''} disabled={readOnly} />
+            <ContentSeoPanel
+              contentId={contentId}
+              path={content?.path ?? ''}
+              disabled={readOnly}
+              onSaved={() => void refreshLastChange()}
+            />
           ) : null}
         </Tabs>
       ) : null}

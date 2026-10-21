@@ -3,5 +3,6 @@
  * verita' per validazione, tipi TypeScript e specifica OpenAPI.
  */
 export * from './accounts.js';
+export * from './audit.js';
 export * from './errors.js';
 export * from './health.js';

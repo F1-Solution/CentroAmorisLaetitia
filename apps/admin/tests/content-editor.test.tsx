@@ -303,4 +303,68 @@ describe('editor del contenuto', () => {
     renderEditor();
     expect(await screen.findByText(/non è valido secondo il modello/)).toBeInTheDocument();
   });
+
+  it('W2-3: mostra «Ultima modifica di X il Y» dal registro', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({
+          ...syntheticContent,
+          lastChange: { actorLabel: 'Ada Inventata', occurredAt: '2026-10-01T12:30:00.000Z' },
+        });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    const riga = await screen.findByText(/^Ultima modifica di Ada Inventata il /);
+    expect(riga.textContent).toMatch(/01\/10\/2026/);
+  });
+
+  it('W2-3: per un contenuto mai toccato dopo l’import cita la sorgente', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({
+          ...syntheticContent,
+          lastChange: { importedAt: '2026-03-05T12:00:00.000Z' },
+        });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    const riga = await screen.findByText(/^Importato dalla sorgente, ultima modifica il /);
+    expect(riga.textContent).toMatch(/05\/03\/2026/);
+  });
+
+  it('m5: dopo il salvataggio del layout «Ultima modifica» si aggiorna senza ricaricare l’editor', async () => {
+    const user = userEvent.setup();
+    let reads = 0;
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path === `/contents/${syntheticContent.id}` && !options?.method) {
+        reads += 1;
+        return Promise.resolve({
+          ...syntheticContent,
+          lastChange:
+            reads === 1
+              ? { actorLabel: 'Ada Inventata', occurredAt: '2026-10-01T12:30:00.000Z' }
+              : { actorLabel: 'Bruno Inventato', occurredAt: '2026-10-02T09:00:00.000Z' },
+        });
+      }
+      if (options?.method === 'PATCH') return Promise.resolve(undefined);
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    await screen.findByText(/^Ultima modifica di Ada Inventata il /);
+    await user.click(screen.getByRole('tab', { name: 'Pagina' }));
+    await user.selectOptions(screen.getByLabelText('Layout della pagina'), 'full_width');
+    await user.click(screen.getByRole('button', { name: 'Salva il layout' }));
+    expect(await screen.findByText(/^Ultima modifica di Bruno Inventato il /)).toBeInTheDocument();
+    // Si rilegge solo il contenuto: la copia di lavoro non viene richiesta di nuovo.
+    expect(apiMock.mock.calls.filter((c) => (c[0] as string).endsWith('/draft'))).toHaveLength(1);
+  });
+
+  it('W2-3: senza ultima modifica non scrive nulla', async () => {
+    renderEditor();
+    await waitForEditor();
+    expect(screen.queryByText(/Ultima modifica/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Importato dalla sorgente/)).not.toBeInTheDocument();
+  });
 });

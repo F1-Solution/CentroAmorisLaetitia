@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AREA_DEFINITIONS, type AreaId } from '../lib/areas';
+import { choiceUrlFor } from '../lib/returnPath';
 import { useSession, vestmentsOf } from '../lib/session';
 
 export interface AreaShellProps {
@@ -74,14 +75,16 @@ export function AreaShell({
       return;
     }
     if (!user.activeArea) {
-      router.replace('/scelta-area');
+      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
       return;
     }
     // Arrivati in un'area diversa da quella indossata: non si indovina, si
     // manda a scegliere. Cambiare veste da solo al posto della persona
     // vanificherebbe il punto 2 del §4.4, che è proprio non poterlo fare per
-    // distrazione.
-    if (user.activeArea !== area) router.replace('/scelta-area');
+    // distrazione; il percorso di arrivo si conserva per dopo la scelta.
+    if (user.activeArea !== area) {
+      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
+    }
   }, [loading, user, area, router]);
 
   if (loading || !user || user.mustChangePassword || user.activeArea !== area) return null;

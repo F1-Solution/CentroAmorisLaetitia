@@ -37,7 +37,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-027 | [Ripristino della description e 1E-19](HO-027-ripristino-description-e-1E-19-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-199, DR-200) |
 | HO-028 | [Home senza titolo e confronto di 1E-19](HO-028-home-senza-titolo-e-confronto-1E-19-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-201, DR-202), 1E-19 4/4 |
 | HO-029 | [Ultime difformità dell'audit](HO-029-ultime-difformita-dell-audit-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-204, DR-205) |
-| HO-030 | [Migrazione `0008` e primo account di amministrazione](HO-030-migrazione-0008-1G-W1.md) | 1G | ✅ migrazione eseguita il 2026-10-20 (copia `amoris-prima-HO-030-2026-10-20.dump`); 🕓 account di amministrazione da creare (§3) |
+| HO-030 | [Migrazione `0008` e primo account di amministrazione](HO-030-migrazione-0008-1G-W1.md) | 1G | ✅ migrazione eseguita il 2026-10-20 (copia `amoris-prima-HO-030-2026-10-20.dump`); account di amministrazione creato dall'utente (§3) |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

@@ -33,3 +33,10 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.amoris-editor__last-change {
+  margin: 0 0 var(--amoris-space-3);
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}

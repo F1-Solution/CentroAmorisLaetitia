@@ -2,9 +2,11 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
+import { lastChangeOf } from '../audit/service.js';
 import { sessionOf } from '../../plugins/auth.js';
 import {
   contentDetail,
+  contentDetailWithChange,
   createBody,
   draftBody,
   draftDetail,
@@ -78,13 +80,16 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
         tags: ['contenuti'],
         summary: 'Un contenuto con il suo documento a blocchi',
         params: idParam,
-        response: { 200: contentDetail, ...errorResponses(401, 403, 404) },
+        response: { 200: contentDetailWithChange, ...errorResponses(401, 403, 404) },
       },
     },
     async (request, reply) => {
       const row = await findById(app.db, request.params.id);
       if (!row) return reply.callNotFound();
-      return reply.send(serialiseDetail(row));
+      const lastChange = await lastChangeOf(app.db, row.id);
+      // Porta il nome di una persona: non resta in cache.
+      void reply.header('Cache-Control', 'no-store');
+      return reply.send({ ...serialiseDetail(row), lastChange });
     },
   );
 
@@ -102,6 +107,7 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const id = await create(app.db, request.body, sessionOf(request).user.userId);
+      request.auditTarget = { entityId: id };
       const row = await findById(app.db, id);
       if (!row) throw new Error('contenuto creato ma non rileggibile');
       return reply.code(201).send(serialiseDetail(row));
