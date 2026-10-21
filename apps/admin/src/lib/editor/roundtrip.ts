@@ -40,6 +40,8 @@ export interface ContentDetail {
   readonly status: 'draft' | 'published' | 'archived';
   readonly slug: string;
   readonly path: string;
+  /** Pagina genitore; sempre nulla per una notizia (S2). */
+  readonly parentId: string | null;
   readonly title: string;
   readonly excerpt: string | null;
   readonly showTitle: boolean;
@@ -50,6 +52,8 @@ export interface ContentDetail {
   readonly publishedAt: string | null;
   /** Ultima modifica dal registro, o data della sorgente importata (D127). */
   readonly lastChange?: LastChange;
+  /** Pagina iniziale: il sito la serve a `/` qualunque sia il suo percorso (S3). */
+  readonly isHome?: boolean;
 }
 
 export interface EditorState {

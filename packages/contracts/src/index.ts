@@ -4,5 +4,6 @@
  */
 export * from './accounts.js';
 export * from './audit.js';
+export * from './contentAddress.js';
 export * from './errors.js';
 export * from './health.js';

@@ -1,4 +1,4 @@
-import { lastChangeSchema } from '@amoris/contracts';
+import { addressPlanSchema, lastChangeSchema } from '@amoris/contracts';
 import { blockDocumentSchema } from '@amoris/blocks/model';
 import { z } from 'zod';
 
@@ -70,8 +70,14 @@ export const contentDetail = contentSummary.extend({
   legacyFormat: z.string().nullable(),
 });
 
-/** Solo la lettura di un contenuto porta l'ultima modifica (D127). */
-export const contentDetailWithChange = contentDetail.extend({ lastChange: lastChangeSchema });
+/**
+ * Solo la lettura di un contenuto porta l'ultima modifica (D127), e se è la pagina
+ * iniziale, che il sito serve a `/` qualunque sia il suo percorso (S3).
+ */
+export const contentDetailWithChange = contentDetail.extend({
+  lastChange: lastChangeSchema,
+  isHome: z.boolean(),
+});
 
 export const listResponse = z.object({
   items: z.array(contentSummary),
@@ -82,13 +88,46 @@ export const listResponse = z.object({
   }),
 });
 
+/** Caratteri ammessi in un segmento del percorso; `%` solo come codifica completa (D136-A). */
+const SLUG_PATTERN = /^(?:[a-z0-9._~!$&()*+,;=:@-]|%[0-9a-f]{2})+$/;
+
+/** Lo slug decodificato; `null` se una codifica non corrisponde a un carattere. */
+export function decodeSlug(slug: string): string | null {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return null;
+  }
+}
+
+/** Perché lo slug, decodificato, non è un segmento che il sito possa servire (D136-A, DR-240). */
+function decodedSlugProblem(slug: string): string | null {
+  // Un carattere non ammesso lo segnala già l'espressione.
+  if (!SLUG_PATTERN.test(slug)) return null;
+  const decoded = decodeSlug(slug);
+  if (decoded === null) return 'lo slug contiene una codifica che non corrisponde a un carattere';
+  if (decoded === '.' || decoded === '..') {
+    return 'lo slug non può essere «.» né «..», nemmeno codificati: il browser li toglie dall’indirizzo';
+  }
+  if (/[/\\]/.test(decoded)) return 'lo slug non può contenere barre, nemmeno codificate';
+  if (/\p{Cc}/u.test(decoded)) return 'lo slug non può contenere caratteri di controllo';
+  return null;
+}
+
+/** Un segmento del percorso: la stessa regola alla creazione e al cambio d'indirizzo. */
+export const slugSchema = z
+  .string()
+  .min(1)
+  .max(200)
+  .regex(SLUG_PATTERN, 'lo slug contiene caratteri non ammessi nel percorso')
+  .superRefine((slug, ctx) => {
+    const problem = decodedSlugProblem(slug);
+    if (problem) ctx.addIssue({ code: 'custom', message: problem });
+  });
+
 export const createBody = z.object({
   type: contentTypeSchema,
-  slug: z
-    .string()
-    .min(1)
-    .max(200)
-    .regex(/^[a-z0-9._~%!$&()*+,;=:@-]+$/, 'lo slug contiene caratteri non ammessi nel percorso'),
+  slug: slugSchema,
   title: z.string().min(1).max(500),
   parentId: z.string().uuid().nullable().optional(),
   excerpt: z.string().max(5000).nullable().optional(),
@@ -97,16 +136,43 @@ export const createBody = z.object({
   blocks: blockDocument.optional(),
 });
 
-/** Il titolo vuoto è ammesso solo se il contenuto lo ha già vuoto (DR-201): lo verifica il servizio. */
-export const updateBody = createBody.partial().extend({
-  title: z.string().max(500).optional(),
-  isSticky: z.boolean().optional(),
-  featuredMediaId: z.string().uuid().nullable().optional(),
-  contentHtml: z.string().optional(),
-  contentText: z.string().optional(),
-});
+/**
+ * Il titolo vuoto è ammesso solo se il contenuto lo ha già vuoto (DR-201): lo verifica il servizio.
+ * Slug e genitore cambiano solo con `PUT /contents/:id/address`: una chiave in più è un 400.
+ */
+export const updateBody = createBody
+  .omit({ slug: true, parentId: true })
+  .partial()
+  .extend({
+    title: z.string().max(500).optional(),
+    isSticky: z.boolean().optional(),
+    featuredMediaId: z.string().uuid().nullable().optional(),
+    contentHtml: z.string().optional(),
+    contentText: z.string().optional(),
+  })
+  .strict();
 
 export const idParam = z.object({ id: z.string().uuid() });
+
+/** Cambio d'indirizzo (wave 1G-W3): risposte in `@amoris/contracts`. */
+export { addressOptionsSchema, addressPlanSchema } from '@amoris/contracts';
+
+/** Anteprima: `parentId` assente o vuoto vuol dire primo livello. */
+export const addressPreviewQuery = z.object({
+  slug: slugSchema,
+  parentId: z.union([z.literal(''), z.string().uuid()]).optional(),
+});
+
+/** L'indirizzo d'arrivo completo: `parentId` nullo vuol dire primo livello. */
+export const addressChangeBody = z.object({
+  slug: slugSchema,
+  parentId: z.string().uuid().nullable(),
+});
+
+export const addressChangeResponse = z.object({
+  content: contentDetailWithChange,
+  plan: addressPlanSchema,
+});
 
 /**
  * Copie di lavoro (DR-068). L'editor vi salva da solo; il contenuto pubblicato

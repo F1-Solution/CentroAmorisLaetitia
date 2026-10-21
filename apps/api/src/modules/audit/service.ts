@@ -1,7 +1,7 @@
 import type { AuditContentOption, AuditItem, LastChange } from '@amoris/contracts';
 import { schema, type Database } from '@amoris/db';
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
-import { CHANGE_ACTIONS } from './actions.js';
+import { DEFAULT_VIEW_ACTIONS } from './actions.js';
 import { encodeCursor, type AuditQuery } from './schemas.js';
 
 /** Sola lettura di `audit_log`, che resta append-only. */
@@ -16,7 +16,8 @@ function conditions(query: AuditQuery): SQL[] {
   const where: SQL[] = [];
   // Un'azione esplicita prevale sulla vista.
   if (query.action) where.push(eq(auditLog.action, query.action));
-  else if (query.view === 'changes') where.push(inArray(auditLog.action, [...CHANGE_ACTIONS]));
+  else if (query.view === 'changes')
+    where.push(inArray(auditLog.action, [...DEFAULT_VIEW_ACTIONS]));
   if (query.entityType === 'content') {
     where.push(inArray(auditLog.entityType, ['content', 'content_seo']));
   } else if (query.entityType) {
@@ -173,8 +174,14 @@ export async function searchContents(db: Database, search: string): Promise<Audi
     .limit(10);
 }
 
-/** Azioni che cambiano la pagina pubblica; le copie di lavoro non contano (D127). */
-const PUBLIC_CHANGES = ['content.create', 'content.update', 'content.publish', 'content.unpublish'];
+/** Azioni che cambiano la pagina pubblica, compreso il cambio d'indirizzo (S5); le copie di lavoro non contano (D127). */
+const PUBLIC_CHANGES = [
+  'content.create',
+  'content.update',
+  'content.publish',
+  'content.unpublish',
+  'content.address.update',
+];
 
 export async function lastChangeOf(db: Database, contentId: string): Promise<LastChange> {
   const { auditLog } = schema;

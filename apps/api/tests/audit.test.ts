@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { AUTH_ACTIONS } from '../src/auth/audit.js';
-import { CHANGE_ACTIONS } from '../src/modules/audit/actions.js';
+import { CHANGE_ACTIONS, DEFAULT_VIEW_ACTIONS } from '../src/modules/audit/actions.js';
 import {
   ADMIN_EMAIL,
   BOTH_EMAIL,
@@ -92,7 +92,7 @@ describe('elenco chiuso delle azioni', () => {
         declared.add(match[1] ?? '');
       }
     }
-    expect(declared.size).toBe(26);
+    expect(declared.size).toBe(27);
     const runtime = ['account.deactivate', 'account.reactivate', 'account.roles'];
     expect([...CHANGE_ACTIONS].sort()).toEqual([...declared, ...runtime].sort());
   });
@@ -174,6 +174,44 @@ describe('vista e filtri', () => {
     expect(tutto.items.map((item) => item.action).sort()).toEqual(
       ['POST /forms/:slug/submissions', 'auth.login', 'content.create'].sort(),
     );
+  });
+
+  it('DR-233: la vista predefinita non mostra le copie di lavoro, «all» e il filtro per azione sì', async () => {
+    await seed({ action: 'content.draft.save', entityType: 'content', entityId: 'copie' });
+    await seed({ action: 'content.draft.discard', entityType: 'content', entityId: 'copie' });
+    await seed({ action: 'content.update', entityType: 'content', entityId: 'copie' });
+    const predefinita = await page({ entityId: 'copie' });
+    expect(predefinita.items.map((item) => item.action)).toEqual(['content.update']);
+    const esplicita = await page({ entityId: 'copie', view: 'changes' });
+    expect(esplicita.items.map((item) => item.action)).toEqual(['content.update']);
+    const tutto = await page({ entityId: 'copie', view: 'all' });
+    expect(tutto.items.map((item) => item.action).sort()).toEqual([
+      'content.draft.discard',
+      'content.draft.save',
+      'content.update',
+    ]);
+    // Un'azione esplicita prevale sulla vista, anche senza `view`.
+    const salvataggi = await page({ entityId: 'copie', action: 'content.draft.save' });
+    expect(salvataggi.items.map((item) => item.action)).toEqual(['content.draft.save']);
+    const scarti = await page({ entityId: 'copie', action: 'content.draft.discard' });
+    expect(scarti.items.map((item) => item.action)).toEqual(['content.draft.discard']);
+  });
+
+  it('DR-233: la vista predefinita deriva da CHANGE_ACTIONS meno le due copie di lavoro', () => {
+    expect([...DEFAULT_VIEW_ACTIONS].sort()).toEqual(
+      CHANGE_ACTIONS.filter(
+        (a) => a !== 'content.draft.save' && a !== 'content.draft.discard',
+      ).sort(),
+    );
+    expect(DEFAULT_VIEW_ACTIONS).toHaveLength(CHANGE_ACTIONS.length - 2);
+  });
+
+  it('S5: il cambio d’indirizzo è una modifica al sito e compare nella vista predefinita', async () => {
+    await seed({ action: 'content.address.update', entityType: 'content', entityId: 'indirizzo' });
+    const predefinita = await page({ entityId: 'indirizzo' });
+    expect(predefinita.items.map((item) => item.action)).toEqual(['content.address.update']);
+    const filtrata = await page({ action: 'content.address.update', entityId: 'indirizzo' });
+    expect(filtrata.items).toHaveLength(1);
   });
 
   it('la vista «all» include anche le azioni non dichiarate', async () => {

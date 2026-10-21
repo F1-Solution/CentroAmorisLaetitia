@@ -289,3 +289,67 @@ describe('creazione di un redirect (criterio 1D-34)', () => {
     expect(JSON.stringify(corpo.error.details)).toContain('sourcePath');
   });
 });
+
+describe('destinazione dei redirect manuali: mai fuori dal sito (D137-A, DR-241)', () => {
+  // `//host` e `/\host` il browser li legge come un altro sito; `\` e i caratteri di controllo non sono indirizzi.
+  const REFUSED = [
+    '//sito-estraneo.example/x/',
+    '/\\sito-estraneo.example/x/',
+    '/a\\b/',
+    '/a\u0000b/',
+    '/a\tb/',
+  ];
+
+  const crea = (sourcePath: string, targetPath: string) =>
+    harness.app.inject({
+      method: 'POST',
+      url: '/redirects',
+      headers: signed.writeHeaders,
+      payload: { sourcePath, targetPath, statusCode: 301, kind: 'exact', note: null },
+    });
+
+  const regole = () => harness.db.select().from(schema.redirects).orderBy(schema.redirects.id);
+
+  it('alla creazione e alla modifica si rifiutano, con il motivo in italiano sul campo', async () => {
+    const creata = await crea('/destinazione-da-cambiare/', '/destinazione-normale/');
+    expect(creata.statusCode, creata.body).toBe(201);
+    const id = (creata.json() as { id: string }).id;
+    const prima = await regole();
+
+    for (const targetPath of REFUSED) {
+      for (const risposta of [
+        await crea('/destinazione-rifiutata/', targetPath),
+        await harness.app.inject({
+          method: 'PATCH',
+          url: `/redirects/${id}`,
+          headers: signed.writeHeaders,
+          payload: { targetPath },
+        }),
+      ]) {
+        expect(risposta.statusCode, JSON.stringify(targetPath)).toBe(400);
+        const corpo = risposta.json() as {
+          error: { code: string; details: { path: string; message: string }[] };
+        };
+        expect(corpo.error.code).toBe('VALIDATION_FAILED');
+        expect(corpo.error.details).toContainEqual({
+          path: expect.stringContaining('targetPath'),
+          message: expect.stringMatching(/^la destinazione /),
+        });
+      }
+    }
+    expect(await regole()).toEqual(prima);
+  });
+
+  it('una destinazione normale resta ammessa, alla creazione e alla modifica', async () => {
+    const creata = await crea('/destinazione-ammessa/', '/pagina-sintetica/?vista=intera');
+    expect(creata.statusCode, creata.body).toBe(201);
+    const modificata = await harness.app.inject({
+      method: 'PATCH',
+      url: `/redirects/${(creata.json() as { id: string }).id}`,
+      headers: signed.writeHeaders,
+      payload: { targetPath: '/altra-pagina-sintetica/' },
+    });
+    expect(modificata.statusCode, modificata.body).toBe(200);
+    expect(modificata.json()).toMatchObject({ targetPath: '/altra-pagina-sintetica/' });
+  });
+});

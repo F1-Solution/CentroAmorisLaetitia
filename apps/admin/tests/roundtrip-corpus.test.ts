@@ -44,6 +44,7 @@ function asContent(entry: CorpusEntry): ContentDetail {
     status: 'published',
     slug: entry.slug,
     path: `/${entry.slug}/`,
+    parentId: null,
     title: entry.name,
     excerpt: null,
     showTitle: true,

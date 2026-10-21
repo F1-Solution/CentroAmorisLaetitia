@@ -41,6 +41,7 @@ import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
+import { ContentAddressPanel } from './ContentAddressPanel';
 import { ContentLayoutPanel } from './ContentLayoutPanel';
 import { ContentSeoPanel } from './ContentSeoPanel';
 import { EditorPreview } from './EditorPreview';
@@ -131,6 +132,7 @@ export function ContentEditor({
   const [viewport, setViewport] = useState<PreviewViewport>('desktop');
   const [pending, setPending] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reloading, setReloading] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
 
   const canWrite = user?.permissions.includes('content.write') ?? false;
@@ -138,6 +140,7 @@ export function ContentEditor({
   const readOnly = !canWrite;
 
   const load = useCallback(async () => {
+    setReloading(true);
     try {
       const fresh = await api<ContentDetail>(`/contents/${contentId}`);
       const outcome = openContent(fresh);
@@ -176,6 +179,8 @@ export function ContentEditor({
           ? caught.fullMessage
           : 'Non è stato possibile contattare il servizio.',
       );
+    } finally {
+      setReloading(false);
     }
   }, [contentId]);
 
@@ -415,6 +420,7 @@ export function ContentEditor({
             { key: 'contenuto', label: 'Contenuto' },
             { key: 'pagina', label: 'Pagina' },
             { key: 'seo', label: 'SEO' },
+            { key: 'indirizzo', label: 'Indirizzo' },
           ]}
           activeKey={tab}
           onChange={setTab}
@@ -436,6 +442,32 @@ export function ContentEditor({
               path={content?.path ?? ''}
               disabled={readOnly}
               onSaved={() => void refreshLastChange()}
+            />
+          ) : null}
+          {tab === 'indirizzo' && content ? (
+            <ContentAddressPanel
+              contentId={contentId}
+              type={content.type}
+              slug={content.slug}
+              parentId={content.parentId}
+              isHome={content.isHome ?? false}
+              disabled={readOnly}
+              // Mentre l'editor salva o rilegge, una lettura vecchia riporterebbe l'indirizzo di prima.
+              paused={busy || reloading}
+              onSaved={(moved) =>
+                // Solo indirizzo e ultima modifica: il documento sullo schermo resta com'è (§6 caso 4).
+                setContent((current) =>
+                  current
+                    ? {
+                        ...current,
+                        slug: moved.slug,
+                        parentId: moved.parentId,
+                        path: moved.path,
+                        ...(moved.lastChange !== undefined ? { lastChange: moved.lastChange } : {}),
+                      }
+                    : current,
+                )
+              }
             />
           ) : null}
         </Tabs>

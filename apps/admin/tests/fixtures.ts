@@ -114,6 +114,7 @@ export const syntheticContent: ContentDetail = {
   status: 'published',
   slug: 'pagina-di-prova',
   path: '/pagina-di-prova/',
+  parentId: null,
   title: 'Pagina di prova',
   excerpt: null,
   showTitle: true,

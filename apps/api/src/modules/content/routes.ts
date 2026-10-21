@@ -1,10 +1,18 @@
-import type { FastifyInstance } from 'fastify';
+import type { LastChange } from '@amoris/contracts';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { lastChangeOf } from '../audit/service.js';
+import { homeContentId } from '../public/service.js';
 import { sessionOf } from '../../plugins/auth.js';
+import { applyAddressChange, parentOptions, planAddressChange } from './address.js';
 import {
+  addressChangeBody,
+  addressChangeResponse,
+  addressOptionsSchema,
+  addressPlanSchema,
+  addressPreviewQuery,
   contentDetail,
   contentDetailWithChange,
   createBody,
@@ -49,6 +57,11 @@ function serialiseDetail(row: NonNullable<Awaited<ReturnType<typeof findById>>>)
   };
 }
 
+/** La riga del registro la scrive il hook all'invio della risposta: l'ultima modifica è già questa (D127). */
+function changeBy(request: FastifyRequest): LastChange {
+  return { actorLabel: sessionOf(request).user.fullName, occurredAt: new Date().toISOString() };
+}
+
 export async function contentRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
 
@@ -87,9 +100,93 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       const row = await findById(app.db, request.params.id);
       if (!row) return reply.callNotFound();
       const lastChange = await lastChangeOf(app.db, row.id);
+      const isHome = (await homeContentId(app.db)) === row.id;
       // Porta il nome di una persona: non resta in cache.
       void reply.header('Cache-Control', 'no-store');
-      return reply.send({ ...serialiseDetail(row), lastChange });
+      return reply.send({ ...serialiseDetail(row), lastChange, isHome });
+    },
+  );
+
+  typed.get(
+    '/contents/:id/address/options',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentRead),
+      schema: {
+        tags: ['contenuti'],
+        summary: 'Le pagine che possono fare da genitore del contenuto',
+        params: idParam,
+        response: { 200: addressOptionsSchema, ...errorResponses(401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const items = await parentOptions(app.db, request.params.id);
+      if (!items) return reply.callNotFound();
+      return reply.send({ items });
+    },
+  );
+
+  typed.get(
+    '/contents/:id/address/preview',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentRead),
+      schema: {
+        tags: ['contenuti'],
+        summary: 'Anteprima del cambio d’indirizzo: percorsi e redirect, senza scrivere nulla',
+        params: idParam,
+        querystring: addressPreviewQuery,
+        response: { 200: addressPlanSchema, ...errorResponses(400, 401, 403, 404, 409) },
+      },
+    },
+    async (request, reply) => {
+      const plan = await planAddressChange(app.db, request.params.id, {
+        slug: request.query.slug,
+        parentId: request.query.parentId || null,
+      });
+      if (!plan) return reply.callNotFound();
+      return reply.send(plan);
+    },
+  );
+
+  typed.put(
+    '/contents/:id/address',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentWrite),
+      config: { audit: { action: 'content.address.update', entityType: ENTITY } },
+      schema: {
+        tags: ['contenuti'],
+        summary:
+          'Cambia slug e genitore: percorsi delle discendenti e redirect nella stessa transazione',
+        params: idParam,
+        body: addressChangeBody,
+        response: { 200: addressChangeResponse, ...errorResponses(400, 401, 403, 404, 409) },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const plan = await applyAddressChange(
+        app.db,
+        id,
+        request.body,
+        sessionOf(request).permissions,
+      );
+      if (!plan) return reply.callNotFound();
+      // Solo conteggi: gli indirizzi stanno già in contenuti e regole.
+      request.auditTarget = {
+        entityId: id,
+        detail: {
+          moved: plan.moves.length,
+          redirectsCreated: plan.redirectsCreated.length,
+          redirectsRetargeted: plan.redirectsRetargeted.length,
+          redirectsRemoved: plan.redirectsRemoved.length,
+        },
+      };
+      const row = await findById(app.db, id);
+      if (!row) throw new Error('contenuto spostato ma non rileggibile');
+      const isHome = (await homeContentId(app.db)) === id;
+      return reply.send({
+        content: { ...serialiseDetail(row), lastChange: changeBy(request), isHome },
+        plan,
+      });
     },
   );
 

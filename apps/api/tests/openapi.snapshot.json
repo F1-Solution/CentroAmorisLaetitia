@@ -1920,7 +1920,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200,
-                    "pattern": "^[a-z0-9._~%!$&()*+,;=:@-]+$"
+                    "pattern": "^(?:[a-z0-9._~!$&()*+,;=:@-]|%[0-9a-f]{2})+$"
                   },
                   "title": {
                     "type": "string",
@@ -2474,6 +2474,9 @@
                           "additionalProperties": false
                         }
                       ]
+                    },
+                    "isHome": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -2495,7 +2498,8 @@
                     "contentHtml",
                     "featuredMediaId",
                     "legacyFormat",
-                    "lastChange"
+                    "lastChange",
+                    "isHome"
                   ],
                   "additionalProperties": false
                 }
@@ -2688,21 +2692,9 @@
                       "post"
                     ]
                   },
-                  "slug": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 200,
-                    "pattern": "^[a-z0-9._~%!$&()*+,;=:@-]+$"
-                  },
                   "title": {
                     "type": "string",
                     "maxLength": 500
-                  },
-                  "parentId": {
-                    "nullable": true,
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   },
                   "excerpt": {
                     "nullable": true,
@@ -2753,7 +2745,8 @@
                   "contentText": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -3201,6 +3194,1344 @@
                     null
                   ],
                   "description": "Operazione eseguita, nessun contenuto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Risorsa non trovata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Risorsa non trovata"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflitto con lo stato attuale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Conflitto con lo stato attuale"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contents/{id}/address/options": {
+      "get": {
+        "summary": "Le pagine che possono fare da genitore del contenuto",
+        "tags": [
+          "contenuti"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Risorsa non trovata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Risorsa non trovata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contents/{id}/address/preview": {
+      "get": {
+        "summary": "Anteprima del cambio d’indirizzo: percorsi e redirect, senza scrivere nulla",
+        "tags": [
+          "contenuti"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "^(?:[a-z0-9._~!$&()*+,;=:@-]|%[0-9a-f]{2})+$"
+            },
+            "in": "query",
+            "name": "slug",
+            "required": true
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    ""
+                  ]
+                },
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "parentId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "moves": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "from": {
+                            "type": "string"
+                          },
+                          "to": {
+                            "type": "string"
+                          },
+                          "published": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "from",
+                          "to",
+                          "published"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "redirectsCreated": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "from": {
+                            "type": "string"
+                          },
+                          "to": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "from",
+                          "to"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "redirectsRetargeted": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "from": {
+                            "type": "string"
+                          },
+                          "to": {
+                            "type": "string"
+                          },
+                          "origin": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "source",
+                          "from",
+                          "to",
+                          "origin"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "redirectsRemoved": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "source",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "canonical",
+                              "menu"
+                            ]
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "id",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "moves",
+                    "redirectsCreated",
+                    "redirectsRetargeted",
+                    "redirectsRemoved",
+                    "warnings"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Richiesta non valida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Richiesta non valida"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Risorsa non trovata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Risorsa non trovata"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflitto con lo stato attuale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Conflitto con lo stato attuale"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contents/{id}/address": {
+      "put": {
+        "summary": "Cambia slug e genitore: percorsi delle discendenti e redirect nella stessa transazione",
+        "tags": [
+          "contenuti"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "pattern": "^(?:[a-z0-9._~!$&()*+,;=:@-]|%[0-9a-f]{2})+$"
+                  },
+                  "parentId": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "required": [
+                  "slug",
+                  "parentId"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "page",
+                            "post"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "draft",
+                            "published",
+                            "archived"
+                          ]
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "parentId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "publishedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "showTitle": {
+                          "type": "boolean"
+                        },
+                        "pageLayout": {
+                          "type": "string",
+                          "enum": [
+                            "right_sidebar",
+                            "full_width",
+                            "no_sidebar"
+                          ]
+                        },
+                        "isSticky": {
+                          "type": "boolean"
+                        },
+                        "excerpt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "blocks": {
+                          "type": "object",
+                          "properties": {
+                            "schema": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "blocks": {
+                              "type": "array",
+                              "items": {}
+                            }
+                          },
+                          "required": [
+                            "schema",
+                            "blocks"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "contentHtml": {
+                          "type": "string"
+                        },
+                        "featuredMediaId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "legacyFormat": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "lastChange": {
+                          "nullable": true,
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "actorLabel": {
+                                  "type": "string"
+                                },
+                                "occurredAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "actorLabel",
+                                "occurredAt"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "importedAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "importedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "isHome": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "status",
+                        "slug",
+                        "path",
+                        "title",
+                        "position",
+                        "parentId",
+                        "publishedAt",
+                        "updatedAt",
+                        "showTitle",
+                        "pageLayout",
+                        "isSticky",
+                        "excerpt",
+                        "blocks",
+                        "contentHtml",
+                        "featuredMediaId",
+                        "legacyFormat",
+                        "lastChange",
+                        "isHome"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "moves": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "from": {
+                                "type": "string"
+                              },
+                              "to": {
+                                "type": "string"
+                              },
+                              "published": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "from",
+                              "to",
+                              "published"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "redirectsCreated": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string"
+                              },
+                              "to": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "from",
+                              "to"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "redirectsRetargeted": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "source": {
+                                "type": "string"
+                              },
+                              "from": {
+                                "type": "string"
+                              },
+                              "to": {
+                                "type": "string"
+                              },
+                              "origin": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "source",
+                              "from",
+                              "to",
+                              "origin"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "redirectsRemoved": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "source": {
+                                "type": "string"
+                              },
+                              "target": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "source",
+                              "target"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "canonical",
+                                  "menu"
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id",
+                              "value"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "moves",
+                        "redirectsCreated",
+                        "redirectsRetargeted",
+                        "redirectsRemoved",
+                        "warnings"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "plan"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Richiesta non valida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Richiesta non valida"
                 }
               }
             }

@@ -348,9 +348,10 @@ const contentColumns = {
 /**
  * La pagina iniziale: il contenuto indicato da `settings['site.home_content_id']`
  * (`wp-to-postgres-mapping.md` §5, `page_on_front`). Si serve a `/`, e il suo
- * percorso proprio risponde 301 verso `/`, come nella sorgente.
+ * percorso proprio risponde 301 verso `/`, come nella sorgente. Basta `select`:
+ * la legge anche il cambio d'indirizzo dentro la sua transazione.
  */
-export async function homeContentId(db: Database): Promise<string | null> {
+export async function homeContentId(db: Pick<Database, 'select'>): Promise<string | null> {
   const [row] = await db
     .select({ value: schema.settings.value })
     .from(schema.settings)
@@ -896,9 +897,10 @@ export async function publishedPosts(db: Database, query: PostQuery) {
  * La regola che si applica a un percorso: prima quella esatta, poi il prefisso più
  * lungo, che porta con sé il resto del percorso. Solo regole attive. È così che
  * `/wp-content/uploads/2017/09/file.png` diventa `/media/2017/09/file.png`
- * (ADR-004, la regola `prefix` importata).
+ * (ADR-004, la regola `prefix` importata). Basta `select`: il cambio d'indirizzo
+ * la usa nella sua transazione per il controllo finale delle catene.
  */
-export async function resolveRedirect(db: Database, path: string) {
+export async function resolveRedirect(db: Pick<Database, 'select'>, path: string) {
   const homeId = await homeContentId(db);
   if (homeId && path !== '/') {
     const [home] = await db

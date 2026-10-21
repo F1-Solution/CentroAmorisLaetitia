@@ -2,6 +2,17 @@ import { z } from 'zod';
 
 const path = z.string().min(1).max(2000).startsWith('/', 'il percorso deve iniziare con una barra');
 
+/** La destinazione resta sul sito: `//host` e `/\host` il browser li legge come un altro sito (D137-A, DR-241). */
+const targetPath = path
+  .refine(
+    (value) => !/^\/[/\\]/.test(value),
+    'la destinazione non può iniziare con «//» né con «/\\»: porterebbe fuori dal sito',
+  )
+  .refine(
+    (value) => !/[\\\p{Cc}]/u.test(value),
+    'la destinazione non può contenere «\\» né caratteri di controllo',
+  );
+
 export const redirectSchema = z.object({
   id: z.string(),
   sourcePath: z.string(),
@@ -33,7 +44,7 @@ export const listResponse = z.object({
 
 export const createBody = z.object({
   sourcePath: path,
-  targetPath: path,
+  targetPath,
   statusCode: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).optional(),
   kind: z.enum(['exact', 'prefix']).optional(),
   note: z.string().max(2000).nullable().optional(),

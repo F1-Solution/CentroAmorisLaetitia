@@ -1,6 +1,7 @@
 import { databaseNow, schema, type Database } from '@amoris/db';
 import { and, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
+import { newContentPath, withPathLock } from './address.js';
 import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
 
 /**
@@ -24,25 +25,6 @@ const summaryColumns = {
   publishedAt: schema.contents.publishedAt,
   updatedAt: schema.contents.updatedAt,
 };
-
-/**
- * Il percorso discende dal genitore, non si scrive a mano: è ciò che tiene
- * `contents_path_unique` e il vincolo di forma allineati all'albero.
- */
-export async function pathFor(
-  db: Database,
-  parentId: string | null | undefined,
-  slug: string,
-): Promise<string> {
-  if (!parentId) return `/${slug}/`;
-  const [parent] = await db
-    .select({ path: schema.contents.path })
-    .from(schema.contents)
-    .where(eq(schema.contents.id, parentId))
-    .limit(1);
-  if (!parent) throw Object.assign(new Error('genitore inesistente'), { statusCode: 400 });
-  return `${parent.path}${slug}/`;
-}
 
 export async function list(db: Database, query: ListQuery) {
   const filters: SQL[] = [];
@@ -86,25 +68,29 @@ export async function findById(db: Database, id: string) {
   return row ?? null;
 }
 
+/** Il percorso discende dal genitore e si calcola sotto lo stesso blocco del cambio d'indirizzo. */
 export async function create(db: Database, input: CreateInput, authorId: string) {
-  const [row] = await db
-    .insert(schema.contents)
-    .values({
-      type: input.type,
-      status: 'draft',
-      slug: input.slug,
-      path: await pathFor(db, input.parentId ?? null, input.slug),
-      parentId: input.type === 'post' ? null : (input.parentId ?? null),
-      title: input.title,
-      showTitle: input.showTitle ?? true,
-      ...(input.pageLayout ? { pageLayout: input.pageLayout } : {}),
-      excerpt: input.excerpt ?? null,
-      blocks: input.blocks ?? { schema: 1, blocks: [] },
-      authorId,
-    })
-    .returning({ id: schema.contents.id });
-  if (!row) throw new Error('contenuto non creato');
-  return row.id;
+  const target = { slug: input.slug, parentId: input.parentId ?? null };
+  return withPathLock(db, async (tx) => {
+    const [row] = await tx
+      .insert(schema.contents)
+      .values({
+        type: input.type,
+        status: 'draft',
+        slug: input.slug,
+        path: await newContentPath(tx, input.type, target),
+        parentId: target.parentId,
+        title: input.title,
+        showTitle: input.showTitle ?? true,
+        ...(input.pageLayout ? { pageLayout: input.pageLayout } : {}),
+        excerpt: input.excerpt ?? null,
+        blocks: input.blocks ?? { schema: 1, blocks: [] },
+        authorId,
+      })
+      .returning({ id: schema.contents.id });
+    if (!row) throw new Error('contenuto non creato');
+    return row.id;
+  });
 }
 
 /** Un contenuto con titolo non può perderlo; la home importata senza titolo resta salvabile (DR-201). */
@@ -117,9 +103,6 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   const current = await findById(db, id);
   if (!current) return null;
   assertTitleAllowed(input.title, current.title);
-
-  const slug = input.slug ?? current.slug;
-  const parentId = input.parentId === undefined ? current.parentId : (input.parentId ?? null);
 
   // DR-091: l'ora del database, la stessa con cui l'importer registra la fine di un'esecuzione.
   const changes: Record<string, unknown> = { updatedAt: databaseNow() };
@@ -151,14 +134,9 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   // Blocchi senza testo: il testo non si può confrontare, la description importata non vale più.
   if (input.blocks !== undefined && input.contentText === undefined)
     changes.descriptionSource = null;
-  if (input.slug !== undefined || input.parentId !== undefined) {
-    changes.slug = slug;
-    changes.parentId = parentId;
-    changes.path = await pathFor(db, parentId, slug);
-  }
 
   // DR-186: la data di modifica cambia solo se cambia un campo, non a un salvataggio identico (1E-19).
-  const differs = changedFields(input, slug, parentId);
+  const differs = changedFields(input);
   changes.modifiedAt =
     differs.length === 0
       ? sql`${schema.contents.modifiedAt}`
@@ -169,7 +147,7 @@ export async function update(db: Database, id: string, input: UpdateInput) {
 }
 
 /** Le condizioni «il valore inviato è diverso da quello salvato», una per campo inviato. */
-function changedFields(input: UpdateInput, slug: string, parentId: string | null): SQL[] {
+function changedFields(input: UpdateInput): SQL[] {
   const c = schema.contents;
   const differs: SQL[] = [];
   const add = (sent: unknown, condition: SQL) => {
@@ -195,11 +173,6 @@ function changedFields(input: UpdateInput, slug: string, parentId: string | null
     input.contentText,
     sql`regexp_replace(${c.contentText}, '\\s+', ' ', 'g') is distinct from regexp_replace(${input.contentText ?? null}::text, '\\s+', ' ', 'g')`,
   );
-  if (input.slug !== undefined || input.parentId !== undefined) {
-    differs.push(
-      sql`(${c.slug} is distinct from ${slug}::text or ${c.parentId} is distinct from ${parentId}::uuid)`,
-    );
-  }
   return differs;
 }
 

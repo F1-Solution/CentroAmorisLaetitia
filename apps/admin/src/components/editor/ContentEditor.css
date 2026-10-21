@@ -34,6 +34,38 @@
   justify-content: flex-end;
 }
 
+/* Scheda «Indirizzo» e sua conferma (wave 1G-W3). */
+.amoris-editor__address {
+  display: grid;
+  gap: var(--amoris-space-4);
+  max-width: 44rem;
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-editor__address-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-editor__address-result {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.amoris-editor__address-heading {
+  margin: var(--amoris-space-4) 0 var(--amoris-space-2);
+  font-size: var(--amoris-text-base-size);
+  line-height: var(--amoris-text-base-line);
+}
+
+.amoris-editor__address-list {
+  margin: 0;
+  padding-left: var(--amoris-space-6);
+  overflow-wrap: anywhere;
+}
+
 .amoris-editor__last-change {
   margin: 0 0 var(--amoris-space-3);
   color: var(--amoris-text-secondary);

@@ -1598,3 +1598,26 @@ Nella stessa risposta l'utente ha chiesto l'esecuzione della `1G-W2` secondo `W2
 | DR-233 | 2026-10-21 | Copie di lavoro nella vista «Modifiche al sito» del registro (D129) | **Opzione B** — i salvataggi e gli scarti delle copie di lavoro escono dalla vista predefinita; restano in «Tutte le operazioni» e con il filtro per operazione | A — lasciarli nella vista predefinita (`W2-PLAN.md` §5) | «D129=B» | Proprietario | registro, `1G-W3` (termine: `1G-W7`) | sì | DR-230, `W2-PLAN.md` §5 |
 
 Nella stessa risposta l'utente ha confermato commit e push della `1G-W2` e chiesto il piano di dettaglio della `1G-W3`.
+
+## 79. Round 70 — risposta del 2026-10-21, decisioni della `1G-W3`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-234 | 2026-10-21 | Regole che puntano al vecchio indirizzo di un contenuto spostato (D130) | **Opzione A** — tutte le regole esatte che vi puntano, comprese quelle della migrazione, si riscrivono verso il nuovo indirizzo; «181 invariati» di 1G-11 si legge «le 181 regole restano e ognuna porta in un passo alla pagina giusta» | B — riscritte solo le manuali e automatiche · C — spostamento rifiutato se vi punta una regola della migrazione | «D130=A» | Proprietario | redirect, `1G-W3`, 1G-11 | sì | `W3-PLAN.md` §3 |
+| DR-235 | 2026-10-21 | Regole già presenti sugli indirizzi coinvolti (D131) | **Opzione A** — in partenza la regola nascosta dal contenuto prende come destinazione il nuovo indirizzo; in arrivo una regola automatica si toglie, una manuale o della migrazione fa rifiutare lo spostamento con un messaggio che la indica | B — regola nascosta lasciata com'è · C — ogni regola coinvolta modificata o tolta da sé | «D131=A» | Proprietario | redirect, `1G-W3` | sì | idem |
+| DR-236 | 2026-10-21 | Riferimenti scritti a mano al vecchio indirizzo (D132) | **Opzione A** — nessuna riscrittura; l'anteprima avvisa se un canonical o una voce di menu personalizzata indica un vecchio indirizzo | B — riscritti canonical e voci di menu · C — come B più i collegamenti nel testo | «D132=A» | Proprietario | editor, SEO, menu, `1G-W3` | sì | idem, 1E-19 |
+| DR-237 | 2026-10-21 | Slug di primo livello che il sito usa per sé (D133) | **Opzione A** — rifiutati al primo livello, alla creazione e al cambio d'indirizzo, con messaggio in italiano; nessun contenuto esistente toccato | B — nessun controllo | «D133=A» | Proprietario | contenuti, `1G-W3` | sì | idem |
+
+Nella stessa risposta l'utente ha approvato `W3-PLAN.md` e chiesto l'esecuzione della `1G-W3`, con fermata alle conferme previste.
+
+## 80. Round 71 — risposta del 2026-10-21, decisioni emerse dalle revisioni finali della `1G-W3`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-238 | 2026-10-21 | Ritorno all'indirizzo originale con una regola nascosta riusata al primo spostamento (D134) | **Opzione A** — la regola riusata come redirect automatico diventa `origin = 'automatic'`; al ritorno si toglie come ogni regola automatica | B — origine conservata, regola tolta al ritorno se punta allo stesso contenuto · C — ritorno rifiutato | «D134=A» | Proprietario | redirect, `1G-W3` | sì | `W3-PLAN.md` §10, DR-235 |
+| DR-239 | 2026-10-21 | Regola automatica sull'indirizzo d'arrivo di una bozza (D135) | **Opzione A** — si toglie solo se il contenuto che arriva è pubblicato; la conferma dell'editor si apre anche quando il piano riscrive o toglie una regola (S6 esteso) | B — tolta comunque, con conferma estesa · C — come prima | «D135=A» | Proprietario | redirect, editor, `1G-W3` | sì | idem, DR-235 |
+| DR-240 | 2026-10-21 | Slug con segmenti di punto e codifiche percentuali (D136) | **Opzione A** — rifiutati: codifiche `%xx` incomplete, slug che decodificato è `.`/`..` o contiene `/`, `\`, caratteri di controllo; slug riservati sulla forma decodificata; controlli di catena e anello su percorsi normalizzati | B — slug ristretto a `[a-z0-9-]` · C — nessun cambio | «D136=A» | Proprietario | contenuti, sicurezza, `1G-W3` | sì | idem, DR-237 |
+| DR-241 | 2026-10-21 | Destinazioni `//host` e `/\host` nelle regole manuali (D137) | **Opzione A** — rifiutate nello schema dell'API; sito pubblico e proxy invariati | B — anche il proxy · C — rinvio alla 1F | «D137=A» | Proprietario | redirect manuali, sicurezza, `1G-W3` | sì | idem |
+| DR-242 | 2026-10-21 | Permessi del cambio d'indirizzo (D138) | **Opzione A** — oltre a `content.write`, serve `settings.write` quando il piano tocca regole esistenti e `content.publish` quando sposta un contenuto pubblicato | B — solo `content.write` (raccomandazione dell'agente, non scelta) | «D138=A» | Proprietario | permessi, `1G-W3` | sì | idem, ADR-007 |
+
+Nella stessa risposta l'utente ha chiesto l'ondata finale di correzioni e la T6 di `W3-PLAN.md`, con fermata prima del commit.

@@ -253,6 +253,23 @@ describe('registro delle operazioni', () => {
     expect(screen.getAllByText('contenuto non più presente')).toHaveLength(1);
   });
 
+  it("W3-8: il cambio d'indirizzo si legge «Ha cambiato l'indirizzo» e si sceglie fra le operazioni", async () => {
+    const indirizzo = { ...modifica, id: '31', action: 'content.address.update' };
+    apiMock.mockImplementation((path: string) =>
+      Promise.resolve(
+        path === '/accounts' ? { items: persone } : { items: [indirizzo], nextCursor: null },
+      ),
+    );
+    renderPage();
+    const riga = (await screen.findByText("Ha cambiato l'indirizzo", { selector: 'td' })).closest(
+      'tr',
+    ) as HTMLElement;
+    expect(within(riga).getByText('Pagina di prova')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: "Ha cambiato l'indirizzo" })).toHaveValue(
+      'content.address.update',
+    );
+  });
+
   it('un’azione senza etichetta mostra il codice grezzo', async () => {
     renderPage();
     expect(await screen.findByText('nuova.azione')).toBeInTheDocument();

@@ -2,7 +2,7 @@ import { AUTH_ACTIONS } from '../../auth/audit.js';
 
 /**
  * Elenco chiuso delle azioni delle modifiche fatte dall'area amministrativa:
- * le 26 dichiarate con `config.audit` nei moduli, più le tre che `accounts`
+ * le 27 dichiarate con `config.audit` nei moduli, più le tre che `accounts`
  * sceglie a runtime. Una prova confronta l'elenco con i sorgenti.
  */
 export const CHANGE_ACTIONS = [
@@ -11,6 +11,7 @@ export const CHANGE_ACTIONS = [
   'content.publish',
   'content.unpublish',
   'content.delete',
+  'content.address.update',
   'content.draft.save',
   'content.draft.discard',
   'media.upload',
@@ -36,6 +37,11 @@ export const CHANGE_ACTIONS = [
   'account.reactivate',
   'account.roles',
 ] as const;
+
+/** Vista predefinita: le modifiche al sito, senza salvataggi e scarti delle copie di lavoro (DR-233). */
+export const DEFAULT_VIEW_ACTIONS: readonly string[] = CHANGE_ACTIONS.filter(
+  (action) => action !== 'content.draft.save' && action !== 'content.draft.discard',
+);
 
 /** Azione che il hook scrive per gli invii dei form del sito (metodo e percorso). */
 export const FORM_SUBMISSION_ACTION = 'POST /forms/:slug/submissions';
