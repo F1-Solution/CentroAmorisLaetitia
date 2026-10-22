@@ -9,6 +9,7 @@ import {
   PageHeader,
   SaveBar,
   Tabs,
+  TextArea,
   TextField,
   insertableBlockTypes,
   type DropZone,
@@ -42,7 +43,9 @@ import { AreaShell } from '../AreaShell';
 import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
 import { ContentAddressPanel } from './ContentAddressPanel';
+import { ContentDeleteAction } from './ContentDeleteAction';
 import { ContentLayoutPanel } from './ContentLayoutPanel';
+import { ContentListingPanel } from './ContentListingPanel';
 import { ContentSeoPanel } from './ContentSeoPanel';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
@@ -72,6 +75,10 @@ interface DraftDetail {
 }
 
 const AUTOSAVE_DELAY_MS = 1500;
+
+/** D141-A detto prima di scrivere: lo stesso rifiuto del servizio, con dove rimediare. */
+const CATEGORY_REQUIRED =
+  'Per pubblicare una notizia serve almeno una categoria: sceglila nella scheda «Elenchi e archivi».';
 
 /**
  * «Archiviato» a schermo si dice «ritirato», che è la parola con cui ADR-006
@@ -235,9 +242,15 @@ export function ContentEditor({
 
   async function writeToContent(publish: boolean | null): Promise<void> {
     if (!state || !content) return;
+    // Il rifiuto arriva prima del PATCH: altrimenti il contenuto cambierebbe senza essere pubblicato.
+    if (publish === true && content.type === 'post' && (content.termIds ?? []).length === 0) {
+      setActionError(CATEGORY_REQUIRED);
+      return;
+    }
     const editsBefore = editCount.current;
     setBusy(true);
     setActionError(null);
+    let patched = false;
     try {
       const unchanged = isUnchanged(content, state);
       if (unchanged && publish === null) {
@@ -250,7 +263,7 @@ export function ContentEditor({
           setActionError(saved.reason);
           return;
         }
-        await api(`/contents/${contentId}`, {
+        const written = await api<{ updatedAt?: string } | undefined>(`/contents/${contentId}`, {
           method: 'PATCH',
           body: {
             title: saved.payload.title,
@@ -260,6 +273,21 @@ export function ContentEditor({
             contentText: saved.payload.contentText,
           },
         });
+        patched = true;
+        const updatedAt = written?.updatedAt;
+        // Il contenuto ora è ciò che si è scritto, con la sua data nuova: la copia di lavoro riparte da lì.
+        setContent((current) =>
+          current
+            ? {
+                ...current,
+                title: saved.payload.title,
+                excerpt: saved.payload.excerpt,
+                blocks: saved.payload.blocks,
+                contentHtml: saved.payload.contentHtml,
+                ...(updatedAt !== undefined ? { updatedAt } : {}),
+              }
+            : current,
+        );
       }
       if (publish !== null) {
         await api(`/contents/${contentId}/${publish ? 'publish' : 'unpublish'}`, {
@@ -288,6 +316,8 @@ export function ContentEditor({
       setActionError(
         caught instanceof ApiError ? caught.fullMessage : 'L’operazione non è riuscita.',
       );
+      // Il PATCH è passato, la pubblicazione o il ritiro no: la copia di lavoro si riscrive sulla data nuova.
+      if (patched && draftSavedAt !== null) setPending(true);
     } finally {
       setBusy(false);
     }
@@ -371,16 +401,28 @@ export function ContentEditor({
       <PageHeader
         title={content?.title ?? 'Contenuto'}
         {...(content ? { summary: `${content.path} — ${STATUS_LABEL[content.status]}` } : {})}
-        {...(canPublish && content?.status === 'published'
+        {...(content
           ? {
               action: (
-                <Button
-                  variant="secondary"
-                  onClick={() => void writeToContent(false)}
-                  disabled={busy}
-                >
-                  Ritira
-                </Button>
+                <>
+                  {canPublish && content.status === 'published' ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() => void writeToContent(false)}
+                      disabled={busy}
+                    >
+                      Ritira
+                    </Button>
+                  ) : null}
+                  <ContentDeleteAction
+                    contentId={contentId}
+                    title={content.title}
+                    published={content.status === 'published'}
+                    canPublish={canPublish}
+                    disabled={readOnly}
+                    listHref={listHref}
+                  />
+                </>
               ),
             }
           : {})}
@@ -421,6 +463,7 @@ export function ContentEditor({
             { key: 'pagina', label: 'Pagina' },
             { key: 'seo', label: 'SEO' },
             { key: 'indirizzo', label: 'Indirizzo' },
+            ...(content?.type === 'post' ? [{ key: 'elenchi', label: 'Elenchi e archivi' }] : []),
           ]}
           activeKey={tab}
           onChange={setTab}
@@ -430,8 +473,45 @@ export function ContentEditor({
               contentId={contentId}
               initial={content.pageLayout}
               disabled={readOnly}
-              onSaved={(pageLayout) => {
-                setContent({ ...content, pageLayout });
+              onSaved={(pageLayout, updatedAt) => {
+                setContent((current) =>
+                  current
+                    ? {
+                        ...current,
+                        pageLayout,
+                        ...(updatedAt !== undefined ? { updatedAt } : {}),
+                      }
+                    : current,
+                );
+                // Come per l'immagine in evidenza: la copia di lavoro si riscrive sulla data nuova.
+                if (updatedAt !== undefined && draftSavedAt !== null) setPending(true);
+                void refreshLastChange();
+              }}
+            />
+          ) : null}
+          {tab === 'elenchi' && content?.type === 'post' ? (
+            <ContentListingPanel
+              contentId={contentId}
+              featuredMedia={content.featuredMedia ?? null}
+              termIds={content.termIds ?? []}
+              disabled={readOnly}
+              onSaved={(saved) => {
+                // Solo immagine, categorie e ultima modifica: il documento sullo schermo resta com'è (§6 caso 2).
+                setContent((current) =>
+                  current
+                    ? {
+                        ...current,
+                        ...(saved.featuredMedia !== undefined
+                          ? { featuredMedia: saved.featuredMedia }
+                          : {}),
+                        ...(saved.termIds !== undefined ? { termIds: saved.termIds } : {}),
+                        ...(saved.lastChange !== undefined ? { lastChange: saved.lastChange } : {}),
+                        ...(saved.updatedAt !== undefined ? { updatedAt: saved.updatedAt } : {}),
+                      }
+                    : current,
+                );
+                // La copia di lavoro porta la data vecchia: si riscrive, così resta riprendibile.
+                if (saved.updatedAt !== undefined && draftSavedAt !== null) setPending(true);
                 void refreshLastChange();
               }}
             />
@@ -482,6 +562,16 @@ export function ContentEditor({
               disabled={readOnly}
               onChange={(event) => mutate({ ...state, title: event.target.value })}
             />
+            {content?.type === 'post' ? (
+              <TextArea
+                label="Estratto"
+                value={state.excerpt ?? ''}
+                disabled={readOnly}
+                rows={3}
+                helpText="Compare nell’archivio della categoria, nella ricerca, in «Elenco articoli», nel feed e come descrizione per i motori di ricerca. Se resta vuoto si usa l’inizio del testo."
+                onChange={(event) => mutate({ ...state, excerpt: event.target.value })}
+              />
+            ) : null}
             <TreeDragArea
               canNest={(id) => {
                 const block = findBlock(state.document.blocks, id);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { archiveSummary, fileSize, longDate, postDate } from '../src/lib/format';
+import { archiveSummary, excerptLines, fileSize, longDate, postDate } from '../src/lib/format';
 import { featuredImageAttributes } from '../src/lib/featured';
 
 /** Presentazione dell'archivio come il tema Divi della sorgente (1E-W6). Dati sintetici. */
@@ -124,5 +124,34 @@ describe('scheda del pacchetto (D75)', () => {
     expect(fileSize(5 * 1024 * 1024)).toBe('5.00 MB');
     expect(fileSize(512)).toBe('512 B');
     expect(fileSize(1048575)).toBe('1.00 MB');
+  });
+});
+
+describe('excerptLines: l’estratto intero in archivio e ricerca (D139 = B, S10)', () => {
+  it('un estratto vuoto o di soli spazi non c’è', () => {
+    expect(excerptLines('')).toBeNull();
+    expect(excerptLines('  \n\t ')).toBeNull();
+    expect(excerptLines('<b> </b>')).toBeNull();
+  });
+
+  it('il testo resta intero, senza taglio', () => {
+    const lungo = Array.from({ length: 120 }, (_, i) => `parola${i}`).join(' ');
+    expect(excerptLines(lungo)).toEqual([lungo]);
+  });
+
+  it('gli a capo separano le righe, in ogni forma', () => {
+    expect(excerptLines('uno\ndue\r\ntre\rquattro')).toEqual(['uno', 'due', 'tre', 'quattro']);
+  });
+
+  it('i tag HTML si tolgono e ne resta il testo', () => {
+    expect(
+      excerptLines('Vai alla <a href="/x/" class="y">pagina</a> <strong>ora</strong>.'),
+    ).toEqual(['Vai alla pagina ora.']);
+  });
+
+  it('le entità si decodificano dopo aver tolto i tag: un «<» scritto come entità resta testo', () => {
+    expect(excerptLines('Rock &amp; roll, t&#232; &lt;b&gt; &#8217;')).toEqual([
+      'Rock & roll, tè <b> ’',
+    ]);
   });
 });

@@ -1621,3 +1621,23 @@ Nella stessa risposta l'utente ha approvato `W3-PLAN.md` e chiesto l'esecuzione 
 | DR-242 | 2026-10-21 | Permessi del cambio d'indirizzo (D138) | **Opzione A** — oltre a `content.write`, serve `settings.write` quando il piano tocca regole esistenti e `content.publish` quando sposta un contenuto pubblicato | B — solo `content.write` (raccomandazione dell'agente, non scelta) | «D138=A» | Proprietario | permessi, `1G-W3` | sì | idem, ADR-007 |
 
 Nella stessa risposta l'utente ha chiesto l'ondata finale di correzioni e la T6 di `W3-PLAN.md`, con fermata prima del commit.
+
+## 81. Round 72 — risposta del 2026-10-21, decisioni della `1G-W4`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-243 | 2026-10-21 | Dove il sito mostra l'estratto di una notizia (D139) | **Opzione B** — anche archivio e ricerca mostrano l'estratto quando c'è, oltre a «Elenco articoli», feed e meta description; le viste di archivio e ricerca che cambiano sono una difformità di parità da accettare nella `1G-W7` | A — archivio e ricerca con l'inizio del testo, come Divi (raccomandazione dell'agente, non scelta) | «D139=B» | Proprietario | sito pubblico, parità, `1G-W4` (accettazione: `1G-W7`) | sì | `W4-PLAN.md` §3, DR-210, 1G-12, 1G-21 |
+| DR-244 | 2026-10-21 | Slug di una categoria (D140) | **Opzione A** — rinominare cambia solo il nome; lo slug si sceglie alla creazione, proposto dal nome, e poi non cambia | B — slug modificabile con redirect 301 automatico · C — slug modificabile senza redirect | «D140=A» | Proprietario | categorie, `1G-W4` | sì | idem, DR-217 B |
+| DR-245 | 2026-10-21 | Una notizia senza categoria (D141) | **Opzione A** — per pubblicare una notizia serve almeno una categoria; l'ultima categoria di una notizia pubblicata non si toglie; nessuna categoria predefinita | B — «Senza categoria» come categoria predefinita · C — nessun obbligo | «D141=A» | Proprietario | categorie, pubblicazione, `1G-W4` | sì | idem, D115 |
+| DR-246 | 2026-10-21 | Come si elimina un contenuto (D142) | **Opzione A** — eliminazione definitiva; con il contenuto spariscono copia di lavoro, SEO e legami alle categorie; il registro conserva titolo e indirizzo; conferma scrivendo il titolo; per un contenuto pubblicato serve anche `content.publish` | B — definitiva con il solo `content.write` · C — cestino recuperabile | «D142=A» | Proprietario | eliminazione, permessi, `1G-W4` | sì | idem, DR-217 C, DR-242 |
+| DR-247 | 2026-10-21 | Che cosa succede a ciò che punta al contenuto eliminato (D143) | **Opzione A** — rifiuto spiegato se ha figlie, se è in un menu (voci elencate, da togliere prima dal menu) o se è la pagina iniziale; le regole di redirect verso il suo indirizzo restano e la conferma le elenca; il suo indirizzo risponde 404 | B — voci di menu tolte insieme al contenuto · C — regole verso il suo indirizzo disattivate | «D143=A» | Proprietario | eliminazione, menu, redirect, `1G-W4` | sì | idem, 1G-13 |
+
+Nella stessa risposta l'utente ha approvato `W4-PLAN.md` e chiesto l'esecuzione della `1G-W4`, con fermata alle conferme previste.
+
+## 82. Round 73 — risposta del 2026-10-22, chiusura della `1G-W4`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-248 | 2026-10-22 | Estratti delle pagine nei risultati della ricerca (D144) | **Opzione B** — l'estratto in archivio e ricerca vale solo per le notizie; le pagine nella ricerca tornano all'inizio del testo, con una nuova cattura delle viste interessate | A — estratti delle pagine mostrati come farebbe Divi · C — estratti mostrati e campo «Estratto» anche per le pagine | «D144=B» | Proprietario | sito pubblico, ricerca, parità, `1G-W5` | sì | DR-243, `W4-PLAN.md` S10, `visual-parity-report.md` §13.1 |
+
+Nella stessa risposta l'utente ha confermato commit e push della `1G-W4`.

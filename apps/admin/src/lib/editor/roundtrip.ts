@@ -34,6 +34,13 @@ export type LastChange =
 /** Layout della pagina (DR-139). */
 export type PageLayout = 'right_sidebar' | 'full_width' | 'no_sidebar';
 
+/** Immagine in evidenza di una notizia, come la restituisce `GET /contents/:id` (wave 1G-W4). */
+export interface FeaturedMedia {
+  readonly id: string;
+  readonly title: string | null;
+  readonly thumbnailUrl: string;
+}
+
 export interface ContentDetail {
   readonly id: string;
   readonly type: 'page' | 'post';
@@ -54,6 +61,10 @@ export interface ContentDetail {
   readonly lastChange?: LastChange;
   /** Pagina iniziale: il sito la serve a `/` qualunque sia il suo percorso (S3). */
   readonly isHome?: boolean;
+  /** Categorie assegnate a una notizia (wave 1G-W4). */
+  readonly termIds?: readonly string[];
+  /** Immagine in evidenza di una notizia, o nulla (wave 1G-W4). */
+  readonly featuredMedia?: FeaturedMedia | null;
 }
 
 export interface EditorState {
@@ -185,7 +196,8 @@ export function isUnchanged(content: ContentDetail, state: EditorState): boolean
   const { payload } = outcome;
   return (
     payload.title === content.title &&
-    (payload.excerpt ?? null) === (content.excerpt ?? null) &&
+    // Estratto vuoto e assente sono la stessa cosa: l'API salva il vuoto come `NULL`.
+    (payload.excerpt || null) === (content.excerpt || null) &&
     payload.contentHtml === content.contentHtml &&
     deepEqual(payload.blocks, content.blocks)
   );

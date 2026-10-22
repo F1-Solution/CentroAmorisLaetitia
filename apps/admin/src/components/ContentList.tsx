@@ -125,6 +125,20 @@ export function ContentList({
   const [data, setData] = useState<ListResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [removed, setRemoved] = useState(false);
+
+  // Dopo «Elimina» l'indicatore si legge una volta e si toglie dall'indirizzo, senza voce nuova in cronologia.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('eliminato')) return;
+    setRemoved(url.searchParams.get('eliminato') === '1');
+    url.searchParams.delete('eliminato');
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, []);
 
   const load = useCallback(
     async (signal: AbortSignal) => {
@@ -190,6 +204,12 @@ export function ContentList({
           ) : undefined
         }
       />
+
+      {removed ? (
+        <Alert variant="success" title="Contenuto eliminato">
+          Il contenuto è stato eliminato definitivamente.
+        </Alert>
+      ) : null}
 
       <TableToolbar
         searchLabel={searchLabel}

@@ -7,6 +7,7 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
   'content.unpublish': 'Ha ritirato',
   'content.delete': 'Ha eliminato',
   'content.address.update': "Ha cambiato l'indirizzo",
+  'content.terms.update': 'Ha cambiato le categorie',
   'content.draft.save': 'Ha salvato la copia di lavoro',
   'content.draft.discard': 'Ha scartato la copia di lavoro',
   'media.upload': 'Ha caricato un media',

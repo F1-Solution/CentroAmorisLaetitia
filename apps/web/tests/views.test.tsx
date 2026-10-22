@@ -2,7 +2,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { blockDocumentSchema, type BlockDocument } from '@amoris/blocks';
 import type { PublicContent } from '../src/lib/api';
-import { ContentView, DocumentView, DownloadCategoryView } from '../src/components/Views';
+import {
+  ArchiveView,
+  ContentView,
+  DocumentView,
+  DownloadCategoryView,
+} from '../src/components/Views';
 
 /**
  * Layout della pagina come `_et_pb_page_layout` della sorgente (DR-139, famiglia
@@ -209,5 +214,39 @@ describe('categoria dei download (DR-181)', () => {
     );
     expect(vuota).not.toContain('<article');
     expect(vuota).toContain('id="left-area"');
+  });
+});
+
+describe('archivio di categoria: estratto o inizio del testo (D139 = B, S10)', () => {
+  const term = { id: 't', slug: 'cat', name: 'Categoria sintetica', path: '/category/cat/' };
+  const post = (id: string, excerpt: string | null) => ({
+    id,
+    path: `/${id}/`,
+    title: `Titolo ${id}`,
+    excerpt,
+    summary: null,
+    textStart: `Inizio ${id}`,
+    featuredMediaId: null,
+    publishedAt: '2026-01-01T10:00:00Z',
+  });
+  const html = renderToStaticMarkup(
+    <ArchiveView
+      term={term}
+      posts={{
+        items: [post('con', 'Estratto <em>intero</em>\nsu due righe'), post('senza', null)],
+        media: {},
+        meta: { total: 2, page: 1, perPage: 6 },
+      }}
+      page={1}
+    />,
+  );
+
+  it('chi ha l’estratto lo mostra intero in un paragrafo, a capo compreso', () => {
+    expect(html).toContain('<p>Estratto intero<br/>su due righe</p>');
+    expect(html).not.toContain('Inizio con');
+  });
+
+  it('chi non ce l’ha mostra l’inizio del testo, nudo come prima', () => {
+    expect(html).toContain('</p>Inizio senza</article>');
   });
 });

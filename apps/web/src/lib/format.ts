@@ -40,7 +40,16 @@ function decodeEntities(text: string): string {
 }
 
 /**
- * Il testo degli articoli nell'archivio, come lo tronca il tema
+ * L'estratto scritto a mano, intero e a righe (D139 = B): via i tag, decodificate le
+ * entità, un elemento per riga; `null` se resta solo vuoto.
+ */
+export function excerptLines(excerpt: string): string[] | null {
+  const text = decodeEntities(excerpt.replace(/<[^>]*>/g, '')).trim();
+  return text === '' ? null : text.split(/\r\n|\r|\n/);
+}
+
+/**
+ * Senza estratto, il testo degli articoli nell'archivio, come lo tronca il tema
  * (`et_divi.divi_use_excerpt = false`, `truncate_post(270)`): 270 caratteri,
  * spazi finali tolti, poi via l'ultima parola e «...» quando il testo supera i
  * 270 byte. Il testo arriva nella forma che la sorgente contava, con le entità

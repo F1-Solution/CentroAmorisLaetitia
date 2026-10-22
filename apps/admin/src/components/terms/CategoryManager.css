@@ -1,0 +1,11 @@
+.amoris-categories__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-categories__address {
+  margin-top: var(--amoris-space-3);
+  color: var(--amoris-text-secondary);
+}

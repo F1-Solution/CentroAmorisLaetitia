@@ -199,7 +199,7 @@ try {
         taxonomy: 'category',
         slug: 'avvisi',
         name: 'Avvisi',
-        path: '/categoria/avvisi/',
+        path: '/category/avvisi/',
       })
       .returning({ id: schema.terms.id });
     if (!term) throw new Error('categoria di prova non creata');

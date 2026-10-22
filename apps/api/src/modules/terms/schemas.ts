@@ -1,19 +1,13 @@
+import { categorySchema } from '@amoris/contracts';
 import { z } from 'zod';
+import { slugSchema } from '../content/schemas.js';
 
-export const termSchema = z.object({
-  id: z.string(),
-  taxonomy: z.string(),
-  slug: z.string(),
-  name: z.string(),
-  description: z.string().nullable(),
-  parentId: z.string().nullable(),
-  position: z.number().int(),
-  path: z.string(),
-});
+/** Un termine con il numero di contenuti legati: per le tassonomie diverse da `category` conta comunque i legami. */
+export const termSchema = categorySchema;
 
 export const listQuery = z.object({ taxonomy: z.string().min(1).max(50).optional() });
 
-export const createBody = z.object({
+const termFields = z.object({
   taxonomy: z.string().min(1).max(50),
   slug: z
     .string()
@@ -26,5 +20,15 @@ export const createBody = z.object({
   position: z.number().int().optional(),
 });
 
-export const updateBody = createBody.partial().omit({ taxonomy: true });
+/** Per una categoria lo slug segue la regola dei contenuti (DR-240). */
+export const createBody = termFields.superRefine((body, ctx) => {
+  if (body.taxonomy !== 'category') return;
+  const parsed = slugSchema.safeParse(body.slug);
+  if (parsed.success) return;
+  for (const issue of parsed.error.issues) {
+    ctx.addIssue({ code: 'custom', path: ['slug'], message: issue.message });
+  }
+});
+
+export const updateBody = termFields.partial().omit({ taxonomy: true });
 export const idParam = z.object({ id: z.string().uuid() });

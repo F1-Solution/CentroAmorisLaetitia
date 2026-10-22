@@ -21,7 +21,8 @@ export interface ContentLayoutPanelProps {
   readonly contentId: string;
   readonly initial: PageLayout;
   readonly disabled: boolean;
-  readonly onSaved: (layout: PageLayout) => void;
+  /** `updatedAt` è la data di modifica che il PATCH ha dato al contenuto. */
+  readonly onSaved: (layout: PageLayout, updatedAt?: string) => void;
 }
 
 export function ContentLayoutPanel({
@@ -42,8 +43,11 @@ export function ContentLayoutPanel({
     setError(null);
     setNotice(null);
     try {
-      await api(`/contents/${contentId}`, { method: 'PATCH', body: { pageLayout: layout } });
-      onSaved(layout);
+      const saved = await api<{ updatedAt?: string } | undefined>(`/contents/${contentId}`, {
+        method: 'PATCH',
+        body: { pageLayout: layout },
+      });
+      onSaved(layout, saved?.updatedAt);
       setNotice('La pagina pubblica usa il nuovo layout.');
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : 'Salvataggio del layout non riuscito.');

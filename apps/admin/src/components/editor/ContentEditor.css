@@ -72,3 +72,28 @@
   font-size: var(--amoris-text-sm-size);
   line-height: var(--amoris-text-sm-line);
 }
+
+/* Scheda «Elenchi e archivi» (wave 1G-W4). */
+.amoris-editor__listing {
+  display: grid;
+  gap: var(--amoris-space-4);
+  max-width: 44rem;
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-editor__listing-preview {
+  max-width: 16rem;
+  max-height: 10rem;
+  object-fit: cover;
+}
+
+.amoris-editor__listing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-3);
+}
+
+.amoris-editor__delete-note {
+  margin: 0;
+  max-width: 20rem;
+}

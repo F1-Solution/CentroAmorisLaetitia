@@ -22,6 +22,8 @@ export interface MediaPickerProps {
   loading?: boolean;
   errorText?: string;
   emptyText?: string;
+  /** Falso quando il testo alternativo appartiene al media e non si chiede qui (immagine in evidenza). */
+  requireAlt?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function MediaPicker({
   loading = false,
   errorText,
   emptyText = 'Nessun media trovato.',
+  requireAlt = true,
 }: MediaPickerProps): React.JSX.Element | null {
   const [selected, setSelected] = useState<MediaPickerItem | null>(null);
   const [alt, setAlt] = useState('');
@@ -55,10 +58,10 @@ export function MediaPicker({
 
   function confirm() {
     if (!selected) return;
-    onSelect(selected, decorative ? '' : alt);
+    onSelect(selected, requireAlt && !decorative ? alt : '');
   }
 
-  const canConfirm = Boolean(selected) && (decorative || alt.trim().length > 0);
+  const canConfirm = Boolean(selected) && (!requireAlt || decorative || alt.trim().length > 0);
 
   return (
     <SidePanel
@@ -81,7 +84,10 @@ export function MediaPicker({
           <Spinner label="Caricamento dei media in corso…" />
         </div>
       ) : items.length === 0 ? (
-        <p className="amoris-media-picker__status">{emptyText}</p>
+        // Con un errore vale solo quello: «nessun media» sarebbe falso.
+        errorText ? null : (
+          <p className="amoris-media-picker__status">{emptyText}</p>
+        )
       ) : (
         <div className="amoris-media-picker__grid" role="listbox" aria-label="Media disponibili">
           {items.map((item) => {
@@ -111,18 +117,22 @@ export function MediaPicker({
 
       {selected ? (
         <div className="amoris-media-picker__detail">
-          <TextField
-            label="Testo alternativo"
-            helpText="Obbligatorio, a meno che l'immagine non sia dichiarata decorativa."
-            value={alt}
-            onChange={(event) => setAlt(event.target.value)}
-            disabled={decorative}
-          />
-          <CheckboxField
-            label="Immagine puramente decorativa (nessun testo alternativo)"
-            checked={decorative}
-            onChange={(event) => setDecorative(event.target.checked)}
-          />
+          {requireAlt ? (
+            <>
+              <TextField
+                label="Testo alternativo"
+                helpText="Obbligatorio, a meno che l'immagine non sia dichiarata decorativa."
+                value={alt}
+                onChange={(event) => setAlt(event.target.value)}
+                disabled={decorative}
+              />
+              <CheckboxField
+                label="Immagine puramente decorativa (nessun testo alternativo)"
+                checked={decorative}
+                onChange={(event) => setDecorative(event.target.checked)}
+              />
+            </>
+          ) : null}
           <div className="amoris-media-picker__confirm">
             <Button variant="primary" onClick={confirm} disabled={!canConfirm}>
               Usa questo media

@@ -1,4 +1,4 @@
-import type { LastChange } from '@amoris/contracts';
+import { deletionPreviewSchema, type LastChange } from '@amoris/contracts';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
@@ -6,6 +6,7 @@ import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { lastChangeOf } from '../audit/service.js';
 import { homeContentId } from '../public/service.js';
 import { sessionOf } from '../../plugins/auth.js';
+import { deletionBlockers, removeContent } from './deletion.js';
 import { applyAddressChange, parentOptions, planAddressChange } from './address.js';
 import {
   addressChangeBody,
@@ -15,6 +16,8 @@ import {
   addressPreviewQuery,
   contentDetail,
   contentDetailWithChange,
+  contentTermsBodySchema,
+  contentTermsResponseSchema,
   createBody,
   draftBody,
   draftDetail,
@@ -26,13 +29,14 @@ import {
 import {
   assertTitleAllowed,
   create,
+  detailExtras,
   discardDraft,
   findById,
   findDraft,
   list,
-  remove,
   saveDraft,
   setPublication,
+  setTerms,
   update,
 } from './service.js';
 
@@ -103,7 +107,12 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       const isHome = (await homeContentId(app.db)) === row.id;
       // Porta il nome di una persona: non resta in cache.
       void reply.header('Cache-Control', 'no-store');
-      return reply.send({ ...serialiseDetail(row), lastChange, isHome });
+      return reply.send({
+        ...serialiseDetail(row),
+        lastChange,
+        isHome,
+        ...(await detailExtras(app.db, row)),
+      });
     },
   );
 
@@ -184,7 +193,12 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       if (!row) throw new Error('contenuto spostato ma non rileggibile');
       const isHome = (await homeContentId(app.db)) === id;
       return reply.send({
-        content: { ...serialiseDetail(row), lastChange: changeBy(request), isHome },
+        content: {
+          ...serialiseDetail(row),
+          lastChange: changeBy(request),
+          isHome,
+          ...(await detailExtras(app.db, row)),
+        },
         plan,
       });
     },
@@ -238,9 +252,9 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       config: { audit: { action: 'content.publish', entityType: ENTITY } },
       schema: {
         tags: ['contenuti'],
-        summary: 'Pubblica un contenuto',
+        summary: 'Pubblica un contenuto; una notizia senza categoria è rifiutata',
         params: idParam,
-        response: { 200: contentDetail, ...errorResponses(401, 403, 404) },
+        response: { 200: contentDetail, ...errorResponses(400, 401, 403, 404) },
       },
     },
     async (request, reply) => {
@@ -269,6 +283,47 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
+  typed.put(
+    '/contents/:id/terms',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentWrite),
+      config: { audit: { action: 'content.terms.update', entityType: ENTITY } },
+      schema: {
+        tags: ['contenuti'],
+        summary:
+          'Sostituisce le categorie di una notizia; una notizia pubblicata ne conserva almeno una',
+        params: idParam,
+        body: contentTermsBodySchema,
+        response: { 200: contentTermsResponseSchema, ...errorResponses(400, 401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const termIds = await setTerms(app.db, id, request.body.termIds);
+      if (!termIds) return reply.callNotFound();
+      request.auditTarget = { entityId: id, detail: { termIds } };
+      return reply.send({ termIds, lastChange: changeBy(request) });
+    },
+  );
+
+  typed.get(
+    '/contents/:id/deletion',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentRead),
+      schema: {
+        tags: ['contenuti'],
+        summary: 'Anteprima dell’eliminazione: che cosa la impedisce, senza scrivere nulla',
+        params: idParam,
+        response: { 200: deletionPreviewSchema, ...errorResponses(401, 403, 404) },
+      },
+    },
+    async (request, reply) => {
+      const preview = await deletionBlockers(app.db, request.params.id);
+      if (!preview) return reply.callNotFound();
+      return reply.send(preview);
+    },
+  );
+
   typed.delete(
     '/contents/:id',
     {
@@ -276,14 +331,18 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       config: { audit: { action: 'content.delete', entityType: ENTITY } },
       schema: {
         tags: ['contenuti'],
-        summary: 'Elimina un contenuto senza figli',
+        summary:
+          'Elimina un contenuto: rifiutato se ha figlie, è in un menu o è la pagina iniziale; se pubblicato serve anche content.publish',
         params: idParam,
         response: { 204: noContent, ...errorResponses(401, 403, 404, 409) },
       },
     },
     async (request, reply) => {
-      const removed = await remove(app.db, request.params.id);
+      const { id } = request.params;
+      const removed = await removeContent(app.db, id, sessionOf(request).permissions);
       if (!removed) return reply.callNotFound();
+      // Titolo e percorso restano nel registro: il contenuto non c'è più per ritrovarli.
+      request.auditTarget = { entityId: id, detail: { title: removed.title, path: removed.path } };
       return reply.code(204).send(null);
     },
   );

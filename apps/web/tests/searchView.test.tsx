@@ -40,3 +40,58 @@ describe('ricerca del sito pubblico (DR-144)', () => {
     expect(html).not.toContain('Post successivi');
   });
 });
+
+describe('estratto nei risultati (D139 = B, S10)', () => {
+  const item = (over: Record<string, unknown>) => ({
+    id: 'a',
+    path: '/articolo-sintetico/',
+    title: 'Articolo sintetico',
+    excerpt: null as string | null,
+    summary: null,
+    textStart: 'Inizio automatico del testo',
+    featuredMediaId: null,
+    publishedAt: '2026-01-01T10:00:00Z',
+    ...over,
+  });
+  const render = (items: ReturnType<typeof item>[]) =>
+    renderToStaticMarkup(
+      <SearchView
+        query="x"
+        posts={{ items, media: {}, meta: { total: items.length, page: 1, perPage: 5 } }}
+        page={1}
+      />,
+    );
+
+  it('con l’estratto lo mostra intero in un paragrafo al posto dell’inizio del testo', () => {
+    const lungo = Array.from({ length: 120 }, (_, i) => `parola${i}`).join(' ');
+    const html = render([item({ excerpt: lungo })]);
+    expect(html).toContain(`<p>${lungo}</p>`);
+    expect(html).not.toContain('Inizio automatico del testo');
+    expect(html).not.toContain('...');
+  });
+
+  it('gli a capo diventano interruzioni, i tag si tolgono, le entità si decodificano', () => {
+    const html = render([
+      item({ excerpt: 'Prima riga &amp; più\nseconda <a href="/x/">riga</a>' }),
+    ]);
+    expect(html).toContain('<p>Prima riga &amp; più<br/>seconda riga</p>');
+    expect(html).not.toContain('href="/x/"');
+  });
+
+  it('senza estratto, o con un estratto di soli spazi, resta l’inizio del testo nudo', () => {
+    for (const excerpt of [null, '', ' \n ']) {
+      const html = render([item({ excerpt })]);
+      expect(html).toContain('</p>Inizio automatico del testo</article>');
+      expect(html).not.toContain('<p>');
+    }
+  });
+
+  it('vale per ogni risultato, comprese le pagine: ognuno col proprio estratto', () => {
+    const html = render([
+      item({ id: 'p', path: '/pagina-sintetica/', excerpt: 'Estratto della pagina' }),
+      item({ id: 'n', excerpt: null }),
+    ]);
+    expect(html).toContain('<p>Estratto della pagina</p>');
+    expect(html).toContain('Inizio automatico del testo');
+  });
+});

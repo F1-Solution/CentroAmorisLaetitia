@@ -47,6 +47,13 @@ interface Row {
   readonly entityId: string | null;
 }
 
+/** Dopo l'eliminazione l'etichetta si legge dal titolo conservato nel dettaglio della riga `content.delete`. */
+function deletedTitle(row: Row & { action: string; detail: unknown }): string | null {
+  if (row.action !== 'content.delete' || row.entityType !== 'content') return null;
+  const detail = row.detail as { title?: unknown } | null;
+  return typeof detail?.title === 'string' && detail.title ? detail.title : null;
+}
+
 /** Un'interrogazione per tipo di oggetto e per pagina, mai una per riga. */
 async function labelsFor(
   db: Database,
@@ -130,6 +137,7 @@ export async function listAudit(
       entityType: auditLog.entityType,
       entityId: auditLog.entityId,
       outcome: auditLog.outcome,
+      detail: auditLog.detail,
     })
     .from(auditLog)
     .where(where.length ? and(...where) : undefined)
@@ -154,7 +162,7 @@ export async function listAudit(
     entityType: row.entityType,
     // Per l'accesso fallito l'id e' l'impronta dell'identificativo: non si mostra.
     entityId: row.entityType === 'auth.identifier' ? null : row.entityId,
-    entityLabel: labels.get(labelKey(row)) ?? null,
+    entityLabel: labels.get(labelKey(row)) ?? deletedTitle(row),
     contentType: types.get(labelKey(row)) ?? null,
     outcome: row.outcome,
   }));
@@ -174,13 +182,14 @@ export async function searchContents(db: Database, search: string): Promise<Audi
     .limit(10);
 }
 
-/** Azioni che cambiano la pagina pubblica, compreso il cambio d'indirizzo (S5); le copie di lavoro non contano (D127). */
+/** Azioni che cambiano la pagina pubblica, compresi il cambio d'indirizzo (S5) e le categorie; le copie di lavoro non contano (D127). */
 const PUBLIC_CHANGES = [
   'content.create',
   'content.update',
   'content.publish',
   'content.unpublish',
   'content.address.update',
+  'content.terms.update',
 ];
 
 export async function lastChangeOf(db: Database, contentId: string): Promise<LastChange> {

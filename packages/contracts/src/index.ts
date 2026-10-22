@@ -5,5 +5,7 @@
 export * from './accounts.js';
 export * from './audit.js';
 export * from './contentAddress.js';
+export * from './contentDeletion.js';
 export * from './errors.js';
 export * from './health.js';
+export * from './terms.js';

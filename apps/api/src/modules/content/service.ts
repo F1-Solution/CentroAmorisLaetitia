@@ -1,5 +1,5 @@
 import { databaseNow, schema, type Database } from '@amoris/db';
-import { and, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 import { newContentPath, withPathLock } from './address.js';
 import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
@@ -99,10 +99,54 @@ export function assertTitleAllowed(next: string | undefined, current: string): v
     throw Object.assign(new Error('il titolo non può essere vuoto'), { statusCode: 400 });
 }
 
-export async function update(db: Database, id: string, input: UpdateInput) {
+/** Un'immagine in evidenza è un media esistente, pubblico e `image/*`; altrimenti nulla si scrive (S3). */
+async function assertFeaturedMediaValid(db: Database, mediaId: string): Promise<void> {
+  const [row] = await db
+    .select({ mimeType: schema.media.mimeType, isPrivate: schema.media.isPrivate })
+    .from(schema.media)
+    .where(eq(schema.media.id, mediaId))
+    .limit(1);
+  if (row && !row.isPrivate && row.mimeType.startsWith('image/')) return;
+  throw Object.assign(
+    new Error('L’immagine scelta non è disponibile: scegline una pubblica fra i media.'),
+    { statusCode: 400, code: 'CONTENT_MEDIA_INVALID' },
+  );
+}
+
+/** Categorie e immagine in evidenza del dettaglio: serve alla scheda «Elenchi e archivi». */
+export async function detailExtras(
+  db: Database,
+  row: { id: string; featuredMediaId: string | null },
+) {
+  const links = await db
+    .select({ id: schema.contentTerms.termId })
+    .from(schema.contentTerms)
+    .innerJoin(schema.terms, eq(schema.terms.id, schema.contentTerms.termId))
+    .where(and(eq(schema.contentTerms.contentId, row.id), eq(schema.terms.taxonomy, 'category')))
+    .orderBy(sql`${schema.contentTerms.position}`);
+  let featuredMedia: { id: string; title: string | null; thumbnailUrl: string } | null = null;
+  if (row.featuredMediaId) {
+    const [media] = await db
+      .select({
+        id: schema.media.id,
+        title: schema.media.title,
+        publicPath: schema.media.publicPath,
+      })
+      .from(schema.media)
+      .where(eq(schema.media.id, row.featuredMediaId))
+      .limit(1);
+    if (media) featuredMedia = { id: media.id, title: media.title, thumbnailUrl: media.publicPath };
+  }
+  return { termIds: links.map((link) => link.id), featuredMedia };
+}
+
+export async function update(db: Database, id: string, rawInput: UpdateInput) {
   const current = await findById(db, id);
   if (!current) return null;
+  // Un estratto vuoto è `NULL`, e prima del confronto: uno vuoto invariato non cambia data né description (DR-180).
+  const input: UpdateInput = rawInput.excerpt === '' ? { ...rawInput, excerpt: null } : rawInput;
   assertTitleAllowed(input.title, current.title);
+  if (input.featuredMediaId) await assertFeaturedMediaValid(db, input.featuredMediaId);
 
   // DR-091: l'ora del database, la stessa con cui l'importer registra la fine di un'esecuzione.
   const changes: Record<string, unknown> = { updatedAt: databaseNow() };
@@ -176,39 +220,113 @@ function changedFields(input: UpdateInput): SQL[] {
   return differs;
 }
 
-/** Pubblicazione e ritiro sono due stati, non due campi: il vincolo di schema lo impone. */
-export async function setPublication(db: Database, id: string, published: boolean) {
-  const current = await findById(db, id);
-  if (!current) return null;
-
-  await db
-    .update(schema.contents)
-    .set(
-      published
-        ? {
-            status: 'published',
-            publishedAt: current.publishedAt ?? new Date(),
-            updatedAt: databaseNow(),
-          }
-        : { status: 'draft', updatedAt: databaseNow() },
-    )
-    .where(eq(schema.contents.id, id));
-  return findById(db, id);
+function termsError(code: 'CONTENT_TERMS_INVALID' | 'CONTENT_CATEGORY_REQUIRED', message: string) {
+  return Object.assign(new Error(message), { statusCode: 400, code });
 }
 
-export async function remove(db: Database, id: string): Promise<boolean> {
-  const [child] = await db
-    .select({ value: count() })
-    .from(schema.contents)
-    .where(eq(schema.contents.parentId, id));
-  if ((child?.value ?? 0) > 0) {
-    throw Object.assign(new Error('il contenuto ha figli e non si elimina'), { statusCode: 409 });
-  }
-  const rows = await db
-    .delete(schema.contents)
-    .where(eq(schema.contents.id, id))
-    .returning({ id: schema.contents.id });
-  return rows.length > 0;
+const categoryRequired = (message: string) => termsError('CONTENT_CATEGORY_REQUIRED', message);
+
+/** Pubblicazione e ritiro sono due stati, non due campi: il vincolo di schema lo impone. */
+export async function setPublication(db: Database, id: string, published: boolean) {
+  const done = await db.transaction(async (tx) => {
+    // Il blocco della riga serializza la pubblicazione con `setTerms`: D141-A vale anche a gara in corso.
+    const [current] = await tx
+      .select({
+        type: schema.contents.type,
+        publishedAt: schema.contents.publishedAt,
+      })
+      .from(schema.contents)
+      .where(eq(schema.contents.id, id))
+      .for('update');
+    if (!current) return false;
+
+    if (published && current.type === 'post') {
+      // Contano solo le categorie: un legame di un'altra tassonomia non basta (m-1).
+      const [linked] = await tx
+        .select({ value: count() })
+        .from(schema.contentTerms)
+        .innerJoin(schema.terms, eq(schema.terms.id, schema.contentTerms.termId))
+        .where(and(eq(schema.contentTerms.contentId, id), eq(schema.terms.taxonomy, 'category')));
+      if ((linked?.value ?? 0) === 0) {
+        throw categoryRequired('Per pubblicare una notizia serve almeno una categoria.');
+      }
+    }
+
+    await tx
+      .update(schema.contents)
+      .set(
+        published
+          ? {
+              status: 'published',
+              publishedAt: current.publishedAt ?? new Date(),
+              updatedAt: databaseNow(),
+            }
+          : { status: 'draft', updatedAt: databaseNow() },
+      )
+      .where(eq(schema.contents.id, id));
+    return true;
+  });
+  return done ? findById(db, id) : null;
+}
+
+/**
+ * Sostituisce le categorie di una notizia (S4, D141-A). Non passa dalla copia di lavoro e
+ * non cambia la data di modifica: l'archivio cambia alla richiesta successiva.
+ * `null` se il contenuto non esiste.
+ */
+export async function setTerms(
+  db: Database,
+  id: string,
+  termIds: readonly string[],
+): Promise<string[] | null> {
+  const wanted = [...new Set(termIds)];
+  return db.transaction(async (tx) => {
+    const [content] = await tx
+      .select({ type: schema.contents.type, status: schema.contents.status })
+      .from(schema.contents)
+      .where(eq(schema.contents.id, id))
+      .for('update');
+    if (!content) return null;
+    if (content.type !== 'post') {
+      throw termsError('CONTENT_TERMS_INVALID', 'Solo le notizie hanno delle categorie.');
+    }
+    if (wanted.length === 0 && content.status === 'published') {
+      throw categoryRequired(
+        'Una notizia pubblicata deve avere almeno una categoria: assegnane un’altra prima di togliere questa.',
+      );
+    }
+    if (wanted.length > 0) {
+      const found = await tx
+        .select({ id: schema.terms.id })
+        .from(schema.terms)
+        .where(and(inArray(schema.terms.id, wanted), eq(schema.terms.taxonomy, 'category')));
+      if (found.length !== wanted.length) {
+        throw termsError(
+          'CONTENT_TERMS_INVALID',
+          'Una delle categorie scelte non esiste: ricarica l’elenco e riprova.',
+        );
+      }
+    }
+    // Si sostituiscono solo i legami alle categorie: quelli di altre tassonomie restano (m-1).
+    const categoryIds = tx
+      .select({ id: schema.terms.id })
+      .from(schema.terms)
+      .where(eq(schema.terms.taxonomy, 'category'));
+    await tx
+      .delete(schema.contentTerms)
+      .where(
+        and(
+          eq(schema.contentTerms.contentId, id),
+          inArray(schema.contentTerms.termId, categoryIds),
+        ),
+      );
+    if (wanted.length > 0) {
+      await tx
+        .insert(schema.contentTerms)
+        .values(wanted.map((termId, position) => ({ contentId: id, termId, position })));
+    }
+    return wanted;
+  });
 }
 
 /** Elenco dei termini legati a un contenuto: serve all'elenco e all'editor. */

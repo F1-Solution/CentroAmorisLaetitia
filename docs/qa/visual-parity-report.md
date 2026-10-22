@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| **Stato** | **UAT approvata dall'utente il 2026-10-18** (§12, DR-210), con le difformità accettate elencate nel §11.1. Audit in [`AUDIT.md`](../../.planning/phases/1E/AUDIT.md). Il gate resta chiuso fino al deploy in produzione verificato |
+| **Stato** | **UAT approvata dall'utente il 2026-10-18** (§12, DR-210), con le difformità accettate elencate nel §11.1. Audit in [`AUDIT.md`](../../.planning/phases/1E/AUDIT.md). Il gate resta chiuso fino al deploy in produzione verificato. Dalla Fase 1G, difformità **in attesa di accettazione** nel §13 |
 | **Piano** | [`visual-regression-plan.md`](visual-regression-plan.md), approvato con DR-110 |
 | **Criteri** | [`acceptance-criteria.md`](acceptance-criteria.md) §4 e §6 |
 | **Immagini** | `docs/qa/screenshots/`, **fuori da Git** (DR-106): ogni immagine si riconosce dalla sua impronta SHA-256 nelle tabelle di `docs/qa/riferimento/` |
 
 Le sezioni 1–6 sono l'esito della `1E-W1`, la cattura del riferimento; il §10 quello
-del confronto della `1E-W6`; il §11 quello delle verifiche della `1E-W7`; il §12 è la UAT.
+del confronto della `1E-W6`; il §11 quello delle verifiche della `1E-W7`; il §12 è la UAT; il §13 raccoglie le difformità introdotte dalla Fase 1G.
 
 ---
 
@@ -303,3 +303,40 @@ Esito: **UAT approvata** dal Proprietario con la formula di DR-209. La condizion
 gate è soddisfatta; resta la condizione del deploy in produzione eseguito e verificato
 (Fase 1F, `deployment-gate`). Prova del form: 1 compilazione ricevuta alle 21:46:24 UTC
 sul modulo di contatto, nessuna email inviata.
+
+## 13. Difformità introdotte dalla Fase 1G, da accettare nella `1G-W7`
+
+Non sono coperte dall'approvazione di DR-210: ognuna va accettata nominativamente dal
+Proprietario nel confronto integrale della `1G-W7` (1G-21).
+
+### 13.1 DR-243 — estratto delle notizie in archivio e ricerca (2026-10-22)
+
+**Che cosa cambia.** Con D139 = B un risultato dell'archivio o della ricerca che ha un
+estratto mostra l'estratto intero, in un paragrafo, al posto dei primi 270 caratteri del
+testo (`W4-PLAN.md` S10). Senza estratto la resa resta quella accettata. Nel database di
+sviluppo hanno un estratto 19 notizie pubblicate su 28 e 5 pagine pubblicate su 78.
+
+**Misura.** Stesse condizioni e stessi strumenti del §11.2 (Playwright 1.63.0, Chromium
+153.0.8010.12, `pixelmatch` 7.2.0, `pngjs` 7.0.0), sito nuovo con `next start` su
+`127.0.0.1:3200` e `SITE_URL=http://127.0.0.1:3200`, codice della `1G-W4` prima del
+commit, database di sviluppo invariato. Catture in `docs/qa/screenshots/sito-1G-W4/` e
+differenze in `docs/qa/screenshots/diff-1G-W4/`, fuori da Git; esiti con le impronte in
+[`confronto/esiti-1G-W4-DR-243.csv`](confronto/esiti-1G-W4-DR-243.csv).
+
+| Indirizzo | Viste | Rispetto alla cattura accettata | Rispetto al riferimento |
+|---|---|---|---|
+| `/category/news/` | 1440, 768, 390 | cambiate: altezza 4609, 3930, 3220 contro 4827, 4202, 3682 | non confrontabili (altezze diverse); prima 1,88 %, 3,30 %, 4,28 % |
+| `/category/news/page/2/` | 1440, 768, 390 | cambiate: altezza 4895, 4222, 3351 contro 5058, 4330, 3678 | non confrontabili; prima 1,92 %, 3,58 %, 4,29 % |
+| `/category/news/page/3/` | 1440, 768, 390 | cambiate (768: 12,79 % dei pixel) | non confrontabili, come prima |
+| `/?s=corso` | 1440, 768, 390 | **identiche** (nessun risultato con estratto) | invariate: 1,63 %, 4,07 %, 4,60 % |
+
+Le pagine si accorciano perché gli estratti sono più brevi dei 270 caratteri; il controllo
+a vista della 1440 di `/category/news/` mostra lo stesso stile di paragrafo, con le notizie
+senza estratto invariate. Cambiano allo stesso modo, fuori dalla matrice visiva,
+`/category/senza-categoria/` (priorità bassa) e ogni ricerca che trovi una notizia o una
+pagina con un estratto.
+
+Con D144 = B (DR-248) le pagine nella ricerca tornano all'inizio del testo nella `1G-W5`,
+che ripete la cattura delle viste interessate.
+
+**Stato:** in attesa di accettazione nella `1G-W7`.

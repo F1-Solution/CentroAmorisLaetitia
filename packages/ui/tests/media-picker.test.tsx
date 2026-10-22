@@ -36,6 +36,22 @@ describe('MediaPicker — componente 38', () => {
     expect(screen.getByText('Nessun media trovato.')).toBeDefined();
   });
 
+  it('con un errore mostra l’errore e non dice «nessun media trovato»', () => {
+    render(
+      <MediaPicker
+        open
+        items={[]}
+        errorText="L’elenco dei media non si è caricato."
+        searchValue=""
+        onSearchChange={vi.fn()}
+        onSelect={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('alert').textContent).toBe('L’elenco dei media non si è caricato.');
+    expect(screen.queryByText('Nessun media trovato.')).toBeNull();
+  });
+
   it('stato L: caricamento', () => {
     render(
       <MediaPicker
@@ -85,6 +101,30 @@ describe('MediaPicker — componente 38', () => {
     fireEvent.click(
       screen.getByLabelText('Immagine puramente decorativa (nessun testo alternativo)'),
     );
+    const confirmButton = screen.getByRole('button', { name: 'Usa questo media' });
+    expect(confirmButton).toHaveProperty('disabled', false);
+    fireEvent.click(confirmButton);
+    expect(onSelect).toHaveBeenCalledWith(items[0], '');
+  });
+
+  it('con requireAlt=false non chiede il testo alternativo e conferma subito', () => {
+    const onSelect = vi.fn();
+    render(
+      <MediaPicker
+        open
+        requireAlt={false}
+        items={items}
+        searchValue=""
+        onSearchChange={vi.fn()}
+        onSelect={onSelect}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText('Facciata del centro'));
+    expect(screen.queryByLabelText('Testo alternativo')).toBeNull();
+    expect(
+      screen.queryByLabelText('Immagine puramente decorativa (nessun testo alternativo)'),
+    ).toBeNull();
     const confirmButton = screen.getByRole('button', { name: 'Usa questo media' });
     expect(confirmButton).toHaveProperty('disabled', false);
     fireEvent.click(confirmButton);

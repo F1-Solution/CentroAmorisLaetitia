@@ -1,6 +1,7 @@
+import { Fragment } from 'react';
 import { BlocksDocument, type MediaMap } from '@amoris/blocks';
 import type { PostPage, PublicContent, PublicDocument, Term } from '../lib/api';
-import { archiveSummary, fileSize, longDate, postDate } from '../lib/format';
+import { archiveSummary, excerptLines, fileSize, longDate, postDate } from '../lib/format';
 import { featuredImageAttributes } from '../lib/featured';
 import { promoteFirstHeading } from '../lib/headings';
 
@@ -132,9 +133,28 @@ function Thumbnail({
   );
 }
 
+/** L'estratto intero in un paragrafo, o l'inizio del testo nudo se manca (D139 = B). */
+function ListingText({ excerpt, textStart }: { excerpt: string | null; textStart: string }) {
+  const lines = excerpt ? excerptLines(excerpt) : null;
+  if (lines) {
+    return (
+      <p>
+        {lines.map((line, i) => (
+          <Fragment key={i}>
+            {i > 0 ? <br /> : null}
+            {line}
+          </Fragment>
+        ))}
+      </p>
+    );
+  }
+  return textStart ? <>{archiveSummary(textStart)}</> : null;
+}
+
 /**
  * Elenco del modello `index.php` di Divi, comune ad archivio e ricerca: immagine,
- * titolo, data, inizio del testo, «Post precedenti» verso le pagine più vecchie.
+ * titolo, data, estratto intero se c'è (D139 = B) altrimenti l'inizio del testo,
+ * «Post precedenti» verso le pagine più vecchie.
  */
 function PostListing({
   heading,
@@ -164,7 +184,7 @@ function PostListing({
               <p className="post-meta">
                 <span className="published">{postDate(post.publishedAt)}</span>
               </p>
-              {post.textStart ? archiveSummary(post.textStart) : null}
+              <ListingText excerpt={post.excerpt} textStart={post.textStart} />
             </article>
           ))}
           <div className="pagination clearfix">

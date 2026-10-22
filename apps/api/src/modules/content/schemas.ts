@@ -77,6 +77,12 @@ export const contentDetail = contentSummary.extend({
 export const contentDetailWithChange = contentDetail.extend({
   lastChange: lastChangeSchema,
   isHome: z.boolean(),
+  /** Solo le categorie (S4): le altre tassonomie non si assegnano dal CMS. */
+  termIds: z.array(z.string()),
+  /** L'immagine in evidenza con la miniatura per l'anteprima; per un media senza varianti è l'originale. */
+  featuredMedia: z
+    .object({ id: z.string(), title: z.string().nullable(), thumbnailUrl: z.string() })
+    .nullable(),
 });
 
 export const listResponse = z.object({
@@ -153,6 +159,9 @@ export const updateBody = createBody
   .strict();
 
 export const idParam = z.object({ id: z.string().uuid() });
+
+/** Categorie di una notizia (wave 1G-W4): corpo e risposta in `@amoris/contracts`. */
+export { contentTermsBodySchema, contentTermsResponseSchema } from '@amoris/contracts';
 
 /** Cambio d'indirizzo (wave 1G-W3): risposte in `@amoris/contracts`. */
 export { addressOptionsSchema, addressPlanSchema } from '@amoris/contracts';

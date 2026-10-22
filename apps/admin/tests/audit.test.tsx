@@ -270,6 +270,10 @@ describe('registro delle operazioni', () => {
     );
   });
 
+  it('W4: il cambio di categorie si legge «Ha cambiato le categorie» e si sceglie fra le operazioni', () => {
+    expect(actionLabel('content.terms.update')).toBe('Ha cambiato le categorie');
+  });
+
   it('un’azione senza etichetta mostra il codice grezzo', async () => {
     renderPage();
     expect(await screen.findByText('nuova.azione')).toBeInTheDocument();

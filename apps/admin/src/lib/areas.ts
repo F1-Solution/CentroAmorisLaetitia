@@ -45,6 +45,7 @@ export const AREA_DEFINITIONS: Readonly<Record<AreaId, AreaDefinition>> = {
         sections: [
           { id: 'pagine', label: 'Pagine', href: '/redazione/pagine' },
           { id: 'notizie', label: 'Notizie', href: '/redazione/notizie' },
+          { id: 'categorie', label: 'Categorie', href: '/redazione/categorie' },
         ],
       },
       {
