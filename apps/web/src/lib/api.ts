@@ -106,6 +106,8 @@ export interface PublicDocument {
   readonly mediaId: string;
   readonly updatedAt: string;
   readonly publishedAt: string | null;
+  /** Ultima modifica fatta dal CMS; nulla per i documenti importati. */
+  readonly modifiedAt: string | null;
   readonly byteSize: number;
 }
 

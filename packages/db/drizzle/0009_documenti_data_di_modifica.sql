@@ -1,0 +1,1 @@
+ALTER TABLE "documents" ADD COLUMN "modified_at" timestamp with time zone;

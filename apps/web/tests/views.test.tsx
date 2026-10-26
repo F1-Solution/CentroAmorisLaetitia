@@ -115,6 +115,7 @@ describe('scheda del pacchetto nei download (D75)', () => {
         mediaId: 'm-1',
         updatedAt: '2026-10-16T09:00:00Z',
         publishedAt: '2022-04-05T10:00:00Z',
+        modifiedAt: null,
         byteSize: 103209,
       }}
       media={{

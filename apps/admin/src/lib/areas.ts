@@ -53,6 +53,8 @@ export const AREA_DEFINITIONS: Readonly<Record<AreaId, AreaDefinition>> = {
         label: 'Corredo',
         sections: [
           { id: 'media', label: 'Media', href: '/redazione/media' },
+          { id: 'documenti', label: 'Documenti', href: '/redazione/documenti' },
+          { id: 'caroselli', label: 'Caroselli', href: '/redazione/caroselli' },
           { id: 'menu', label: 'Menu', href: '/redazione/menu' },
           { id: 'seo', label: 'SEO e indirizzi', href: '/redazione/seo' },
         ],

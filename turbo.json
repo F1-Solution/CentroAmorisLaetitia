@@ -26,7 +26,10 @@
         "S3_ACCESS_KEY",
         "S3_SECRET_KEY",
         "S3_BUCKET_PUBLIC",
-        "S3_BUCKET_PRIVATE"
+        "S3_BUCKET_PRIVATE",
+        "QPDF_PATH",
+        "FFMPEG_PATH",
+        "FFPROBE_PATH"
       ],
       "outputs": []
     },

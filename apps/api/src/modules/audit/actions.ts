@@ -2,7 +2,7 @@ import { AUTH_ACTIONS } from '../../auth/audit.js';
 
 /**
  * Elenco chiuso delle azioni delle modifiche fatte dall'area amministrativa:
- * le 28 dichiarate con `config.audit` nei moduli, più le tre che `accounts`
+ * le 30 dichiarate con `config.audit` nei moduli, più le tre che `accounts`
  * sceglie a runtime. Una prova confronta l'elenco con i sorgenti.
  */
 export const CHANGE_ACTIONS = [
@@ -19,6 +19,8 @@ export const CHANGE_ACTIONS = [
   'media.replace',
   'media.update',
   'media.delete',
+  'document.update',
+  'slider.update',
   'menu.item.create',
   'menu.item.update',
   'menu.item.delete',

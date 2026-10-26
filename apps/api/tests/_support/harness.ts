@@ -99,6 +99,9 @@ export function testConfig(databaseUrl: string, overrides: Record<string, string
     LOGIN_DELAY_STEP_MS: '0',
     // Le prove caricano molti file dallo stesso indirizzo.
     MEDIA_WRITES_PER_MINUTE: '100000',
+    // I programmi della pulizia dei metadati: in locale `qpdf` può stare fuori dal PATH.
+    ...(process.env.QPDF_PATH ? { QPDF_PATH: process.env.QPDF_PATH } : {}),
+    ...(process.env.FFMPEG_PATH ? { FFMPEG_PATH: process.env.FFMPEG_PATH } : {}),
     ...overrides,
   });
 }

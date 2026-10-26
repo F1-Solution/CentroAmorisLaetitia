@@ -682,6 +682,7 @@ export async function documentsBy(
         updatedAt: schema.documents.updatedAt,
         // Data e dimensione per la scheda del pacchetto, come WPDM (D75, DR-161).
         publishedAt: schema.documents.publishedAt,
+        modifiedAt: schema.documents.modifiedAt,
         byteSize: schema.media.byteSize,
       })
       .from(schema.documents)

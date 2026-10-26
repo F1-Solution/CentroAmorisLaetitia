@@ -5,10 +5,13 @@ import {
   ColumnRatioControl,
   HtmlFallbackEditor,
   RadioGroup,
+  SelectField,
   TextArea,
   TextField,
 } from '@amoris/ui';
 import type { BlockNode as ModelBlock } from '@amoris/blocks';
+import Link from 'next/link';
+import { useSliders } from '../sliders/useSliders';
 import { RichTextEditor } from './RichTextEditor';
 import './BlockInspector.css';
 
@@ -33,6 +36,50 @@ const SEPARATOR_OPTIONS = [
   { value: 'wide', label: 'Largo' },
   { value: 'dots', label: 'Puntini' },
 ];
+
+/** Scelta del carosello di un blocco «slider» e collegamento alla schermata delle sue immagini. */
+function SliderInspector({
+  sliderId,
+  disabled,
+  onChoose,
+}: {
+  readonly sliderId: string;
+  readonly disabled: boolean;
+  readonly onChoose: (sliderId: string) => void;
+}): React.JSX.Element {
+  const { sliders, error } = useSliders();
+  const known = sliders?.some((slider) => slider.id === sliderId) ?? false;
+  const options = [
+    ...(sliders ?? []).map((slider) => ({ value: slider.id, label: slider.title })),
+    ...(!known
+      ? [{ value: sliderId, label: sliders ? 'Carosello non trovato' : 'Caricamento in corso…' }]
+      : []),
+  ];
+  return (
+    <div className="amoris-inspector">
+      {error ? (
+        <Alert variant="error" title="I caroselli non si sono caricati">
+          {error}
+        </Alert>
+      ) : null}
+      <SelectField
+        label="Carosello"
+        value={sliderId}
+        options={options}
+        disabled={disabled}
+        onChange={(event) => onChoose(event.target.value)}
+      />
+      {/* In una scheda nuova, come «Anteprima sul sito»: un blocco appena inserito non si perde. */}
+      <Link href={`/redazione/caroselli/${sliderId}`} target="_blank" rel="noopener noreferrer">
+        Modifica le immagini del carosello
+      </Link>
+      <p className="amoris-inspector__note">
+        L’anteprima qui accanto non mostra le immagini: si vedono con «Anteprima sul sito» e dopo la
+        pubblicazione.
+      </p>
+    </div>
+  );
+}
 
 /**
  * Che cosa si modifica del blocco selezionato.
@@ -159,13 +206,21 @@ export function BlockInspector({
         </div>
       );
 
+    case 'slider':
+      return (
+        <SliderInspector
+          sliderId={block.props.sliderId}
+          disabled={disabled}
+          onChoose={(sliderId) => onChange({ ...block, props: { ...block.props, sliderId } })}
+        />
+      );
+
     default:
       return (
         <div className="amoris-inspector">
           <Alert variant="info" title="Questo blocco non si modifica qui">
             Un blocco di tipo «{block.type}» rimanda a qualcosa che vive altrove — un modulo, un
-            documento, una presentazione, una mappa. In questa fase si può spostarlo o eliminarlo,
-            non riconfigurarlo.
+            documento, una mappa. In questa fase si può spostarlo o eliminarlo, non riconfigurarlo.
           </Alert>
         </div>
       );

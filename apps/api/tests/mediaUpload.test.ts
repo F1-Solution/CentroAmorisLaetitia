@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sanitizeFileName } from '../src/modules/media/fileName.js';
 import { detectMime } from '../src/modules/media/fileType.js';
 import { createHarness, signIn, type Harness, type Signed } from './_support/harness.js';
+import { buildMp4, buildPdf } from './_support/syntheticFiles.js';
 
 /**
  * Tipi di file e limiti dei media (1G-14, D147-A): ogni rifiuto ha un codice
@@ -267,10 +268,17 @@ describe('rifiuti del caricamento (S5)', () => {
   });
 
   it('ammette PDF e MP4 con il proprio tipo', async () => {
-    const pdf = await post(harness, signed, 'documento.pdf', 'text/plain', PDF);
+    // Passano dalla pulizia dei metadati: file veri, generati qui.
+    const pdf = await post(harness, signed, 'documento.pdf', 'text/plain', buildPdf());
     expect(pdf.statusCode).toBe(201);
     expect(pdf.json().mimeType).toBe('application/pdf');
-    const video = await post(harness, signed, 'filmato.mp4', 'application/octet-stream', MP4);
+    const video = await post(
+      harness,
+      signed,
+      'filmato.mp4',
+      'application/octet-stream',
+      await buildMp4({ withMetadata: false }),
+    );
     expect(video.statusCode).toBe(201);
     expect(video.json().mimeType).toBe('video/mp4');
   });

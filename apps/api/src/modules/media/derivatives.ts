@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import type { ObjectStore } from '../../lib/objectStore.js';
 import type { Transaction } from './fileName.js';
 import { derivativeFileName } from './sizes.js';
+import { storeErrorFields } from './storeErrorLog.js';
 import type { EncodedImage } from './variants.js';
 
 /** Percorsi, blocchi e citazioni delle dimensioni derivate, condivisi da caricamento e sostituzione. */
@@ -92,7 +93,12 @@ export async function removeQuietly(
   for (const key of keys) {
     await store.remove(bucket, key).catch((error: unknown) => {
       log?.error(
-        { ...context, keyDigest: digestOf(key), objects: keys.length, err: error },
+        {
+          ...context,
+          keyDigest: digestOf(key),
+          objects: keys.length,
+          err: storeErrorFields(error),
+        },
         'oggetto non rimosso dall’archivio',
       );
     });

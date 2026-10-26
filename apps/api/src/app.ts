@@ -26,7 +26,9 @@ import {
   maxMediaBytes,
   mediaMultipartError,
 } from './modules/media/multipartErrors.js';
+import { loggableError } from './modules/media/storeErrorLog.js';
 import { mediaRoutes } from './modules/media/routes.js';
+import { removeLeftoverScrubDirs } from './modules/media/scrub.js';
 import { menuRoutes } from './modules/menu/routes.js';
 import { formSubmissionRoutes } from './modules/formSubmissions/routes.js';
 import { publicMediaRoutes, publicRoutes } from './modules/public/routes.js';
@@ -40,6 +42,8 @@ import { registerAuditHook } from './plugins/audit.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerCsrf } from './plugins/csrf.js';
 import './plugins/routeConfig.js';
+import { documentRoutes } from './modules/documents/routes.js';
+import { sliderRoutes } from './modules/sliders/routes.js';
 import { healthRoutes } from './routes/health.js';
 
 declare module 'fastify' {
@@ -126,6 +130,8 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
   app.decorate('objectStore', options.objectStore ?? createObjectStore(config));
   configureImageEngine(config);
   app.decorate('mediaRuntime', createMediaRuntime(config));
+  // Le copie dei file lasciate da una pulizia interrotta si cancellano all'avvio (L2).
+  await removeLeftoverScrubDirs(app.log);
   app.addHook('onClose', async () => {
     await close();
   });
@@ -221,7 +227,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     // Un rifiuto dei media (per esempio 503 «occupato») ha un messaggio fatto per chi lo legge.
     const refusal = typeof caught.code === 'string' && caught.code in MEDIA_ERROR_STATUS;
     if (status >= 500 && !refusal) {
-      request.log.error({ err: caught }, 'richiesta fallita');
+      request.log.error({ err: loggableError(caught) }, 'richiesta fallita');
     }
 
     return reply.code(status).send({
@@ -257,6 +263,8 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     contentRoutes,
     termRoutes,
     mediaRoutes,
+    documentRoutes,
+    sliderRoutes,
     menuRoutes,
     seoRoutes,
     redirectRoutes,

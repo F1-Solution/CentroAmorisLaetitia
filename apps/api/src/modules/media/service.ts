@@ -1,4 +1,4 @@
-import { mediaMessages, type MediaLimits } from '@amoris/contracts';
+import { mediaMessages, type MediaLimits, type MediaRule } from '@amoris/contracts';
 import { schema, type Database } from '@amoris/db';
 import { and, count, desc, eq, ilike, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
@@ -21,10 +21,18 @@ import {
   type VanishingVariant,
 } from './derivatives.js';
 import { sanitizeFileName, takenPaths, uniqueFileName, type Transaction } from './fileName.js';
-import { inspectUpload, mediaError } from './fileType.js';
+import { detectMime, inspectUpload, mediaError } from './fileType.js';
 import { inMediaTransaction, type MediaRuntime } from './runtime.js';
+import {
+  ScrubTooLargeError,
+  ScrubUnavailableError,
+  ScrubUnreadableError,
+  scrubFile,
+  type ScrubTools,
+} from './scrub.js';
 import type { listQuery, updateBody } from './schemas.js';
 import { sourceBaseName, splitFileName } from './sizes.js';
+import { loggableError } from './storeErrorLog.js';
 import { processImage, type ProcessedImage } from './variants.js';
 
 /** Servizio del dominio `media` (ADR-004). */
@@ -50,7 +58,7 @@ const columns = {
 };
 
 export async function list(db: Database, query: ListQuery) {
-  const filters: SQL[] = [];
+  const filters: SQL[] = [eq(schema.media.isPrivate, false)];
   if (query.mimePrefix) filters.push(like(schema.media.mimeType, `${query.mimePrefix}%`));
   if (query.search) {
     const pattern = `%${query.search}%`;
@@ -71,8 +79,13 @@ export async function list(db: Database, query: ListQuery) {
   return { items, total: total?.value ?? 0 };
 }
 
+/** I media riservati non esistono per l'area (DR-218, ADR-004 §3.6). */
 export async function findById(db: Database, id: string) {
-  const [row] = await db.select(columns).from(schema.media).where(eq(schema.media.id, id)).limit(1);
+  const [row] = await db
+    .select(columns)
+    .from(schema.media)
+    .where(and(eq(schema.media.id, id), eq(schema.media.isPrivate, false)))
+    .limit(1);
   return row ?? null;
 }
 
@@ -91,6 +104,8 @@ export interface UploadInput {
   readonly uploadedBy: string;
   readonly log?: Logger;
   readonly runtime?: MediaRuntime;
+  /** Programmi della pulizia dei metadati, dalla configurazione. */
+  readonly scrub: ScrubTools;
 }
 
 export interface Uploaded {
@@ -113,25 +128,74 @@ interface UploadContext {
 const gated = <T>(runtime: MediaRuntime | undefined, task: () => Promise<T>): Promise<T> =>
   runtime ? runtime.gate.run(task) : task();
 
-/** Controlla ed elabora il file dentro il semaforo; un errore di `sharp` è un file illeggibile (M-5). */
-async function inspectAndProcess(
+/** Come ripulire e come annotare un rifiuto: il log riceve strumento, uscita e durata, mai il nome. */
+interface ScrubContext {
+  readonly tools: ScrubTools;
+  readonly log: Logger | undefined;
+}
+
+/** Ripulisce PDF e MP4 (DR-254): ciò che non si ripulisce non si salva, e il file ripulito rispetta il limite del suo tipo. */
+async function scrubBody(
+  fileName: string,
+  mime: string,
+  rule: MediaRule,
+  body: Buffer,
+  context: ScrubContext,
+): Promise<Buffer> {
+  try {
+    return await scrubFile(mime, body, context.tools, rule.maxBytes, context.log);
+  } catch (error) {
+    if (error instanceof ScrubTooLargeError) {
+      throw mediaError('MEDIA_TOO_LARGE', mediaMessages.tooLarge(fileName, rule));
+    }
+    if (error instanceof ScrubUnavailableError) {
+      context.log?.error({ ...error.trace }, 'pulizia dei metadati non disponibile');
+      throw mediaError('MEDIA_SCRUB_UNAVAILABLE', mediaMessages.scrubUnavailable());
+    }
+    if (error instanceof ScrubUnreadableError) {
+      throw mediaError('MEDIA_FILE_INVALID', mediaMessages.fileInvalid(fileName));
+    }
+    throw error;
+  }
+}
+
+/** Immagini: controllo e `sharp` nel semaforo delle immagini; un errore di `sharp` è un file illeggibile (M-5). */
+async function processImageUpload(
   fileName: string,
   body: Buffer,
   limits: MediaLimits,
   runtime: MediaRuntime | undefined,
   accept?: (mime: string) => void,
-): Promise<{ mime: string; processed: ProcessedImage | null }> {
+): Promise<{ mime: string; processed: ProcessedImage | null; body: Buffer }> {
   return gated(runtime, async () => {
     const inspected = await inspectUpload(fileName, body, limits);
     accept?.(inspected.mime);
-    if (!inspected.rule.derivatives) return { mime: inspected.mime, processed: null };
     try {
       const processed = await processImage(body, inspected.mime, limits.imagePixels);
-      return { mime: inspected.mime, processed };
+      return { mime: inspected.mime, processed, body: processed.original.body };
     } catch {
       throw mediaError('MEDIA_FILE_INVALID', mediaMessages.fileInvalid(fileName));
     }
   });
+}
+
+/** Controlla il file; le immagini passano da `sharp`, PDF e MP4 dalla pulizia, ognuno nel proprio semaforo. */
+async function inspectAndProcess(
+  fileName: string,
+  body: Buffer,
+  limits: MediaLimits,
+  runtime: MediaRuntime | undefined,
+  scrub: ScrubContext,
+  accept?: (mime: string) => void,
+): Promise<{ mime: string; processed: ProcessedImage | null; body: Buffer }> {
+  if (detectMime(body)?.startsWith('image/')) {
+    return processImageUpload(fileName, body, limits, runtime, accept);
+  }
+  const inspected = await inspectUpload(fileName, body, limits);
+  accept?.(inspected.mime);
+  const task = async () => scrubBody(fileName, inspected.mime, inspected.rule, body, scrub);
+  const cleaned = await (runtime ? runtime.scrubGate.run(task) : task());
+  return { mime: inspected.mime, processed: null, body: cleaned };
 }
 
 /** Percorsi che un nome candidato occuperebbe oltre al proprio: `-scaled` e derivate. */
@@ -195,18 +259,19 @@ export async function upload(
   input: UploadInput,
 ): Promise<Uploaded> {
   const requested = sanitizeFileName(input.fileName);
-  const { mime, processed } = await inspectAndProcess(
+  const { mime, processed, body } = await inspectAndProcess(
     requested,
     input.body,
     input.limits,
     input.runtime,
+    { tools: input.scrub, log: input.log },
   );
   const folder = folderFor(new Date());
   const context: UploadContext = {
     input,
     mime,
     processed,
-    body: processed ? processed.original.body : input.body,
+    body,
     now: new Date(),
     folder,
     bucket: input.isPrivate ? store.privateBucket : store.publicBucket,
@@ -236,6 +301,7 @@ export interface ReplaceInput {
   /** Dove si annota, con l'id del media, ciò che non si completa. */
   readonly log?: Logger;
   readonly runtime?: MediaRuntime;
+  readonly scrub: ScrubTools;
 }
 
 export interface Replaced {
@@ -282,18 +348,19 @@ function baseOf(fileName: string, existingPaths: readonly string[]): string {
 async function prepareReplacement(db: Database, id: string, input: ReplaceInput) {
   const current = await findById(db, id);
   if (!current) return null;
-  const { mime, processed } = await inspectAndProcess(
+  const { mime, processed, body } = await inspectAndProcess(
     sanitizeFileName(input.fileName),
     input.body,
     input.limits,
     input.runtime,
+    { tools: input.scrub, log: input.log },
     (found) => {
       if (found !== current.mimeType) {
         throw mediaError('MEDIA_TYPE_CHANGED', mediaMessages.typeChanged(found, current.mimeType));
       }
     },
   );
-  return { current, mime, processed };
+  return { current, mime, processed, body };
 }
 
 interface ReplacePlan {
@@ -407,6 +474,12 @@ async function replaceSteps(
     }
   }
   await writeReplacementRows(tx, context, plan);
+  // D156: la data dei documenti che citano il file cambia insieme al file.
+  const now = new Date();
+  await tx
+    .update(schema.documents)
+    .set({ modifiedAt: now, updatedAt: now })
+    .where(eq(schema.documents.mediaId, id));
 
   trace.created = plan.fresh.map((one) => one.storageKey);
   const files = [
@@ -465,7 +538,10 @@ async function purgeVanished(
       );
     });
   } catch (error) {
-    log?.error({ mediaId: context.id, err: error }, 'oggetti non rimossi dall’archivio');
+    log?.error(
+      { mediaId: context.id, err: loggableError(error) },
+      'oggetti non rimossi dall’archivio',
+    );
   }
 }
 
@@ -478,12 +554,12 @@ export async function replaceFile(
 ): Promise<Replaced | null> {
   const prepared = await prepareReplacement(db, id, input);
   if (!prepared) return null;
-  const { current, processed } = prepared;
+  const { current, processed, body } = prepared;
   const context: ReplaceContext = {
     id,
     mime: prepared.mime,
     processed,
-    body: processed ? processed.original.body : input.body,
+    body,
     bucket: current.isPrivate ? store.privateBucket : store.publicBucket,
     folder: folderOfKey(current.storageKey),
   };
@@ -497,7 +573,10 @@ export async function replaceFile(
   } catch (error) {
     // I rifiuti con codice non sono guasti da annotare.
     if (!(error instanceof Error && 'statusCode' in error)) {
-      input.log?.error({ mediaId: id, err: error }, 'sostituzione del file non completata');
+      input.log?.error(
+        { mediaId: id, err: loggableError(error) },
+        'sostituzione del file non completata',
+      );
     }
     throw error;
   }
@@ -524,6 +603,28 @@ export async function update(db: Database, id: string, input: UpdateInput) {
     })
     .where(eq(schema.media.id, id));
   return findById(db, id);
+}
+
+/** Al posto del titolo di un documento riservato, che non esce dall'area (L3). */
+const PRIVATE_DOCUMENT_LABEL = 'un documento riservato';
+
+/** Titoli di documenti e caroselli che citano il media (S7). */
+async function citedByDocumentsOrSlides(db: Database | Transaction, id: string): Promise<string[]> {
+  const documents = await db
+    .select({ title: schema.documents.title, isPrivate: schema.documents.isPrivate })
+    .from(schema.documents)
+    .where(eq(schema.documents.mediaId, id))
+    .limit(10);
+  const sliders = await db
+    .selectDistinct({ title: schema.sliders.title })
+    .from(schema.sliderSlides)
+    .innerJoin(schema.sliders, eq(schema.sliders.id, schema.sliderSlides.sliderId))
+    .where(eq(schema.sliderSlides.mediaId, id))
+    .limit(10);
+  return [
+    ...documents.map((row) => (row.isPrivate ? PRIVATE_DOCUMENT_LABEL : row.title)),
+    ...sliders.map((row) => row.title),
+  ];
 }
 
 /** Contenuti che citano il media per identificativo, in evidenza o per indirizzo, cercati come testo (DR-077, DR-109). */
@@ -566,8 +667,9 @@ async function deleteRows(tx: Transaction, id: string, folder: string) {
     locked.publicPath,
     ...variants.map((variant) => variant.publicPath),
   ]);
-  if (used.length > 0) {
-    throw mediaError('MEDIA_IN_USE', mediaMessages.inUse(used.map((row) => row.title).join(', ')));
+  const titles = [...used.map((row) => row.title), ...(await citedByDocumentsOrSlides(tx, id))];
+  if (titles.length > 0) {
+    throw mediaError('MEDIA_IN_USE', mediaMessages.inUse(titles.join(', ')));
   }
   await tx.delete(schema.media).where(eq(schema.media.id, id));
   return [...variants, { storageKey: locked.storageKey, publicPath: locked.publicPath }];

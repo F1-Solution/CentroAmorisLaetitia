@@ -9,14 +9,20 @@ import { createGate, type ProcessingGate } from './gate.js';
 /** Semaforo dell'elaborazione e attesa massima dei blocchi, uguali per ogni richiesta del processo. */
 export interface MediaRuntime {
   readonly gate: ProcessingGate;
+  /** Semaforo proprio della pulizia di PDF e MP4: un posto, perché un file lento non fermi le immagini. */
+  readonly scrubGate: ProcessingGate;
   readonly lockTimeoutMs: number;
 }
 
 export const DEFAULT_LOCK_TIMEOUT_MS = 10_000;
 
+/** Pulizie di PDF e MP4 insieme. */
+export const SCRUB_PLACES = 1;
+
 export function createMediaRuntime(config: Config): MediaRuntime {
   return {
     gate: createGate(config.MEDIA_MAX_CONCURRENT, config.MEDIA_QUEUE_LENGTH),
+    scrubGate: createGate(SCRUB_PLACES, config.MEDIA_QUEUE_LENGTH),
     lockTimeoutMs: config.MEDIA_LOCK_TIMEOUT_MS,
   };
 }

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { mediaLimitsOf } from '../../config.js';
+import { MEDIA_ERROR_STATUS, mediaMessages } from '@amoris/contracts';
+import { mediaLimitsOf, scrubToolsOf } from '../../config.js';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
@@ -23,6 +24,12 @@ const ENTITY = 'media';
 const writeLimit = (app: FastifyInstance) => ({
   max: app.config.MEDIA_WRITES_PER_MINUTE,
   timeWindow: '1 minute',
+  // Oltre il tetto la risposta ha codice stabile e messaggio in italiano, come gli altri rifiuti dei media.
+  errorResponseBuilder: () => ({
+    statusCode: MEDIA_ERROR_STATUS.MEDIA_RATE_LIMITED,
+    code: 'MEDIA_RATE_LIMITED',
+    message: mediaMessages.rateLimited(),
+  }),
 });
 
 type Row = NonNullable<Awaited<ReturnType<typeof findById>>>;
@@ -101,6 +108,7 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
         fileName: part.filename,
         body: await part.toBuffer(),
         limits: mediaLimitsOf(app.config),
+        scrub: scrubToolsOf(app.config),
         // Il bucket riservato è dei documenti della futura area riservata
         // (ADR-004 §3.6): da qui si carica soltanto nel bucket pubblico.
         isPrivate: false,
@@ -150,6 +158,7 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
         fileName: part.filename,
         body: await part.toBuffer(),
         limits: mediaLimitsOf(app.config),
+        scrub: scrubToolsOf(app.config),
         log: request.log,
         runtime: app.mediaRuntime,
       });

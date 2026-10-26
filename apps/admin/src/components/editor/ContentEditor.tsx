@@ -48,6 +48,7 @@ import { ContentDeleteAction } from './ContentDeleteAction';
 import { ContentLayoutPanel } from './ContentLayoutPanel';
 import { ContentListingPanel } from './ContentListingPanel';
 import { ContentSeoPanel } from './ContentSeoPanel';
+import { SliderInsertDialog } from '../sliders/SliderInsertDialog';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
 
@@ -137,6 +138,8 @@ export function ContentEditor({
   const [inserterParent, setInserterParent] = useState<string | null | undefined>(undefined);
   const [tab, setTab] = useState('contenuto');
   const [inserterSearch, setInserterSearch] = useState('');
+  // Il passo «quale carosello?»: tiene il contenitore scelto mentre si sceglie.
+  const [sliderStepParent, setSliderStepParent] = useState<string | null | undefined>(undefined);
   const [viewport, setViewport] = useState<PreviewViewport>('desktop');
   const [pending, setPending] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -382,11 +385,27 @@ export function ContentEditor({
 
   function onInsert(type: BlockType): void {
     if (!state || inserterParent === undefined) return;
+    if (type === 'slider') {
+      setSliderStepParent(inserterParent);
+      setInserterParent(undefined);
+      setInserterSearch('');
+      return;
+    }
     const { document, insertedId } = insertBlock(state.document, inserterParent, type);
     mutate({ ...state, document });
     setSelectedId(insertedId);
     setInserterParent(undefined);
     setInserterSearch('');
+  }
+
+  function onInsertSlider(sliderId: string): void {
+    if (!state || sliderStepParent === undefined) return;
+    const { document, insertedId } = insertBlock(state.document, sliderStepParent, 'slider', {
+      sliderId,
+    });
+    mutate({ ...state, document });
+    setSelectedId(insertedId);
+    setSliderStepParent(undefined);
   }
 
   function onBlockChange(next: ModelBlock): void {
@@ -672,6 +691,12 @@ export function ContentEditor({
         onSearchChange={setInserterSearch}
         unavailableTypes={uncreatable}
         unavailableReason={UNCREATABLE_REASON}
+      />
+
+      <SliderInsertDialog
+        open={sliderStepParent !== undefined}
+        onClose={() => setSliderStepParent(undefined)}
+        onInsert={onInsertSlider}
       />
 
       <SaveBar

@@ -554,6 +554,7 @@ CREATE TABLE documents (
     is_private    boolean NOT NULL DEFAULT false,
     download_count bigint NOT NULL DEFAULT 0,
     published_at  timestamptz,                 -- data del download, per la ricerca (DR-144)
+    modified_at   timestamptz,                 -- ultima modifica dall'area, nulla per gli importati (D156)
     legacy_id     bigint,
     legacy_source text,                        -- 'wpdmpro' | 'cuar_private_file'
     created_at    timestamptz NOT NULL DEFAULT now(),

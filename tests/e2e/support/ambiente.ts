@@ -123,6 +123,9 @@ export function ambienteDeiServer(): Record<string, string> {
     'S3_SECRET_KEY',
     'S3_BUCKET_PUBLIC',
     'S3_BUCKET_PRIVATE',
+    // Gli strumenti che puliscono PDF e MP4: in CI sono nel PATH, in locale `qpdf` può stare altrove.
+    'QPDF_PATH',
+    'FFMPEG_PATH',
   ]) {
     const valore = process.env[chiave];
     if (valore !== undefined) env[chiave] = valore;

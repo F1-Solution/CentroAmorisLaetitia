@@ -66,7 +66,9 @@ describe('operazioni sull’albero (criterio 1D-30)', () => {
 
   it('ogni tipo creabile produce un blocco che lo schema accetta', () => {
     for (const type of creatableChildTypes(syntheticDocument, COLUMN)) {
-      const { document } = insertBlock(syntheticDocument, COLUMN, type);
+      const { document } = insertBlock(syntheticDocument, COLUMN, type, {
+        sliderId: '66666666-6666-4666-8666-666666666666',
+      });
       const outcome = blockDocumentSchema.safeParse(document);
       expect(outcome.success, `il blocco «${type}» deve essere valido`).toBe(true);
     }

@@ -22,6 +22,7 @@ import {
   postListPropsSchema,
   richTextPropsSchema,
   separatorPropsSchema,
+  sliderPropsSchema,
   type BlockDocument,
   type BlockNode as ModelBlock,
   type BlockType,
@@ -29,12 +30,11 @@ import {
 import type { DropZone, BlockNode as TreeNode } from '@amoris/ui';
 
 /**
- * I tipi che si possono creare da zero in questa wave. Gli altri sei non sono
- * dimenticati: `form`, `document` e `slider` richiedono l'identificatore di una
- * riga che l'editor non sa ancora scegliere, `image` un media, `video` una
- * sorgente e `map` un indirizzo con le coordinate. Crearli con un segnaposto
- * significherebbe inventare un dato, e lo schema di `packages/blocks` li
- * rifiuterebbe comunque.
+ * I tipi che l'editor sa creare. Gli altri non sono dimenticati: `form` e `document`
+ * richiedono l'identificatore di una riga che l'editor non sa ancora scegliere, `image`
+ * un media, `video` una sorgente e `map` un indirizzo con le coordinate. Crearli con un
+ * segnaposto significherebbe inventare un dato, e lo schema di `packages/blocks` li
+ * rifiuterebbe comunque. `slider` nasce con il carosello scelto dall'area (DR-257).
  */
 export const CREATABLE_TYPES: readonly BlockType[] = [
   'rich_text',
@@ -42,10 +42,11 @@ export const CREATABLE_TYPES: readonly BlockType[] = [
   'html',
   'media_text',
   'post_list',
+  'slider',
 ];
 
 export const UNCREATABLE_REASON =
-  'Immagine, video, mappa, modulo, documento e presentazione rimandano a qualcosa che già esiste: si potranno inserire quando la schermata dei media e quella dei moduli esisteranno. I blocchi di questi tipi già presenti nella pagina si modificano normalmente.';
+  'Immagine, video, mappa, modulo e documento rimandano a qualcosa che già esiste: si potranno inserire quando la schermata dei media e quella dei moduli esisteranno. I blocchi di questi tipi già presenti nella pagina si modificano normalmente.';
 
 /** Che cosa si può inserire dentro `parentId`. `null` è la radice del documento. */
 export function allowedChildTypes(
@@ -192,7 +193,7 @@ export function replaceBlock(doc: BlockDocument, next: ModelBlock): BlockDocumen
  * non si scrivono a mano qui: si chiedono allo schema di `packages/blocks`, che
  * è la sola autorità su che cosa sia un blocco valido (ADR-005 §3.1).
  */
-export function createBlock(type: BlockType): ModelBlock {
+export function createBlock(type: BlockType, options: { sliderId?: string } = {}): ModelBlock {
   const id = generateAdminBlockId();
   switch (type) {
     case 'rich_text':
@@ -215,6 +216,14 @@ export function createBlock(type: BlockType): ModelBlock {
       return { type, id, props: mediaTextPropsSchema.parse({}), children: [] };
     case 'post_list':
       return { type, id, props: postListPropsSchema.parse({}), children: [] };
+    case 'slider':
+      if (!options.sliderId) throw new Error('Il blocco «slider» si crea scegliendo un carosello.');
+      return {
+        type,
+        id,
+        props: sliderPropsSchema.parse({ sliderId: options.sliderId }),
+        children: [],
+      };
     default:
       throw new Error(`Il blocco «${type}» non si crea da zero in questa fase.`);
   }
@@ -224,8 +233,9 @@ export function insertBlock(
   doc: BlockDocument,
   parentId: string | null,
   type: BlockType,
+  options: { sliderId?: string } = {},
 ): { document: BlockDocument; insertedId: string } {
-  const block = createBlock(type);
+  const block = createBlock(type, options);
   const next = replaceSiblings(doc, parentId, (children) => [...children, block]);
   return { document: next, insertedId: block.id };
 }

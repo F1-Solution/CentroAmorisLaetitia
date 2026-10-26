@@ -44,6 +44,8 @@ export const MEDIA_ERROR_STATUS = {
   MEDIA_UPLOAD_INVALID: 400,
   MEDIA_TOO_MANY_PARTS: 413,
   MEDIA_BUSY: 503,
+  MEDIA_RATE_LIMITED: 429,
+  MEDIA_SCRUB_UNAVAILABLE: 503,
 } as const;
 
 export type MediaErrorCode = keyof typeof MEDIA_ERROR_STATUS;
@@ -132,6 +134,9 @@ export const mediaMessages = {
   uploadInvalid: () =>
     'Il caricamento non è arrivato intero o la richiesta non è ben formata. Riprova a caricare il file.',
   tooManyParts: () => 'Si carica un file alla volta: la richiesta ne porta più di uno.',
+  rateLimited: () => 'Troppi caricamenti in poco tempo. Riprova fra un minuto.',
+  scrubUnavailable: () =>
+    'Il caricamento di PDF e video è sospeso: il servizio non riesce a ripulire i file. Avvisa chi gestisce il sito.',
   busy: () => 'Il servizio sta elaborando altri file: riprova fra qualche istante.',
   animatedNotAllowed: (fileName: string) =>
     `L'immagine «${fileName}» è animata e non si ammette: si possono caricare solo immagini ferme. Esporta un solo fotogramma e riprova.`,

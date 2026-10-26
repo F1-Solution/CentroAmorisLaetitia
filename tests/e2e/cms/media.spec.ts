@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { MARKERS, buildMp4, contains } from '../../../apps/api/tests/_support/syntheticFiles';
 import { ADMIN_URL, API_URL, WEB_URL } from '../support/ambiente';
 import { BLU, ROSSO, coloreProssimo, leggiPng, pngTintaUnita } from '../support/immagini';
 import { entra, intestazioniApi } from '../support/sessione';
@@ -320,6 +321,42 @@ test.describe('media', () => {
     const creato = (await ostile.json()) as { fileName: string; publicPath: string };
     expect(creato.fileName).toBe(`ostile-${stamp}.png`);
     expect(creato.publicPath).not.toContain('..');
+    await redazione.close();
+  });
+
+  test('un MP4 con posizione, artista e capitoli si scarica dal sito senza quei metadati', async ({
+    browser,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const stamp = Date.now();
+    const nomeFile = `video-${stamp}.mp4`;
+    const originale = await buildMp4({ withMetadata: true });
+    expect(contains(originale, MARKERS.location), 'il file caricato porta la posizione').toBe(true);
+
+    const redazione = await browser.newPage();
+    await entra(redazione, 'Redazione');
+    const caricato = await redazione.request.post(`${API_URL}/media`, {
+      headers: await intestazioniApi(redazione),
+      multipart: { file: { name: nomeFile, mimeType: 'video/mp4', buffer: originale } },
+    });
+    expect(caricato.status(), await caricato.text()).toBe(201);
+    const { publicPath } = (await caricato.json()) as { publicPath: string };
+
+    const servito = await request.get(`${WEB_URL}${publicPath}`);
+    expect(servito.status()).toBe(200);
+    const corpo = await servito.body();
+    expect(corpo.subarray(4, 8).toString('latin1'), 'è ancora un MP4').toBe('ftyp');
+    for (const marcatore of [
+      MARKERS.location,
+      MARKERS.artist,
+      MARKERS.chapter,
+      MARKERS.subtitle,
+      MARKERS.uuidXmp,
+    ]) {
+      expect(contains(originale, marcatore), `il file caricato porta ${marcatore}`).toBe(true);
+      expect(contains(corpo, marcatore), `il file servito non porta ${marcatore}`).toBe(false);
+    }
     await redazione.close();
   });
 });

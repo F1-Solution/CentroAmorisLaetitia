@@ -984,3 +984,10 @@ describe('metadati, documenti e mappa del sito della T7 (DR-179…193)', () => {
     });
   });
 });
+
+describe('documenti: data di modifica (D156)', () => {
+  it('un documento importato ha modifiedAt nullo', async () => {
+    const response = await get('/public/documents/modulo-pubblico');
+    expect(response.json().document.modifiedAt).toBeNull();
+  });
+});

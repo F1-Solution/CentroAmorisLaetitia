@@ -1,0 +1,53 @@
+/* Scheda del carosello. Usa i token di `@amoris/ui`: nessun colore letterale. */
+
+.amoris-slider__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-4);
+  margin-bottom: var(--amoris-space-4);
+}
+
+.amoris-slider__slide {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: var(--amoris-space-4);
+  padding: var(--amoris-space-4);
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+}
+
+@media (max-width: 40rem) {
+  .amoris-slider__slide {
+    grid-template-columns: 1fr;
+  }
+}
+
+.amoris-slider__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--amoris-radius);
+}
+
+.amoris-slider__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--amoris-space-3);
+}
+
+.amoris-slider__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}
+
+.amoris-slider__note {
+  margin: 0 0 var(--amoris-space-3);
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}
+
+.amoris-slider__used {
+  margin-top: var(--amoris-space-6);
+}

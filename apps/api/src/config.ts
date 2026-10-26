@@ -1,4 +1,5 @@
 import { DEFAULT_MEDIA_LIMITS, type MediaLimits } from '@amoris/contracts';
+import type { ScrubTools } from './modules/media/scrub.js';
 import { z } from 'zod';
 
 /**
@@ -105,6 +106,11 @@ const configSchema = z.object({
   /** Tetto per indirizzo di caricamenti e sostituzioni, e attesa massima dei blocchi del database. */
   MEDIA_WRITES_PER_MINUTE: z.coerce.number().int().min(1).default(30),
   MEDIA_LOCK_TIMEOUT_MS: z.coerce.number().int().min(1).default(10000),
+  /** Programmi che ripuliscono i metadati di PDF e MP4 (ADR-012) e tempi massimi in millisecondi. */
+  QPDF_PATH: z.string().min(1).default('qpdf'),
+  FFMPEG_PATH: z.string().min(1).default('ffmpeg'),
+  SCRUB_PDF_TIMEOUT_MS: z.coerce.number().int().min(1).default(30000),
+  SCRUB_VIDEO_TIMEOUT_MS: z.coerce.number().int().min(1).default(120000),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -126,6 +132,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     return `${name}: ${issue.message}`;
   });
   throw new ConfigError(problems);
+}
+
+/** Programmi e tempi della pulizia dei metadati letti dalla configurazione. */
+export function scrubToolsOf(config: Config): ScrubTools {
+  return {
+    qpdfPath: config.QPDF_PATH,
+    ffmpegPath: config.FFMPEG_PATH,
+    pdfTimeoutMs: config.SCRUB_PDF_TIMEOUT_MS,
+    videoTimeoutMs: config.SCRUB_VIDEO_TIMEOUT_MS,
+  };
 }
 
 /** Limiti dei media letti dalla configurazione. */

@@ -54,6 +54,7 @@ const documentSchema = z.object({
   mediaId: z.string(),
   updatedAt: z.string(),
   publishedAt: z.string().nullable(),
+  modifiedAt: z.string().nullable(),
   byteSize: z.number().int().nonnegative(),
 });
 

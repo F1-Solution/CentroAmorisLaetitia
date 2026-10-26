@@ -53,8 +53,9 @@ Fuori dal perimetro, e non si comincia (DR-218):
   Fase 1 e il rapporto li elenca come tali;
 - creazione di nuovi menu e di nuove chiavi delle impostazioni: non richieste da alcun
   criterio;
-- creazione di nuovi blocchi immagine, video, mappa, modulo, documento e presentazione:
-  l'avviso dell'editor lo dichiara già; quelli presenti restano modificabili;
+- creazione di nuovi blocchi immagine, video, mappa, modulo e documento: l'avviso
+  dell'editor lo dichiara già; quelli presenti restano modificabili. La presentazione a
+  scorrimento si inserisce dalla `1G-W6` (DR-257, 2026-10-26);
 - staging, produzione, email, DNS: Fase 1F;
 - correzione dei difetti ereditati che cambiano la resa (DR-115, DR-169): richiedono una
   decisione propria, perché toccano la parità approvata;

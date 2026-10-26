@@ -150,7 +150,8 @@ export async function searchPublished(
     union all
     select d.id, 'document' as type, '/download/' || d.slug || '/', d.title, '', '', null, null, d.published_at
       from documents d
-     where d.is_private = false
+      join media m on m.id = d.media_id
+     where d.is_private = false and m.is_private = false
   ) as corpus`;
   const where = whereClause(parsed);
   const relevance = relevanceOrder(parsed);

@@ -312,7 +312,9 @@ export function DocumentView({
                       </li>
                       <li className="list-group-item">
                         Ultimo aggiornamento{' '}
-                        <span className="badge">{longDate(document.publishedAt)}</span>
+                        <span className="badge">
+                          {longDate(document.modifiedAt ?? document.publishedAt)}
+                        </span>
                       </li>
                     </ul>
                   </div>

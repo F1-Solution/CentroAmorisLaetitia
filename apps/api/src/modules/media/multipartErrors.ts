@@ -31,7 +31,7 @@ const TRUNCATED_CODES = new Set([
 ]);
 /** I messaggi esatti di busboy e del plugin per un corpo troncato o malformato. */
 const TRUNCATED_MESSAGES =
-  /^(Unexpected end of (multipart data|form)|Part terminated early due to unexpected end of multipart data|Malformed part header|Premature close)$/;
+  /^(Unexpected end of (multipart data|form)|(Part|Preamble) terminated early( due to unexpected end of multipart data)?|Malformed part header|Premature close)$/;
 
 /** Le sole rotte che leggono un caricamento multipart: solo lì gli errori del plugin si traducono. */
 export function isMediaUploadRoute(method: string, url: string | undefined): boolean {

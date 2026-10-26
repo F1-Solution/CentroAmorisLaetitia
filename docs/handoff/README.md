@@ -39,6 +39,8 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-029 | [Ultime difformità dell'audit](HO-029-ultime-difformita-dell-audit-1E-W7.md) | 1E | ✅ fatto il 2026-10-18 (DR-204, DR-205) |
 | HO-030 | [Migrazione `0008` e primo account di amministrazione](HO-030-migrazione-0008-1G-W1.md) | 1G | ✅ migrazione eseguita il 2026-10-20 (copia `amoris-prima-HO-030-2026-10-20.dump`); account di amministrazione creato dall'utente (§3) |
 | HO-031 | [Prove dell'anteprima e di 1E-19 sui contenuti veri](HO-031-prove-anteprima-e-1E-19-1G-W5.md) | 1G | ✅ fatto il 2026-10-26 con §3-bis (account sintetico `qa-1g-w5@locale.invalid`): anteprima 106/106 identici, 1E-19 4/4 |
+| HO-032 | [Installare `qpdf` sulla macchina di sviluppo](HO-032-installare-qpdf-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: `qpdf` 12.4.2 in `C:\Program Files\qpdf 12.4.2\bin`, fuori dal `PATH` di sistema; le prove lo trovano con `QPDF_PATH` |
+| HO-033 | [Migrazione `0009` sul database di sviluppo](HO-033-migrazione-0009-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: migrazione `0009` (copia `amoris-prima-HO-033-2026-10-26.dump`), esito nel §6 |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

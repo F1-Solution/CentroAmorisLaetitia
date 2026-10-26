@@ -23,12 +23,17 @@ export async function siteTitle(db: Database): Promise<string> {
 
 /** Un documento pubblico con le date in ISO, come lo legge il sito. */
 export function publicDocument<
-  T extends { readonly updatedAt: Date; readonly publishedAt: Date | null },
+  T extends {
+    readonly updatedAt: Date;
+    readonly publishedAt: Date | null;
+    readonly modifiedAt: Date | null;
+  },
 >(document: T) {
   return {
     ...document,
     updatedAt: document.updatedAt.toISOString(),
     publishedAt: iso(document.publishedAt),
+    modifiedAt: iso(document.modifiedAt),
   };
 }
 

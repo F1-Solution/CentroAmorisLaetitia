@@ -1,0 +1,41 @@
+/* Scheda del documento. Usa i token di `@amoris/ui`: nessun colore letterale. */
+
+.amoris-document__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--amoris-space-1) var(--amoris-space-3);
+  margin: 0 0 var(--amoris-space-4);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}
+
+.amoris-document__facts dt {
+  color: var(--amoris-text-secondary);
+}
+
+.amoris-document__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.amoris-document__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+  margin-top: var(--amoris-space-4);
+}
+
+.amoris-document__note {
+  margin-top: var(--amoris-space-3);
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}
+
+.amoris-document__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

@@ -33,6 +33,8 @@ import { createHash } from 'node:crypto';
 import { loadConfig } from '../src/config.js';
 import { PERMISSIONS } from '../src/auth/permissions.js';
 import { hashPassword } from '../src/lib/password.js';
+import { createObjectStore } from '../src/lib/objectStore.js';
+import { buildPdf } from '../tests/_support/syntheticFiles.js';
 
 const SYNTHETIC_EMAIL = 'redazione@esempio.invalid';
 const ADMINISTRATION_EMAIL = 'amministrazione@esempio.invalid';
@@ -53,6 +55,26 @@ const ONE_PIXEL_PNG = Buffer.from(
   'base64',
 );
 
+/** I due documenti sintetici: ognuno ha il suo PDF generato, e quello riservato ha il file nel bucket privato. */
+const DOCUMENT_SEEDS = [
+  {
+    slug: 'documento-di-prova-pubblico',
+    title: 'Documento di prova pubblico',
+    description: 'Un documento inventato, per provare la schermata dei documenti.',
+    fileName: 'documento-di-prova-pubblico.pdf',
+    visibleText: 'documento sintetico pubblico',
+    isPrivate: false,
+  },
+  {
+    slug: 'documento-di-prova-riservato',
+    title: 'Documento di prova riservato',
+    description: null,
+    fileName: 'documento-di-prova-riservato.pdf',
+    visibleText: 'documento sintetico riservato',
+    isPrivate: true,
+  },
+] as const;
+
 function fail(message: string): never {
   console.error(message);
   process.exit(1);
@@ -70,6 +92,9 @@ const config = loadConfig(process.env as Record<string, string | undefined>);
 if (config.NODE_ENV === 'production') {
   fail('Il seme sintetico non si esegue con NODE_ENV=production.');
 }
+
+const store = createObjectStore(config);
+const documentFiles: { bucket: string; key: string; body: Buffer }[] = [];
 
 const { db, close } = createDatabase({ url: config.DATABASE_URL, maxConnections: 1 });
 
@@ -191,6 +216,88 @@ try {
       .returning({ id: schema.media.id, fileName: schema.media.fileName });
     const citedMedia = mediaRows[0];
     if (!citedMedia) throw new Error('media di prova non creati');
+
+    // --- Documenti e carosello sintetici (1G-W6) ---------------------------------
+    const documentMedia = await tx
+      .insert(schema.media)
+      .values(
+        DOCUMENT_SEEDS.map((seed) => {
+          const body = buildPdf({ pages: 1, visibleText: seed.visibleText });
+          const storageKey = `prova-sintetica/${seed.fileName}`;
+          documentFiles.push({
+            bucket: seed.isPrivate ? store.privateBucket : store.publicBucket,
+            key: storageKey,
+            body,
+          });
+          return {
+            storageKey,
+            publicPath: `/media/${storageKey}`,
+            fileName: seed.fileName,
+            mimeType: 'application/pdf',
+            byteSize: body.byteLength,
+            checksum: createHash('sha256').update(body).digest(),
+            title: seed.title,
+            isPrivate: seed.isPrivate,
+            uploadedAt: new Date(),
+            uploadedBy: person.id,
+          };
+        }),
+      )
+      .returning({ id: schema.media.id, fileName: schema.media.fileName });
+
+    const [downloadCategory] = await tx
+      .insert(schema.terms)
+      .values({
+        taxonomy: 'wpdmcategory',
+        slug: 'moduli-di-prova',
+        name: 'Moduli di prova',
+        path: '/download-category/moduli-di-prova/',
+      })
+      .returning({ id: schema.terms.id });
+    if (!downloadCategory) throw new Error('categoria dei download non creata');
+
+    const seededDocuments = await tx
+      .insert(schema.documents)
+      .values(
+        DOCUMENT_SEEDS.map((seed) => {
+          const file = documentMedia.find((row) => row.fileName === seed.fileName);
+          if (!file) throw new Error('file del documento di prova non creato');
+          return {
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            mediaId: file.id,
+            isPrivate: seed.isPrivate,
+            publishedAt: new Date('2026-01-05T10:00:00Z'),
+          };
+        }),
+      )
+      .returning({ id: schema.documents.id, slug: schema.documents.slug });
+    const publicDocument = seededDocuments.find((row) => row.slug === DOCUMENT_SEEDS[0].slug);
+    if (!publicDocument) throw new Error('documento pubblico di prova non creato');
+    await tx
+      .insert(schema.documentTerms)
+      .values({ documentId: publicDocument.id, termId: downloadCategory.id });
+
+    const [slider] = await tx
+      .insert(schema.sliders)
+      .values({ key: 'carosello-di-prova', title: 'Carosello di prova' })
+      .returning({ id: schema.sliders.id });
+    if (!slider) throw new Error('carosello di prova non creato');
+    const [firstImage, secondImage] = mediaRows;
+    if (!firstImage || !secondImage) throw new Error('media del carosello non creati');
+    await tx.insert(schema.sliderSlides).values(
+      [
+        [firstImage.id, 'Prima slide di prova'],
+        [secondImage.id, 'Seconda slide di prova'],
+        [firstImage.id, 'Terza slide di prova'],
+      ].map(([mediaId, heading], position) => ({
+        sliderId: slider.id,
+        position: position + 1,
+        mediaId: mediaId ?? null,
+        heading: heading ?? null,
+      })),
+    );
 
     // --- Tassonomia ------------------------------------------------------------
     const [term] = await tx
@@ -345,6 +452,11 @@ try {
     ]);
   });
 
+  // I PDF dei documenti di prova entrano nell'archivio a oggetti; un errore fa fallire il seme.
+  for (const file of documentFiles) {
+    await store.put(file.bucket, file.key, file.body, 'application/pdf');
+  }
+
   console.error(
     [
       'Seme sintetico scritto.',
@@ -352,9 +464,9 @@ try {
       `- ${SYNTHETIC_EMAIL}: Redazione, con i cinque permessi della redazione;`,
       `- ${ADMINISTRATION_EMAIL}: Amministrazione (persone e permessi, registro, impostazioni del sito);`,
       `- ${BOTH_ROLES_EMAIL}: entrambi i ruoli, sceglie l’area dopo l’accesso.`,
-      'Dentro: 2 media, 2 contenuti, 1 categoria, 1 menu con i quattro casi di visibilità,',
+      'Dentro: 4 media, 2 contenuti, 2 documenti (uno riservato), 1 carosello di 3 slide, 2 categorie, 1 menu con i quattro casi di visibilità,',
       '2 redirect, 6 impostazioni, 4 template SEO.',
-      'I file dei media non sono nell’archivio a oggetti: le righe sì, i byte no.',
+      'Nell’archivio a oggetti entrano solo i due PDF dei documenti: dei media immagine ci sono le righe, non i byte.',
     ].join('\n'),
   );
 } catch (error) {

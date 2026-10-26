@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { derivativeFileName, planDerivatives, sourceBaseName } from '../src/modules/media/sizes.js';
 import { createHarness, signIn, type Harness, type Signed } from './_support/harness.js';
+import { buildMp4, buildPdf, pdfPageCount } from './_support/syntheticFiles.js';
 
 /**
  * Dimensioni derivate (DR-225, D145-A): nascono al caricamento, si rigenerano alla
@@ -57,14 +58,11 @@ async function image(width: number, height: number, options: ImageOptions = {}):
   return pipeline.toBuffer();
 }
 
-const PDF = Buffer.from('%PDF-1.4\n% documento sintetico\n%%EOF\n');
-const PDF_2 = Buffer.from('%PDF-1.4\n% altro documento sintetico\n%%EOF\n');
-const MP4 = Buffer.concat([
-  Buffer.from([0, 0, 0, 24]),
-  Buffer.from('ftypisom'),
-  Buffer.from([0, 0, 2, 0]),
-  Buffer.from('isomiso2'),
-]);
+// PDF e MP4 passano dalla pulizia dei metadati: devono essere file veri.
+const PDF = buildPdf({ pages: 1 });
+const PDF_2 = buildPdf({ pages: 3 });
+const MP4 = await buildMp4({ withMetadata: false });
+const MP4_2 = await buildMp4({ withMetadata: false, withAudio: false });
 
 function multipart(fileName: string, mimeType: string, body: Buffer) {
   const boundary = '----prova-sintetica';
@@ -620,7 +618,8 @@ describe('sostituzione del file (S9, D146-A)', () => {
     expect(await variantRows(pdf.id)).toHaveLength(0);
     expect(harness.store.objects.has(bucketKey(secondKey))).toBe(false);
     expect(harness.store.objects.has(bucketKey(citedKey))).toBe(false);
-    expect(harness.store.objects.get(bucketKey(pdf.storageKey))?.equals(PDF_2)).toBe(true);
+    const stored = harness.store.objects.get(bucketKey(pdf.storageKey)) ?? Buffer.alloc(0);
+    expect(await pdfPageCount(stored)).toBe(3);
   });
 
   it('video: sostituito il file, larghezza e altezza diventano nulle', async () => {
@@ -629,8 +628,7 @@ describe('sostituzione del file (S9, D146-A)', () => {
       .update(schema.media)
       .set({ width: 1920, height: 1080 })
       .where(eq(schema.media.id, video.id));
-    const other = Buffer.concat([MP4, Buffer.from('altri-byte-sintetici')]);
-    const response = await replace(video.id, 'x.mp4', other, 'video/mp4');
+    const response = await replace(video.id, 'x.mp4', MP4_2, 'video/mp4');
     expect(response.statusCode).toBe(200);
     const row = await mediaRow(video.id);
     expect(row.width).toBeNull();
