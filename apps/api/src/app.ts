@@ -1,3 +1,4 @@
+import { MEDIA_ERROR_STATUS } from '@amoris/contracts';
 import { createDatabase, type Database } from '@amoris/db';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -13,11 +14,18 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { AdminArea } from './auth/areas.js';
-import type { Config } from './config.js';
+import { mediaLimitsOf, type Config } from './config.js';
+import { configureImageEngine } from './lib/imageEngine.js';
 import { createObjectStore, type ObjectStore } from './lib/objectStore.js';
+import { createMediaRuntime, type MediaRuntime } from './modules/media/runtime.js';
 import { accountRoutes } from './modules/accounts/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { contentRoutes } from './modules/content/routes.js';
+import {
+  isMediaUploadRoute,
+  maxMediaBytes,
+  mediaMultipartError,
+} from './modules/media/multipartErrors.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { menuRoutes } from './modules/menu/routes.js';
 import { formSubmissionRoutes } from './modules/formSubmissions/routes.js';
@@ -39,6 +47,7 @@ declare module 'fastify' {
     db: Database;
     config: Config;
     objectStore: ObjectStore;
+    mediaRuntime: MediaRuntime;
   }
 }
 
@@ -115,6 +124,8 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
   app.decorate('db', db);
   app.decorate('config', config);
   app.decorate('objectStore', options.objectStore ?? createObjectStore(config));
+  configureImageEngine(config);
+  app.decorate('mediaRuntime', createMediaRuntime(config));
   app.addHook('onClose', async () => {
     await close();
   });
@@ -136,7 +147,9 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(cookie);
-  await app.register(multipart, { limits: { fileSize: 64 * 1024 * 1024, files: 1 } });
+  await app.register(multipart, {
+    limits: { fileSize: maxMediaBytes(mediaLimitsOf(config)), files: 1 },
+  });
   /**
    * ADR-007 §3.1 controllo 8, prima metà: un tetto complessivo per indirizzo.
    * Il conteggio per account e il ritardo progressivo stanno nel modulo `auth`,
@@ -193,8 +206,21 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
       });
     }
 
+    const media = mediaMultipartError(
+      caught,
+      config,
+      isMediaUploadRoute(request.method, request.routeOptions.url),
+    );
+    if (media) {
+      return reply.code(media.status).send({
+        error: { code: media.code, message: media.message, requestId: request.id },
+      });
+    }
+
     const status = caught.statusCode ?? 500;
-    if (status >= 500) {
+    // Un rifiuto dei media (per esempio 503 «occupato») ha un messaggio fatto per chi lo legge.
+    const refusal = typeof caught.code === 'string' && caught.code in MEDIA_ERROR_STATUS;
+    if (status >= 500 && !refusal) {
       request.log.error({ err: caught }, 'richiesta fallita');
     }
 
@@ -202,7 +228,7 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
       error: {
         code: caught.code ?? 'INTERNAL_ERROR',
         // Sopra il 500 il messaggio non esce: potrebbe contenere dettagli interni.
-        message: status >= 500 ? 'Errore interno del servizio.' : caught.message,
+        message: status >= 500 && !refusal ? 'Errore interno del servizio.' : caught.message,
         requestId: request.id,
       },
     });

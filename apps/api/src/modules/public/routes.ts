@@ -14,13 +14,13 @@ import {
   postsResponse,
   redirectResponse,
   searchQuery,
+  searchResponse,
   settingsResponse,
   sitemapResponse,
   slugParam,
   termResponse,
 } from './schemas.js';
 import {
-  collectRefs,
   documentsBy,
   downloadCategoriesOf,
   downloadCategoryById,
@@ -28,22 +28,18 @@ import {
   summaryTextStart,
   fileByPublicPath,
   fillTemplate,
-  formsByIds,
   mediaByIds,
-  postListsByRefs,
   publicMenu,
   publicSettings,
   publishedByPath,
   publishedPosts,
   resolveRedirect,
   robotsDirectives,
-  seoForContent,
   sitemapEntries,
-  slidersByIds,
   termByPath,
-  termsOfContent,
 } from './service.js';
 import { searchPublished } from './search.js';
+import { assemblePage, publicDocument, siteTitle } from './page.js';
 import { schema } from '@amoris/db';
 import { eq } from 'drizzle-orm';
 import { parseByteRange } from '../../lib/objectStore.js';
@@ -57,23 +53,6 @@ import { parseByteRange } from '../../lib/objectStore.js';
  */
 
 const iso = (value: Date | null) => (value ? value.toISOString() : null);
-
-async function siteTitle(app: FastifyInstance): Promise<string> {
-  const settings = await publicSettings(app.db);
-  const value = settings['site.title'];
-  return typeof value === 'string' ? value : '';
-}
-
-/** Un documento pubblico con le date in ISO, come lo legge il sito. */
-function publicDocument<T extends { readonly updatedAt: Date; readonly publishedAt: Date | null }>(
-  document: T,
-) {
-  return {
-    ...document,
-    updatedAt: document.updatedAt.toISOString(),
-    publishedAt: iso(document.publishedAt),
-  };
-}
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
@@ -91,57 +70,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const content = await publishedByPath(app.db, request.query.path);
       if (!content) return reply.callNotFound();
-      const refs = collectRefs(content.blocks);
-      if (content.featuredMediaId) refs.mediaIds.add(content.featuredMediaId);
-      const sliders = await slidersByIds(app.db, refs.sliderIds);
-      for (const slider of Object.values(sliders)) {
-        for (const slide of slider.slides) if (slide.mediaId) refs.mediaIds.add(slide.mediaId);
-      }
-      const documents = await documentsBy(app.db, { ids: refs.documentIds });
-      for (const document of documents) refs.mediaIds.add(document.mediaId);
-      const [media, terms, seo, forms, postLists] = await Promise.all([
-        mediaByIds(app.db, refs.mediaIds),
-        termsOfContent(app.db, content.id),
-        seoForContent(app.db, content, await siteTitle(app)),
-        formsByIds(app.db, refs.formIds),
-        postListsByRefs(app.db, refs.postLists),
-      ]);
-      // Le miniature degli articoli dell'elenco: media noti a chi rende, come il resto.
-      for (const items of Object.values(postLists)) {
-        for (const item of items) if (item.featuredMediaId) refs.mediaIds.add(item.featuredMediaId);
-      }
-      const extraMedia = await mediaByIds(
-        app.db,
-        [...refs.mediaIds].filter((id) => !(id in media)),
-      );
-      return reply.send({
-        content: {
-          id: content.id,
-          type: content.type,
-          path: content.path,
-          slug: content.slug,
-          title: content.title,
-          showTitle: content.showTitle,
-          pageLayout: content.pageLayout,
-          gutterWidth: content.gutterWidth,
-          excerpt: content.excerpt,
-          blocks: content.blocks,
-          featuredMediaId: content.featuredMediaId,
-          publishedAt: iso(content.publishedAt),
-          updatedAt: content.updatedAt.toISOString(),
-          // DR-186: la modifica della sorgente o del CMS; prima dell'import, l'aggiornamento.
-          modifiedAt: (content.modifiedAt ?? content.updatedAt).toISOString(),
-        },
-        seo,
-        terms,
-        media: { ...media, ...extraMedia },
-        sliders,
-        forms,
-        postLists,
-        documents: Object.fromEntries(
-          documents.map((document) => [document.id, publicDocument(document)]),
-        ),
-      });
+      return reply.send(await assemblePage(app.db, content, await siteTitle(app.db)));
     },
   );
 
@@ -198,7 +127,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         tags: ['pubblico'],
         summary: 'Ricerca fra pagine, articoli e download pubblicati, come la sorgente',
         querystring: searchQuery,
-        response: { 200: postsResponse, ...errorResponses(400) },
+        response: { 200: searchResponse, ...errorResponses(400) },
       },
     },
     async (request, reply) => {
@@ -210,6 +139,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         items: rows.map((row) => ({
           id: row.id,
+          type: row.type,
           path: row.path,
           title: row.title,
           excerpt: row.excerpt,
@@ -280,7 +210,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
         seo: {
           title: fillTemplate(template?.titleTemplate ?? '{term_title} - {site_title}', {
             term_title: term.name,
-            site_title: await siteTitle(app),
+            site_title: await siteTitle(app.db),
           }),
           robots: robotsDirectives(false, false, template?.robotsDirectives ?? []),
         },
@@ -380,9 +310,9 @@ const ACTIVE_TYPES = new Set(['text/html', 'application/xhtml+xml', 'image/svg+x
 
 /**
  * I file dei media a `/media/…` (ADR-004 §3.6, ADR-008): il servizio legge il
- * bucket pubblico e passa il contenuto alla risposta, senza URL firmati. Le
- * intestazioni di cache sono rimandate alla Fase 1F (registro, conseguenza di
- * DR-074): qui solo impronta e data, che bastano alla rivalidazione.
+ * bucket pubblico e passa il contenuto alla risposta, senza URL firmati. Il file
+ * esce con `Cache-Control: no-cache` (D149-A): il browser convalida con impronta e
+ * data e vede subito una sostituzione; la politica definitiva resta alla Fase 1F.
  */
 export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
   app.get(
@@ -407,7 +337,7 @@ export async function publicMediaRoutes(app: FastifyInstance): Promise<void> {
       const etag = `"${file.checksum.toString('hex')}"`;
       const lastModified = file.updatedAt.toUTCString();
       // DR-189: le richieste a intervalli si dichiarano su ogni risposta.
-      void reply.header('accept-ranges', 'bytes');
+      void reply.header('accept-ranges', 'bytes').header('cache-control', 'no-cache');
       if (request.headers['if-none-match'] === etag) {
         return reply.code(304).header('etag', etag).send(null);
       }

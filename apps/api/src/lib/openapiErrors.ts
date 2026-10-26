@@ -23,8 +23,13 @@ const descriptions: Record<number, string> = {
   401: 'Accesso mancante o scaduto',
   403: 'Operazione non consentita, o token anti-CSRF assente',
   404: 'Risorsa non trovata',
+  406: 'La richiesta non è un modulo multipart con un file',
   409: 'Conflitto con lo stato attuale',
+  413: 'File troppo pesante o con troppi pixel',
+  415: 'Tipo di file non ammesso',
+  422: 'Dati non elaborabili',
   429: 'Troppi tentativi',
+  503: 'Servizio occupato o archivio non raggiungibile: riprovare più tardi',
 };
 
 export function errorResponses<const Codes extends readonly number[]>(

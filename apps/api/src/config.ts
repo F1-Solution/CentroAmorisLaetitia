@@ -1,3 +1,4 @@
+import { DEFAULT_MEDIA_LIMITS, type MediaLimits } from '@amoris/contracts';
 import { z } from 'zod';
 
 /**
@@ -88,6 +89,22 @@ const configSchema = z.object({
   S3_SECRET_KEY: z.string().default(''),
   S3_BUCKET_PUBLIC: z.string().min(1).default('media-public'),
   S3_BUCKET_PRIVATE: z.string().min(1).default('media-private'),
+  /** Tempi massimi di attesa dell'archivio: il blocco della cartella non resta tenuto all'infinito. */
+  S3_CONNECT_TIMEOUT_MS: z.coerce.number().int().min(1).default(5000),
+  S3_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1).default(30000),
+
+  /** Limiti dei file caricati nei media (1G-14, D147-A): le prove li abbassano. */
+  MEDIA_MAX_IMAGE_BYTES: z.coerce.number().int().min(1).default(DEFAULT_MEDIA_LIMITS.imageBytes),
+  MEDIA_MAX_IMAGE_PIXELS: z.coerce.number().int().min(1).default(DEFAULT_MEDIA_LIMITS.imagePixels),
+  MEDIA_MAX_PDF_BYTES: z.coerce.number().int().min(1).default(DEFAULT_MEDIA_LIMITS.pdfBytes),
+  MEDIA_MAX_VIDEO_BYTES: z.coerce.number().int().min(1).default(DEFAULT_MEDIA_LIMITS.videoBytes),
+  /** Elaborazioni di immagini insieme, posti in coda e fili di `sharp`: oltre, 503. */
+  MEDIA_MAX_CONCURRENT: z.coerce.number().int().min(1).default(2),
+  MEDIA_QUEUE_LENGTH: z.coerce.number().int().min(0).default(4),
+  MEDIA_IMAGE_THREADS: z.coerce.number().int().min(1).default(2),
+  /** Tetto per indirizzo di caricamenti e sostituzioni, e attesa massima dei blocchi del database. */
+  MEDIA_WRITES_PER_MINUTE: z.coerce.number().int().min(1).default(30),
+  MEDIA_LOCK_TIMEOUT_MS: z.coerce.number().int().min(1).default(10000),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -109,4 +126,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     return `${name}: ${issue.message}`;
   });
   throw new ConfigError(problems);
+}
+
+/** Limiti dei media letti dalla configurazione. */
+export function mediaLimitsOf(config: Config): MediaLimits {
+  return {
+    imageBytes: config.MEDIA_MAX_IMAGE_BYTES,
+    imagePixels: config.MEDIA_MAX_IMAGE_PIXELS,
+    pdfBytes: config.MEDIA_MAX_PDF_BYTES,
+    videoBytes: config.MEDIA_MAX_VIDEO_BYTES,
+  };
 }

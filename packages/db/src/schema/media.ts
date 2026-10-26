@@ -55,7 +55,7 @@ export const media = pgTable(
   ],
 );
 
-/** Dimensioni derivate generate a suo tempo da WordPress. Non si rigenerano (ADR-004 §3.2). */
+/** Dimensioni derivate: quelle importate da WordPress e, dal 2026-10-23, quelle generate al caricamento e alla sostituzione (ADR-004 §3.2). */
 export const mediaVariants = pgTable(
   'media_variants',
   {

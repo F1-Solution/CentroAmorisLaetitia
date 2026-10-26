@@ -12,9 +12,8 @@ import type { Config } from '../config.js';
  * Archivio a oggetti (ADR-004, DR-005). Il client ufficiale è compatibile con
  * MinIO, che è ciò che gira in locale; `forcePathStyle` serve proprio a quello.
  *
- * Qui non si generano miniature: ADR-004 §3.2 vieta di rigenerare le varianti,
- * perché le dimensioni derivate sono quelle che WordPress produsse a suo tempo e
- * riprodurle diverse farebbe divergere il `srcset`.
+ * Qui non si generano miniature: le dimensioni derivate le produce il servizio dei
+ * media al caricamento e alla sostituzione (ADR-004 §3.2, revisione del 2026-10-23).
  */
 
 /** Un oggetto letto: il contenuto come flusso, da passare alla risposta senza caricarlo in memoria. */
@@ -69,6 +68,13 @@ export function createObjectStore(config: Config): ObjectStore {
     endpoint: config.S3_ENDPOINT,
     region: config.S3_REGION,
     forcePathStyle: true,
+    // Senza tempi massimi un archivio che non risponde terrebbe i blocchi della cartella.
+    requestHandler: {
+      connectionTimeout: config.S3_CONNECT_TIMEOUT_MS,
+      requestTimeout: config.S3_REQUEST_TIMEOUT_MS,
+      throwOnRequestTimeout: true,
+    },
+    maxAttempts: 2,
     credentials: {
       accessKeyId: config.S3_ACCESS_KEY,
       secretAccessKey: config.S3_SECRET_KEY,

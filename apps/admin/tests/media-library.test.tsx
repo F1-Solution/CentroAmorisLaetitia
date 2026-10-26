@@ -1,3 +1,9 @@
+import {
+  DEFAULT_MEDIA_LIMITS,
+  MEDIA_RULES,
+  mediaMessages,
+  ruleForMime,
+} from '@amoris/contracts/mediaRules';
 import { DensityProvider } from '@amoris/ui';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -147,13 +153,214 @@ describe('archivio dei media', () => {
     });
   });
 
-  it('sostituisce il file conservando l’indirizzo', async () => {
+  async function chooseReplacement(panel: HTMLElement, file: File, applyAccept = true) {
+    const user = userEvent.setup({ applyAccept });
+    await user.upload(within(panel).getByLabelText(/Scegli il file che sostituisce/), file);
+    return user;
+  }
+
+  async function confirmReplacement(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+    const conferma = screen.getByRole('dialog', { name: 'Sostituisci il file' });
+    await user.click(within(conferma).getByRole('button', { name: 'Sostituisci' }));
+  }
+
+  it('prima di sostituire avverte che il file attuale e le sue dimensioni derivate non si recuperano', async () => {
+    const panel = await openPanel();
+    await chooseReplacement(panel, new File(['byte'], 'sostituta.png', { type: 'image/png' }));
+
+    const conferma = screen.getByRole('dialog', { name: 'Sostituisci il file' });
+    expect(
+      within(conferma).getByText(
+        /file attuale e le sue dimensioni derivate non si potranno recuperare/,
+      ),
+    ).toBeInTheDocument();
+    expect(within(conferma).getByText(/sostituta\.png/)).toBeInTheDocument();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it('«Annulla» nella conferma non invia nulla', async () => {
+    const panel = await openPanel();
+    const user = await chooseReplacement(
+      panel,
+      new File(['byte'], 'sostituta.png', { type: 'image/png' }),
+    );
+    const conferma = screen.getByRole('dialog', { name: 'Sostituisci il file' });
+    await user.click(within(conferma).getByRole('button', { name: 'Annulla' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Sostituisci il file' })).not.toBeInTheDocument();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it('dopo la sostituzione dice quante dimensioni derivate sono state rigenerate', async () => {
+    uploadMock.mockResolvedValue({ ...immagine, derivatives: { written: 5, removed: 2 } });
+    const panel = await openPanel();
+    const user = await chooseReplacement(
+      panel,
+      new File(['byte'], 'sostituta.png', { type: 'image/png' }),
+    );
+    await confirmReplacement(user);
+
+    expect(await within(panel).findByText(/5 dimensioni derivate rigenerate/)).toBeInTheDocument();
+    expect(within(panel).getByText(/2 non servono più e sono state tolte/)).toBeInTheDocument();
+  });
+
+  it('un file di tipo non ammesso, scelto per sostituire, è rifiutato prima di ogni richiesta', async () => {
+    const panel = await openPanel();
+    await chooseReplacement(
+      panel,
+      new File(['byte'], 'script.exe', { type: 'application/x-msdownload' }),
+      false,
+    );
+
+    expect(
+      await within(panel).findByText(mediaMessages.typeNotAllowed('script.exe')),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Sostituisci il file' })).not.toBeInTheDocument();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it('il rifiuto che elenca i contenuti si legge per intero nel pannello (D146-A)', async () => {
+    const messaggio = mediaMessages.variantInUse('Pagina inventata, Notizia inventata');
+    uploadMock.mockRejectedValue(new ApiError(409, 'MEDIA_VARIANT_IN_USE', messaggio));
+    const panel = await openPanel();
+    const user = await chooseReplacement(
+      panel,
+      new File(['byte'], 'piccola.png', { type: 'image/png' }),
+    );
+    await confirmReplacement(user);
+
+    expect(
+      await within(panel).findByText(/Pagina inventata, Notizia inventata/),
+    ).toBeInTheDocument();
+  });
+
+  it('dichiara i tipi ammessi accanto a «Carica» e a «Sostituisci»', async () => {
+    const panel = await openPanel();
+    const riga = 'Tipi ammessi: JPEG, PNG, WebP, PDF e MP4.';
+    expect(screen.getAllByText(riga)).toHaveLength(2);
+    const rigaPannello = within(panel).getByText(riga);
+    expect(
+      within(panel)
+        .getByLabelText(/Scegli il file che sostituisce/)
+        .getAttribute('aria-describedby'),
+    ).toBe(rigaPannello.id);
+    expect(rigaPannello.id).not.toBe('');
+  });
+
+  it('i controlli di scelta hanno «accept» con i tipi ammessi', async () => {
+    const panel = await openPanel();
+    for (const input of [
+      screen.getByLabelText('Scegli i file da caricare'),
+      within(panel).getByLabelText(/Scegli il file che sostituisce/),
+    ]) {
+      const accept = input.getAttribute('accept') ?? '';
+      for (const rule of MEDIA_RULES) {
+        expect(accept).toContain(rule.mime);
+        for (const extension of rule.extensions) expect(accept).toContain(`.${extension}`);
+      }
+      expect(accept).not.toContain('svg');
+    }
+  });
+
+  it('un file di tipo non ammesso è rifiutato prima dell’invio, con il messaggio in italiano', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    const file = new File(['<svg/>'], 'disegno.svg', { type: 'image/svg+xml' });
+    await user.upload(screen.getByLabelText('Scegli i file da caricare'), file);
+
+    expect(
+      await screen.findByText(mediaMessages.typeNotAllowed('disegno.svg')),
+    ).toBeInTheDocument();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it('un file troppo pesante è rifiutato prima dell’invio, con il limite del suo tipo', async () => {
     const user = userEvent.setup();
-    uploadMock.mockResolvedValue({ ...immagine, byteSize: 4096 });
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    const file = new File(['x'], 'enorme.png', { type: 'image/png' });
+    Object.defineProperty(file, 'size', { value: DEFAULT_MEDIA_LIMITS.imageBytes + 1 });
+    await user.upload(screen.getByLabelText('Scegli i file da caricare'), file);
+
+    const rule = ruleForMime('image/png');
+    if (!rule) throw new Error('Regola PNG assente.');
+    expect(await screen.findByText(mediaMessages.tooLarge('enorme.png', rule))).toBeInTheDocument();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it('con più file, invia quelli ammessi e rifiuta gli altri', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    uploadMock.mockResolvedValue({ ...immagine, id: 'm2', derivatives: 4 });
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    const buono = new File(['byte'], 'buona.png', { type: 'image/png' });
+    const cattivo = new File(['byte'], 'cattivo.exe', { type: 'application/octet-stream' });
+    await user.upload(screen.getByLabelText('Scegli i file da caricare'), [cattivo, buono]);
+
+    await waitFor(() => expect(uploadMock).toHaveBeenCalledTimes(1));
+    expect(uploadMock).toHaveBeenCalledWith('/media', buono, undefined);
+    expect(screen.getByText(mediaMessages.typeNotAllowed('cattivo.exe'))).toBeInTheDocument();
+  });
+
+  it('con una sola dimensione derivata il participio è al singolare', async () => {
+    const user = userEvent.setup();
+    uploadMock.mockResolvedValue({ ...immagine, id: 'm3', derivatives: 1 });
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    await user.upload(
+      screen.getByLabelText('Scegli i file da caricare'),
+      new File(['byte'], 'piccola.png', { type: 'image/png' }),
+    );
+
+    expect(await screen.findByText('1 dimensione derivata generata.')).toBeInTheDocument();
+  });
+
+  it('dopo un caricamento dice quante dimensioni derivate sono state create', async () => {
+    const user = userEvent.setup();
+    uploadMock.mockResolvedValue({ ...immagine, id: 'm2', derivatives: 4 });
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    await user.upload(
+      screen.getByLabelText('Scegli i file da caricare'),
+      new File(['byte'], 'nuova.png', { type: 'image/png' }),
+    );
+
+    expect(await screen.findByText('4 dimensioni derivate generate.')).toBeInTheDocument();
+  });
+
+  it('il messaggio italiano del server per un file troppo grande si mostra così com’è', async () => {
+    const user = userEvent.setup();
+    const messaggio = mediaMessages.tooLargeAny(DEFAULT_MEDIA_LIMITS.videoBytes);
+    uploadMock.mockRejectedValue(new ApiError(413, 'MEDIA_TOO_LARGE', messaggio));
+    renderLibrary();
+    await waitFor(() => expect(screen.getByText('Immagine inventata')).toBeInTheDocument());
+
+    await user.upload(
+      screen.getByLabelText('Scegli i file da caricare'),
+      new File(['byte'], 'nuova.png', { type: 'image/png' }),
+    );
+
+    expect(await screen.findByText(messaggio)).toBeInTheDocument();
+  });
+
+  it('sostituisce il file conservando l’indirizzo, dopo la conferma', async () => {
+    const user = userEvent.setup();
+    uploadMock.mockResolvedValue({
+      ...immagine,
+      byteSize: 4096,
+      derivatives: { written: 3, removed: 0 },
+    });
     const panel = await openPanel();
 
     const file = new File(['altri byte inventati'], 'sostituta.png', { type: 'image/png' });
     await user.upload(within(panel).getByLabelText(/Scegli il file che sostituisce/), file);
+    await confirmReplacement(user);
 
     await waitFor(() => {
       expect(uploadMock).toHaveBeenCalledWith('/media/m1/file', file, { method: 'PUT' });

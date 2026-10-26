@@ -17,6 +17,14 @@ export const mediaSchema = z.object({
   uploadedAt: z.string(),
 });
 
+/** Dopo il caricamento: il media e quante dimensioni derivate sono nate. */
+export const uploadResponse = mediaSchema.extend({ derivatives: z.number().int() });
+
+/** Dopo la sostituzione: il media e le derivate scritte e tolte. */
+export const replaceResponse = mediaSchema.extend({
+  derivatives: z.object({ written: z.number().int(), removed: z.number().int() }),
+});
+
 export const listQuery = z.object({
   search: z.string().min(1).max(200).optional(),
   mimePrefix: z.string().min(1).max(50).optional(),

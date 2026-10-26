@@ -139,6 +139,20 @@ const search = async (query: string) => {
 };
 
 describe('ricerca pubblica (DR-144)', () => {
+  it('ogni risultato dice di che tipo è: pagina, notizia o documento (DR-248)', async () => {
+    const body = await search('s=corso');
+    const types = Object.fromEntries(
+      (body.items as { path: string; type: string }[]).map((i) => [i.path, i.type]),
+    );
+    expect(types).toEqual({
+      '/corso-nuovo/': 'post',
+      '/download/modulo-corso/': 'document',
+      '/corso-vecchio/': 'post',
+      '/notizia-nuova/': 'post',
+      '/': 'page',
+    });
+  });
+
   it('una parola: prima i titoli che la contengono, poi per data; download pubblico compreso, home a /', async () => {
     const body = await search('s=corso');
     expect(body.items.map((i) => i.path)).toEqual([

@@ -1,0 +1,10 @@
+url,viewport,sha256_accettato,sha256_nuovo,identico_all_accettato,confrontabile_con_accettato,percentuale_con_accettato,aree_oltre_32_con_accettato,confrontabile_con_riferimento,percentuale_con_riferimento,aree_oltre_32_con_riferimento,percentuale_accettata,esito_accettato
+"/page/8/?s=corso",1440,,43fee524f8a0df02c8beba53e03692c19cfe197454086d7e0d58ae054fb1a7fb,,,,,,,,,
+"/page/8/?s=corso",768,,a5ba0ba9a62fbdbd079b3f2dbf119a3f2ee29b3794a894ddea075adde40787a1,,,,,,,,,
+"/page/8/?s=corso",390,,877b9c5b70da7f8c71181df2981c8a4fa1fde3f7110cb19b5852c8e8ec23dcba,,,,,,,,,
+"/page/9/?s=corso",1440,,fbc0120c4a4482a459568572dd7f474416e72f40222794f678646113aa3ee590,,,,,,,,,
+"/page/9/?s=corso",768,,d6e0f5ec90be1217b5456593be4a5414c7b538bf8f038891b6c878e139fa7eec,,,,,,,,,
+"/page/9/?s=corso",390,,71651151ca59e240f27c0b0becba61ab1a682f04d2497dbb0099370c47be22b1,,,,,,,,,
+"/?s=corso",1440,77cf3a0c9dde32e947522d7f1308172da84366c8622cb84a6db6ba2f52045b52,77cf3a0c9dde32e947522d7f1308172da84366c8622cb84a6db6ba2f52045b52,si,si,0.0000,0,si,1.6292,6,1.6292,fallito
+"/?s=corso",768,bbb2fc38284653a7ea2d0eb37f757cfba42f4a07128aa67f33b2325208758917,bbb2fc38284653a7ea2d0eb37f757cfba42f4a07128aa67f33b2325208758917,si,si,0.0000,0,si,4.0724,12,4.0724,fallito
+"/?s=corso",390,959a4f4d86c02ff7b226f3777d6b80e2b6bf967b863ac0da661aeafcd8de84cd,959a4f4d86c02ff7b226f3777d6b80e2b6bf967b863ac0da661aeafcd8de84cd,si,si,0.0000,0,si,4.6046,5,4.6046,fallito

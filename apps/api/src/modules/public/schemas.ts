@@ -139,6 +139,9 @@ export const contentResponse = z.object({
   documents: z.record(z.string(), documentSchema),
 });
 
+/** L'anteprima aggiunge l'indirizzo a cui il sito serve (o servirà) il contenuto: «/» per la pagina iniziale. */
+export const previewResponse = contentResponse.extend({ publicPath: z.string() });
+
 type MenuNode = {
   id: string;
   label: string;
@@ -205,6 +208,15 @@ export const postsResponse = z.object({
     page: z.number().int(),
     perPage: z.number().int(),
   }),
+});
+
+/** Un risultato della ricerca: come un articolo, più il tipo di contenuto (DR-248). */
+export const searchResponse = z.object({
+  items: z.array(
+    postsResponse.shape.items.element.extend({ type: z.enum(['page', 'post', 'document']) }),
+  ),
+  media: postsResponse.shape.media,
+  meta: postsResponse.shape.meta,
 });
 
 /** Ricerca del sito pubblico (DR-144): la frase come la scrive il visitatore, `s` di WordPress. */

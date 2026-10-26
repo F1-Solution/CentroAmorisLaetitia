@@ -186,9 +186,9 @@ CREATE TABLE media (
 CREATE INDEX media_mime_idx    ON media (mime_type);
 CREATE INDEX media_private_idx ON media (is_private) WHERE is_private;
 
--- Dimensioni derivate generate a suo tempo da WordPress: 150, 300, 768,
--- 1024 px. Si importano cosi' come sono e NON si rigenerano
--- (ADR-004 §3.2): il contenuto le referenzia negli attributi srcset.
+-- Dimensioni derivate: quelle importate da WordPress e, dal 2026-10-23, quelle
+-- generate al caricamento e alla sostituzione (ADR-004 §3.2): il contenuto le
+-- referenzia negli attributi srcset.
 CREATE TABLE media_variants (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     media_id    uuid NOT NULL REFERENCES media(id) ON DELETE CASCADE,

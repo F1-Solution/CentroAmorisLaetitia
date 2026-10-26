@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { Button } from '../primitives/Button';
 import './MediaUploader.css';
@@ -10,12 +10,18 @@ export interface UploadingFile {
   progress: number;
   status: 'uploading' | 'done' | 'error';
   errorText?: string;
+  /** Avviso a caricamento riuscito, per esempio quante dimensioni derivate sono nate. */
+  noticeText?: string;
 }
 
 export interface MediaUploaderProps {
   files: UploadingFile[];
   onFilesSelected: (files: FileList) => void;
   disabled?: boolean;
+  /** Valore dell'attributo `accept` del controllo di scelta. */
+  accept?: string;
+  /** Riga che dichiara i tipi ammessi, accanto al pulsante. */
+  hintText?: string;
 }
 
 /**
@@ -29,9 +35,12 @@ export function MediaUploader({
   files,
   onFilesSelected,
   disabled = false,
+  accept,
+  hintText,
 }: MediaUploaderProps): React.JSX.Element {
   const [isOver, setIsOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hintId = useId();
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -60,10 +69,17 @@ export function MediaUploader({
         <Button variant="secondary" disabled={disabled} onClick={() => inputRef.current?.click()}>
           Scegli i file
         </Button>
+        {hintText ? (
+          <p id={hintId} className="amoris-media-uploader__hint">
+            {hintText}
+          </p>
+        ) : null}
         <input
           ref={inputRef}
           type="file"
           multiple
+          {...(accept ? { accept } : {})}
+          {...(hintText ? { 'aria-describedby': hintId } : {})}
           aria-label="Scegli i file da caricare"
           className="amoris-media-uploader__input"
           disabled={disabled}
@@ -105,6 +121,9 @@ export function MediaUploader({
                 <p className="amoris-media-uploader__file-error" role="alert">
                   {file.errorText}
                 </p>
+              ) : null}
+              {file.status === 'done' && file.noticeText ? (
+                <p className="amoris-media-uploader__file-notice">{file.noticeText}</p>
               ) : null}
             </li>
           ))}

@@ -102,6 +102,8 @@ Stesso dominio, percorsi distinti, gestiti da Caddy (ADR-003). Il cookie di sess
 Il sottodominio dedicato per l'area amministrativa resta possibile e si valuta in
 Fase 1F: cambierebbe la configurazione del cookie, non l'architettura.
 
+> Nota del 2026-10-23 (DR-252): con un sottodominio per l'area, l'anteprima del sito risulterebbe sempre 404, perché il cookie di sessione è dell'origine unica e il sito non lo riceverebbe.
+
 ### 3.3 Regole che non si negoziano
 
 1. **`apps/web` non registra alcun service worker e non serve alcun manifest**,

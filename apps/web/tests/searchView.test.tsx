@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { SearchView, searchHref } from '../src/components/Views';
+import { ArchiveView, SearchView, searchHref } from '../src/components/Views';
 
 /** Ricerca del sito pubblico (DR-144): indirizzi e resa come la sorgente. Dati sintetici. */
 
@@ -23,6 +23,7 @@ describe('ricerca del sito pubblico (DR-144)', () => {
       items: [
         {
           id: 'a',
+          type: 'post' as const,
           path: '/articolo-sintetico/',
           title: 'Articolo sintetico',
           excerpt: null,
@@ -41,9 +42,10 @@ describe('ricerca del sito pubblico (DR-144)', () => {
   });
 });
 
-describe('estratto nei risultati (D139 = B, S10)', () => {
+describe('estratto nei risultati (D139 = B, S10; DR-248)', () => {
   const item = (over: Record<string, unknown>) => ({
     id: 'a',
+    type: 'post' as 'page' | 'post' | 'document',
     path: '/articolo-sintetico/',
     title: 'Articolo sintetico',
     excerpt: null as string | null,
@@ -86,12 +88,48 @@ describe('estratto nei risultati (D139 = B, S10)', () => {
     }
   });
 
-  it('vale per ogni risultato, comprese le pagine: ognuno col proprio estratto', () => {
+  it('solo le notizie mostrano l’estratto: la pagina mostra l’inizio del testo (DR-248)', () => {
     const html = render([
-      item({ id: 'p', path: '/pagina-sintetica/', excerpt: 'Estratto della pagina' }),
-      item({ id: 'n', excerpt: null }),
+      item({ id: 'p', type: 'page', path: '/pagina-sintetica/', excerpt: 'Estratto della pagina' }),
+      item({ id: 'n', type: 'post', excerpt: 'Estratto della notizia' }),
     ]);
-    expect(html).toContain('<p>Estratto della pagina</p>');
-    expect(html).toContain('Inizio automatico del testo');
+    expect(html).not.toContain('Estratto della pagina');
+    expect(html).toContain('Inizio automatico del testo</article>');
+    expect(html).toContain('<p>Estratto della notizia</p>');
+  });
+
+  it('il documento resta com’è: l’inizio del testo, anche se un estratto ci fosse (DR-248)', () => {
+    const html = render([item({ type: 'document', excerpt: 'Estratto del documento' })]);
+    expect(html).not.toContain('Estratto del documento');
+    expect(html).toContain('Inizio automatico del testo</article>');
+  });
+});
+
+describe('estratto nell’archivio (D139 = B, S10): invariato da DR-248', () => {
+  it('l’archivio mostra l’estratto di ogni notizia, senza il tipo', () => {
+    const html = renderToStaticMarkup(
+      <ArchiveView
+        term={{ id: 't', name: 'Notizie', path: '/category/news/' } as never}
+        posts={{
+          items: [
+            {
+              id: 'n',
+              path: '/notizia-sintetica/',
+              title: 'Notizia sintetica',
+              excerpt: 'Estratto dell’archivio',
+              summary: null,
+              textStart: 'Inizio automatico del testo',
+              featuredMediaId: null,
+              publishedAt: '2026-01-01T10:00:00Z',
+            },
+          ],
+          media: {},
+          meta: { total: 1, page: 1, perPage: 10 },
+        }}
+        page={1}
+      />,
+    );
+    expect(html).toContain('<p>Estratto dell’archivio</p>');
+    expect(html).not.toContain('Inizio automatico del testo');
   });
 });

@@ -24,7 +24,7 @@ export interface ImageAttributes {
 
 /**
  * `src`, `srcset` e `sizes` come li scrive WordPress per un'immagine a piena
- * larghezza: le dimensioni derivate (ADR-004 §3.2, mai rigenerate) più
+ * larghezza: le dimensioni derivate (ADR-004 §3.2, generate al caricamento e alla sostituzione dal 2026-10-23) più
  * l'originale, e `sizes` pari alla larghezza dell'originale; con le derivate
  * Divi valgono i filtri del tema (I2, DR-183, DR-195).
  */

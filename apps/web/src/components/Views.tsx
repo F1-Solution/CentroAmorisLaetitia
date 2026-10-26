@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { BlocksDocument, type MediaMap } from '@amoris/blocks';
-import type { PostPage, PublicContent, PublicDocument, Term } from '../lib/api';
+import type { PostPage, PublicContent, PublicDocument, SearchPage, Term } from '../lib/api';
 import { archiveSummary, excerptLines, fileSize, longDate, postDate } from '../lib/format';
 import { featuredImageAttributes } from '../lib/featured';
 import { promoteFirstHeading } from '../lib/headings';
@@ -163,7 +163,7 @@ function PostListing({
   pageHref,
 }: {
   readonly heading: string;
-  readonly posts: PostPage;
+  readonly posts: PostPage | SearchPage;
   readonly page: number;
   readonly pageHref: (n: number) => string;
 }) {
@@ -184,7 +184,11 @@ function PostListing({
               <p className="post-meta">
                 <span className="published">{postDate(post.publishedAt)}</span>
               </p>
-              <ListingText excerpt={post.excerpt} textStart={post.textStart} />
+              {/* Nella ricerca l'estratto è delle sole notizie (DR-248); l'archivio ha solo notizie. */}
+              <ListingText
+                excerpt={'type' in post && post.type !== 'post' ? null : post.excerpt}
+                textStart={post.textStart}
+              />
             </article>
           ))}
           <div className="pagination clearfix">
@@ -238,7 +242,7 @@ export function SearchView({
   page,
 }: {
   readonly query: string;
-  readonly posts: PostPage;
+  readonly posts: SearchPage;
   readonly page: number;
 }) {
   if (posts.items.length === 0) {

@@ -369,6 +369,7 @@ describe('rifiuti senza scritture (W3-4)', () => {
       'sitemap.xml',
       'robots.txt',
       'favicon.ico',
+      'anteprima',
     ]);
   });
 });

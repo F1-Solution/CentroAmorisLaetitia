@@ -33,6 +33,7 @@ export const RESERVED_SLUGS: readonly string[] = [
   'sitemap.xml',
   'robots.txt',
   'favicon.ico',
+  'anteprima',
 ];
 
 export interface AddressTarget {

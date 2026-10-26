@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { SiteShell } from '../../components/SiteShell';
 import { JsonLd } from '../../components/JsonLd';
@@ -15,15 +16,19 @@ import {
   getDocument,
   getDocuments,
   getPosts,
+  getPreview,
   getSettings,
   getTerm,
+  SESSION_COOKIE_NAME,
   searchContents,
   settingString,
   type PostPage,
   type PublicContent,
   type PublicDocument,
+  type SearchPage,
   type Term,
 } from '../../lib/api';
+import { isPreviewPath, previewIdOf } from '../../lib/previewPath';
 import { siteUrl } from '../../lib/site';
 import {
   buildGraph,
@@ -58,7 +63,7 @@ type Resolved =
       page: number;
       posts: PostPage;
     }
-  | { kind: 'search'; query: string; page: number; posts: PostPage }
+  | { kind: 'search'; query: string; page: number; posts: SearchPage }
   | {
       kind: 'downloadCategory';
       term: Term;
@@ -67,7 +72,7 @@ type Resolved =
       documents: readonly PublicDocument[];
     }
   | { kind: 'document'; document: PublicDocument; media: MediaMap; terms: readonly Term[] }
-  | { kind: 'content'; data: PublicContent };
+  | { kind: 'content'; data: PublicContent; path: string };
 
 interface Params {
   readonly params: Promise<{ percorso?: string[] }>;
@@ -86,68 +91,94 @@ const SEARCH_ROBOTS = 'noindex, max-snippet:-1, max-image-preview:large, max-vid
 const SEARCH_ROBOTS_PAGED =
   'noindex, nofollow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
+/** L'indirizzo nella forma dei `params` di Next (segmenti già ricodificati): quella a cui il proxy riporta il percorso grezzo. */
+function rawPathOf(segments: readonly string[] | undefined): string {
+  if (!segments || segments.length === 0) return '/';
+  return `/${segments.join('/')}/`;
+}
+
 function pathOf(segments: readonly string[] | undefined): string {
   if (!segments || segments.length === 0) return '/';
   return `/${segments.map((segment) => decodeURIComponent(segment)).join('/')}/`;
 }
 
+/** S15: la bozza si vede solo con la sessione di Redazione; per tutto il resto è un 404. */
+async function resolvePreview(id: string): Promise<Resolved | null> {
+  const session = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  if (!session) return null;
+  const data = await getPreview(id, session);
+  // L'indirizzo pubblico del contenuto («/» per la pagina iniziale) è quello corrente: menu, JSON-LD e canonical coincidono con la pagina pubblicata.
+  return data ? { kind: 'content', data, path: data.publicPath } : null;
+}
+
 /** Una sola risoluzione per richiesta, condivisa fra metadati e pagina. */
-const resolve = cache(async (path: string, query: string | null): Promise<Resolved | null> => {
-  // Ricerca (DR-144): `?s=` sulla home e sulle sue pagine, come WordPress.
-  const searchPage = /^\/(?:page\/(\d+)\/)?$/.exec(path);
-  if (query !== null && searchPage) {
-    const page = Number(searchPage[1] ?? '1');
-    const posts = page >= 1 ? await searchContents(query, page) : null;
-    if (!posts || (page > 1 && posts.items.length === 0)) return null;
-    return { kind: 'search', query, page, posts };
-  }
+const resolve = cache(
+  async (path: string, query: string | null, rawPath: string): Promise<Resolved | null> => {
+    const previewId = previewIdOf(rawPath);
+    if (previewId) return resolvePreview(previewId);
+    if (isPreviewPath(rawPath)) return null;
 
-  const archive = /^(\/category\/[^/]+\/)(?:page\/(\d+)\/)?$/.exec(path);
-  if (archive?.[1]) {
-    const found = await getTerm(archive[1]);
-    const page = Number(archive[2] ?? '1');
-    if (found && page >= 1) {
-      const posts = await getPosts([found.term.id], page, CATEGORY_POSTS_PER_PAGE);
-      if (posts && (page === 1 || posts.items.length > 0)) {
-        return {
-          kind: 'archive',
-          term: found.term,
-          seoTitle: found.seo.title,
-          robots: found.seo.robots,
-          page,
-          posts,
-        };
-      }
+    // Ricerca (DR-144): `?s=` sulla home e sulle sue pagine, come WordPress.
+    const searchPage = /^\/(?:page\/(\d+)\/)?$/.exec(path);
+    if (query !== null && searchPage) {
+      const page = Number(searchPage[1] ?? '1');
+      const posts = page >= 1 ? await searchContents(query, page) : null;
+      if (!posts || (page > 1 && posts.items.length === 0)) return null;
+      return { kind: 'search', query, page, posts };
     }
-    return null;
-  }
 
-  // DR-181: pagina dell'elenco dei moduli, solo per i termini di Download Manager.
-  if (/^\/download-category\/(?:[^/]+\/)+$/.test(path)) {
-    const found = await getTerm(path);
-    if (found?.term.taxonomy !== 'wpdmcategory') return null;
-    const documents = await getDocuments(found.term.id);
-    if (!documents) return null;
-    return {
-      kind: 'downloadCategory',
-      term: found.term,
-      seoTitle: found.seo.title,
-      robots: found.seo.robots,
-      documents: documents.items,
-    };
-  }
+    const archive = /^(\/category\/[^/]+\/)(?:page\/(\d+)\/)?$/.exec(path);
+    if (archive?.[1]) {
+      const found = await getTerm(archive[1]);
+      const page = Number(archive[2] ?? '1');
+      if (found && page >= 1) {
+        const posts = await getPosts([found.term.id], page, CATEGORY_POSTS_PER_PAGE);
+        if (posts && (page === 1 || posts.items.length > 0)) {
+          return {
+            kind: 'archive',
+            term: found.term,
+            seoTitle: found.seo.title,
+            robots: found.seo.robots,
+            page,
+            posts,
+          };
+        }
+      }
+      return null;
+    }
 
-  const download = /^\/download\/([^/]+)\/$/.exec(path);
-  if (download?.[1]) {
-    const found = await getDocument(download[1]);
-    return found
-      ? { kind: 'document', document: found.document, media: found.media, terms: found.terms ?? [] }
-      : null;
-  }
+    // DR-181: pagina dell'elenco dei moduli, solo per i termini di Download Manager.
+    if (/^\/download-category\/(?:[^/]+\/)+$/.test(path)) {
+      const found = await getTerm(path);
+      if (found?.term.taxonomy !== 'wpdmcategory') return null;
+      const documents = await getDocuments(found.term.id);
+      if (!documents) return null;
+      return {
+        kind: 'downloadCategory',
+        term: found.term,
+        seoTitle: found.seo.title,
+        robots: found.seo.robots,
+        documents: documents.items,
+      };
+    }
 
-  const data = await getContent(path);
-  return data ? { kind: 'content', data } : null;
-});
+    const download = /^\/download\/([^/]+)\/$/.exec(path);
+    if (download?.[1]) {
+      const found = await getDocument(download[1]);
+      return found
+        ? {
+            kind: 'document',
+            document: found.document,
+            media: found.media,
+            terms: found.terms ?? [],
+          }
+        : null;
+    }
+
+    const data = await getContent(path);
+    return data ? { kind: 'content', data, path } : null;
+  },
+);
 
 /** Le impostazioni pubbliche, lette una volta per richiesta fra metadati e pagina. */
 const settingsOnce = cache(getSettings);
@@ -157,7 +188,11 @@ const plainTitle = (title: string, siteTitle: string) => `${title} - ${siteTitle
 
 export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const path = pathOf((await params).percorso);
-  const resolved = await resolve(path, searchQueryOf(await searchParams));
+  const resolved = await resolve(
+    path,
+    searchQueryOf(await searchParams),
+    rawPathOf((await params).percorso),
+  );
   const siteTitle = settingString(await settingsOnce(), 'site.title');
   if (!resolved) return { title: `404 Non trovato | ${siteTitle}` };
 
@@ -275,17 +310,22 @@ function graphPageOf(resolved: Resolved, path: string, siteTitle: string): Graph
 
 export default async function Page({ params, searchParams }: Params) {
   const path = pathOf((await params).percorso);
-  const resolved = await resolve(path, searchQueryOf(await searchParams));
+  const resolved = await resolve(
+    path,
+    searchQueryOf(await searchParams),
+    rawPathOf((await params).percorso),
+  );
   if (!resolved) notFound();
+  const currentPath = resolved.kind === 'content' ? resolved.path : path;
   const settings = await settingsOnce();
   const graph = buildGraph(
     siteFromSettings(settings, siteUrl()),
-    graphPageOf(resolved, path, settingString(settings, 'site.title')),
+    graphPageOf(resolved, currentPath, settingString(settings, 'site.title')),
   );
 
   return (
     <SiteShell
-      currentPath={path}
+      currentPath={currentPath}
       gutterWidth={resolved.kind === 'content' ? resolved.data.content.gutterWidth : null}
     >
       <JsonLd graph={graph} />

@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { blockDocumentSchema, extractContentText, serializeBlockDocument } from '@amoris/blocks';
 import postgres from 'postgres';
+import { formaConfrontabile } from './confrontoHtml';
 
 /**
  * Criterio 1E-19 (ADR-005 §7): aprire e salvare senza modifiche un contenuto
@@ -123,15 +124,9 @@ async function campiSalvati(id: string): Promise<string> {
   }
 }
 
-/**
- * Il payload RSC di Next.js (`self.__next_f.push`) cambia ordine a ogni lettura anche
- * senza salvataggi: si confronta l'HTML che il visitatore riceve, `<head>` compreso (DR-202).
- */
-const PAYLOAD_RSC = /<script>self\.__next_f\.push\([\s\S]*?\)<\/script>/g;
-
 async function paginaPubblica(p: string): Promise<string> {
   const risposta = await fetch(`${SITO}${p}`, { redirect: 'manual' });
-  return `${risposta.status}\n${(await risposta.text()).replace(PAYLOAD_RSC, '')}`;
+  return formaConfrontabile(risposta.status, await risposta.text());
 }
 
 async function main(): Promise<void> {

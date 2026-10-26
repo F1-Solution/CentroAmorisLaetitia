@@ -326,7 +326,7 @@ export function robotsDirectives(
 
 // ── Contenuti ────────────────────────────────────────────────────────────────
 
-const contentColumns = {
+export const contentColumns = {
   id: schema.contents.id,
   type: schema.contents.type,
   path: schema.contents.path,

@@ -339,4 +339,21 @@ pagina con un estratto.
 Con D144 = B (DR-248) le pagine nella ricerca tornano all'inizio del testo nella `1G-W5`,
 che ripete la cattura delle viste interessate.
 
+**Seguito nella `1G-W5` (DR-248, 2026-10-23).** Nella ricerca l'estratto vale ora solo per
+le notizie: pagine e documenti mostrano di nuovo i primi 270 caratteri del testo, come la
+sorgente. L'archivio di categoria è invariato rispetto alla tabella sopra. Misura con le
+stesse condizioni, sito nuovo col codice della `1G-W5` prima del commit; catture in
+`docs/qa/screenshots/sito-1G-W5/prima/` e `dopo/`, fuori da Git; impronte in
+[`confronto/esiti-1G-W5-DR-248-prima.csv`](confronto/esiti-1G-W5-DR-248-prima.csv) e
+[`confronto/esiti-1G-W5-DR-248.csv`](confronto/esiti-1G-W5-DR-248.csv).
+
+| Indirizzo | Viste | Esito |
+|---|---|---|
+| `/?s=corso` | 1440, 768, 390 | **identiche** alla cattura accettata (stessa impronta); rispetto al riferimento 1,63 %, 4,07 %, 4,60 %, come prima |
+| `/page/8/?s=corso` (fuori matrice) | 1440, 768, 390 | cambiate rispetto alla `1G-W4`: l'unica pagina con estratto, uguale all'inizio del suo testo, mostra il riassunto invece del paragrafo intero |
+| `/page/9/?s=corso` (fuori matrice) | 1440, 768, 390 | cambiate rispetto alla `1G-W4`: la pagina con estratto mostra l'inizio del testo, le due notizie con estratto mostrano l'estratto |
+
+Il controllo sull'HTML delle pagine 8 e 9 (estratto contro inizio del testo, per tipo di
+risultato) conferma la regola; nessun testo dei contenuti è riportato qui.
+
 **Stato:** in attesa di accettazione nella `1G-W7`.

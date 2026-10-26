@@ -1,5 +1,6 @@
 import { schema } from '@amoris/db';
 import { eq } from 'drizzle-orm';
+import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHarness, signIn, type Harness, type Signed } from './_support/harness.js';
 
@@ -23,6 +24,8 @@ const PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
   'base64',
 );
+
+const PDF = Buffer.from('%PDF-1.4\n%%EOF\n');
 
 beforeAll(async () => {
   harness = await createHarness('api_corredo');
@@ -61,7 +64,11 @@ async function uploadMedia(fileName: string): Promise<Record<string, string>> {
 describe('sostituzione del file di un media (DR-074)', () => {
   it('riscrive sulla stessa chiave: indirizzo e nome non cambiano', async () => {
     const media = await uploadMedia('da-sostituire.png');
-    const bigger = Buffer.concat([PNG, PNG]);
+    const bigger = await sharp({
+      create: { width: 8, height: 8, channels: 3, background: { r: 10, g: 200, b: 90 } },
+    })
+      .png()
+      .toBuffer();
 
     const { payload, headers } = multipart('tutt-altro-nome.png', 'image/png', bigger);
     const response = await harness.app.inject({
@@ -75,7 +82,10 @@ describe('sostituzione del file di un media (DR-074)', () => {
     const updated = response.json();
     expect(updated.publicPath).toBe(media.publicPath);
     expect(updated.fileName).toBe(media.fileName);
-    expect(updated.byteSize).toBe(bigger.byteLength);
+    // Il file si riscrive senza metadati (D145-A): il peso è quello dell'oggetto conservato.
+    const stored = harness.store.objects.get(`media-public/${media.storageKey}`);
+    expect(updated.byteSize).toBe(stored?.byteLength);
+    expect(updated.width).toBe(8);
     // Il file è finito nel bucket sulla chiave di partenza, non su una nuova.
     expect(harness.store.puts.filter((key) => key.endsWith('da-sostituire.png'))).toHaveLength(2);
     expect(harness.store.puts.some((key) => key.includes('tutt-altro-nome.png'))).toBe(false);
@@ -83,7 +93,7 @@ describe('sostituzione del file di un media (DR-074)', () => {
 
   it('rifiuta un file di tipo diverso, perché il nome resta quello', async () => {
     const media = await uploadMedia('resta-png.png');
-    const { payload, headers } = multipart('qualunque.pdf', 'application/pdf', PNG);
+    const { payload, headers } = multipart('qualunque.pdf', 'application/pdf', PDF);
     const response = await harness.app.inject({
       method: 'PUT',
       url: `/media/${media.id}/file`,
@@ -91,6 +101,7 @@ describe('sostituzione del file di un media (DR-074)', () => {
       payload,
     });
     expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('MEDIA_TYPE_CHANGED');
   });
 
   it('su un media inesistente risponde 404', async () => {
@@ -139,6 +150,7 @@ describe('eliminazione di un media citato (DR-077)', () => {
     });
 
     expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('MEDIA_IN_USE');
     expect(response.json().error.message).toContain('Pagina che cita un media');
   });
 

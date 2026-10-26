@@ -6886,6 +6886,830 @@
         }
       }
     },
+    "/contents/{id}/preview": {
+      "get": {
+        "summary": "La pagina come la servirebbe il sito, con la propria copia di lavoro: bozza o pubblicato",
+        "tags": [
+          "contenuti"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "page",
+                            "post"
+                          ]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "showTitle": {
+                          "type": "boolean"
+                        },
+                        "pageLayout": {
+                          "type": "string",
+                          "enum": [
+                            "right_sidebar",
+                            "full_width",
+                            "no_sidebar"
+                          ]
+                        },
+                        "gutterWidth": {
+                          "nullable": true,
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 4
+                        },
+                        "excerpt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "blocks": {},
+                        "featuredMediaId": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "publishedAt": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "modifiedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "path",
+                        "slug",
+                        "title",
+                        "showTitle",
+                        "pageLayout",
+                        "gutterWidth",
+                        "excerpt",
+                        "blocks",
+                        "featuredMediaId",
+                        "publishedAt",
+                        "updatedAt",
+                        "modifiedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "seo": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "canonicalPath": {
+                          "type": "string"
+                        },
+                        "robots": {
+                          "type": "string"
+                        },
+                        "ogTitle": {
+                          "type": "string"
+                        },
+                        "ogDescription": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "ogType": {
+                          "type": "string"
+                        },
+                        "ogImagePath": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "description",
+                        "canonicalPath",
+                        "robots",
+                        "ogTitle",
+                        "ogDescription",
+                        "ogType",
+                        "ogImagePath"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "terms": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "taxonomy": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "taxonomy",
+                          "slug",
+                          "name",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "media": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "publicPath": {
+                            "type": "string"
+                          },
+                          "mimeType": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "nullable": true,
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "height": {
+                            "nullable": true,
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "title": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "altText": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "caption": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "variants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "publicPath": {
+                                  "type": "string"
+                                },
+                                "width": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "height": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "publicPath",
+                                "width",
+                                "height"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "publicPath",
+                          "mimeType",
+                          "width",
+                          "height",
+                          "title",
+                          "altText",
+                          "caption",
+                          "variants"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "sliders": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "settings": {},
+                          "slides": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "position": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "mediaId": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "heading": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "body": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "linkUrl": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "linkLabel": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "settings": {}
+                              },
+                              "required": [
+                                "position",
+                                "mediaId",
+                                "heading",
+                                "body",
+                                "linkUrl",
+                                "linkLabel",
+                                "settings"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "key",
+                          "settings",
+                          "slides"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "forms": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "confirmationMessage": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "requiresPayment": {
+                            "type": "boolean"
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "order": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "description": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "options": {
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "label",
+                                "required",
+                                "order",
+                                "description",
+                                "options"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "payment": {
+                            "nullable": true,
+                            "type": "object",
+                            "properties": {
+                              "amount": {
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "url": {
+                                "nullable": true,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "amount",
+                              "url"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "submitText": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "submitTextProcessing": {
+                            "nullable": true,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "slug",
+                          "title",
+                          "confirmationMessage",
+                          "requiresPayment",
+                          "fields",
+                          "payment",
+                          "submitText",
+                          "submitTextProcessing"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "postLists": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "excerpt": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "summary": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "summaryTruncated": {
+                              "type": "boolean"
+                            },
+                            "featuredMediaId": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "publishedAt": {
+                              "nullable": true,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "path",
+                            "title",
+                            "excerpt",
+                            "summary",
+                            "summaryTruncated",
+                            "featuredMediaId",
+                            "publishedAt"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "documents": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "mediaId": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "publishedAt": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "byteSize": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "slug",
+                          "title",
+                          "description",
+                          "mediaId",
+                          "updatedAt",
+                          "publishedAt",
+                          "byteSize"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "publicPath": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "seo",
+                    "terms",
+                    "media",
+                    "sliders",
+                    "forms",
+                    "postLists",
+                    "documents",
+                    "publicPath"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Richiesta non valida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Richiesta non valida"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Risorsa non trovata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Risorsa non trovata"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dati non elaborabili",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Dati non elaborabili"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/terms": {
       "get": {
         "summary": "Elenca i termini, per tassonomia",
@@ -8466,6 +9290,11 @@
                     },
                     "uploadedAt": {
                       "type": "string"
+                    },
+                    "derivatives": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -8482,7 +9311,8 @@
                     "caption",
                     "description",
                     "isPrivate",
-                    "uploadedAt"
+                    "uploadedAt",
+                    "derivatives"
                   ],
                   "additionalProperties": false
                 }
@@ -8654,8 +9484,8 @@
               }
             }
           },
-          "409": {
-            "description": "Conflitto con lo stato attuale",
+          "406": {
+            "description": "La richiesta non è un modulo multipart con un file",
             "content": {
               "application/json": {
                 "schema": {
@@ -8704,7 +9534,227 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Conflitto con lo stato attuale"
+                  "description": "La richiesta non è un modulo multipart con un file"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File troppo pesante o con troppi pixel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "File troppo pesante o con troppi pixel"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Tipo di file non ammesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Tipo di file non ammesso"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Troppi tentativi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Troppi tentativi"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
                 }
               }
             }
@@ -9588,6 +10638,61 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
+                }
+              }
+            }
           }
         }
       }
@@ -9671,6 +10776,26 @@
                     },
                     "uploadedAt": {
                       "type": "string"
+                    },
+                    "derivatives": {
+                      "type": "object",
+                      "properties": {
+                        "written": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "removed": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "written",
+                        "removed"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -9687,7 +10812,8 @@
                     "caption",
                     "description",
                     "isPrivate",
-                    "uploadedAt"
+                    "uploadedAt",
+                    "derivatives"
                   ],
                   "additionalProperties": false
                 }
@@ -9914,6 +11040,61 @@
               }
             }
           },
+          "406": {
+            "description": "La richiesta non è un modulo multipart con un file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "La richiesta non è un modulo multipart con un file"
+                }
+              }
+            }
+          },
           "409": {
             "description": "Conflitto con lo stato attuale",
             "content": {
@@ -9965,6 +11146,226 @@
                   ],
                   "additionalProperties": false,
                   "description": "Conflitto con lo stato attuale"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File troppo pesante o con troppi pixel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "File troppo pesante o con troppi pixel"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Tipo di file non ammesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Tipo di file non ammesso"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Troppi tentativi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Troppi tentativi"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
                 }
               }
             }
@@ -17591,6 +18992,14 @@
                           "publishedAt": {
                             "nullable": true,
                             "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "page",
+                              "post",
+                              "document"
+                            ]
                           }
                         },
                         "required": [
@@ -17601,7 +19010,8 @@
                           "summary",
                           "textStart",
                           "featuredMediaId",
-                          "publishedAt"
+                          "publishedAt",
+                          "type"
                         ],
                         "additionalProperties": false
                       }

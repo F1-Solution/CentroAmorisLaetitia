@@ -142,7 +142,13 @@ test.describe('media', () => {
 
     const cerca = async () => {
       const corpo = await leggi<{
-        items: { fileName: string; caption: string | null; byteSize: number; publicPath: string }[];
+        items: {
+          fileName: string;
+          caption: string | null;
+          width: number | null;
+          height: number | null;
+          publicPath: string;
+        }[];
       }>(page, `/media?search=${encodeURIComponent(nomeFile)}`);
       return corpo.items.find((item) => item.fileName === nomeFile);
     };
@@ -152,14 +158,18 @@ test.describe('media', () => {
     await expect.poll(async () => (await cerca())?.caption).toBe('Didascalia del media di prova.');
 
     const prima = await cerca();
-    expect(prima?.byteSize).toBe(UN_PIXEL_PNG.length);
+    expect([prima?.width, prima?.height]).toEqual([1, 1]);
     await page.getByLabel('Scegli il file che sostituisce questo').setInputFiles({
       name: 'sostituto.png',
       mimeType: 'image/png',
       buffer: QUATTRO_PIXEL_PNG,
     });
+    // Dalla 1G-W5 la sostituzione chiede conferma; le misure si leggono dal file, che il servizio rielabora.
+    await page.getByRole('button', { name: 'Sostituisci', exact: true }).click();
     // La sostituzione conserva l'indirizzo (DR-074) e cambia il file.
-    await expect.poll(async () => (await cerca())?.byteSize).toBe(QUATTRO_PIXEL_PNG.length);
+    await expect
+      .poll(async () => [(await cerca())?.width, (await cerca())?.height])
+      .toEqual([2, 2]);
     expect((await cerca())?.publicPath).toBe(prima?.publicPath);
 
     await page.getByRole('button', { name: 'Elimina', exact: true }).click();

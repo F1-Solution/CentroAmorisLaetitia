@@ -1,0 +1,532 @@
+[
+ {
+  "path": "/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/10-anni-di-vita-del-centro-per-la-famiglia-amoris-laetitia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/affettivita-e-sessualita-il-lungo-viaggio/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/attivita-centro-amoris-laetitia/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/attraversare-le-emozioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/autostima-e-assertivita/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/bacheca-degli-eventi/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/bacheca/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/chi-siamo/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/circolo-della-sicurezza/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/conosco-il-mio-corpo/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/contatti/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/contest-fotografico-selfiemotions/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/convegno-17-febbraio-2018/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/convegno-17-marzo-2018/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/convegno-26-novembre/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/convegno-comunicare-e-una-necessita-ascoltare-unarte/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/convegno-diventare-anziani-in-famiglia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/convegno-genitori-sempre-oltre-la-separazione/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/convegno-imperfetto-dunque-prezioso/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/corsi-2022-2023/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/corso-caritas-fare-bene-il-bene/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/corso-per-consulenti-familiari-vecchia-pagina/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/corso-per-consulenti-familiari/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/corso-per-operatore-centro-dascolto/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/dal-prossimo-6-dicembre-la-3a-edizione-del-corso-relazioni-efficaci/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/dal-vizioso-al-virtuoso/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/dalla-ferita-alla-feritoia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/diventa-socio/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/dove-hai-la-testa-2/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/dove-siamo/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/fatti-non-parole-2/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/genitori-si-resta/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/giornata-di-studio-per-consulenti-familiari/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/giornata-informativa-del-10-ottobre-2018/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/i-prossimi-corsi-del-centro/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/i-prossimi-eventi-del-centro/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/i-social-occasione-o-tentazione/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/il-contenitore-famiglia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/il-corpo-racconta/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/il-litigio-di-coppia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/informativa-privacy/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/informazioni-sui-cookie/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/inizia-il-lungo-viaggio/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/inizio-secondo-anno-corso-consulenti-familiari/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/invidia-vergogna-e-senso-di-colpa-nella-consulenza-familiare/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/io-e-laltro-imparare-a-stare-insieme/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/iscrizioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/la-bussola-delle-emozioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/la-fabbrica-del-coraggio/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/la-rabbia-in-consulenza-ostacolo-e-possibile-risorsa/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/laboratorio-esperienziale-12-maggio-2018/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/le-date-dei-prossimi-corsi-del-centro/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/le-dipendenze/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/lequilibrio-che-regge-e-fa-crescere-la-coppia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/litighiamo-oggi/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/noi-uomini/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/nuova-proposta-per-coppie-parlarsi-col-cuore/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/offerta-formativa-2019-2020/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/parlarsi-con-il-cuore/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/parte-il-nuovo-percorso-sguardi-damore-2/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/parte-il-nuovo-percorso-sguardi-damore/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/pronti-a-ripartire/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/prossimi-corsi/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/psicologia-perinatale-2/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/rampa-di-lancio-e-porto-sicuro-una-sana-relazione-genitori-figli/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-attraversare-le-emozioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-caritas-fare-bene-il-bene/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-circolo-della-sicurezza/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-consulenti-familiari/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-dal-vizioso-al-virtuoso/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-dalla-ferita-alla-feritoia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-genitori-si-resta/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-il-litigio-di-coppia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-noi-uomini/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-reinventa-la-tua-vita/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-relazion-arti/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-corso-riparare-le-relazioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-il-corpo-racconta/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-laboratorio-litighiamo-oggi/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-parlarsi-con-il-cuore/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-seminario-autostima-e-assertivita/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-seminario-invidia-vergogna-e-senso-di-colpa/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-seminario-io-e-laltro-imparare-a-stare-insieme/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-seminario-la-rabbia-in-consulenza/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-seminario-lequilibrio-che-regge-la-coppia/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-sguardi-damore-2/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/registrazione-sguardi-damore/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/reinventa-la-tua-vita/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/relazionarti/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/ridere-in-coppia-e-una-cosa-seria/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/riparare-le-relazioni-2018/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/riparare-le-relazioni/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/riparte-il-circolo-della-sicurezza/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/riparte-il-corso-per-consulenti-familiari/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/riparte-il-corso-relazion-arti/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/riparte-il-corso-riparare-le-relazioni-2/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/riparte-il-corso-riparare-le-relazioni/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/ripartiamo-da-noi-stessi/",
+  "type": "post",
+  "identica": true
+ },
+ {
+  "path": "/seminario-estivo/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/servizi/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/sguardi-damore-2/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/sguardi-damore/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/sostegno-alla-genitorialita/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/spazio-alle-paure/",
+  "type": "page",
+  "identica": true
+ },
+ {
+  "path": "/vuoi-diventare-consulente-familiare/",
+  "type": "post",
+  "identica": true
+ }
+]

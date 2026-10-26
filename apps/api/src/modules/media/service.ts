@@ -1,9 +1,31 @@
+import { mediaMessages, type MediaLimits } from '@amoris/contracts';
 import { schema, type Database } from '@amoris/db';
-import { and, count, desc, eq, ilike, like, or, sql, type SQL } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
+import { and, count, desc, eq, ilike, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 import type { ObjectStore } from '../../lib/objectStore.js';
+import {
+  checksumOf,
+  citingVariants,
+  folderOfKey,
+  lockFolder,
+  lockMedia,
+  planFiles,
+  publicPathOf,
+  putAll,
+  removeQuietly,
+  variantValue,
+  variantValues,
+  withScaledSuffix,
+  type Logger,
+  type PlannedFile,
+  type VanishingVariant,
+} from './derivatives.js';
+import { sanitizeFileName, takenPaths, uniqueFileName, type Transaction } from './fileName.js';
+import { inspectUpload, mediaError } from './fileType.js';
+import { inMediaTransaction, type MediaRuntime } from './runtime.js';
 import type { listQuery, updateBody } from './schemas.js';
+import { sourceBaseName, splitFileName } from './sizes.js';
+import { processImage, type ProcessedImage } from './variants.js';
 
 /** Servizio del dominio `media` (ADR-004). */
 
@@ -54,110 +76,437 @@ export async function findById(db: Database, id: string) {
   return row ?? null;
 }
 
-/**
- * La chiave nel bucket segue la disposizione della sorgente — anno, mese, nome —
- * perché è quella che i percorsi storici di ADR-004 §3.4 sanno raggiungere.
- * Il nome non si normalizza: ADR-004 §3.1 lo vieta, perché farebbe divergere il
- * `srcset` delle varianti già esistenti.
- */
-export function storageKeyFor(fileName: string, when: Date): string {
+/** La chiave nel bucket segue la disposizione della sorgente: anno, mese, nome (ADR-004 §3.4). */
+export function folderFor(when: Date): string {
   const year = when.getUTCFullYear();
   const month = String(when.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}/${month}/${fileName}`;
+  return `${year}/${month}`;
 }
 
 export interface UploadInput {
   readonly fileName: string;
-  readonly mimeType: string;
   readonly body: Buffer;
+  readonly limits: MediaLimits;
   readonly isPrivate: boolean;
   readonly uploadedBy: string;
+  readonly log?: Logger;
+  readonly runtime?: MediaRuntime;
 }
 
-/**
- * Il file entra nel bucket **prima** della riga a database: se il caricamento
- * fallisce non resta una riga che promette un file che non c'è. È la stessa
- * regola dell'importer.
- */
+export interface Uploaded {
+  readonly id: string;
+  /** Quante dimensioni derivate sono nate con il file. */
+  readonly derivatives: number;
+}
+
+interface UploadContext {
+  readonly input: UploadInput;
+  readonly mime: string;
+  readonly processed: ProcessedImage | null;
+  readonly body: Buffer;
+  readonly now: Date;
+  readonly folder: string;
+  readonly bucket: string;
+}
+
+/** Esegue dentro il semaforo, se c'è. */
+const gated = <T>(runtime: MediaRuntime | undefined, task: () => Promise<T>): Promise<T> =>
+  runtime ? runtime.gate.run(task) : task();
+
+/** Controlla ed elabora il file dentro il semaforo; un errore di `sharp` è un file illeggibile (M-5). */
+async function inspectAndProcess(
+  fileName: string,
+  body: Buffer,
+  limits: MediaLimits,
+  runtime: MediaRuntime | undefined,
+  accept?: (mime: string) => void,
+): Promise<{ mime: string; processed: ProcessedImage | null }> {
+  return gated(runtime, async () => {
+    const inspected = await inspectUpload(fileName, body, limits);
+    accept?.(inspected.mime);
+    if (!inspected.rule.derivatives) return { mime: inspected.mime, processed: null };
+    try {
+      const processed = await processImage(body, inspected.mime, limits.imagePixels);
+      return { mime: inspected.mime, processed };
+    } catch {
+      throw mediaError('MEDIA_FILE_INVALID', mediaMessages.fileInvalid(fileName));
+    }
+  });
+}
+
+/** Percorsi che un nome candidato occuperebbe oltre al proprio: `-scaled` e derivate. */
+function extraPathsOf(processed: ProcessedImage | null, folder: string) {
+  return (candidate: string): string[] => {
+    if (!processed) return [];
+    const { stem, extension } = splitFileName(candidate);
+    return [
+      ...(processed.scaled ? [publicPathOf(`${folder}/${withScaledSuffix(candidate)}`)] : []),
+      ...planFiles(processed.derivatives, folder, stem, extension).map((one) => one.publicPath),
+    ];
+  };
+}
+
+/** Riga del media, righe delle derivate e oggetti, dentro la transazione della cartella. */
+async function writeUpload(
+  tx: Transaction,
+  store: ObjectStore,
+  context: UploadContext,
+  candidate: string,
+  written: string[],
+): Promise<Uploaded> {
+  const { input, processed, body, folder } = context;
+  const fileName = processed?.scaled ? withScaledSuffix(candidate) : candidate;
+  const storageKey = `${folder}/${fileName}`;
+  const { stem, extension } = splitFileName(candidate);
+  const derived = processed ? planFiles(processed.derivatives, folder, stem, extension) : [];
+
+  const [row] = await tx
+    .insert(schema.media)
+    .values({
+      storageKey,
+      publicPath: publicPathOf(storageKey),
+      fileName,
+      mimeType: context.mime,
+      byteSize: body.byteLength,
+      width: processed ? processed.original.width : null,
+      height: processed ? processed.original.height : null,
+      checksum: checksumOf(body),
+      isPrivate: input.isPrivate,
+      uploadedAt: context.now,
+      uploadedBy: input.uploadedBy,
+    })
+    .returning({ id: schema.media.id });
+  if (!row) throw new Error('media non registrato');
+  if (derived.length > 0) {
+    await tx.insert(schema.mediaVariants).values(variantValues(row.id, derived));
+  }
+  const files = [
+    { key: storageKey, body },
+    ...derived.map((one) => ({ key: one.storageKey, body: one.file.body })),
+  ];
+  await putAll(store, context.bucket, context.mime, files, written);
+  return { id: row.id, derivatives: derived.length };
+}
+
+/** Carica un file: controllo sul contenuto, riscrittura delle immagini (D145-A) e scrittura sotto il blocco della cartella. */
 export async function upload(
   db: Database,
   store: ObjectStore,
   input: UploadInput,
-): Promise<string> {
-  const now = new Date();
-  const storageKey = storageKeyFor(input.fileName, now);
-  const bucket = input.isPrivate ? store.privateBucket : store.publicBucket;
-
-  await store.put(bucket, storageKey, input.body, input.mimeType);
-
-  const [row] = await db
-    .insert(schema.media)
-    .values({
-      storageKey,
-      publicPath: `/media/${storageKey}`,
-      fileName: input.fileName,
-      mimeType: input.mimeType,
-      byteSize: input.body.byteLength,
-      checksum: createHash('sha256').update(input.body).digest(),
-      isPrivate: input.isPrivate,
-      uploadedAt: now,
-      uploadedBy: input.uploadedBy,
-    })
-    .returning({ id: schema.media.id });
-
-  if (!row) throw new Error('media non registrato');
-  return row.id;
+): Promise<Uploaded> {
+  const requested = sanitizeFileName(input.fileName);
+  const { mime, processed } = await inspectAndProcess(
+    requested,
+    input.body,
+    input.limits,
+    input.runtime,
+  );
+  const folder = folderFor(new Date());
+  const context: UploadContext = {
+    input,
+    mime,
+    processed,
+    body: processed ? processed.original.body : input.body,
+    now: new Date(),
+    folder,
+    bucket: input.isPrivate ? store.privateBucket : store.publicBucket,
+  };
+  const written: string[] = [];
+  return inMediaTransaction(db, input.runtime, async (tx) => {
+    try {
+      await lockFolder(tx, folder);
+      const candidate = await uniqueFileName(tx, {
+        folder,
+        fileName: requested,
+        extraPaths: extraPathsOf(processed, folder),
+      });
+      return await writeUpload(tx, store, context, candidate, written);
+    } catch (error) {
+      // Gli oggetti scritti si tolgono prima di liberare il blocco, così nessuno ne sceglie i nomi.
+      await removeQuietly(store, context.bucket, written, input.log, { folder });
+      throw error;
+    }
+  });
 }
 
 export interface ReplaceInput {
-  readonly mimeType: string;
+  readonly fileName: string;
   readonly body: Buffer;
+  readonly limits: MediaLimits;
+  /** Dove si annota, con l'id del media, ciò che non si completa. */
+  readonly log?: Logger;
+  readonly runtime?: MediaRuntime;
 }
 
-/**
- * Sostituzione del file di un media (DR-074, opzione A).
- *
- * I byte si riscrivono **sulla chiave che il media già usa**: il percorso
- * pubblico non cambia, e ogni riferimento — blocchi, `srcset`, indirizzi
- * storici — continua a funzionare. È anche il motivo per cui il tipo del file
- * non può cambiare: la chiave porta l'estensione del file di partenza, e
- * servire un PNG sotto un nome `.jpg` renderebbe il nome una bugia.
- *
- * L'operazione **non è annullabile**: il file precedente viene sovrascritto e
- * non esiste versione da recuperare. Chi la offre in interfaccia lo dichiara.
- */
+export interface Replaced {
+  readonly row: NonNullable<Awaited<ReturnType<typeof findById>>>;
+  /** Derivate scritte (nuove o riscritte) e tolte. */
+  readonly derivatives: { readonly written: number; readonly removed: number };
+}
+
+type MediaRow = NonNullable<Awaited<ReturnType<typeof findById>>>;
+
+/** Chi e dove si ripulisce l'archivio dopo la conferma. */
+interface PurgeContext {
+  readonly id: string;
+  readonly bucket: string;
+  readonly folder: string;
+}
+
+interface ReplaceContext {
+  readonly id: string;
+  readonly mime: string;
+  readonly processed: ProcessedImage | null;
+  readonly body: Buffer;
+  readonly bucket: string;
+  readonly folder: string;
+}
+
+/** Tracce di una sostituzione, per compensare solo ciò che la transazione ha scritto. */
+interface ReplaceTrace {
+  written: string[];
+  created: string[];
+}
+
+/** Base delle derivate: senza `-scaled`, salvo che le derivate esistenti usino il nome intero. */
+function baseOf(fileName: string, existingPaths: readonly string[]): string {
+  const { base, extension } = sourceBaseName(fileName);
+  const whole = splitFileName(fileName).stem;
+  const usesWhole =
+    whole !== base &&
+    existingPaths.some((path) => path.includes(`/${whole}-`) && path.endsWith(`.${extension}`));
+  return usesWhole ? whole : base;
+}
+
+/** Controlli sul file nuovo e sua elaborazione, prima di toccare qualunque cosa. */
+async function prepareReplacement(db: Database, id: string, input: ReplaceInput) {
+  const current = await findById(db, id);
+  if (!current) return null;
+  const { mime, processed } = await inspectAndProcess(
+    sanitizeFileName(input.fileName),
+    input.body,
+    input.limits,
+    input.runtime,
+    (found) => {
+      if (found !== current.mimeType) {
+        throw mediaError('MEDIA_TYPE_CHANGED', mediaMessages.typeChanged(found, current.mimeType));
+      }
+    },
+  );
+  return { current, mime, processed };
+}
+
+interface ReplacePlan {
+  /** Stesso nome di una derivata esistente: si riscrive sulla stessa riga. */
+  readonly rewrite: PlannedFile[];
+  /** Nome nuovo: riga nuova. */
+  readonly fresh: PlannedFile[];
+  readonly vanishing: VanishingVariant[];
+}
+
+/** Quali derivate si riscrivono, quali nascono e quali spariscono, sotto i blocchi. */
+async function planReplacement(
+  tx: Transaction,
+  locked: MediaRow,
+  existing: readonly VanishingVariant[],
+  processed: ProcessedImage | null,
+): Promise<ReplacePlan> {
+  const { extension } = sourceBaseName(locked.fileName);
+  const folder = folderOfKey(locked.storageKey);
+  const base = baseOf(
+    locked.fileName,
+    existing.map((variant) => variant.publicPath),
+  );
+  const all = processed ? planFiles(processed.derivatives, folder, base, extension) : [];
+
+  // Un nome già di un altro media non si sovrascrive: quella misura si salta.
+  const ownPaths = new Set(existing.map((variant) => variant.publicPath));
+  const taken = await takenPaths(
+    tx,
+    all.map((one) => one.publicPath),
+  );
+  const usable = all.filter((one) => ownPaths.has(one.publicPath) || !taken.has(one.publicPath));
+  const kept = new Set(usable.map((one) => one.publicPath));
+  return {
+    rewrite: usable.filter((one) => ownPaths.has(one.publicPath)),
+    fresh: usable.filter((one) => !ownPaths.has(one.publicPath)),
+    vanishing: existing.filter((variant) => !kept.has(variant.publicPath)),
+  };
+}
+
+/** Aggiorna riga e derivate di questo media; le nuove si inseriscono senza upsert, così un percorso altrui dà 23505. */
+async function writeReplacementRows(
+  tx: Transaction,
+  context: ReplaceContext,
+  plan: ReplacePlan,
+): Promise<void> {
+  const { id, processed, body } = context;
+  await tx
+    .update(schema.media)
+    .set({
+      byteSize: body.byteLength,
+      checksum: checksumOf(body),
+      width: processed ? processed.original.width : null,
+      height: processed ? processed.original.height : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.media.id, id));
+  if (plan.vanishing.length > 0) {
+    const ids = plan.vanishing.map((variant) => variant.id);
+    await tx.delete(schema.mediaVariants).where(inArray(schema.mediaVariants.id, ids));
+  }
+  for (const one of plan.rewrite) {
+    const { storageKey, width, height, byteSize, checksum } = variantValue(id, one);
+    await tx
+      .update(schema.mediaVariants)
+      .set({ storageKey, width, height, byteSize, checksum })
+      .where(
+        and(
+          eq(schema.mediaVariants.mediaId, id),
+          eq(schema.mediaVariants.publicPath, one.publicPath),
+        ),
+      );
+  }
+  if (plan.fresh.length > 0) {
+    await tx.insert(schema.mediaVariants).values(variantValues(id, plan.fresh));
+  }
+}
+
+/** I passi della sostituzione: blocchi, controllo D146-A, righe, oggetti. */
+async function replaceSteps(
+  tx: Transaction,
+  store: ObjectStore,
+  context: ReplaceContext,
+  trace: ReplaceTrace,
+) {
+  const { id } = context;
+  await lockMedia(tx, id);
+  await lockFolder(tx, context.folder);
+  const [locked] = await tx.select(columns).from(schema.media).where(eq(schema.media.id, id));
+  if (!locked) return null;
+
+  const existing = await tx
+    .select({
+      id: schema.mediaVariants.id,
+      storageKey: schema.mediaVariants.storageKey,
+      publicPath: schema.mediaVariants.publicPath,
+      width: schema.mediaVariants.width,
+      height: schema.mediaVariants.height,
+    })
+    .from(schema.mediaVariants)
+    .where(eq(schema.mediaVariants.mediaId, id));
+  const plan = await planReplacement(tx, locked, existing, context.processed);
+
+  if (plan.vanishing.length > 0) {
+    const titles = await citingVariants(tx, id, plan.vanishing);
+    if (titles.length > 0) {
+      throw mediaError(
+        'MEDIA_VARIANT_IN_USE',
+        mediaMessages.variantInUse(titles.join(', '), context.processed !== null),
+      );
+    }
+  }
+  await writeReplacementRows(tx, context, plan);
+
+  trace.created = plan.fresh.map((one) => one.storageKey);
+  const files = [
+    { key: locked.storageKey, body: context.body },
+    ...[...plan.rewrite, ...plan.fresh].map((one) => ({
+      key: one.storageKey,
+      body: one.file.body,
+    })),
+  ];
+  await putAll(store, context.bucket, context.mime, files, trace.written);
+  return { written: plan.rewrite.length + plan.fresh.length, vanishing: plan.vanishing };
+}
+
+/** La sostituzione dentro la transazione; se fallisce toglie le derivate nuove prima di liberare i blocchi. */
+async function replaceInTransaction(
+  tx: Transaction,
+  store: ObjectStore,
+  context: ReplaceContext,
+  trace: ReplaceTrace,
+  log: Logger | undefined,
+) {
+  try {
+    return await replaceSteps(tx, store, context, trace);
+  } catch (error) {
+    const orphans = trace.created.filter((key) => trace.written.includes(key));
+    await removeQuietly(store, context.bucket, orphans, log, { mediaId: context.id });
+    throw error;
+  }
+}
+
+/** Toglie gli oggetti dall'archivio sotto i blocchi, saltando i nomi che nel frattempo sono tornati in uso. */
+async function purgeVanished(
+  db: Database,
+  store: ObjectStore,
+  runtime: MediaRuntime | undefined,
+  context: PurgeContext,
+  vanishing: readonly { publicPath: string; storageKey: string }[],
+  log: Logger | undefined,
+): Promise<void> {
+  if (vanishing.length === 0) return;
+  try {
+    await inMediaTransaction(db, runtime, async (tx) => {
+      await lockMedia(tx, context.id);
+      await lockFolder(tx, context.folder);
+      const taken = await takenPaths(
+        tx,
+        vanishing.map((variant) => variant.publicPath),
+      );
+      const free = vanishing.filter((variant) => !taken.has(variant.publicPath));
+      await removeQuietly(
+        store,
+        context.bucket,
+        free.map((variant) => variant.storageKey),
+        log,
+        { mediaId: context.id },
+      );
+    });
+  } catch (error) {
+    log?.error({ mediaId: context.id, err: error }, 'oggetti non rimossi dall’archivio');
+  }
+}
+
+/** Sostituisce il file di un media sulla stessa chiave (DR-074): indirizzo e tipo invariati, operazione non annullabile. */
 export async function replaceFile(
   db: Database,
   store: ObjectStore,
   id: string,
   input: ReplaceInput,
-) {
-  const current = await findById(db, id);
-  if (!current) return null;
+): Promise<Replaced | null> {
+  const prepared = await prepareReplacement(db, id, input);
+  if (!prepared) return null;
+  const { current, processed } = prepared;
+  const context: ReplaceContext = {
+    id,
+    mime: prepared.mime,
+    processed,
+    body: processed ? processed.original.body : input.body,
+    bucket: current.isPrivate ? store.privateBucket : store.publicBucket,
+    folder: folderOfKey(current.storageKey),
+  };
+  const trace: ReplaceTrace = { written: [], created: [] };
 
-  if (input.mimeType !== current.mimeType) {
-    throw Object.assign(
-      new Error(
-        `Il file nuovo è di tipo ${input.mimeType}, quello sostituito è ${current.mimeType}. ` +
-          'La sostituzione conserva indirizzo e nome del file, quindi il tipo deve coincidere.',
-      ),
-      { statusCode: 409 },
+  let outcome;
+  try {
+    outcome = await inMediaTransaction(db, input.runtime, (tx) =>
+      replaceInTransaction(tx, store, context, trace, input.log),
     );
+  } catch (error) {
+    // I rifiuti con codice non sono guasti da annotare.
+    if (!(error instanceof Error && 'statusCode' in error)) {
+      input.log?.error({ mediaId: id, err: error }, 'sostituzione del file non completata');
+    }
+    throw error;
   }
+  if (!outcome) return null;
 
-  const bucket = current.isPrivate ? store.privateBucket : store.publicBucket;
-  await store.put(bucket, current.storageKey, input.body, input.mimeType);
-
-  await db
-    .update(schema.media)
-    .set({
-      byteSize: input.body.byteLength,
-      checksum: createHash('sha256').update(input.body).digest(),
-      updatedAt: new Date(),
-    })
-    .where(eq(schema.media.id, id));
-
-  return findById(db, id);
+  await purgeVanished(db, store, input.runtime, context, outcome.vanishing, input.log);
+  const row = await findById(db, id);
+  if (!row) return null;
+  return { row, derivatives: { written: outcome.written, removed: outcome.vanishing.length } };
 }
 
 export async function update(db: Database, id: string, input: UpdateInput) {
@@ -177,24 +526,8 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   return findById(db, id);
 }
 
-/**
- * Contenuti che citano il media: in evidenza, oppure dentro il documento a
- * blocchi (DR-077).
- *
- * Il documento si cerca **come testo**, non prop per prop. I riferimenti a un
- * media vivono in proprietà diverse secondo il tipo di blocco — `mediaId` in
- * `image` e `media_text`, `posterMediaId` in `video` — e un elenco scritto a
- * mano andrebbe rifatto a ogni tipo nuovo, dimenticandosene uno. Un
- * identificativo è unico: cercarlo nel testo del documento non produce falsi
- * positivi e non dimentica nulla.
- *
- * Dal 2026-10-10 (DR-109) si cercano anche gli **indirizzi**: quello del media
- * e quelli delle sue dimensioni derivate, così come sono e codificati, perché
- * un blocco di riserva `html` scritto a mano cita il file per indirizzo e non
- * per identificativo. `strpos` invece di `like`: il trattino basso, frequente
- * nei nomi di file, per `like` è un carattere jolly.
- */
-async function citedBy(db: Database, id: string, paths: readonly string[]) {
+/** Contenuti che citano il media per identificativo, in evidenza o per indirizzo, cercati come testo (DR-077, DR-109). */
+async function citedBy(db: Database | Transaction, id: string, paths: readonly string[]) {
   const needles = [...new Set(paths.flatMap((path) => [path, encodeURI(path)]))];
   return db
     .select({ id: schema.contents.id, title: schema.contents.title })
@@ -209,12 +542,19 @@ async function citedBy(db: Database, id: string, paths: readonly string[]) {
     .limit(10);
 }
 
-/** Un media ancora citato da un contenuto non si elimina in silenzio. */
-export async function remove(db: Database, store: ObjectStore, id: string): Promise<boolean> {
-  const current = await findById(db, id);
-  if (!current) return false;
+export interface RemoveOptions {
+  readonly runtime?: MediaRuntime;
+  readonly log?: Logger;
+}
 
-  const variants = await db
+/** Righe da togliere e oggetti da cancellare di un media eliminato. */
+async function deleteRows(tx: Transaction, id: string, folder: string) {
+  await lockMedia(tx, id);
+  await lockFolder(tx, folder);
+  const [locked] = await tx.select(columns).from(schema.media).where(eq(schema.media.id, id));
+  if (!locked) return null;
+
+  const variants = await tx
     .select({
       storageKey: schema.mediaVariants.storageKey,
       publicPath: schema.mediaVariants.publicPath,
@@ -222,24 +562,35 @@ export async function remove(db: Database, store: ObjectStore, id: string): Prom
     .from(schema.mediaVariants)
     .where(eq(schema.mediaVariants.mediaId, id));
 
-  const used = await citedBy(db, id, [
-    current.publicPath,
+  const used = await citedBy(tx, id, [
+    locked.publicPath,
     ...variants.map((variant) => variant.publicPath),
   ]);
   if (used.length > 0) {
-    const titles = used.map((row) => row.title).join(', ');
-    throw Object.assign(
-      new Error(
-        `Il media è citato da questi contenuti e non si elimina finché lo citano: ${titles}.`,
-      ),
-      { statusCode: 409 },
-    );
+    throw mediaError('MEDIA_IN_USE', mediaMessages.inUse(used.map((row) => row.title).join(', ')));
   }
+  await tx.delete(schema.media).where(eq(schema.media.id, id));
+  return [...variants, { storageKey: locked.storageKey, publicPath: locked.publicPath }];
+}
 
-  await db.delete(schema.media).where(eq(schema.media.id, id));
-
-  const bucket = current.isPrivate ? store.privateBucket : store.publicBucket;
-  for (const variant of variants) await store.remove(bucket, variant.storageKey);
-  await store.remove(bucket, current.storageKey);
+/** Un media ancora citato da un contenuto non si elimina in silenzio; gli oggetti si tolgono dopo, sotto i blocchi. */
+export async function remove(
+  db: Database,
+  store: ObjectStore,
+  id: string,
+  options: RemoveOptions = {},
+): Promise<boolean> {
+  const current = await findById(db, id);
+  if (!current) return false;
+  const context: PurgeContext = {
+    id,
+    bucket: current.isPrivate ? store.privateBucket : store.publicBucket,
+    folder: folderOfKey(current.storageKey),
+  };
+  const gone = await inMediaTransaction(db, options.runtime, (tx) =>
+    deleteRows(tx, id, context.folder),
+  );
+  if (!gone) return false;
+  await purgeVanished(db, store, options.runtime, context, gone, options.log);
   return true;
 }

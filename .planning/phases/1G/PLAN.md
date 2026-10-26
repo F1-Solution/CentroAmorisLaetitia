@@ -23,7 +23,7 @@ l'utente nel ruolo di redattore, per l'approvazione della condizione 7 del gate.
 | `1G-W2` | **Registro delle operazioni** (DR-216 A). Rotta di lettura, filtrabile per contenuto, autore, periodo, solo con il ruolo `amministrazione`; schermata «Registro delle operazioni»; «ultima modifica di X il Y» nell'editor, visibile alla redazione | 1G-9 eseguibile da prove; 1G-17 per il registro; 1G-20: nessuna voce 404 |
 | `1G-W3` | **Indirizzi dei contenuti** (DR-216 D). Slug e genitore nell'editor; alla modifica, nella stessa transazione: redirect 301 dal vecchio indirizzo, percorsi delle figlie ricalcolati, redirect anche per loro; nessuna catena (un redirect che punta a un indirizzo a sua volta rediretto si riscrive verso la destinazione finale) e nessun ciclo | 1G-11: prove su gerarchia a tre livelli, su slug riportato al valore originale, su collisione di percorso; 181/181 redirect e 293 indirizzi della matrice invariati |
 | `1G-W4` | **Campi, categorie, eliminazione** (DR-217 A, B, C). Estratto e immagine in evidenza nell'editor; assegnazione delle categorie a un contenuto (API e interfaccia), creazione e rinomina delle categorie; eliminazione con conferma e rifiuto spiegato se ha figlie | 1G-12, 1G-13 da prove; il sito mostra estratto, immagine e archivio di categoria aggiornati |
-| `1G-W5` | **Media e anteprima** (DR-216 B, C; DR-217 D). Dimensioni derivate rigenerate alla sostituzione, con le stesse misure e gli stessi ritagli dell'import (esito di D121); elenco dei tipi ammessi e messaggi in italiano; anteprima della bozza sul sito pubblico, con autorizzazione, `noindex`, nessuna cache | 1G-5 da prove su ogni dimensione; 1G-14; 1G-19 prova negativa da anonimo; anteprima e pagina pubblicata identiche dopo la pubblicazione, con il metodo di confronto di 1E-19 (DR-201: HTML senza il payload RSC) |
+| `1G-W5` | **Media e anteprima** (DR-216 B, C; DR-217 D). Dimensioni derivate rigenerate alla sostituzione, con le stesse misure e gli stessi ritagli dell'import (esito di D121); elenco dei tipi ammessi e messaggi in italiano; anteprima della bozza sul sito pubblico, con autorizzazione, `noindex`, nessuna cache | 1G-5 da prove su ogni dimensione; 1G-14; 1G-19 prova negativa da anonimo; anteprima e pagina pubblicata identiche dopo la pubblicazione, con il metodo di confronto di 1E-19 (DR-202: HTML senza il payload RSC) |
 | `1G-W6` | **Documenti e caroselli** (DR-218). Rotte e schermate per sostituire file e titolo dei documenti scaricabili; per sostituire, aggiungere, togliere e riordinare le immagini di un carosello | 1G-15 da prove; i 4 documenti riservati restano irraggiungibili (1E-16 rieseguito) |
 | `1G-W7` | **Non regressione e preparazione del collaudo.** Confronto visivo integrale; 1E-19, menu, metadati, redirect, stati; verifica come la CI; caccia al contenuto scritto nel codice; matrice di editabilità attesa; ambiente di collaudo (esito di D119) con HO dedicato; account sintetici `redazione` e `amministrazione`; un handoff per compito (1G-1…1G-10 e i casi di 1G-11…1G-17) | 1G-21, 1G-22, 1G-23, 1G-26 registrati; ambiente risponde; handoff pronti. **Stop**: richiesta del collaudo all'utente |
 | `1G-W8` | **Collaudo con l'utente** (DR-214, DR-221). L'utente esegue i compiti; l'agente osserva il sito, registra esito, tempo, console, e classifica ogni difetto | Ogni compito con esito e tempo; 1D-28…1D-37 coperti; 1G-24; elenco dei difetti con severità |
@@ -146,5 +146,12 @@ Secondo round, chiuso il 2026-10-19 insieme all'approvazione del piano (**DR-222
 | ~~**D120**~~ | Deroga ad ADR-007 | **DR-224**: revisione datata di ADR-007 nella `1G-W1` |
 | ~~**D121**~~ | Rigenerazione delle dimensioni derivate | **DR-225**: libreria di elaborazione delle immagini in `apps/api`, dichiarata nella `1G-W5` |
 | ~~**D122**~~ | HO-006 | **DR-226**: assorbito nel collaudo della `1G-W8` |
+
+Decisioni delle wave che cambiano le wave successive:
+
+| id | Decisione | Esito |
+|---|---|---|
+| ~~**D150**~~ | Metadati di MP4 e PDF caricati dal CMS | **DR-254**: pulizia con uno strumento nuovo, ADR e dipendenza da pianificare prima della `1G-W7` |
+| ~~**D151**~~ | `next` 16.3.5 con avvisi di sicurezza critici | **DR-255**: aggiornamento a ≥ 16.4.1 all'inizio della `1G-W7` |
 
 Nessuna wave parte con una decisione bloccante aperta.

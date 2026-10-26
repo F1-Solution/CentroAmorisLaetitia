@@ -14,11 +14,23 @@ const API_URL = (
 
 export class ApiUnavailable extends Error {}
 
+/** Il nome del cookie di sessione: la stessa variabile dell'API, con lo stesso valore predefinito. */
+export const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? 'amoris_sessione';
+
+interface ReadOptions {
+  readonly headers?: Record<string, string>;
+  /** Gli esiti che valgono «non c'è», oltre a 404. */
+  readonly absentStatuses?: readonly number[];
+}
+
 /** `null` se la risorsa non esiste (404); un errore per ogni altro esito. */
-async function read<T>(path: string): Promise<T | null> {
+async function read<T>(path: string, options: ReadOptions = {}): Promise<T | null> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
+    response = await fetch(`${API_URL}${path}`, {
+      cache: 'no-store',
+      ...(options.headers ? { headers: options.headers } : {}),
+    });
   } catch (caught) {
     // Solo l'errore di rete: gli errori interni di Next (resa dinamica) devono passare.
     if (caught instanceof TypeError) {
@@ -26,7 +38,7 @@ async function read<T>(path: string): Promise<T | null> {
     }
     throw caught;
   }
-  if (response.status === 404) return null;
+  if (response.status === 404 || options.absentStatuses?.includes(response.status)) return null;
   if (!response.ok) throw new ApiUnavailable(`servizio: ${response.status} su ${path}`);
   return (await response.json()) as T;
 }
@@ -81,6 +93,11 @@ export interface PublicContent {
   readonly documents: Readonly<Record<string, PublicDocument>>;
 }
 
+/** L'anteprima: la pagina come `/public/content`, più l'indirizzo a cui il sito la serve («/» per la pagina iniziale). */
+export interface PublicPreview extends PublicContent {
+  readonly publicPath: string;
+}
+
 export interface PublicDocument {
   readonly id: string;
   readonly slug: string;
@@ -118,7 +135,21 @@ export interface PostPage {
   readonly meta: { readonly total: number; readonly page: number; readonly perPage: number };
 }
 
+/** Un risultato della ricerca: come un articolo, più il tipo di contenuto (DR-248). */
+export interface SearchResult extends PostSummary {
+  readonly type: 'page' | 'post' | 'document';
+}
+
+export type SearchPage = Omit<PostPage, 'items'> & { readonly items: readonly SearchResult[] };
+
 export const getContent = (path: string) => read<PublicContent>(`/public/content?path=${q(path)}`);
+
+/** La bozza di un contenuto come la servirebbe il sito (S15): solo qui si inoltra il cookie di sessione, e un rifiuto vale «non c'è». */
+export const getPreview = (id: string, session: string) =>
+  read<PublicPreview>(`/contents/${encodeURIComponent(id)}/preview`, {
+    headers: { cookie: `${SESSION_COOKIE_NAME}=${encodeURIComponent(session)}` },
+    absentStatuses: [400, 401, 403, 422],
+  });
 
 export const getMenu = (key: string) =>
   read<{ key: string; items: readonly MenuItem[] }>(`/public/menus/${encodeURIComponent(key)}`);
@@ -161,4 +192,4 @@ export function settingString(settings: Record<string, unknown>, key: string): s
 
 /** Ricerca del sito pubblico (DR-144); 5 risultati per pagina come la sorgente. */
 export const searchContents = (query: string, page: number) =>
-  read<PostPage>(`/public/search?s=${encodeURIComponent(query)}&page=${page}`);
+  read<SearchPage>(`/public/search?s=${encodeURIComponent(query)}&page=${page}`);

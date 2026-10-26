@@ -6,6 +6,8 @@ import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { lastChangeOf } from '../audit/service.js';
 import { homeContentId } from '../public/service.js';
 import { sessionOf } from '../../plugins/auth.js';
+import { previewResponse } from '../public/schemas.js';
+import { previewPage } from './preview.js';
 import { deletionBlockers, removeContent } from './deletion.js';
 import { applyAddressChange, parentOptions, planAddressChange } from './address.js';
 import {
@@ -414,6 +416,25 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
         updatedAt: row.updatedAt.toISOString(),
         stillCurrent: row.baseUpdatedAt.getTime() === row.contentUpdatedAt.getTime(),
       });
+    },
+  );
+
+  typed.get(
+    '/contents/:id/preview',
+    {
+      onRequest: app.requirePermission(PERMISSIONS.contentRead),
+      schema: {
+        tags: ['contenuti'],
+        summary:
+          'La pagina come la servirebbe il sito, con la propria copia di lavoro: bozza o pubblicato',
+        params: idParam,
+        response: { 200: previewResponse, ...errorResponses(400, 401, 403, 404, 422) },
+      },
+    },
+    async (request, reply) => {
+      const page = await previewPage(app.db, request.params.id, sessionOf(request).user.userId);
+      if (!page) return reply.callNotFound();
+      return reply.header('cache-control', 'no-store').send(page);
     },
   );
 

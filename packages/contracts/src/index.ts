@@ -8,4 +8,5 @@ export * from './contentAddress.js';
 export * from './contentDeletion.js';
 export * from './errors.js';
 export * from './health.js';
+export * from './mediaRules.js';
 export * from './terms.js';

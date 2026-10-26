@@ -5,6 +5,7 @@ import {
   Button,
   ConfirmDestructive,
   DataTable,
+  Dialog,
   MediaUploader,
   PageHeader,
   Pagination,
@@ -16,6 +17,12 @@ import {
 } from '@amoris/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import {
+  checkMediaFile,
+  derivedSizes,
+  MEDIA_ACCEPT,
+  MEDIA_ALLOWED_HINT,
+} from '../../lib/mediaCheck';
 import { uploadFile } from '../../lib/upload';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
@@ -47,6 +54,27 @@ export interface MediaItem {
   readonly caption: string | null;
   readonly description: string | null;
   readonly uploadedAt: string;
+}
+
+/** Esito di `PUT /media/:id/file`: il media e le dimensioni derivate scritte e tolte. */
+interface ReplaceResponse extends MediaItem {
+  readonly derivatives?: { readonly written: number; readonly removed: number };
+}
+
+function replaceNotice(derivatives: ReplaceResponse['derivatives']): string {
+  const base =
+    'File sostituito. L’indirizzo non è cambiato: le pagine che lo citano mostrano il file nuovo.';
+  if (!derivatives || (derivatives.written === 0 && derivatives.removed === 0)) return base;
+  const written =
+    derivatives.written === 1
+      ? '1 dimensione derivata rigenerata'
+      : `${derivatives.written} dimensioni derivate rigenerate`;
+  if (derivatives.removed === 0) return `${base} ${written}.`;
+  const removed =
+    derivatives.removed === 1
+      ? '1 non serve più ed è stata tolta'
+      : `${derivatives.removed} non servono più e sono state tolte`;
+  return `${base} ${written}; ${removed}.`;
 }
 
 interface ListResponse {
@@ -103,6 +131,7 @@ export function MediaLibrary(): React.JSX.Element {
   const [panelNotice, setPanelNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [pendingReplacement, setPendingReplacement] = useState<File | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const replaceInput = useRef<HTMLInputElement>(null);
 
@@ -165,11 +194,35 @@ export function MediaLibrary(): React.JSX.Element {
     // parallelo produrrebbe dieci errori invece di dieci esiti.
     for (const [index, file] of chosen.entries()) {
       const id = `${Date.now()}-${index}`;
-      try {
-        await uploadFile<MediaItem>('/media', file);
+      const rejection = checkMediaFile(file);
+      if (rejection) {
         setUploads((previous) =>
           previous.map((entry, position) =>
-            position === index ? { ...entry, id, progress: 100, status: 'done' } : entry,
+            position === index
+              ? { ...entry, id, progress: 100, status: 'error', errorText: rejection }
+              : entry,
+          ),
+        );
+        continue;
+      }
+      try {
+        const created = await uploadFile<MediaItem & { derivatives?: number }>('/media', file);
+        const derivatives = created.derivatives ?? 0;
+        setUploads((previous) =>
+          previous.map((entry, position) =>
+            position === index
+              ? {
+                  ...entry,
+                  id,
+                  progress: 100,
+                  status: 'done',
+                  ...(derivatives > 0
+                    ? {
+                        noticeText: `${derivedSizes(derivatives)} ${derivatives === 1 ? 'generata' : 'generate'}.`,
+                      }
+                    : {}),
+                }
+              : entry,
           ),
         );
       } catch (caught) {
@@ -185,19 +238,32 @@ export function MediaLibrary(): React.JSX.Element {
     reload();
   }
 
+  /** Controlla il file scelto e, se è ammesso, chiede conferma prima di sostituire. */
+  function onReplacementChosen(file: File): void {
+    setPanelNotice(null);
+    const rejection = checkMediaFile(file);
+    if (rejection) {
+      setPanelError(rejection);
+      return;
+    }
+    setPanelError(null);
+    setPendingReplacement(file);
+  }
+
   async function onReplace(file: File): Promise<void> {
     if (!selected) return;
+    setPendingReplacement(null);
     setBusy(true);
     setPanelError(null);
     setPanelNotice(null);
     try {
-      const updated = await uploadFile<MediaItem>(`/media/${selected.id}/file`, file, {
-        method: 'PUT',
-      });
-      setSelected(updated);
-      setPanelNotice(
-        'File sostituito. L’indirizzo non è cambiato: le pagine che lo citano mostrano il file nuovo.',
+      const { derivatives, ...updated } = await uploadFile<ReplaceResponse>(
+        `/media/${selected.id}/file`,
+        file,
+        { method: 'PUT' },
       );
+      setSelected(updated);
+      setPanelNotice(replaceNotice(derivatives));
       reload();
     } catch (caught) {
       setPanelError(messageOf(caught));
@@ -257,7 +323,12 @@ export function MediaLibrary(): React.JSX.Element {
 
       {canWrite ? (
         <section className="amoris-media-library__upload" aria-label="Carica nuovi media">
-          <MediaUploader files={uploads} onFilesSelected={(files) => void onFilesSelected(files)} />
+          <MediaUploader
+            files={uploads}
+            accept={MEDIA_ACCEPT}
+            hintText={MEDIA_ALLOWED_HINT}
+            onFilesSelected={(files) => void onFilesSelected(files)}
+          />
         </section>
       ) : null}
 
@@ -425,6 +496,9 @@ export function MediaLibrary(): React.JSX.Element {
             </Button>
           </div>
 
+          <p id="media-replace-hint" className="amoris-media-library__note">
+            {MEDIA_ALLOWED_HINT}
+          </p>
           <p className="amoris-media-library__note">
             La sostituzione conserva l’indirizzo del file: le pagine che lo citano mostrano subito
             quello nuovo. Il file precedente viene sovrascritto e non si recupera.
@@ -434,14 +508,33 @@ export function MediaLibrary(): React.JSX.Element {
             ref={replaceInput}
             type="file"
             aria-label="Scegli il file che sostituisce questo"
+            aria-describedby="media-replace-hint"
             className="amoris-media-library__file-input"
+            accept={MEDIA_ACCEPT}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = '';
-              if (file) void onReplace(file);
+              if (file) onReplacementChosen(file);
             }}
           />
         </SidePanel>
+      ) : null}
+
+      {selected && pendingReplacement ? (
+        <Dialog open onClose={() => setPendingReplacement(null)} title="Sostituisci il file">
+          <p>
+            Il file attuale e le sue dimensioni derivate non si potranno recuperare: «
+            {pendingReplacement.name}» prenderà il loro posto sullo stesso indirizzo.
+          </p>
+          <div className="amoris-media-library__actions">
+            <Button variant="secondary" onClick={() => setPendingReplacement(null)}>
+              Annulla
+            </Button>
+            <Button variant="primary" onClick={() => void onReplace(pendingReplacement)}>
+              Sostituisci
+            </Button>
+          </div>
+        </Dialog>
       ) : null}
 
       {selected ? (

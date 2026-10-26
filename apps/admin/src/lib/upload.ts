@@ -11,6 +11,7 @@
  * perché queste sono richieste che modificano dati.
  */
 
+import { DEFAULT_MEDIA_LIMITS, mediaMessages } from '@amoris/contracts/mediaRules';
 import { ApiError } from './api';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
@@ -26,6 +27,21 @@ function csrfToken(): string | null {
 export interface UploadOptions {
   readonly method?: 'POST' | 'PUT';
   readonly signal?: AbortSignal;
+}
+
+/** Un rifiuto senza codice dell’API (proxy, limite di dimensione) si legge comunque in italiano. */
+function fallbackRejection(status: number, fileName: string): ApiError | null {
+  if (status === 413) {
+    const message = mediaMessages.tooLargeAny(DEFAULT_MEDIA_LIMITS.videoBytes);
+    return new ApiError(413, 'MEDIA_TOO_LARGE', message);
+  }
+  if (status === 415) {
+    return new ApiError(415, 'MEDIA_TYPE_NOT_ALLOWED', mediaMessages.typeNotAllowed(fileName));
+  }
+  if (status === 406) {
+    return new ApiError(406, 'MEDIA_NOT_MULTIPART', mediaMessages.notMultipart());
+  }
+  return null;
 }
 
 export async function uploadFile<T>(
@@ -53,6 +69,10 @@ export async function uploadFile<T>(
   } | null;
 
   if (!response.ok) {
+    if (!payload?.error?.code?.startsWith('MEDIA_')) {
+      const fallback = fallbackRejection(response.status, file.name);
+      if (fallback) throw fallback;
+    }
     throw new ApiError(
       response.status,
       payload?.error?.code ?? 'UNKNOWN',

@@ -85,6 +85,17 @@ Comprese le dimensioni derivate. **Non si rigenerano.** Rigenerarle con una libr
 diversa da quella usata da WordPress produrrebbe immagini di peso e compressione
 diversi, e su una pagina con molte immagini la differenza si vede.
 
+> **Revisione del 2026-10-23 (DR-225, DR-249).** Il testo sopra vale per i 1.546 file
+> importati, che restano byte per byte. Da `1G-W5` le dimensioni derivate **si generano**
+> al caricamento di un'immagine dall'area e **si rigenerano** alla sostituzione del suo
+> file, con `sharp` (DR-225), con le stesse misure e gli stessi ritagli di WordPress e
+> Divi e nome `<base>-<L>x<A>.<est>` nella cartella dell'originale. L'originale si
+> riscrive orientato e senza metadati (EXIF, GPS) e, oltre 2560 px sul lato lungo, si
+> riduce e prende il nome `<base>-scaled` (D145-A). Se la sostituzione farebbe sparire
+> una derivata citata da un contenuto, si rifiuta con `409 MEDIA_VARIANT_IN_USE`
+> (D146-A). Nessuna rigenerazione in blocco: i file importati non si toccano finché non
+> si sostituiscono.
+
 Restano **escluse** le cartelle di servizio già identificate in 1A §4.3:
 `uploads/backwpup*`, `uploads/wpforms`, `uploads/aioseo`, `uploads/wpdm-cache`,
 `uploads/et_temp`.

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@amoris/blocks": "workspace:*",
+    "@amoris/contracts": "workspace:*",
     "@amoris/ui": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@tiptap/core": "^3.31.3",

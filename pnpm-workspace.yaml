@@ -12,3 +12,7 @@ allowBuilds:
 ignoredBuiltDependencies:
   - esbuild
 strictDepBuilds: false
+
+# sharp 0.35.5 corregge GHSA-wq5f-xc86-pv6w, anche per la copia facoltativa di next.
+overrides:
+  sharp: 0.35.5

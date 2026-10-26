@@ -97,6 +97,8 @@ export function testConfig(databaseUrl: string, overrides: Record<string, string
     // I test non devono aspettare mezzo secondo per ogni accesso.
     LOGIN_UNIFORM_MS: '0',
     LOGIN_DELAY_STEP_MS: '0',
+    // Le prove caricano molti file dallo stesso indirizzo.
+    MEDIA_WRITES_PER_MINUTE: '100000',
     ...overrides,
   });
 }

@@ -75,3 +75,9 @@
   color: var(--amoris-danger);
   margin: 0;
 }
+
+.amoris-media-uploader__file-notice {
+  font-size: var(--amoris-text-sm-size);
+  color: var(--amoris-text-secondary);
+  margin: 0;
+}

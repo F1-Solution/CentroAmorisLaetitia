@@ -39,6 +39,7 @@ import {
   type EditorState,
 } from '../../lib/editor/roundtrip';
 import { useSession } from '../../lib/session';
+import { previewUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
 import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
@@ -209,9 +210,9 @@ export function ContentEditor({
     setActionError(null);
   }, []);
 
-  const saveDraft = useRef<() => Promise<void>>(async () => undefined);
+  const saveDraft = useRef<() => Promise<boolean>>(async () => true);
   saveDraft.current = async () => {
-    if (!state || !content) return;
+    if (!state || !content) return true;
     try {
       const saved = await api<DraftDetail>(`/contents/${contentId}/draft`, {
         method: 'PUT',
@@ -224,14 +225,38 @@ export function ContentEditor({
       });
       setDraftSavedAt(saved.updatedAt);
       setPending(false);
+      return true;
     } catch (caught) {
       setActionError(
         caught instanceof ApiError
           ? caught.fullMessage
           : 'La copia di lavoro non è stata salvata: le modifiche sono ancora solo sullo schermo.',
       );
+      return false;
     }
   };
+
+  /** S17: salva la copia di lavoro in sospeso e apre la pagina come sarà sul sito, in una scheda nuova. */
+  async function openSitePreview(): Promise<void> {
+    const url = previewUrl(contentId);
+    if (!pending) {
+      window.open(url, '_blank', 'noopener');
+      return;
+    }
+    // La scheda si apre subito, nel gesto dell'utente: il salvataggio può durare quanto basta a far scattare il blocco dei popup.
+    const tab = window.open('', '_blank');
+    const saved = await saveDraft.current();
+    if (!saved) {
+      tab?.close();
+      return;
+    }
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
 
   useEffect(() => {
     // Durante un salvataggio la copia di lavoro aspetta: ripartirà sul contenuto riletto.
@@ -405,6 +430,13 @@ export function ContentEditor({
           ? {
               action: (
                 <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void openSitePreview()}
+                    disabled={busy}
+                  >
+                    Anteprima sul sito
+                  </Button>
                   {canPublish && content.status === 'published' ? (
                     <Button
                       variant="secondary"

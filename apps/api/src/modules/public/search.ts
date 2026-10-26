@@ -125,6 +125,7 @@ function relevanceOrder(parsed: ParsedSearch): SQL | null {
 
 export interface SearchRow {
   readonly id: string;
+  readonly type: 'page' | 'post' | 'document';
   readonly path: string;
   readonly title: string;
   readonly excerpt: string | null;
@@ -141,13 +142,13 @@ export async function searchPublished(
   const parsed = parseSearch(query.s);
   const homeId = await homeContentId(db);
   const corpus = sql`(
-    select c.id, case when c.id = ${homeId}::uuid then '/' else c.path end as path, c.title,
+    select c.id, c.type::text as type, case when c.id = ${homeId}::uuid then '/' else c.path end as path, c.title,
            coalesce(c.excerpt, '') as excerpt, c.content_text as body,
            c.summary_source, c.featured_media_id, c.published_at
       from contents c
      where c.status = 'published'
     union all
-    select d.id, '/download/' || d.slug || '/', d.title, '', '', null, null, d.published_at
+    select d.id, 'document' as type, '/download/' || d.slug || '/', d.title, '', '', null, null, d.published_at
       from documents d
      where d.is_private = false
   ) as corpus`;
@@ -161,6 +162,7 @@ export async function searchPublished(
   const [found, counted] = await Promise.all([
     db.execute<{
       id: string;
+      type: SearchRow['type'];
       path: string;
       title: string;
       excerpt: string;
@@ -168,13 +170,14 @@ export async function searchPublished(
       summary_source: string | null;
       featured_media_id: string | null;
       published_at: Date | string | null;
-    }>(sql`select id, path, title, excerpt, body, summary_source, featured_media_id, published_at
+    }>(sql`select id, type, path, title, excerpt, body, summary_source, featured_media_id, published_at
              from ${corpus} where ${where} order by ${order}
              limit ${query.perPage} offset ${offset}`),
     db.execute<{ total: number }>(sql`select count(*)::int as total from ${corpus} where ${where}`),
   ]);
   const rows = [...found].map((row) => ({
     id: row.id,
+    type: row.type,
     path: row.path,
     title: row.title,
     excerpt: row.excerpt === '' ? null : row.excerpt,

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { FEED_ITEMS, renderFeed } from './lib/feed';
+import { asNextParams, isPreviewPath } from './lib/previewPath';
 import { siteUrl } from './lib/site';
 
 /**
@@ -66,8 +67,19 @@ async function feed(prefix: string): Promise<NextResponse | null> {
   );
 }
 
+/** L'anteprima delle bozze (S16): mai indicizzata né conservata, e senza ricerca di redirect. */
+function previewResponse(): NextResponse {
+  const response = NextResponse.next();
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  response.headers.set('Cache-Control', 'private, no-store');
+  response.headers.set('Referrer-Policy', 'no-referrer');
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  if (isPreviewPath(asNextParams(path))) return previewResponse();
 
   if (path === '/wp-sitemap.xml') {
     return NextResponse.redirect(new URL('/sitemap.xml', request.nextUrl.origin), 302);
