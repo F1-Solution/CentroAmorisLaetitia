@@ -269,6 +269,7 @@ parità 1E-W7» e **accettate tutte** (DR-203, `verifiche/decisioni-report-1E-W7
 |---|---|---|
 | DR-162 | 112 indirizzi, 544 viste non superate dopo la `1E-W6` | `confronto/decisioni-report-DR-162.csv` |
 | DR-203 | 25 indirizzi, 50 viste cambiate dopo la `1E-W7` | `verifiche/decisioni-report-1E-W7.csv` |
+| DR-289 | 6 indirizzi, 18 viste cambiate dalla Fase 1G (estratti, titolo delle notizie) | §13, §14, `confronto/esiti-1G-W7.csv` |
 | DR-124…128 | banner dei cookie, mappa e video a copertina, tabella dei cookie, suffisso «- Pagina N» | HO-015 |
 | DR-120 | tabella dei cookie che scorre a 390 e 360 | — |
 | DR-159…161, DR-164 | refuso «IBAN» chiuso; articolo non elencato nell'archivio; scheda dei download | — |
@@ -356,4 +357,33 @@ stesse condizioni, sito nuovo col codice della `1G-W5` prima del commit; catture
 Il controllo sull'HTML delle pagine 8 e 9 (estratto contro inizio del testo, per tipo di
 risultato) conferma la regola; nessun testo dei contenuti è riportato qui.
 
-**Stato:** in attesa di accettazione nella `1G-W7`.
+**Stato:** accettate dal Proprietario il 2026-10-27 (DR-289).
+
+## 14. Confronto integrale della `1G-W7` (2026-10-27)
+
+Ricattura integrale del sito nuovo dopo le modifiche della Fase 1G (1G-21). Stesse
+condizioni e stessi strumenti del §11.2 (Playwright 1.63.0, Chromium 153.0.8010.12,
+`pixelmatch` 7.2.0, `pngjs` 7.0.0), sito nuovo con `next start` su `127.0.0.1:3200` e
+`SITE_URL=http://127.0.0.1:3200`, codice del commit `0dd1efb` (CI verde, run
+40521642612), database di sviluppo invariato. Catture in `docs/qa/screenshots/sito/`,
+quelle precedenti in `docs/qa/screenshots/sito-2026-10-27-prima-1G-W7/`, fuori da Git.
+
+**Rispetto al riferimento:** 591 righe (585 viste distinte), 40 superate, 3 da esaminare,
+548 fallite, 0 senza immagine: gli stessi numeri del §11.
+
+**Rispetto alle catture accettate** (DR-210 per 558 viste, `1G-W6` per 15, DR-243 per 9,
+DR-248 per 3; esiti con le impronte in
+[`confronto/esiti-1G-W7.csv`](confronto/esiti-1G-W7.csv)): 579 viste identiche, 6
+cambiate e non peggiorate, **0 peggiorate**, 0 errori.
+
+| Indirizzo | Viste | Esito |
+|---|---|---|
+| `/riparte-il-circolo-della-sicurezza/` | 1440, 768, 390 | il titolo e la data in testa non compaiono più (DR-286); 768 e 390 passano da non confrontabili a 3,10 % e 3,43 %, la 1440 resta non confrontabile (altezza 1109 contro 1090) |
+| `/riparte-il-corso-per-consulenti-familiari/` | 1440, 768, 390 | come sopra; la 390 passa a 5,17 %, 1440 e 768 restano non confrontabili (altezze 1906 contro 1919, 4209 contro 4208) |
+
+Il controllo a vista delle due 1440 contro il riferimento conferma che la testata della
+notizia ora coincide con WordPress, dove `_et_pb_show_title` era spento. Nel database di
+sviluppo sono le sole due notizie con il titolo spento, invariate dall'importazione.
+
+**Stato:** le 6 viste del §14 e le 12 del §13 sono state accettate nominativamente dal
+Proprietario il 2026-10-27 (DR-289).

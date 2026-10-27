@@ -46,3 +46,14 @@ di sviluppo, se ne vedi.
 ```
 HO-053: fatto, <N> GB liberi. Avvia la cattura integrale della 1G-W7.
 ```
+
+## 5. Seconda esecuzione (2026-10-27, dopo il commit `0dd1efb`)
+
+La prima esecuzione ha liberato 9,2 GB, ma la cattura è stata rinviata per le attività aggiunte
+(DR-278…DR-288). Ora, con i server di sviluppo accesi, i GB liberi sono **3,8**: Chrome ~3,3 GB,
+Edge WebView ~1,4 GB, Visual Studio ~0,4 GB; Docker (~8,6 GB) **non** va chiuso. Ripeti i passi
+del §2 e segnala con:
+
+```
+HO-053: fatto di nuovo, <N> GB liberi. Avvia la cattura integrale della 1G-W7.
+```

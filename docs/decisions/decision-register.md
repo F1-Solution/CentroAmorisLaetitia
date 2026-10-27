@@ -1754,3 +1754,9 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 |---|---|---|---|---|---|---|---|---|---|
 | DR-287 | 2026-10-27 | Resa del blocco «Documento» (D183) | **Opzione A** — sul sito il blocco porta alla scheda `/download/<slug>/` e diventa inseribile dall'editor | B — resta com'è, non inseribile, scelta del documento tolta | «D183=A» | Proprietario | sito pubblico, editor, `1G-W7` | sì | DR-279 |
 | DR-288 | 2026-10-27 | Modifiche al proprio account (D184) | **Opzione C** — la password attuale si chiede per **ogni** modifica al proprio account, compresa la reimpostazione della propria password | A — come oggi con condizione per il recupero via email; B — password solo per la propria email | «D184=C» | Proprietario | area, API degli account, ADR-007, `1G-W7` | sì | DR-282, ADR-007 |
+
+## 94. Round 85 — risposta del 2026-10-27, viste cambiate dalla Fase 1G
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-289 | 2026-10-27 | Accettazione nominativa delle viste cambiate dalla Fase 1G (1G-21) | **Accettate tutte e 18**: le 12 del §13 (DR-243, DR-248: estratti in `/category/news/` pagine 1-3 e `/?s=corso`) e le 6 del §14 (DR-286: titolo e data tolti dalle due notizie che nella sorgente li nascondevano) | accettare solo il §14; non accettare | «Accetto tutte e 18» | Proprietario | sito pubblico, parità, `1G-W7` | sì | `visual-parity-report.md` §13-14, `confronto/esiti-1G-W7.csv`, DR-210 |

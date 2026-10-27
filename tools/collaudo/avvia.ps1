@@ -105,7 +105,7 @@ try {
 }
 finally { Restore-Ambiente -Copia $copiaAmbiente }
 
-# Attesa: l'API deve rispondere 200 su /health/ready; sito e area, una risposta HTTP qualunque.
+# Attesa: l'API deve rispondere 200 su /health/ready; sito e area, una risposta sotto 500 (un 500 all'avvio è l'API non ancora raggiungibile).
 $controlli = @(
   [pscustomobject]@{ Nome = 'API'; Indirizzo = "$api/health/ready"; Atteso = 200 },
   [pscustomobject]@{ Nome = 'sito'; Indirizzo = "$sito/"; Atteso = 0 },
@@ -120,7 +120,8 @@ while ((Get-Date) -lt $deadline -and $pronti.Count -lt $controlli.Count) {
     try {
       $risposta = Invoke-WebRequest -Uri $controllo.Indirizzo -SkipHttpErrorCheck -MaximumRedirection 0 -TimeoutSec 5
       $ultimi[$controllo.Nome] = [int]$risposta.StatusCode
-      if ($controllo.Atteso -eq 0 -or [int]$risposta.StatusCode -eq $controllo.Atteso) { $pronti[$controllo.Nome] = $true }
+      $codice = [int]$risposta.StatusCode
+      if (($controllo.Atteso -eq 0 -and $codice -lt 500) -or $codice -eq $controllo.Atteso) { $pronti[$controllo.Nome] = $true }
     }
     catch { }
   }

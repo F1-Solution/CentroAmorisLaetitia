@@ -127,12 +127,12 @@
   "/?s=corso color",
   "/download-category/moduli-consulenze/ color"
  ],
- "stiliDelQuadro": [],
+ "stiliDelQuadro": [
+  "/corso-per-operatore-centro-dascolto/ position"
+ ],
  "orizzontali": [
-  "/parlarsi-con-il-cuore/ 390 (+17px)",
-  "/sguardi-damore/ 390 (+17px)",
   "/parlarsi-con-il-cuore/ 360 (+15px)",
-  "/sguardi-damore/ 360 (+44px)",
-  "/sguardi-damore-2/ 360 (+15px)"
+  "/sguardi-damore/ 360 (+15px)",
+  "/sguardi-damore-2/ 360 (+44px)"
  ]
 }

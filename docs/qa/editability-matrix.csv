@@ -51,7 +51,7 @@ pagina e notizia,titolo di condivisione,Contenuti › editor › scheda SEO › 
 pagina e notizia,descrizione di condivisione,Contenuti › editor › scheda SEO › «Descrizione di condivisione»,1G-7,1D-33,modificabile,,
 pagina e notizia,immagine di condivisione,Contenuti › editor › scheda SEO › Condivisione › scelta dell'immagine,1G-7,1D-33,modificabile,,
 pagina e notizia,tipo di dati strutturati,Contenuti › editor › scheda SEO › «Dati strutturati» › «Tipo di dati strutturati»,1G-7,DR-278,modificabile,,"«Come il modello SEO», «Pagina web (WebPage)» o «Articolo di blog (BlogPosting)»; si vede nel JSON-LD della pagina"
-categoria,nome,Contenuti › Categorie › «Nuova categoria» e «Rinomina»,1G-12,DR-217 B,modificabile,,
+categoria,nome,Contenuti › Categorie › «Nuova categoria» e «Modifica»,1G-12,DR-217 B,modificabile,,
 categoria,slug,Contenuti › Categorie › «Nuova categoria» › «Indirizzo»,1G-12,(solo il compito),modificabile,,Si sceglie alla creazione e poi non cambia (testo della schermata)
 categoria,percorso dell'archivio,(nessuna schermata lo scrive),1G-12,(solo il compito),non modificabile (calcolato),,
 categoria,descrizione,Contenuti › Categorie › «Modifica» › «Descrizione»,1G-12,DR-280,modificabile,,"Sul sito solo come descrizione per i motori dell'archivio, come All in One SEO; il tema non la stampava nella pagina"
@@ -98,7 +98,7 @@ documento,creare un documento,"Corredo › Documenti › «Nuovo documento» (ti
 documento,eliminare un documento,Corredo › Documenti › editor › «Elimina»,1G-15,DR-281,modificabile,,"Conferma scrivendo il titolo; rifiutata con spiegazione se un blocco «Documento» o una voce di menu lo cita; dopo, scheda e file rispondono 404, senza redirect"
 documento,conteggio dei download e privato,(assente),(nessuno),DR-218,non modificabile in Fase 1,,Il sito non mostra il contatore
 carosello,sostituire l'immagine di una slide,Corredo › Caroselli › editor › «Cambia immagine»,1G-15,DR-218; DR-257,modificabile,,
-carosello,aggiungere una slide,Corredo › Caroselli › editor › «Aggiungi un'immagine»,1G-15,DR-257,modificabile,,
+carosello,aggiungere una slide,Corredo › Caroselli › editor › «Aggiungi un’immagine»,1G-15,DR-257,modificabile,,
 carosello,togliere una slide,Corredo › Caroselli › editor › «Togli»,1G-15,DR-257,modificabile,,Un carosello ha almeno un'immagine
 carosello,ordine delle slide,Corredo › Caroselli › editor › «Sposta su» e «Sposta giù»,1G-15,DR-218,modificabile,,
 slide,titolo,Corredo › Caroselli › editor › slide › «Titolo»,1G-15,DR-257,modificabile,,Il sito lo usa anche come testo alternativo dell'immagine
