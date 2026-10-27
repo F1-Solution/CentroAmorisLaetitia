@@ -2,13 +2,16 @@ import type { UpdateAccountBody } from '@amoris/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
+import { hashAddress } from '../../lib/crypto.js';
 import { errorResponses } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
+import { verifyCurrentPassword } from '../auth/service.js';
 import {
   accountListSchema,
   createAccountBodySchema,
   createAccountResponseSchema,
   idParam,
+  passwordResetBodySchema,
   passwordResetResponseSchema,
   updateAccountBodySchema,
   updateAccountResponseSchema,
@@ -47,6 +50,48 @@ function unknownRole(request: FastifyRequest, reply: FastifyReply) {
   return reply.code(400).send({
     error: { code: 'VALIDATION_FAILED', message: 'Ruolo non disponibile.', requestId: request.id },
   });
+}
+
+/**
+ * DR-288: sul proprio account ogni modifica chiede la password attuale, con il
+ * conteggio e il registro di `/auth/password`; vero se ha già risposto con un
+ * rifiuto (una risposta è *thenable*, quindi non si restituisce). Sugli account
+ * altrui il campo si ignora.
+ */
+async function refuseWithoutCurrentPassword(
+  app: FastifyInstance,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  targetId: string,
+  currentPassword: string | undefined,
+): Promise<boolean> {
+  const session = sessionOf(request);
+  if (targetId !== session.user.userId) return false;
+  const refuse = (status: number, code: string, message: string): true => {
+    void reply.code(status).send({ error: { code, message, requestId: request.id } });
+    return true;
+  };
+  if (!currentPassword) {
+    return refuse(
+      400,
+      'CURRENT_PASSWORD_REQUIRED',
+      'Per modificare il proprio account serve la password attuale.',
+    );
+  }
+  const verdict = await verifyCurrentPassword(
+    app.db,
+    app.config,
+    { ...session.user, sessionId: session.sessionId },
+    currentPassword,
+    hashAddress(request.ip, app.config.IP_HASH_SALT),
+  );
+  if (verdict === 'blocked') {
+    return refuse(429, 'TOO_MANY_ATTEMPTS', 'Troppi tentativi. Riprovare più tardi.');
+  }
+  if (verdict === 'invalid') {
+    return refuse(403, 'INVALID_CREDENTIALS', 'Indirizzo o password non corretti.');
+  }
+  return false;
 }
 
 /** Una richiesta, una riga: la disattivazione prevale sul cambio di ruoli, che prevale sul resto. */
@@ -133,7 +178,8 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       },
       schema: {
         tags: ['account'],
-        summary: 'Modifica nome, ruoli o stato di un account',
+        summary:
+          'Modifica nome, email, ruoli o stato di un account; un indirizzo nuovo chiude le sue sessioni; sul proprio serve la password attuale',
         params: idParam,
         body: updateAccountBodySchema,
         response: {
@@ -144,18 +190,26 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const { body } = request;
+      const { currentPassword, ...body } = request.body;
       request.declaredAudit = { action: updateAction(body), entityType: ENTITY };
-      request.auditTarget = {
-        entityId: id,
-        detail: {
-          accountId: id,
-          ...(body.roleKeys ? { roleKeys: [...body.roleKeys].sort() } : {}),
-        },
+      const detail = {
+        accountId: id,
+        ...(body.roleKeys ? { roleKeys: [...body.roleKeys].sort() } : {}),
       };
+      request.auditTarget = { entityId: id, detail };
+      if (await refuseWithoutCurrentPassword(app, request, reply, id, currentPassword))
+        return reply;
       const result = await updateAccount(app.db, id, body, sessionOf(request).user.userId);
       if (result.kind === 'not_found') return reply.callNotFound();
       if (result.kind === 'unknown_role') return unknownRole(request, reply);
+      if (result.kind === 'email_taken') {
+        return conflict(
+          request,
+          reply,
+          'EMAIL_TAKEN',
+          'Esiste già un account con questo indirizzo.',
+        );
+      }
       if (result.kind === 'last_admin') {
         return conflict(
           request,
@@ -163,6 +217,10 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
           'LAST_ADMINISTRATOR',
           'Non è possibile: nessun account attivo avrebbe più il ruolo di amministrazione.',
         );
+      }
+      // Nomi dei campi cambiati, mai i valori: nessun indirizzo nel registro (DR-282).
+      if (result.fields.length > 0) {
+        request.auditTarget = { entityId: id, detail: { ...detail, fields: result.fields } };
       }
       const account = await findAccount(app.db, id);
       if (!account) return reply.callNotFound();
@@ -180,17 +238,22 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       },
       schema: {
         tags: ['account'],
-        summary: 'Reimposta la password: nuova password temporanea, sessioni chiuse',
+        summary:
+          'Reimposta la password: nuova password temporanea, sessioni chiuse; corpo facoltativo, `currentPassword` serve solo sulla propria',
         params: idParam,
+        body: passwordResetBodySchema,
         response: {
           200: passwordResetResponseSchema,
-          ...errorResponses(401, 403, 404, 429),
+          ...errorResponses(400, 401, 403, 404, 429),
         },
       },
     },
     async (request, reply) => {
       const { id } = request.params;
       request.auditTarget = { entityId: id, detail: { accountId: id } };
+      const currentPassword = request.body?.currentPassword;
+      if (await refuseWithoutCurrentPassword(app, request, reply, id, currentPassword))
+        return reply;
       const temporaryPassword = await resetPassword(app.db, app.config, id);
       if (!temporaryPassword) return reply.callNotFound();
       return reply.send({ temporaryPassword });

@@ -18,6 +18,19 @@ export function italianDate(iso: string): string {
   });
 }
 
+/** Rifiuti della password attuale sul proprio account (DR-288), con il testo mostrato sul campo. */
+const PASSWORD_REFUSALS: Readonly<Record<string, string>> = {
+  CURRENT_PASSWORD_REQUIRED: 'Scrivi la tua password attuale.',
+  INVALID_CREDENTIALS: 'La password attuale non è corretta.',
+  TOO_MANY_ATTEMPTS: 'Troppi tentativi. Riprova più tardi.',
+};
+
+/** Il testo per il campo della password attuale, o `null` se l'errore è un altro. */
+export function passwordRefusalMessage(caught: unknown): string | null {
+  if (!(caught instanceof ApiError)) return null;
+  return PASSWORD_REFUSALS[caught.code] ?? null;
+}
+
 /** Messaggio in italiano per un errore dell'API: i 409 noti hanno un testo proprio. */
 export function accountErrorMessage(caught: unknown): string {
   if (caught instanceof ApiError) {

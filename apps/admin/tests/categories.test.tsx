@@ -8,7 +8,8 @@ import type * as ApiModule from '../src/lib/api';
 import type * as SessionModule from '../src/lib/session';
 
 /**
- * Wave 1G-W4, T5: schermata «Categorie» in Redazione (S5, S6, D140-A, DR-057).
+ * Wave 1G-W4, T5: schermata «Categorie» in Redazione (S5, S6, D140-A, DR-057);
+ * «Rinomina» è diventato «Modifica» con DR-280.
  * Nomi, slug e notizie sono inventati.
  */
 
@@ -120,13 +121,13 @@ describe('schermata Categorie', () => {
     expect(apiMock).toHaveBeenCalledWith('/terms?taxonomy=category', undefined);
   });
 
-  it('con il solo content.read non mostra «Nuova categoria» né «Rinomina» (DR-057)', async () => {
+  it('con il solo content.read non mostra «Nuova categoria» né «Modifica» (DR-057)', async () => {
     permissions = ['content.read'];
     renderScreen();
 
     await screen.findByRole('row', { name: /Incontri di prova/ });
     expect(screen.queryByRole('button', { name: 'Nuova categoria' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Rinomina' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Modifica' })).not.toBeInTheDocument();
   });
 
   it('propone lo slug dal nome, lo lascia correggere e crea con il corpo previsto', async () => {
@@ -236,10 +237,13 @@ describe('schermata Categorie', () => {
     ).toBeInTheDocument();
   });
 
-  it('«Rinomina» cambia solo il nome: lo slug non è un campo modificabile (D140-A)', async () => {
+  it('«Modifica» cambia il nome con un PATCH del solo nome: lo slug non è un campo (D140-A)', async () => {
     const user = userEvent.setup();
     apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
       if (path === '/terms?taxonomy=category' && !options?.method) return CATEGORIES;
+      if (path === `/terms/${CATEGORIES[0]!.id}/seo` && !options?.method) {
+        return { title: null, description: null, robotsNoindex: false, robotsNofollow: false };
+      }
       if (path === `/terms/${CATEGORIES[0]!.id}` && options?.method === 'PATCH') {
         return { ...CATEGORIES[0], name: 'Incontri di prova rinnovati' };
       }
@@ -248,7 +252,7 @@ describe('schermata Categorie', () => {
     renderScreen();
 
     const riga = await screen.findByRole('row', { name: /Incontri di prova/ });
-    await user.click(within(riga).getByRole('button', { name: 'Rinomina' }));
+    await user.click(within(riga).getByRole('button', { name: 'Modifica' }));
 
     const dialogo = screen.getByRole('dialog');
     const nome = within(dialogo).getByLabelText('Nome');
@@ -258,7 +262,8 @@ describe('schermata Categorie', () => {
 
     await user.clear(nome);
     await user.type(nome, 'Incontri di prova rinnovati');
-    await user.click(screen.getByRole('button', { name: 'Salva il nome' }));
+    await waitFor(() => expect(within(dialogo).getByLabelText('Titolo SEO')).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
 
     await waitFor(() => expect(writesTo('PATCH')).toHaveLength(1));
     expect(writesTo('PATCH')[0]).toEqual([

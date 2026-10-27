@@ -4,11 +4,15 @@ import { JsonLd } from '../components/JsonLd';
 import { SiteShell } from '../components/SiteShell';
 import { NotFoundView } from '../components/Views';
 import { getSettings } from '../lib/api';
+import { siteTitleOrDefault } from '../lib/settingsOnce';
 import { siteUrl } from '../lib/site';
 import { buildGraph, siteFromSettings } from '../lib/structuredData';
 
 /** La pagina 404 del tema, con il codice di stato 404 (`url-matrix.csv`: `/404-url-inesistente/`). */
-export const metadata: Metadata = { title: '404 Non trovato | Centro Amoris Laetitia' };
+export async function generateMetadata(): Promise<Metadata> {
+  // DR-273: il nome del sito è «Titolo del sito», con il valore di oggi se manca o l'API non risponde.
+  return { title: `404 Non trovato | ${await siteTitleOrDefault()}` };
+}
 
 export default async function NotFound() {
   // Resa alla richiesta come ogni pagina (DR-105): le impostazioni non si leggono alla compilazione.

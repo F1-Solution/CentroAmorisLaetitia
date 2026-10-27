@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { UiTranslations } from 'intl-tel-input';
 import type { FormFieldData } from './data-maps';
 import { choiceEntries, compositeKeys, type FieldValue } from '../form/logic';
 import { sanitizeRichText } from '../sanitize';
@@ -238,13 +239,20 @@ function PhoneField({ field, value, onChange }: FieldProps) {
     let cancelled = false;
     const element = input.current;
     if (!element || text(field.options, 'format') !== 'smart') return undefined;
-    import('intl-tel-input')
-      .then(({ default: intlTelInput }) => {
+    Promise.all([
+      import('intl-tel-input'),
+      // I tipi di `locale/*` descrivono l'indice di tutte le lingue: il file ha solo l'export predefinito.
+      import('intl-tel-input/locale/it') as unknown as Promise<{ default: UiTranslations }>,
+    ])
+      .then(([{ default: intlTelInput }, { default: uiTranslations }]) => {
         if (cancelled) return;
+        // DR-277: etichette e nomi dei paesi in italiano, con la traduzione della libreria.
         const instance = intlTelInput(element, {
           initialCountry: 'it',
           placeholderNumberPolicy: 'OFF',
           containerClass: 'blk-iti',
+          countryNameLocale: 'it',
+          uiTranslations,
         });
         // Il paese scelto con la bandiera entra nel valore inviato (revisione 1E-W6).
         const onCountry = () => {

@@ -4,7 +4,13 @@ import { z } from 'zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
-import { SETTING_VALUE_SCHEMAS, keyParam, settingSchema, updateBody } from './schemas.js';
+import {
+  SETTING_VALUE_MESSAGES,
+  SETTING_VALUE_SCHEMAS,
+  keyParam,
+  settingSchema,
+  updateBody,
+} from './schemas.js';
 import { list, update, type findByKey } from './service.js';
 
 /**
@@ -61,19 +67,24 @@ export async function settingsRoutes(app: FastifyInstance): Promise<void> {
       const valueSchema = Object.hasOwn(SETTING_VALUE_SCHEMAS, request.params.key)
         ? SETTING_VALUE_SCHEMAS[request.params.key]
         : undefined;
-      if (valueSchema && !valueSchema.safeParse(request.body.value).success) {
+      const parsed = valueSchema?.safeParse(request.body.value);
+      if (parsed && !parsed.success) {
         return reply.code(400).send({
           error: {
             code: 'VALIDATION_FAILED',
-            message: 'Il valore non ha la forma prevista per questa impostazione.',
+            message:
+              (Object.hasOwn(SETTING_VALUE_MESSAGES, request.params.key)
+                ? SETTING_VALUE_MESSAGES[request.params.key]
+                : undefined) ?? 'Il valore non ha la forma prevista per questa impostazione.',
             requestId: request.id,
           },
         });
       }
+      // Si salva il valore nella forma dello schema: «10» scritto come testo diventa 10.
       const row = await update(
         app.db,
         request.params.key,
-        request.body,
+        parsed ? { ...request.body, value: parsed.data } : request.body,
         sessionOf(request).user.userId,
       );
       if (!row) return reply.callNotFound();

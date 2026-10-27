@@ -313,9 +313,11 @@ describe('componenti di resa — un test per tipo (ADR-006 §3.3)', () => {
     expect(container.querySelector('.blk-post-list')).not.toBeNull();
   });
 
-  it('DocBlock rende la label quando presente', () => {
+  // Giro 1 della T2k: il segnaposto con l'etichetta esiste solo nell'anteprima dell'area (`preview`).
+  it('DocBlock rende la label quando presente, nell’anteprima', () => {
     const { getByText } = render(
       <DocBlock
+        preview
         block={{
           type: 'document',
           id: testBlockId(),

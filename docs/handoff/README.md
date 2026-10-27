@@ -13,7 +13,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-003 | [Rimozione della pagina `phpinfo()` dalla produzione](HO-003-rimozione-phpinfo-produzione.md) | 1B | ✅ **risposto** — l'utente sceglie la protezione con password (DR-042). Prosegue in HO-005 |
 | HO-004 | [Scelta del design dell'area amministrativa](HO-004-scelta-ui-ux-area-amministrativa.md) | 1B | ✅ **chiuso** 2026-09-15 — DR-044…DR-048 |
 | HO-005 | [Protezione con password della pagina di diagnostica](HO-005-protezione-con-password-della-pagina-di-diagnostica.md) | 1C | ✅ **chiuso** 2026-09-15 — DR-049 |
-| HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — assorbito nel collaudo della `1G-W8` (DR-226) |
+| HO-006 | [Prova a mano delle schermate della `1D-W9`](HO-006-prova-a-mano-delle-schermate-della-1D-W9.md) | 1D | ⏳ **aperto** — assorbito nel collaudo della `1G-W8` (DR-226): le sue sei prove sono distribuite in HO-040 e HO-049 (media), HO-041 (menu), HO-042 (SEO), HO-043 (redirect), HO-051 (impostazioni) |
 | HO-007 | [Eseguire a mano le suite della `1D-W10`](HO-007-eseguire-le-suite-della-1D-W10.md) | 1D | ✅ **chiuso** 2026-09-30 — tutti i test passati |
 | HO-008 | [Conferma dell'import reale in locale](HO-008-conferma-import-reale-1D-W11.md) | 1D | ✅ **chiuso** 2026-10-04 — `apply` due volte, esito `success`; `import-completeness-report.md` |
 | HO-009 | [Entrare nell'area amministrativa locale](HO-009-entrare-nell-area-amministrativa-locale.md) | 1D | ✅ **chiuso** 2026-10-09 — l'utente è entrato nell'area amministrativa locale |
@@ -41,6 +41,26 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-031 | [Prove dell'anteprima e di 1E-19 sui contenuti veri](HO-031-prove-anteprima-e-1E-19-1G-W5.md) | 1G | ✅ fatto il 2026-10-26 con §3-bis (account sintetico `qa-1g-w5@locale.invalid`): anteprima 106/106 identici, 1E-19 4/4 |
 | HO-032 | [Installare `qpdf` sulla macchina di sviluppo](HO-032-installare-qpdf-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: `qpdf` 12.4.2 in `C:\Program Files\qpdf 12.4.2\bin`, fuori dal `PATH` di sistema; le prove lo trovano con `QPDF_PATH` |
 | HO-033 | [Migrazione `0009` sul database di sviluppo](HO-033-migrazione-0009-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: migrazione `0009` (copia `amoris-prima-HO-033-2026-10-26.dump`), esito nel §6 |
+| HO-034 | [Ambiente di collaudo](HO-034-ambiente-di-collaudo-1G-W7.md) | 1G | ⏳ **aperto** — creazione su conferma, poi i due account sintetici |
+| HO-035 | [1E-19 e anteprima sul collaudo](HO-035-prove-sul-collaudo-1G-W7.md) | 1G | ⏳ **aperto** — dopo HO-034 (DR-265) |
+| HO-036 | [Compito 1G-1 — creare una pagina, pubblicarla, metterla nel menu](HO-036-creare-pagina-e-menu-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; testo alternativo dell'immagine inserita (DR-283) |
+| HO-037 | [Compito 1G-2 — testo e immagine di una pagina Gutenberg](HO-037-testo-e-immagine-gutenberg-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: titolo nascosto e immagine in evidenza di una pagina (DR-278) |
+| HO-038 | [Compito 1G-3 — testo e immagine di una pagina Divi convertita](HO-038-testo-e-immagine-divi-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: spazio fra le colonne, titolo delle pagine a sezioni (DR-278), video e mappa (DR-279) |
+| HO-039 | [Compito 1G-4 — contenuto con un blocco di riserva](HO-039-blocco-di-riserva-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-040 | [Compito 1G-5 — sostituire un'immagine e il testo alternativo](HO-040-sostituire-immagine-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-041 | [Compito 1G-6 — cambiare l'ordine di due voci del menu](HO-041-ordine-del-menu-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-042 | [Compito 1G-7 — titolo SEO e suo effetto](HO-042-titolo-seo-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prova accessoria: tipo di dati strutturati (DR-278) |
+| HO-043 | [Compito 1G-8 — creare un redirect](HO-043-redirect-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-044 | [Compito 1G-9 — chi ha modificato un contenuto e quando](HO-044-chi-ha-modificato-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-045 | [Compito 1G-10 — la pagina pubblica corrisponde all'anteprima](HO-045-anteprima-e-sito-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-046 | [Compito 1G-11 — indirizzo e pagina genitore](HO-046-indirizzo-e-genitore-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-047 | [Compito 1G-12 — estratto, immagine in evidenza e categorie](HO-047-notizie-e-categorie-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: titolo e primo piano di una notizia (DR-278, DR-286), categorie complete (DR-280) |
+| HO-048 | [Compito 1G-13 — eliminare un contenuto](HO-048-eliminare-contenuti-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-049 | [Compito 1G-14 — file non ammessi rifiutati in italiano](HO-049-file-rifiutati-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-050 | [Compito 1G-15 — documento scaricabile e carosello](HO-050-documenti-e-caroselli-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prova accessoria: documento nuovo, blocco «Documento» ed eliminazione (DR-281, DR-287) |
+| HO-051 | [Compito 1G-16 — account, password e impostazioni del sito](HO-051-account-e-impostazioni-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; Parte B con le impostazioni lette dal sito (DR-270, DR-273, DR-282); Parte C: nome ed email di un account (DR-282) e il proprio account con una seconda amministrazione (DR-288) |
+| HO-052 | [Compito 1G-17 — accessi negati alla redazione](HO-052-accessi-negati-alla-redazione-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-053 | [Liberare memoria per la cattura integrale](HO-053-liberare-memoria-per-la-cattura-1G-W7.md) | 1G | ⏳ **aperto** — serve alla T4 della `1G-W7` |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

@@ -11,7 +11,7 @@ import { decodeSlug } from './schemas.js';
  * ricalcola dentro la propria transazione e lo applica.
  */
 
-type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 /** Database o transazione: la scrittura ricalcola il piano dentro la propria. */
 export type Executor = Database | Transaction;
 
@@ -42,7 +42,7 @@ export interface AddressTarget {
   readonly parentId: string | null;
 }
 
-type Move = AddressPlan['moves'][number];
+export type Move = AddressPlan['moves'][number];
 type RedirectChanges = Pick<
   AddressPlan,
   'redirectsCreated' | 'redirectsRetargeted' | 'redirectsRemoved'
@@ -569,4 +569,38 @@ export function applyAddressChange(
     );
     return plan;
   });
+}
+
+/** I redirect di uno spostamento di altri indirizzi pubblici (archivi delle categorie, DR-280), con le regole dei contenuti; non scrive. */
+export async function planMoveRedirects(
+  exec: Executor,
+  moves: readonly Move[],
+): Promise<RedirectChanges & Pick<AddressPlan, 'warnings'>> {
+  const changes = redirectChanges(await rulesTouching(exec, moves), moves, null);
+  const warnings = await warningsFor(
+    exec,
+    moves.map((move) => move.from),
+  );
+  return { ...changes, warnings };
+}
+
+/** Lo spostamento tocca regole esistenti: serve `settings.write` (D138-A, DR-242). */
+export const touchesExistingRules = (plan: AddressPlan): boolean =>
+  plan.redirectsRetargeted.length > 0 || plan.redirectsRemoved.length > 0;
+
+/** Applica i redirect del piano attorno a `move`, con gli stessi controlli di auto-anelli e catene dei contenuti. */
+export async function writeMoveRedirects(
+  tx: Transaction,
+  plan: AddressPlan,
+  move: () => Promise<void>,
+): Promise<void> {
+  const touched = touchedRules(plan);
+  assertNoSelfLoop(touched);
+  await move();
+  await writeRedirects(tx, plan);
+  await assertNoChains(
+    tx,
+    [...touched.map((rule) => rule.source), ...plan.moves.map((m) => m.to)],
+    new Set(plan.redirectsCreated.map((rule) => rule.from)),
+  );
 }

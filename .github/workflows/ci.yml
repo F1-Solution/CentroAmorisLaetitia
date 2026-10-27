@@ -27,8 +27,8 @@ permissions:
 jobs:
   verifica:
     name: Lint, tipi, build, test
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
 
     services:
       db:
@@ -107,16 +107,21 @@ jobs:
           # Sincrono: l'esito del passo e' quello della creazione dei bucket.
           $COMPOSE run --rm objects-init
 
-      # DR-258, DR-262: le prove della pulizia dei metadati usano i programmi veri.
-      # Ubuntu 24.04 distribuisce qpdf 11.9, senza le opzioni di ADR-012: si scarica
-      # il binario ufficiale. Versione e impronta si aggiornano insieme.
+      # DR-258, DR-262, DR-268: le prove della pulizia dei metadati usano i programmi veri,
+      # scaricati come binari ufficiali di versione fissa; versione e impronta si aggiornano insieme.
       - name: Programmi per la pulizia dei metadati
         env:
           QPDF_VERSION: '12.4.2'
           QPDF_SHA256: db367d897829f22c4198ce1094143c9d467bd6ee7dfabc44ba6f02056b24f8b1
+          FFMPEG_RELEASE: autobuild-2026-09-30-13-08
+          FFMPEG_ARCHIVE: ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0
+          FFMPEG_SHA256: 68ee646831adaae2495618346f3bba94ff207ff83bbd34d643e7004730d66269
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ffmpeg
+          curl -fsSL -o "$RUNNER_TEMP/$FFMPEG_ARCHIVE.tar.xz" "https://github.com/BtbN/FFmpeg-Builds/releases/download/${FFMPEG_RELEASE}/${FFMPEG_ARCHIVE}.tar.xz"
+          echo "${FFMPEG_SHA256}  $RUNNER_TEMP/$FFMPEG_ARCHIVE.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/$FFMPEG_ARCHIVE.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/$FFMPEG_ARCHIVE/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/$FFMPEG_ARCHIVE/bin/ffprobe" -version | head -n 1
           archive="qpdf-${QPDF_VERSION}-bin-linux-x86_64.zip"
           curl -fsSL -o "$RUNNER_TEMP/$archive" "https://github.com/qpdf/qpdf/releases/download/v${QPDF_VERSION}/${archive}"
           echo "${QPDF_SHA256}  $RUNNER_TEMP/$archive" | sha256sum -c -

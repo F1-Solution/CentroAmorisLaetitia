@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { ScrubUnreadableError, scrubFile, type ScrubTools } from '../src/modules/media/scrub.js';
-import { FFMPEG, QPDF, assertToolsInstalled, buildPdf } from './_support/syntheticFiles.js';
+import {
+  FFMPEG,
+  FFPROBE,
+  QPDF,
+  assertToolsInstalled,
+  buildPdf,
+} from './_support/syntheticFiles.js';
 
 /**
  * Cartella temporanea della pulizia che non si riesce a cancellare (L2): su Windows un `EBUSY`
@@ -30,6 +36,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 const TOOLS: ScrubTools = {
   qpdfPath: QPDF,
   ffmpegPath: FFMPEG,
+  ffprobePath: FFPROBE,
   pdfTimeoutMs: 30_000,
   videoTimeoutMs: 120_000,
 };

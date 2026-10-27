@@ -69,7 +69,18 @@ export interface PostListItem {
   readonly summaryTruncated: boolean;
   readonly featuredMediaId: string | null;
   readonly publishedAt: string | null;
+  /** La data già scritta nel «Formato data» del sito, se chi rende la conosce (DR-270). */
+  readonly dateText?: string | undefined;
 }
 
 /** Chiave l'identificativo del blocco `post_list`: più elenchi nella stessa pagina. */
 export type PostListsMap = Readonly<Record<string, readonly PostListItem[]>>;
+
+/** Un documento pubblico citato da un blocco `document`: solo ciò che serve al collegamento (DR-287). */
+export interface DocumentLinkData {
+  readonly slug: string;
+  readonly title: string;
+}
+
+/** Chiave l'identificativo del documento; ci sono solo i pubblici. */
+export type DocumentsMap = Readonly<Record<string, DocumentLinkData>>;

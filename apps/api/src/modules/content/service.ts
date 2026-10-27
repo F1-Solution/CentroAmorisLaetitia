@@ -2,6 +2,7 @@ import { databaseNow, schema, type Database } from '@amoris/db';
 import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 import { newContentPath, withPathLock } from './address.js';
+import { assertBlockReferencesValid } from './blockReferences.js';
 import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
 
 /**
@@ -55,6 +56,7 @@ export async function findById(db: Database, id: string) {
       ...summaryColumns,
       showTitle: schema.contents.showTitle,
       pageLayout: schema.contents.pageLayout,
+      gutterWidth: schema.contents.gutterWidth,
       isSticky: schema.contents.isSticky,
       excerpt: schema.contents.excerpt,
       blocks: schema.contents.blocks,
@@ -71,6 +73,7 @@ export async function findById(db: Database, id: string) {
 /** Il percorso discende dal genitore e si calcola sotto lo stesso blocco del cambio d'indirizzo. */
 export async function create(db: Database, input: CreateInput, authorId: string) {
   const target = { slug: input.slug, parentId: input.parentId ?? null };
+  if (input.blocks) await assertBlockReferencesValid(db, input.blocks, null);
   return withPathLock(db, async (tx) => {
     const [row] = await tx
       .insert(schema.contents)
@@ -97,6 +100,15 @@ export async function create(db: Database, input: CreateInput, authorId: string)
 export function assertTitleAllowed(next: string | undefined, current: string): void {
   if (next !== undefined && next.trim() === '' && current.trim() !== '')
     throw Object.assign(new Error('il titolo non può essere vuoto'), { statusCode: 400 });
+}
+
+/** In primo piano va solo una notizia: per WordPress `sticky_posts` vale per gli articoli (DR-278). */
+export function assertStickyAllowed(next: boolean | undefined, type: 'page' | 'post'): void {
+  if (next === true && type !== 'post')
+    throw Object.assign(new Error('Solo una notizia può essere messa in primo piano.'), {
+      statusCode: 400,
+      code: 'CONTENT_STICKY_POST_ONLY',
+    });
 }
 
 /** Un'immagine in evidenza è un media esistente, pubblico e `image/*`; altrimenti nulla si scrive (S3). */
@@ -146,7 +158,10 @@ export async function update(db: Database, id: string, rawInput: UpdateInput) {
   // Un estratto vuoto è `NULL`, e prima del confronto: uno vuoto invariato non cambia data né description (DR-180).
   const input: UpdateInput = rawInput.excerpt === '' ? { ...rawInput, excerpt: null } : rawInput;
   assertTitleAllowed(input.title, current.title);
+  assertStickyAllowed(input.isSticky, current.type);
   if (input.featuredMediaId) await assertFeaturedMediaValid(db, input.featuredMediaId);
+  if (input.blocks !== undefined)
+    await assertBlockReferencesValid(db, input.blocks, current.blocks as { blocks?: unknown });
 
   // DR-091: l'ora del database, la stessa con cui l'importer registra la fine di un'esecuzione.
   const changes: Record<string, unknown> = { updatedAt: databaseNow() };
@@ -154,6 +169,7 @@ export async function update(db: Database, id: string, rawInput: UpdateInput) {
   if (input.excerpt !== undefined) changes.excerpt = input.excerpt;
   if (input.showTitle !== undefined) changes.showTitle = input.showTitle;
   if (input.pageLayout !== undefined) changes.pageLayout = input.pageLayout;
+  if (input.gutterWidth !== undefined) changes.gutterWidth = input.gutterWidth;
   if (input.isSticky !== undefined) changes.isSticky = input.isSticky;
   if (input.featuredMediaId !== undefined) changes.featuredMediaId = input.featuredMediaId;
   if (input.blocks !== undefined) changes.blocks = input.blocks;
@@ -203,6 +219,10 @@ function changedFields(input: UpdateInput): SQL[] {
   add(
     input.pageLayout,
     sql`${c.pageLayout}::text is distinct from ${input.pageLayout ?? null}::text`,
+  );
+  add(
+    input.gutterWidth,
+    sql`${c.gutterWidth} is distinct from ${input.gutterWidth ?? null}::smallint`,
   );
   add(input.isSticky, sql`${c.isSticky} is distinct from ${input.isSticky ?? null}::boolean`);
   add(

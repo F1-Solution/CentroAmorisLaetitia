@@ -251,3 +251,162 @@ describe('archivio di categoria: estratto o inizio del testo (D139 = B, S10)', (
     expect(html).toContain('</p>Inizio senza</article>');
   });
 });
+
+describe('pagina: titolo e immagine in evidenza scelti dall’area (DR-278)', () => {
+  function pageWith(showTitle: boolean, featuredMediaId: string | null): string {
+    const data = {
+      content: {
+        id: '55555555-5555-4555-8555-555555555555',
+        type: 'page',
+        path: '/pagina-sintetica/',
+        slug: 'pagina-sintetica',
+        title: 'Pagina sintetica',
+        showTitle,
+        pageLayout: 'right_sidebar',
+        gutterWidth: null,
+        excerpt: null,
+        blocks: textOnly,
+        featuredMediaId,
+        publishedAt: '2026-01-02T10:00:00.000Z',
+        updatedAt: '2026-01-02T10:00:00.000Z',
+      },
+      seo: {},
+      terms: [],
+      media: featuredMediaId
+        ? {
+            [featuredMediaId]: {
+              id: featuredMediaId,
+              publicPath: '/media/evidenza-sintetica.png',
+              mimeType: 'image/png',
+              width: 800,
+              height: 600,
+              title: null,
+              altText: 'Evidenza sintetica',
+              caption: null,
+              variants: [],
+            },
+          }
+        : {},
+      sliders: {},
+      forms: {},
+      postLists: {},
+      documents: {},
+    } as unknown as PublicContent;
+    return renderToStaticMarkup(<ContentView data={data} />);
+  }
+
+  it('titolo acceso: l’h1 visibile del tema', () => {
+    expect(pageWith(true, null)).toContain(
+      '<h1 class="entry-title main_title">Pagina sintetica</h1>',
+    );
+  });
+
+  it('titolo spento: nessun h1 visibile, quello per i lettori di schermo', () => {
+    const html = pageWith(false, null);
+    expect(html).not.toContain('entry-title main_title');
+    expect(html).toContain('<h1 class="screen-reader-text">Pagina sintetica</h1>');
+  });
+
+  it('immagine in evidenza: la pagina non la mostra nel testo (`divi_page_thumbnails` spento)', () => {
+    const html = pageWith(true, '66666666-6666-4666-8666-666666666666');
+    expect(html).not.toContain('evidenza-sintetica.png');
+    expect(html).toBe(pageWith(true, null));
+  });
+});
+
+describe('notizia: «Mostra il titolo» come Divi `single.php` (DR-286)', () => {
+  function postWith(
+    showTitle: boolean,
+    blocks: BlockDocument,
+    pageLayout = 'right_sidebar',
+  ): string {
+    const data = {
+      content: {
+        id: '77777777-7777-4777-8777-777777777777',
+        type: 'post',
+        path: '/notizia-sintetica/',
+        slug: 'notizia-sintetica',
+        title: 'Notizia sintetica',
+        showTitle,
+        pageLayout,
+        gutterWidth: null,
+        excerpt: null,
+        blocks,
+        featuredMediaId: null,
+        publishedAt: '2026-01-02T10:00:00.000Z',
+        updatedAt: '2026-01-02T10:00:00.000Z',
+      },
+      seo: {},
+      terms: [],
+      media: {},
+      sliders: {},
+      forms: {},
+      postLists: {},
+      documents: {},
+    } as unknown as PublicContent;
+    return renderToStaticMarkup(<ContentView data={data} />);
+  }
+
+  it('titolo acceso: titolo e data, a sezioni o no', () => {
+    for (const html of [postWith(true, textOnly), postWith(true, diviSection)]) {
+      expect(html).toContain('<h1 class="entry-title">Notizia sintetica</h1>');
+      expect(html).toContain('class="post-meta"');
+    }
+  });
+
+  /** Il titolo per i soli lettori di schermo (giro 2, nello spirito di DR-040). */
+  const HIDDEN_H1 = '<h1 class="screen-reader-text">Notizia sintetica</h1>';
+  const h1Count = (html: string) => (html.match(/<h1[\s>]/g) ?? []).length;
+
+  it('notizia a sezioni con titolo spento: niente intestazione, un solo h1 per i lettori di schermo', () => {
+    for (const layout of ['right_sidebar', 'full_width']) {
+      const html = postWith(false, diviSection, layout);
+      expect(html).not.toContain('et_post_meta_wrapper');
+      expect(html).not.toContain('class="entry-title"');
+      expect(h1Count(html)).toBe(1);
+      expect(html).toContain(HIDDEN_H1);
+    }
+  });
+
+  it('notizia senza sezioni con titolo spento: resta la data, il titolo solo per i lettori di schermo', () => {
+    const html = postWith(false, textOnly);
+    expect(html).toContain('class="post-meta"');
+    expect(html).not.toContain('class="entry-title"');
+    expect(h1Count(html)).toBe(1);
+    expect(html).toContain(HIDDEN_H1);
+  });
+
+  it('il resto della notizia non cambia: l’intestazione diventa il solo h1 nascosto', () => {
+    for (const layout of ['right_sidebar', 'full_width']) {
+      const acceso = postWith(true, diviSection, layout);
+      const spento = postWith(false, diviSection, layout);
+      expect(spento).toBe(
+        acceso.replace(
+          /(<div class="container">)?<div class="et_post_meta_wrapper">.*?<\/p><\/div>(<\/div>)?/,
+          HIDDEN_H1,
+        ),
+      );
+    }
+  });
+
+  it('prova negativa: se il contenuto ha già un h1, nessun h1 in più', () => {
+    const conH1 = blockDocumentSchema.parse({
+      schema: 1,
+      blocks: [
+        {
+          type: 'html',
+          id: 'b_000000000009',
+          props: { html: '<h1>Titolo nel testo</h1>', reason: 'manual' },
+          children: [],
+        },
+      ],
+    });
+    const html = postWith(false, conH1);
+    expect(h1Count(html)).toBe(1);
+    expect(html).not.toContain('screen-reader-text');
+  });
+
+  it('titolo acceso: nessun h1 nascosto in più', () => {
+    expect(postWith(true, diviSection)).not.toContain('screen-reader-text');
+  });
+});

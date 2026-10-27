@@ -7,22 +7,28 @@ import { api } from '../../lib/api';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { ConfirmAccountDialog, RolesDialog } from './AccountDialogs';
-import { accountErrorMessage, italianDate, roleLabel } from './accountLabels';
+import {
+  accountErrorMessage,
+  italianDate,
+  passwordRefusalMessage,
+  roleLabel,
+} from './accountLabels';
 import { CreateAccountForm } from './CreateAccountForm';
+import { EditAccountDialog } from './EditAccountDialog';
 import { TemporaryPasswordPanel } from './TemporaryPasswordPanel';
-import type { Account, AccountRoleKey, CreateAccountBody } from './types';
+import type { Account, AccountRoleKey, CreateAccountBody, UpdateIdentityBody } from './types';
 import './Accounts.css';
 
-type Pending = { kind: 'deactivate' | 'reset' | 'roles'; account: Account };
+type Pending = { kind: 'deactivate' | 'reset' | 'roles' | 'identity'; account: Account };
 type Revealed = { personName: string; password: string };
 
 /**
- * «Persone e permessi»: elenco, creazione, ruoli, disattivazione e
- * reimpostazione della password. I comandi di scrittura non compaiono senza
+ * «Persone e permessi»: elenco, creazione, nome ed email (DR-282), ruoli,
+ * disattivazione e reimpostazione della password. I comandi di scrittura non compaiono senza
  * `users.manage`; l'API rifiuta comunque (DR-057).
  */
 export function AccountsScreen(): React.JSX.Element {
-  const { user } = useSession();
+  const { user, refresh } = useSession();
   const canManage = user?.permissions.includes('users.manage') ?? false;
 
   const [accounts, setAccounts] = useState<readonly Account[]>([]);
@@ -34,6 +40,8 @@ export function AccountsScreen(): React.JSX.Element {
   const [revealed, setRevealed] = useState<Revealed | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordRefusals, setPasswordRefusals] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -51,14 +59,19 @@ export function AccountsScreen(): React.JSX.Element {
     void load();
   }, [load]);
 
-  /** Esegue una scrittura: ferma gli invii doppi e porta l'errore in italiano. */
+  /** Esegue una scrittura: ferma gli invii doppi e porta l'errore in italiano; quello della password va sul suo campo. */
   async function run(task: () => Promise<void>): Promise<void> {
     setBusy(true);
     setActionError(null);
+    setPasswordError(null);
     try {
       await task();
     } catch (caught) {
-      setActionError(accountErrorMessage(caught));
+      const refusal = passwordRefusalMessage(caught);
+      if (refusal) {
+        setPasswordError(refusal);
+        setPasswordRefusals((count) => count + 1);
+      } else setActionError(accountErrorMessage(caught));
     } finally {
       setBusy(false);
     }
@@ -82,6 +95,23 @@ export function AccountsScreen(): React.JSX.Element {
       await load();
     });
 
+  /** Sul proprio account si rilegge la sessione: un indirizzo nuovo l'ha chiusa e l'area riporta all'accesso. */
+  const updateIdentity = (
+    account: Account,
+    body: UpdateIdentityBody,
+    currentPassword?: string,
+  ): Promise<void> =>
+    run(async () => {
+      await api(`/accounts/${encodeURIComponent(account.id)}`, {
+        method: 'PATCH',
+        body: currentPassword === undefined ? body : { ...body, currentPassword },
+      });
+      setPending(null);
+      if (account.id === user?.userId) await refresh();
+      // Con un indirizzo proprio nuovo la sessione è chiusa: rileggere l'elenco darebbe solo un 401.
+      if (account.id !== user?.userId || body.email === undefined) await load();
+    });
+
   const reset = (account: Account): Promise<void> =>
     run(async () => {
       const result = await api<{ temporaryPassword: string }>(
@@ -94,6 +124,7 @@ export function AccountsScreen(): React.JSX.Element {
 
   function openPending(next: Pending): void {
     setActionError(null);
+    setPasswordError(null);
     setPending(next);
   }
 
@@ -127,6 +158,13 @@ export function AccountsScreen(): React.JSX.Element {
             header: 'Azioni',
             render: (row: Account) => (
               <div className="amoris-accounts__row-actions">
+                <Button
+                  variant="tertiary"
+                  aria-label={`Modifica nome ed email di ${row.fullName}`}
+                  onClick={() => openPending({ kind: 'identity', account: row })}
+                >
+                  Modifica
+                </Button>
                 <Button
                   variant="tertiary"
                   aria-label={`Modifica i ruoli di ${row.fullName}`}
@@ -235,7 +273,7 @@ export function AccountsScreen(): React.JSX.Element {
         />
       ) : null}
 
-      {canManage && pending && pending.kind !== 'roles' ? (
+      {canManage && (pending?.kind === 'deactivate' || pending?.kind === 'reset') ? (
         <ConfirmAccountDialog
           kind={pending.kind}
           account={pending.account}
@@ -250,14 +288,35 @@ export function AccountsScreen(): React.JSX.Element {
         />
       ) : null}
 
+      {canManage && pending?.kind === 'identity' ? (
+        <EditAccountDialog
+          account={pending.account}
+          isSelf={pending.account.id === user?.userId}
+          busy={busy}
+          error={actionError}
+          passwordError={passwordError}
+          passwordRefusals={passwordRefusals}
+          onClose={() => setPending(null)}
+          onSave={(body, currentPassword) =>
+            void updateIdentity(pending.account, body, currentPassword)
+          }
+        />
+      ) : null}
+
       {canManage && pending?.kind === 'roles' ? (
         <RolesDialog
           account={pending.account}
+          isSelf={pending.account.id === user?.userId}
           busy={busy}
           error={actionError}
+          passwordError={passwordError}
+          passwordRefusals={passwordRefusals}
           onClose={() => setPending(null)}
-          onSave={(roleKeys: readonly AccountRoleKey[]) =>
-            void update(pending.account, { roleKeys })
+          onSave={(roleKeys: readonly AccountRoleKey[], currentPassword?: string) =>
+            void update(
+              pending.account,
+              currentPassword === undefined ? { roleKeys } : { roleKeys, currentPassword },
+            )
           }
         />
       ) : null}

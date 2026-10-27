@@ -1,12 +1,11 @@
 import type { MediaMap } from '@amoris/blocks';
+import { languageOf } from './wpDate';
 
 /**
  * Dati strutturati Schema.org come li serve All in One SEO nella sorgente (DR-170):
  * un solo `@graph` per pagina, stessi `@id`, indirizzi assoluti da SITE_URL (DR-188).
  * Esclusi `Person` e autore (DR-182); campi dell'organizzazione da impostazioni (DR-185).
  */
-
-const LINGUA = 'it-IT';
 
 export interface GraphImage {
   /** Percorso pubblico (`/media/…`) o indirizzo assoluto. */
@@ -24,6 +23,8 @@ export interface GraphSite {
   readonly address: string;
   readonly telephone: string;
   readonly sameAs: readonly string[];
+  /** «Lingua del sito» in BCP 47 (DR-270); senza, quella di oggi. */
+  readonly language?: string;
 }
 
 export interface Crumb {
@@ -59,6 +60,9 @@ export interface JsonLdGraph {
   readonly '@context': 'https://schema.org';
   readonly '@graph': readonly Node[];
 }
+
+/** La lingua dichiarata dei nodi: quella di oggi se il sito non ne indica una. */
+const languageOfSite = (site: GraphSite): string => site.language ?? 'it-IT';
 
 /** Toglie le chiavi vuote: un campo senza valore non si dichiara. */
 function compact(node: Node): Node {
@@ -104,7 +108,7 @@ function webSite(site: GraphSite): Node {
     '@id': `${site.url}/#website`,
     url: `${site.url}/`,
     name: site.name,
-    inLanguage: LINGUA,
+    inLanguage: languageOfSite(site),
     publisher: { '@id': `${site.url}/#organization` },
   };
 }
@@ -167,7 +171,7 @@ function webPage(site: GraphSite, page: PageBase & Dated): Node {
     url,
     name: page.name,
     description: page.description,
-    inLanguage: LINGUA,
+    inLanguage: languageOfSite(site),
     isPartOf: { '@id': `${site.url}/#website` },
     breadcrumb: { '@id': `${url}#breadcrumblist` },
     image: page.image ? imageObject(site, page.image, imageId) : null,
@@ -188,7 +192,7 @@ function blogPosting(site: GraphSite, page: PageBase & Dated & { category: Crumb
     image: page.image ? imageObject(site, page.image) : null,
     datePublished: page.datePublished,
     dateModified: page.dateModified,
-    inLanguage: LINGUA,
+    inLanguage: languageOfSite(site),
     mainEntityOfPage: { '@id': `${url}#webpage` },
     isPartOf: { '@id': `${url}#webpage` },
     articleSection: page.category?.name,
@@ -207,7 +211,7 @@ function collectionLike(
     '@id': `${base}#${fragment}`,
     url: base,
     name,
-    inLanguage: LINGUA,
+    inLanguage: languageOfSite(site),
     isPartOf: { '@id': `${site.url}/#website` },
     breadcrumb: { '@id': `${base}#breadcrumblist` },
   };
@@ -260,13 +264,23 @@ function pageNodes(site: GraphSite, page: GraphPage): Node[] {
           '@type': 'WebPage',
           '@id': `${url}#webpage`,
           url: url || undefined,
-          inLanguage: LINGUA,
+          inLanguage: languageOfSite(site),
           isPartOf: { '@id': `${site.url}/#website` },
           breadcrumb: { '@id': `${url}#breadcrumblist` },
         }),
       ];
     }
   }
+}
+
+/** La forma del grafo di un contenuto: il tipo scelto dall'area, altrimenti quello del tipo di contenuto (DR-278). */
+export function graphKindOf(
+  type: 'page' | 'post',
+  schemaType: string | null | undefined,
+): 'webpage' | 'post' {
+  if (schemaType === 'WebPage') return 'webpage';
+  if (schemaType === 'BlogPosting') return 'post';
+  return type === 'post' ? 'post' : 'webpage';
 }
 
 /** Il grafo di una pagina: i nodi propri, poi organizzazione e sito. */
@@ -307,6 +321,7 @@ export function siteFromSettings(
     logo: logoPath ? { path: logoPath, width: null, height: null, caption: null } : null,
     address: text(settings, 'contact.address'),
     telephone: text(settings, 'contact.phone'),
+    language: languageOf(settings),
     sameAs: Array.isArray(profiles)
       ? profiles.filter((p): p is string => typeof p === 'string' && p.trim() !== '')
       : [],

@@ -7,14 +7,18 @@ import { sessionOf } from '../../plugins/auth.js';
 import {
   contentIdParam,
   contentSeoBody,
+  contentSeoChangedLabels,
   contentSeoSchema,
   scopeParam,
   templateBody,
+  templateChangedLabels,
   templateSchema,
 } from './schemas.js';
 import {
+  assertSchemaTypeScope,
   contentExists,
   findContentSeo,
+  findTemplate,
   listTemplates,
   upsertContentSeo,
   upsertTemplate,
@@ -57,6 +61,12 @@ export async function seoRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      assertSchemaTypeScope(request.params.scope, request.body.schemaType);
+      const before = await findTemplate(app.db, request.params.scope);
+      request.auditTarget = {
+        entityId: request.params.scope,
+        detail: { fields: templateChangedLabels(before, request.body) },
+      };
       const row = await upsertTemplate(
         app.db,
         request.params.scope,
@@ -101,6 +111,11 @@ export async function seoRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       if (!(await contentExists(app.db, request.params.id))) return reply.callNotFound();
+      const before = await findContentSeo(app.db, request.params.id);
+      request.auditTarget = {
+        entityId: request.params.id,
+        detail: { fields: contentSeoChangedLabels(before, request.body) },
+      };
       const row = await upsertContentSeo(app.db, request.params.id, request.body);
       if (!row) throw new Error('sovrascrittura scritta ma non rileggibile');
       return reply.send(withDate(row));

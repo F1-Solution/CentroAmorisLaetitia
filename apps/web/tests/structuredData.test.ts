@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildGraph,
+  graphKindOf,
   imageFromMedia,
   serializeJsonLd,
   siteFromSettings,
@@ -423,6 +424,7 @@ describe('siteFromSettings', () => {
       address: 'Via Inventata 1',
       telephone: '',
       sameAs: ['https://social.example.invalid/a'],
+      language: 'it-IT',
     });
   });
 
@@ -434,6 +436,7 @@ describe('siteFromSettings', () => {
       address: '',
       telephone: '',
       sameAs: [],
+      language: 'it-IT',
     });
   });
 });
@@ -464,5 +467,48 @@ describe('imageFromMedia', () => {
   it('identificativo assente o sconosciuto: nessuna immagine', () => {
     expect(imageFromMedia(media, null)).toBeNull();
     expect(imageFromMedia(media, 'm9')).toBeNull();
+  });
+});
+
+describe('tipo di dati strutturati scelto dall’area (DR-278)', () => {
+  it('senza scelta: pagina WebPage, notizia BlogPosting, come oggi', () => {
+    expect(graphKindOf('page', undefined)).toBe('webpage');
+    expect(graphKindOf('page', null)).toBe('webpage');
+    expect(graphKindOf('post', undefined)).toBe('post');
+    expect(graphKindOf('post', null)).toBe('post');
+  });
+
+  it('la scelta vale per qualunque tipo di contenuto', () => {
+    expect(graphKindOf('page', 'WebPage')).toBe('webpage');
+    expect(graphKindOf('page', 'BlogPosting')).toBe('post');
+    expect(graphKindOf('post', 'WebPage')).toBe('webpage');
+    expect(graphKindOf('post', 'BlogPosting')).toBe('post');
+  });
+
+  it('prova negativa: un valore sconosciuto torna al predefinito del tipo', () => {
+    expect(graphKindOf('page', 'Product')).toBe('webpage');
+    expect(graphKindOf('post', 'Article')).toBe('post');
+  });
+
+  it('una notizia resa come WebPage: nessun BlogPosting, briciole con la categoria', () => {
+    const grafo = buildGraph(SITO, {
+      ...pagina,
+      path: '/notizia-sintetica/',
+      title: 'Notizia sintetica',
+      parent: { name: 'News', path: '/category/news/' },
+    });
+    expect(nodi(grafo, 'BlogPosting')).toHaveLength(0);
+    const elementi = nodo(grafo, 'BreadcrumbList').itemListElement as Nodo[];
+    expect(elementi.map((e) => e.name)).toEqual(['Home', 'News', 'Notizia sintetica']);
+  });
+
+  it('una pagina resa come BlogPosting: BlogPosting senza sezione, briciole Home → pagina', () => {
+    const grafo = buildGraph(SITO, { ...pagina, kind: 'post', category: null });
+    expect(nodo(grafo, 'BlogPosting')).toMatchObject({
+      '@id': `${BASE}/chi-siamo/#blogposting`,
+      headline: 'Chi siamo',
+    });
+    expect(nodo(grafo, 'BlogPosting')).not.toHaveProperty('articleSection');
+    expect(nodo(grafo, 'BreadcrumbList').itemListElement).toHaveLength(2);
   });
 });

@@ -812,3 +812,96 @@ describe('telefono internazionale — valore inviato (F1, 1E-W7)', () => {
     expect(corpo.values['5']).toBe('3331112222');
   });
 });
+
+describe('telefono internazionale — selettore in italiano (DR-277)', () => {
+  // La libreria scrive nomi dei paesi ed etichette in inglese se non riceve la
+  // traduzione: si passano la sua traduzione italiana (`intl-tel-input/locale/it`)
+  // e `countryNameLocale: 'it'`. La resa chiusa (bandiera, freccia, «+39») non cambia.
+  const form: FormData = {
+    id: uuid,
+    slug: 'telefono-italiano-sintetico',
+    title: 'Telefono',
+    confirmationMessage: 'Grazie.',
+    requiresPayment: false,
+    fields: [
+      {
+        id: '6',
+        type: 'phone',
+        label: 'Telefono',
+        required: false,
+        order: 0,
+        description: null,
+        options: { format: 'smart' },
+      },
+    ],
+    payment: null,
+  };
+  const block = {
+    type: 'form' as const,
+    id: testBlockId(),
+    props: {
+      formId: uuid,
+      origin: 'wpforms' as const,
+      showTitle: false,
+      showDescription: false,
+      classes: [],
+    },
+    children: [],
+  };
+
+  it('etichetta e nome del paese in italiano, con la stessa resa chiusa', async () => {
+    const { container } = render(<Form block={block} form={form} />);
+    await waitFor(() => expect(container.querySelector('.iti__selected-country')).not.toBeNull());
+    const scelto = container.querySelector('.iti__selected-country');
+    await waitFor(() =>
+      expect(scelto?.getAttribute('aria-label')).toBe(
+        'Cambia il paese del numero di telefono, selezionato Italia (+39)',
+      ),
+    );
+    expect(scelto?.getAttribute('title')).toBe('Italia');
+    expect(scelto?.querySelector('.iti__flag')?.className).toBe('iti__flag iti__it');
+    expect(scelto?.querySelector('.iti__selected-dial-code')?.textContent).toBe('+39');
+    const nomi = [...container.querySelectorAll('.iti__country-name')].map((n) => n.textContent);
+    expect(nomi).toContain('Germania (+49)');
+    expect(nomi).not.toContain('Germany (+49)');
+  });
+});
+
+describe('elenco Category Posts — data già scritta da chi rende (DR-270)', () => {
+  it('usa «dateText» se c’è, altrimenti la data di riserva', () => {
+    const block = {
+      type: 'post_list' as const,
+      id: testBlockId(),
+      props: {
+        termIds: [],
+        limit: null,
+        offset: 0,
+        showThumbnail: false,
+        showDate: true,
+        showExcerpt: false,
+        order: 'date_desc' as const,
+        classes: [],
+      },
+      children: [],
+    };
+    const item: PostListItem = {
+      id: 'p-1',
+      path: '/notizia-sintetica/',
+      title: 'Notizia sintetica',
+      excerpt: null,
+      summary: null,
+      summaryTruncated: false,
+      featuredMediaId: null,
+      publishedAt: '2022-10-07T10:00:00Z',
+    };
+    const data = (html: string) => /class="cat-post-date"> ([^<]*)</.exec(html)?.[1];
+    const conTesto = render(
+      <PostList block={block} posts={[{ ...item, dateText: '7 Ottobre 2022' }]} />,
+    );
+    expect(data(conTesto.container.innerHTML)).toBe('7 Ottobre 2022');
+    const senza = render(<PostList block={block} posts={[item]} />);
+    expect(data(senza.container.innerHTML)).toBe(
+      new Date(item.publishedAt ?? '').toLocaleDateString('it-IT'),
+    );
+  });
+});

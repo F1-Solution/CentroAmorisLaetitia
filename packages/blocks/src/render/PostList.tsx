@@ -58,7 +58,10 @@ export function PostList({ block, media, posts }: PostListComponentProps) {
                     <span className="cat-post-title">{post.title}</span>
                   )}
                   {showDate && post.publishedAt ? (
-                    <span className="cat-post-date"> {formattedDate(post.publishedAt)}</span>
+                    <span className="cat-post-date">
+                      {' '}
+                      {post.dateText ?? formattedDate(post.publishedAt)}
+                    </span>
                   ) : null}{' '}
                   {showExcerpt && post.summary ? (
                     <p className="cpwp-excerpt-text">

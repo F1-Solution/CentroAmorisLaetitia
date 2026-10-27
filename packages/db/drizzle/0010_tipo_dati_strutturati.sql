@@ -1,0 +1,1 @@
+ALTER TABLE "content_seo" ADD COLUMN "schema_type" text;

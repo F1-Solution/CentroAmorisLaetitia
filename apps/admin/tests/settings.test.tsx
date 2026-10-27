@@ -210,6 +210,53 @@ describe('impostazioni globali', () => {
   });
 });
 
+/*
+ * Giro 1 di DR-270: un'impostazione numerica rimasta `null` si mostra come campo di
+ * testo vuoto e la schermata manda il testo scritto. Il servizio accetta un intero
+ * scritto come testo e lo salva come numero (`settingsValues.test.ts`): ricaricata,
+ * l'impostazione torna un campo numerico. Prima il valore restava rifiutato per sempre.
+ */
+describe('impostazione numerica rimasta nulla', () => {
+  it('si compila dal campo vuoto e, salvata, torna numerica', async () => {
+    let valore: unknown = null;
+    apiMock.mockReset();
+    apiMock.mockImplementation((path: string, options?: { body?: { value?: unknown } }) => {
+      if (path === '/settings') {
+        return Promise.resolve([
+          {
+            key: 'content.posts_per_page',
+            value: valore,
+            label: 'Articoli per pagina',
+            description: null,
+            isSecret: false,
+            updatedAt: '2026-01-10T10:00:00.000Z',
+          },
+        ]);
+      }
+      // Il servizio salva «10» come 10.
+      valore = Number(options?.body?.value);
+      return Promise.resolve({});
+    });
+    const user = userEvent.setup();
+    renderSettings();
+    const campo = await screen.findByLabelText('Articoli per pagina');
+    expect(campo).toHaveValue('');
+    await user.type(campo, '10');
+    await user.click(screen.getByRole('button', { name: 'Salva «Articoli per pagina»' }));
+
+    await waitFor(() => {
+      expect(writes()).toContainEqual({
+        path: '/settings/content.posts_per_page',
+        options: { method: 'PUT', body: { value: '10' } },
+      });
+    });
+    expect(await screen.findByText('Salvata.')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText('Articoli per pagina')).toHaveAttribute('inputmode', 'numeric'),
+    );
+  });
+});
+
 describe('conversione del valore', () => {
   it('una stringa resta una stringa, anche se somiglia a JSON', () => {
     expect(valueFrom('qualcosa', '[1, 2]')).toBe('[1, 2]');

@@ -15,9 +15,11 @@
 import {
   ALLOWED_CHILDREN,
   ROOT_ALLOWED_TYPES,
+  docBlockPropsSchema,
   extractContentText,
   generateAdminBlockId,
   htmlPropsSchema,
+  imagePropsSchema,
   mediaTextPropsSchema,
   postListPropsSchema,
   richTextPropsSchema,
@@ -30,11 +32,12 @@ import {
 import type { DropZone, BlockNode as TreeNode } from '@amoris/ui';
 
 /**
- * I tipi che l'editor sa creare. Gli altri non sono dimenticati: `form` e `document`
- * richiedono l'identificatore di una riga che l'editor non sa ancora scegliere, `image`
- * un media, `video` una sorgente e `map` un indirizzo con le coordinate. Crearli con un
- * segnaposto significherebbe inventare un dato, e lo schema di `packages/blocks` li
- * rifiuterebbe comunque. `slider` nasce con il carosello scelto dall'area (DR-257).
+ * I tipi che l'editor sa creare. Gli altri non sono dimenticati: `form` richiede
+ * l'identificatore di una riga che l'editor non sa ancora scegliere, `video` una sorgente e
+ * `map` un indirizzo con le coordinate. Crearli con un segnaposto significherebbe inventare un
+ * dato, e lo schema di `packages/blocks` li rifiuterebbe comunque. `slider` nasce con il
+ * carosello scelto dall'area (DR-257), `image` con il media scelto e il suo testo alternativo
+ * (DR-283), `document` con un documento pubblico scelto (DR-287).
  */
 export const CREATABLE_TYPES: readonly BlockType[] = [
   'rich_text',
@@ -43,10 +46,12 @@ export const CREATABLE_TYPES: readonly BlockType[] = [
   'media_text',
   'post_list',
   'slider',
+  'image',
+  'document',
 ];
 
 export const UNCREATABLE_REASON =
-  'Immagine, video, mappa, modulo e documento rimandano a qualcosa che già esiste: si potranno inserire quando la schermata dei media e quella dei moduli esisteranno. I blocchi di questi tipi già presenti nella pagina si modificano normalmente.';
+  'Video, mappa e modulo non si inseriscono dall’editor: quelli già presenti nella pagina restano al loro posto e si possono spostare o eliminare.';
 
 /** Che cosa si può inserire dentro `parentId`. `null` è la radice del documento. */
 export function allowedChildTypes(
@@ -188,12 +193,19 @@ export function replaceBlock(doc: BlockDocument, next: ModelBlock): BlockDocumen
   );
 }
 
+export interface CreateBlockOptions {
+  readonly sliderId?: string;
+  readonly mediaId?: string;
+  readonly alt?: string;
+  readonly documentId?: string;
+}
+
 /**
  * Un blocco nuovo, con le proprietà predefinite del suo schema. Le proprietà
  * non si scrivono a mano qui: si chiedono allo schema di `packages/blocks`, che
  * è la sola autorità su che cosa sia un blocco valido (ADR-005 §3.1).
  */
-export function createBlock(type: BlockType, options: { sliderId?: string } = {}): ModelBlock {
+export function createBlock(type: BlockType, options: CreateBlockOptions = {}): ModelBlock {
   const id = generateAdminBlockId();
   switch (type) {
     case 'rich_text':
@@ -224,6 +236,24 @@ export function createBlock(type: BlockType, options: { sliderId?: string } = {}
         props: sliderPropsSchema.parse({ sliderId: options.sliderId }),
         children: [],
       };
+    case 'image':
+      if (!options.mediaId) throw new Error('Il blocco «immagine» si crea scegliendo un media.');
+      return {
+        type,
+        id,
+        props: imagePropsSchema.parse({ mediaId: options.mediaId, alt: options.alt ?? '' }),
+        children: [],
+      };
+    case 'document':
+      if (!options.documentId) {
+        throw new Error('Il blocco «documento» si crea scegliendo un documento pubblico.');
+      }
+      return {
+        type,
+        id,
+        props: docBlockPropsSchema.parse({ documentId: options.documentId }),
+        children: [],
+      };
     default:
       throw new Error(`Il blocco «${type}» non si crea da zero in questa fase.`);
   }
@@ -233,7 +263,7 @@ export function insertBlock(
   doc: BlockDocument,
   parentId: string | null,
   type: BlockType,
-  options: { sliderId?: string } = {},
+  options: CreateBlockOptions = {},
 ): { document: BlockDocument; insertedId: string } {
   const block = createBlock(type, options);
   const next = replaceSiblings(doc, parentId, (children) => [...children, block]);

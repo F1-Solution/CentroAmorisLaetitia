@@ -176,9 +176,7 @@ export function RichTextEditor({
         return;
       }
       case 'image':
-        // Non raggiungibile: il comando è spento finché la schermata dei media
-        // non esiste (`1D-W9`). Inserire un'immagine senza poterla scegliere
-        // significherebbe scrivere un indirizzo a mano.
+        // Non raggiungibile: il comando è spento, le immagini sono blocchi propri (DR-269).
         return;
     }
   }
@@ -209,8 +207,8 @@ export function RichTextEditor({
         </Alert>
       ) : null}
       <p className="amoris-rich-text__hint">
-        L’immagine si inserirà dalla schermata dei media, che non esiste ancora: il comando è spento
-        invece che nascosto.
+        Il comando «Immagine» è spento: le immagini non stanno dentro il testo. Per metterne una nel
+        contenuto si aggiunge un blocco «Immagine» con «Aggiungi blocco».
       </p>
 
       {linkOpen ? (

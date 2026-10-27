@@ -54,6 +54,8 @@ export interface Seo {
   readonly ogDescription: string | null;
   readonly ogType: string;
   readonly ogImagePath: string | null;
+  /** Tipo dei dati strutturati scelto dall'area (DR-278); assente da un'API che non lo conosce. */
+  readonly schemaType?: string;
 }
 
 export interface Term {
@@ -163,9 +165,11 @@ export const getRedirect = (path: string) =>
   read<{ targetPath: string; statusCode: number }>(`/public/redirect?path=${q(path)}`);
 
 export const getTerm = (path: string) =>
-  read<{ term: Term & { description: string | null }; seo: { title: string; robots: string } }>(
-    `/public/terms?path=${q(path)}`,
-  );
+  read<{
+    term: Term & { description: string | null };
+    /** `description` manca da un'API precedente a DR-280. */
+    seo: { title: string; description?: string | null; robots: string };
+  }>(`/public/terms?path=${q(path)}`);
 
 export const getPosts = (termIds: readonly string[], page: number, perPage: number) =>
   read<PostPage>(`/public/posts?termIds=${termIds.join(',')}&page=${page}&perPage=${perPage}`);

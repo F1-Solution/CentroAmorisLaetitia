@@ -37,13 +37,26 @@ export const createAccountBodySchema = z.strictObject({
   roleKeys: roleKeysSchema,
 });
 
+/** Password attuale, richiesta solo sul proprio account (DR-288); vuota vale assente. */
+const currentPasswordSchema = z.string().max(1024).optional();
+
 export const updateAccountBodySchema = z
   .strictObject({
     fullName: z.string().trim().min(1).max(200).optional(),
+    email: emailSchema.optional(),
     roleKeys: roleKeysSchema.optional(),
     isActive: z.boolean().optional(),
+    currentPassword: currentPasswordSchema,
   })
-  .refine((body) => Object.keys(body).length > 0, 'nessuna modifica richiesta');
+  .refine(
+    (body) => Object.keys(body).some((key) => key !== 'currentPassword'),
+    'nessuna modifica richiesta',
+  );
+
+/** Corpo facoltativo della reimpostazione: la password attuale serve solo per la propria (DR-288). */
+export const passwordResetBodySchema = z
+  .strictObject({ currentPassword: currentPasswordSchema })
+  .nullish();
 
 /** L'unica risposta, con quella di reimpostazione, che porta una password (DR-228). */
 export const createAccountResponseSchema = z.object({
@@ -62,4 +75,5 @@ export type CreateAccountBody = z.infer<typeof createAccountBodySchema>;
 export type UpdateAccountBody = z.infer<typeof updateAccountBodySchema>;
 export type CreateAccountResponse = z.infer<typeof createAccountResponseSchema>;
 export type UpdateAccountResponse = z.infer<typeof updateAccountResponseSchema>;
+export type PasswordResetBody = z.infer<typeof passwordResetBodySchema>;
 export type PasswordResetResponse = z.infer<typeof passwordResetResponseSchema>;

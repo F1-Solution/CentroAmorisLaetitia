@@ -9,3 +9,9 @@
   margin-top: var(--amoris-space-3);
   color: var(--amoris-text-secondary);
 }
+
+.amoris-categories__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}

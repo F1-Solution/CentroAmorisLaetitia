@@ -13,6 +13,7 @@
 | Data | Che cosa è cambiato |
 |---|---|
 | 2026-09-14 | Prima stesura, approvata in blocco con DR-038. |
+| 2026-10-27 | **Nome ed email di un account modificabili, revisione dichiarata da DR-282** (wave `1G-W7`). DR-282 approva che da «Persone e permessi» chi ha `users.manage` cambi nome ed email; l'indirizzo resta unico senza distinzione di maiuscole e cambiarlo **chiude tutte le sessioni** della persona (controllo 6). La propria email si può cambiare e si chiude anche la sessione in uso. **DR-288 (D184 = C), decisa dall'utente:** sul **proprio** account ogni modifica — nome, email, ruoli, stato — e la reimpostazione della propria password chiedono la **password attuale**; assente 400 `CURRENT_PASSWORD_REQUIRED`, errata 403 `INVALID_CREDENTIALS` con lo stesso conteggio dei tentativi e lo stesso registro del fallimento di `/auth/password` (controlli 8 e 10), nessuna scrittura in caso di rifiuto; per gli account altrui nulla cambia. Il registro porta i nomi dei campi cambiati, mai i valori né la password. I 12 controlli del §3.1 restano invariati nella sostanza; controllo 8 e §5 aggiornati. Righe rimisurate: **nucleo 469** su 500 invariato, **totale 1407** (1335 con la sola DR-282), deroga di DR-066 invariata per il totale. |
 | 2026-10-20 | **Gestione minima degli account, revisione dichiarata da DR-224** (wave `1G-W1`). L'area Impostazioni ha «Persone e permessi» (DR-219): elenco, creazione, disattivazione, riattivazione, ruoli, reimpostazione della password. Nuovo ruolo `amministrazione` con i permessi `users.manage`, `audit.read` e `site.settings.write` (DR-220, DR-227). La password temporanea è generata dal sistema, mostrata una sola volta, e impone il cambio al primo accesso (DR-228). Il controllo 11 esclude ancora il recupero in autonomia: la reimpostazione da parte dell'amministrazione **è** la reimpostazione manuale che ammette. I 12 controlli del §3.1 restano invariati; §3.2 e §5 aggiornati. Righe rimisurate: **nucleo 469** su 500, **totale 1298**, deroga di DR-066 invariata per il totale. |
 | 2026-09-21 | **La soglia del §6 contromisura 3 passa da 300 a 500 righe**, decisione **DR-070**, che supera DR-066 sul punto della soglia e non sulla deroga. Con la soglia nuova il **nucleo la rispetta** (437) e il **totale la supera ancora** (859): la deroga di DR-066 resta in vigore per la lettura del totale. La regola di conteggio non cambia. |
 | 2026-09-20 | **Due correzioni dichiarate, entrambe da decisioni registrate.** §6 contromisura 3: la soglia delle 300 righe è stata misurata e superata, e **DR-066** la risolve con una **deroga motivata** invece che con l'adozione di Better Auth. §3.2: la scelta fra «un ruolo attivo per volta» e «unione dei permessi», che questa ADR dichiarava di non decidere, è stata decisa da DR-050 e attuata per intero da **DR-067**. Nessuna delle due tocca i 12 controlli del §3.1, che restano invariati. |
@@ -98,7 +99,7 @@ l'autenticazione.
 | 5 | Rotazione | nuovo token a ogni accesso e a ogni cambio di password |
 | 6 | Revoca | invalidazione immediata di una sessione o di tutte le sessioni di una persona |
 | 7 | CSRF | token a doppio invio su ogni richiesta che modifica dati; il solo `SameSite` non basta |
-| 8 | Limitazione dei tentativi | per indirizzo IP **e** per account, con ritardo progressivo |
+| 8 | Limitazione dei tentativi | per indirizzo IP **e** per account, con ritardo progressivo; un solo conteggio per ogni verifica della password attuale — cambio password e modifiche al proprio account (DR-288). **Rischio residuo:** il conteggio si legge e poi si scrive senza serializzazione, quindi richieste parallele possono superare insieme il tetto; è preesistente ed è contenuto dal limite di 30 scritture al minuto per indirizzo. Mitigazione futura: un blocco per account (`pg_advisory_xact_lock` sul digest) attorno a «valuta → verifica → registra» |
 | 9 | Enumerazione degli account | messaggio di errore identico per utente inesistente e password errata; tempo di risposta uniforme |
 | 10 | Audit | accesso riuscito, accesso fallito, disconnessione, cambio password, revoca: tutti registrati |
 | 11 | Recupero password | **fuori perimetro in Fase 1.** Con due account, la reimpostazione è manuale. Un canale di recupero è superficie d'attacco che non serve ancora |
@@ -181,6 +182,26 @@ gestionale, ed è la ragione del riesame del §3.3.
 > ruolo tolto e reimpostazione chiudono subito le sessioni della persona. Il
 > primo account con `amministrazione` di un database nuovo si crea dopo la
 > migrazione `0008`, con la procedura di `docs/handoff/HO-030-migrazione-0008-1G-W1.md`.
+
+> **Aggiornata il 2026-10-27 — DR-282.** Anche nome ed email si cambiano da
+> «Persone e permessi», e **cambiare l'email chiude subito tutte le sessioni**
+> della persona, come la reimpostazione. Condizione vincolante: quando arriveranno
+> il recupero della password via email o gli inviti, cambiare l'email richiederà
+> di **autenticarsi di nuovo** e di **avvisare il vecchio indirizzo**, perché
+> l'indirizzo diventerà un canale di accesso e non più solo un identificativo.
+>
+> **Aggiornata il 2026-10-27 — DR-288.** Sul **proprio** account ogni modifica
+> da «Persone e permessi» — nome, email, ruoli, stato — e la reimpostazione
+> della propria password chiedono la **password attuale**, verificata con lo
+> stesso conteggio dei tentativi e lo stesso registro del fallimento di
+> `/auth/password`. Una sessione rubata non basta quindi a cambiare indirizzo,
+> ruoli o password della persona. Gli account altrui restano governati dal solo
+> permesso `users.manage`. `/auth/context`, `/auth/logout` e
+> `/auth/sessions/revoke-all` agiscono sulla sessione, non sull'account, e non
+> la chiedono. **Rischio residuo:** DR-288 protegge solo l'account della
+> sessione; con una sessione rubata di un'amministrazione si possono ancora
+> creare account, anche di amministrazione, e cambiare l'email o reimpostare la
+> password di altri.
 
 ## 6. Rischio dichiarato
 

@@ -92,7 +92,8 @@ describe('elenco chiuso delle azioni', () => {
         declared.add(match[1] ?? '');
       }
     }
-    expect(declared.size).toBe(30);
+    // DR-280: più `term.seo.update`; DR-281: più `document.create` e `document.delete`.
+    expect(declared.size).toBe(33);
     const runtime = ['account.deactivate', 'account.reactivate', 'account.roles'];
     expect([...CHANGE_ACTIONS].sort()).toEqual([...declared, ...runtime].sort());
   });

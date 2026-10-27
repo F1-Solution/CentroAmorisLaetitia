@@ -7,7 +7,8 @@
 import { z } from 'zod';
 import { classesField } from '../common';
 
-const latLngPattern = /^-?\d+(\.\d+)?$/;
+/** Coordinata come stringa decimale col punto: lo stesso controllo serve all'editor (DR-279). */
+export const latLngPattern = /^-?\d+(\.\d+)?$/;
 
 const mapPinSchema = z
   .object({

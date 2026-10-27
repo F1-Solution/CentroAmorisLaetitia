@@ -3,7 +3,7 @@ import { blockClassName } from './class-name';
 import { spacingVariables } from './spacing';
 import { BlockRenderer } from './BlockRenderer';
 import type { MediaMap } from './media';
-import type { SlidersMap, FormsMap, PostListsMap } from './data-maps';
+import type { SlidersMap, FormsMap, PostListsMap, DocumentsMap } from './data-maps';
 
 export interface SectionComponentProps {
   readonly block: SectionBlock;
@@ -11,10 +11,20 @@ export interface SectionComponentProps {
   readonly sliders?: SlidersMap | undefined;
   readonly forms?: FormsMap | undefined;
   readonly postLists?: PostListsMap | undefined;
+  readonly documents?: DocumentsMap | undefined;
+  readonly preview?: boolean | undefined;
 }
 
 /** Resa di `section` (`BLOCK-MODEL.md` §6.2). Condivisa da sito e anteprima (ADR-006 §3.3). */
-export function Section({ block, media, sliders, forms, postLists }: SectionComponentProps) {
+export function Section({
+  block,
+  media,
+  sliders,
+  forms,
+  postLists,
+  documents,
+  preview,
+}: SectionComponentProps) {
   return (
     <section
       className={blockClassName('section', block.props.classes)}
@@ -29,6 +39,8 @@ export function Section({ block, media, sliders, forms, postLists }: SectionComp
           sliders={sliders}
           forms={forms}
           postLists={postLists}
+          documents={documents}
+          preview={preview}
         />
       ))}
     </section>

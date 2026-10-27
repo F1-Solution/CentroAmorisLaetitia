@@ -12,7 +12,10 @@ import {
 import type { BlockNode as ModelBlock } from '@amoris/blocks';
 import Link from 'next/link';
 import { useSliders } from '../sliders/useSliders';
+import { DocumentBlockInspector } from './DocumentBlockInspector';
+import { MapInspector } from './MapInspector';
 import { RichTextEditor } from './RichTextEditor';
+import { VideoInspector } from './VideoInspector';
 import './BlockInspector.css';
 
 export interface BlockInspectorProps {
@@ -87,7 +90,7 @@ function SliderInspector({
  * Il perimetro è quello di ADR-006 §3.2: **testo e immagini dentro i blocchi
  * esistenti**, non la modifica fine degli stili. Dove la modifica richiede di
  * scegliere una riga che l'area amministrativa non sa ancora elencare — un
- * media, un modulo, un documento — il pannello lo **dice** invece di mostrare
+ * modulo — il pannello lo **dice** invece di mostrare
  * un campo che scriverebbe un identificatore a mano.
  */
 export function BlockInspector({
@@ -165,9 +168,9 @@ export function BlockInspector({
               })
             }
           />
-          <Alert variant="info" title="Il file dell’immagine si cambia dalla schermata dei media">
-            Qui si modifica ciò che accompagna l’immagine. Sostituire il file è la schermata dei
-            media, che non esiste ancora.
+          <Alert variant="info" title="Il file dell’immagine si cambia da «Media»">
+            Qui si modifica ciò che accompagna l’immagine; il file si sostituisce da Corredo ›
+            Media, con «Sostituisci il file».
           </Alert>
         </div>
       );
@@ -215,12 +218,31 @@ export function BlockInspector({
         />
       );
 
+    // Configurabili se già presenti, non inseribili (DR-279); `key` azzera i campi a ogni blocco.
+    case 'video':
+      return (
+        <VideoInspector key={block.id} block={block} onChange={onChange} disabled={disabled} />
+      );
+
+    case 'map':
+      return <MapInspector key={block.id} block={block} onChange={onChange} disabled={disabled} />;
+
+    case 'document':
+      return (
+        <DocumentBlockInspector
+          key={block.id}
+          block={block}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+
     default:
       return (
         <div className="amoris-inspector">
           <Alert variant="info" title="Questo blocco non si modifica qui">
-            Un blocco di tipo «{block.type}» rimanda a qualcosa che vive altrove — un modulo, un
-            documento, una mappa. In questa fase si può spostarlo o eliminarlo, non riconfigurarlo.
+            Un blocco di tipo «{block.type}» rimanda a qualcosa che vive altrove, come un modulo. In
+            questa fase si può spostarlo o eliminarlo, non riconfigurarlo.
           </Alert>
         </div>
       );

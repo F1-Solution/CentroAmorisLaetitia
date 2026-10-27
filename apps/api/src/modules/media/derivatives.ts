@@ -18,6 +18,7 @@ export interface PlannedFile {
 
 export interface Logger {
   error(context: object, message: string): void;
+  warn?(context: object, message: string): void;
 }
 
 export const publicPathOf = (storageKey: string): string => `/media/${storageKey}`;

@@ -6,10 +6,12 @@ import {
   CheckboxField,
   FieldGroup,
   MediaPicker,
+  SelectField,
   SeoPanel,
   TextField,
   type MediaPickerItem,
 } from '@amoris/ui';
+import { SEO_SCHEMA_TYPE_LABELS, SEO_SCHEMA_TYPES } from '@amoris/contracts/seoSchemaTypes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 
@@ -33,6 +35,8 @@ interface ContentSeo {
   readonly ogImageId: string | null;
   readonly robotsNoindex: boolean;
   readonly robotsNofollow: boolean;
+  /** Assente da un'API che non lo conosce ancora. */
+  readonly schemaType?: string | null;
   readonly updatedAt: string;
 }
 
@@ -56,7 +60,14 @@ const EMPTY = {
   ogImageId: null as string | null,
   robotsNoindex: false,
   robotsNofollow: false,
+  schemaType: '',
 };
+
+/** Vuoto vale il modello SEO; gli altri sono i tipi che il sito sa produrre (DR-278). */
+const SCHEMA_TYPE_OPTIONS = [
+  { value: '', label: 'Come il modello SEO' },
+  ...SEO_SCHEMA_TYPES.map((value) => ({ value, label: SEO_SCHEMA_TYPE_LABELS[value] })),
+];
 
 type SeoDraft = typeof EMPTY;
 
@@ -117,6 +128,7 @@ export function ContentSeoPanel({
         ogImageId: row.ogImageId,
         robotsNoindex: row.robotsNoindex,
         robotsNofollow: row.robotsNofollow,
+        schemaType: row.schemaType ?? '',
       };
       setDraft((current) => mergeUntouched(current, loaded, touched.current));
       setExists(true);
@@ -183,6 +195,7 @@ export function ContentSeoPanel({
           ogImageId: draft.ogImageId,
           robotsNoindex: draft.robotsNoindex,
           robotsNofollow: draft.robotsNofollow,
+          schemaType: draft.schemaType || null,
         },
       });
       setExists(true);
@@ -253,6 +266,21 @@ export function ContentSeoPanel({
           disabled={disabled || busy}
           helpText="Solo se questa pagina ripete il contenuto di un'altra. Di norma resta vuoto."
           onChange={(event) => edit({ canonicalUrl: event.target.value })}
+        />
+      </FieldGroup>
+
+      <FieldGroup
+        title="Dati strutturati"
+        description="Il tipo di pagina che il sito dichiara ai motori di ricerca."
+        disabled={disabled || busy}
+      >
+        <SelectField
+          label="Tipo di dati strutturati"
+          options={SCHEMA_TYPE_OPTIONS}
+          value={draft.schemaType}
+          disabled={disabled || busy}
+          helpText="Il modello SEO dà «Pagina web» alle pagine e «Articolo di blog» alle notizie, come il sito di partenza."
+          onChange={(event) => edit({ schemaType: event.target.value })}
         />
       </FieldGroup>
 

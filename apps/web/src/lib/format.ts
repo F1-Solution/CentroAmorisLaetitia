@@ -1,20 +1,4 @@
-/** Mesi abbreviati come li scrive il tema in italiano. */
-const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-
-const MESI_LUNGHI = [
-  'Gennaio',
-  'Febbraio',
-  'Marzo',
-  'Aprile',
-  'Maggio',
-  'Giugno',
-  'Luglio',
-  'Agosto',
-  'Settembre',
-  'Ottobre',
-  'Novembre',
-  'Dicembre',
-];
+import { DEFAULT_SITE_DATES, formatWpDate, type SiteDates } from './wpDate';
 
 const TRUNCATE_AMOUNT = 270;
 
@@ -66,40 +50,20 @@ export function archiveSummary(text: string): string {
   return kept === '' ? '' : `${decodeEntities(kept)}...`;
 }
 
+/** `divi_date_format` della sorgente: opzione del tema che l'area non espone (DR-270). */
+export const DIVI_DATE_FORMAT = 'j M Y';
+
 /**
- * La data nella riga dei metadati degli articoli, come la scrive il tema:
- * giorno, mese abbreviato con l'iniziale maiuscola, anno («1 Dic 2017»). È una
- * regola di presentazione del tema, non un contenuto.
+ * La data nella riga dei metadati degli articoli, come la scrive il tema
+ * («1 Dic 2017»): formato del tema, lingua e fuso del sito.
  */
-export function postDate(iso: string | null): string {
-  if (!iso) return '';
-  const parts = new Intl.DateTimeFormat('it-IT', {
-    timeZone: 'Europe/Rome',
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
-  // `Number` toglie lo zero che alcune versioni di Intl mettono davanti al giorno.
-  return `${Number(value('day'))} ${MESI[Number(value('month')) - 1] ?? ''} ${value('year')}`;
+export function postDate(iso: string | null, dates: SiteDates = DEFAULT_SITE_DATES): string {
+  return iso ? formatWpDate(iso, DIVI_DATE_FORMAT, dates) : '';
 }
 
-function romeParts(iso: string): { day: number; month: number; year: string } {
-  const parts = new Intl.DateTimeFormat('it-IT', {
-    timeZone: 'Europe/Rome',
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  }).formatToParts(new Date(iso));
-  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
-  return { day: Number(value('day')), month: Number(value('month')), year: value('year') };
-}
-
-/** La data della scheda del pacchetto, come `date_format` della sorgente («5 Aprile 2022», D75). */
-export function longDate(iso: string | null): string {
-  if (!iso) return '';
-  const { day, month, year } = romeParts(iso);
-  return `${day} ${MESI_LUNGHI[month - 1] ?? ''} ${year}`;
+/** Una data in «Formato data» del sito, come `get_the_date()` («5 Aprile 2022», D75). */
+export function longDate(iso: string | null, dates: SiteDates = DEFAULT_SITE_DATES): string {
+  return iso ? formatWpDate(iso, dates.dateFormat, dates) : '';
 }
 
 /** La dimensione del file come la scrive Download Manager: base 1024, due decimali col punto (D75). */

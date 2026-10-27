@@ -45,10 +45,13 @@ import { DraggableTreeRow, TreeDragArea } from '../dnd/TreeDragArea';
 import { BlockInspector } from './BlockInspector';
 import { ContentAddressPanel } from './ContentAddressPanel';
 import { ContentDeleteAction } from './ContentDeleteAction';
+import { ContentDisplayPanel } from './ContentDisplayPanel';
 import { ContentLayoutPanel } from './ContentLayoutPanel';
 import { ContentListingPanel } from './ContentListingPanel';
 import { ContentSeoPanel } from './ContentSeoPanel';
 import { SliderInsertDialog } from '../sliders/SliderInsertDialog';
+import { ImageInsertPicker } from './ImageInsertPicker';
+import { DocumentInsertDialog } from '../documents/DocumentInsertDialog';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
 
@@ -92,6 +95,12 @@ const STATUS_LABEL: Record<ContentDetail['status'], string> = {
   draft: 'bozza',
   archived: 'ritirato',
 };
+
+/** Un documento che comincia con una sezione è costruito con il builder di Divi, come vede il sito. */
+function startsWithSection(blocks: unknown): boolean {
+  const first = (blocks as { blocks?: readonly { type?: unknown }[] } | null)?.blocks?.[0];
+  return first?.type === 'section';
+}
 
 function timeOf(iso: string): string {
   return new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
@@ -140,6 +149,11 @@ export function ContentEditor({
   const [inserterSearch, setInserterSearch] = useState('');
   // Il passo «quale carosello?»: tiene il contenitore scelto mentre si sceglie.
   const [sliderStepParent, setSliderStepParent] = useState<string | null | undefined>(undefined);
+  // Il passo «quale immagine?»: tiene il contenitore scelto mentre si sceglie.
+  const [imageStepParent, setImageStepParent] = useState<string | null | undefined>(undefined);
+  const [documentStepParent, setDocumentStepParent] = useState<string | null | undefined>(
+    undefined,
+  );
   const [viewport, setViewport] = useState<PreviewViewport>('desktop');
   const [pending, setPending] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -391,6 +405,18 @@ export function ContentEditor({
       setInserterSearch('');
       return;
     }
+    if (type === 'image') {
+      setImageStepParent(inserterParent);
+      setInserterParent(undefined);
+      setInserterSearch('');
+      return;
+    }
+    if (type === 'document') {
+      setDocumentStepParent(inserterParent);
+      setInserterParent(undefined);
+      setInserterSearch('');
+      return;
+    }
     const { document, insertedId } = insertBlock(state.document, inserterParent, type);
     mutate({ ...state, document });
     setSelectedId(insertedId);
@@ -406,6 +432,27 @@ export function ContentEditor({
     mutate({ ...state, document });
     setSelectedId(insertedId);
     setSliderStepParent(undefined);
+  }
+
+  function onInsertImage(mediaId: string, alt: string): void {
+    if (!state || imageStepParent === undefined) return;
+    const { document, insertedId } = insertBlock(state.document, imageStepParent, 'image', {
+      mediaId,
+      alt,
+    });
+    mutate({ ...state, document });
+    setSelectedId(insertedId);
+    setImageStepParent(undefined);
+  }
+
+  function onInsertDocument(documentId: string): void {
+    if (!state || documentStepParent === undefined) return;
+    const { document, insertedId } = insertBlock(state.document, documentStepParent, 'document', {
+      documentId,
+    });
+    mutate({ ...state, document });
+    setSelectedId(insertedId);
+    setDocumentStepParent(undefined);
   }
 
   function onBlockChange(next: ModelBlock): void {
@@ -515,6 +562,9 @@ export function ContentEditor({
             { key: 'seo', label: 'SEO' },
             { key: 'indirizzo', label: 'Indirizzo' },
             ...(content?.type === 'post' ? [{ key: 'elenchi', label: 'Elenchi e archivi' }] : []),
+            ...(content?.type === 'page'
+              ? [{ key: 'elenchi', label: 'Immagine in evidenza' }]
+              : []),
           ]}
           activeKey={tab}
           onChange={setTab}
@@ -540,9 +590,32 @@ export function ContentEditor({
               }}
             />
           ) : null}
-          {tab === 'elenchi' && content?.type === 'post' ? (
+          {tab === 'pagina' && content ? (
+            <ContentDisplayPanel
+              contentId={contentId}
+              type={content.type}
+              startsWithSection={startsWithSection(content.blocks)}
+              initial={{
+                showTitle: content.showTitle,
+                gutterWidth: content.gutterWidth ?? null,
+                isSticky: content.isSticky ?? false,
+              }}
+              disabled={readOnly}
+              onSaved={(values, updatedAt) => {
+                setContent((current) =>
+                  current
+                    ? { ...current, ...values, ...(updatedAt !== undefined ? { updatedAt } : {}) }
+                    : current,
+                );
+                if (updatedAt !== undefined && draftSavedAt !== null) setPending(true);
+                void refreshLastChange();
+              }}
+            />
+          ) : null}
+          {tab === 'elenchi' && content ? (
             <ContentListingPanel
               contentId={contentId}
+              type={content.type}
               featuredMedia={content.featuredMedia ?? null}
               termIds={content.termIds ?? []}
               disabled={readOnly}
@@ -698,6 +771,24 @@ export function ContentEditor({
         onClose={() => setSliderStepParent(undefined)}
         onInsert={onInsertSlider}
       />
+
+      {/* Montato solo mentre è aperto: scelta, testo alternativo e ricerca non passano all'inserimento dopo. */}
+      {imageStepParent !== undefined ? (
+        <ImageInsertPicker
+          open
+          onClose={() => setImageStepParent(undefined)}
+          onInsert={onInsertImage}
+        />
+      ) : null}
+
+      {/* Montato solo mentre è aperto: la scelta non passa all'inserimento dopo. */}
+      {documentStepParent !== undefined ? (
+        <DocumentInsertDialog
+          open
+          onClose={() => setDocumentStepParent(undefined)}
+          onInsert={onInsertDocument}
+        />
+      ) : null}
 
       <SaveBar
         statusText={statusText}

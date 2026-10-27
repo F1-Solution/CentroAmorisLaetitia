@@ -10,6 +10,7 @@ import {
   createHarness,
   fakeObjectStore,
   signIn,
+  TEST_PASSWORD,
   type Harness,
   type Signed,
 } from './_support/harness.js';
@@ -626,7 +627,8 @@ describe('caso 1: non si resta senza amministrazione', () => {
     try {
       await raw.begin(async (tx) => {
         await tx`select pg_advisory_xact_lock(hashtext('accounts.administration'))`;
-        pending = patch(h, a, adminId, { isActive: false });
+        // La propria disattivazione chiede la password attuale (DR-288).
+        pending = patch(h, a, adminId, { isActive: false, currentPassword: TEST_PASSWORD });
         await waitForBlockedLock(h);
         await tx`update users set is_active = false where id = ${bothId}`;
       });
@@ -644,11 +646,17 @@ describe('caso 1: non si resta senza amministrazione', () => {
     const survivor = adminRow.isActive ? adminRow : bothRow;
     const signed = await signIn(h, { email: survivor.email, area: 'impostazioni' });
 
-    const togli = await patch(h, signed, survivor.id, { roleKeys: ['editor'] });
+    const togli = await patch(h, signed, survivor.id, {
+      roleKeys: ['editor'],
+      currentPassword: TEST_PASSWORD,
+    });
     expect(togli.statusCode).toBe(409);
     expect(togli.json().error.message).toMatch(/amministrazione/i);
 
-    const disattiva = await patch(h, signed, survivor.id, { isActive: false });
+    const disattiva = await patch(h, signed, survivor.id, {
+      isActive: false,
+      currentPassword: TEST_PASSWORD,
+    });
     expect(disattiva.statusCode).toBe(409);
     expect(disattiva.json().error.message).toMatch(/amministrazione/i);
 

@@ -102,6 +102,7 @@ export function testConfig(databaseUrl: string, overrides: Record<string, string
     // I programmi della pulizia dei metadati: in locale `qpdf` può stare fuori dal PATH.
     ...(process.env.QPDF_PATH ? { QPDF_PATH: process.env.QPDF_PATH } : {}),
     ...(process.env.FFMPEG_PATH ? { FFMPEG_PATH: process.env.FFMPEG_PATH } : {}),
+    ...(process.env.FFPROBE_PATH ? { FFPROBE_PATH: process.env.FFPROBE_PATH } : {}),
     ...overrides,
   });
 }

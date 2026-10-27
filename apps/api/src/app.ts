@@ -5,7 +5,11 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
-import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
+import Fastify, {
+  type FastifyError,
+  type FastifyInstance,
+  type FastifyLoggerOptions,
+} from 'fastify';
 import {
   jsonSchemaTransform,
   serializerCompiler,
@@ -27,6 +31,7 @@ import {
   mediaMultipartError,
 } from './modules/media/multipartErrors.js';
 import { loggableError } from './modules/media/storeErrorLog.js';
+import { serializeLogError } from './lib/errorLog.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { removeLeftoverScrubDirs } from './modules/media/scrub.js';
 import { menuRoutes } from './modules/menu/routes.js';
@@ -108,12 +113,17 @@ function pathOfZodIssue(issue: unknown): string {
   return Array.isArray(path) ? path.join('.') : '';
 }
 
+/** Pino accetta qualunque valore; il tipo di Fastify pretende messaggio e traccia, che un errore di query non deve avere. */
+type LogErrSerializer = NonNullable<NonNullable<FastifyLoggerOptions['serializers']>['err']>;
+
 export async function buildApp(config: Config, options: BuildOptions = {}) {
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
       // Nei log non entrano intestazioni di autenticazione né cookie.
       redact: ['req.headers.authorization', 'req.headers.cookie'],
+      // Un errore di query entra ridotto a nome, codice e vincolo: mai query, parametri o valori.
+      serializers: { err: serializeLogError as LogErrSerializer },
       ...(options.logStream ? { stream: options.logStream } : {}),
     },
     // Il proxy davanti è Caddy (ADR-003): l'indirizzo del client arriva da lui.

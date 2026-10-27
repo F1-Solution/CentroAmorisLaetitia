@@ -126,6 +126,7 @@ export function ambienteDeiServer(): Record<string, string> {
     // Gli strumenti che puliscono PDF e MP4: in CI sono nel PATH, in locale `qpdf` può stare altrove.
     'QPDF_PATH',
     'FFMPEG_PATH',
+    'FFPROBE_PATH',
   ]) {
     const valore = process.env[chiave];
     if (valore !== undefined) env[chiave] = valore;

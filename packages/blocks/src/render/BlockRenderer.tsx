@@ -1,6 +1,6 @@
 import type { BlockNode } from '../schema/block';
 import type { MediaMap } from './media';
-import type { SlidersMap, FormsMap, PostListsMap } from './data-maps';
+import type { SlidersMap, FormsMap, PostListsMap, DocumentsMap } from './data-maps';
 import { Section } from './Section';
 import { Row } from './Row';
 import { Column } from './Column';
@@ -26,13 +26,25 @@ export interface BlockRendererProps {
   readonly forms?: FormsMap | undefined;
   /** Gli articoli già risolti per ogni blocco `post_list`, chiave l'identificativo del blocco. */
   readonly postLists?: PostListsMap | undefined;
+  /** I documenti pubblici citati dai blocchi `document`, chiave l'identificativo. */
+  readonly documents?: DocumentsMap | undefined;
+  /** L'anteprima dell'area: i blocchi che ne hanno bisogno rendono il loro segnaposto. */
+  readonly preview?: boolean | undefined;
 }
 
 /**
  * Dispatcher unico: un tipo, un componente. È lo stesso componente usato dal
  * sito pubblico e dall'anteprima dell'area amministrativa (ADR-006 §3.3).
  */
-export function BlockRenderer({ block, media, sliders, forms, postLists }: BlockRendererProps) {
+export function BlockRenderer({
+  block,
+  media,
+  sliders,
+  forms,
+  postLists,
+  documents,
+  preview,
+}: BlockRendererProps) {
   switch (block.type) {
     case 'section':
       return (
@@ -42,22 +54,40 @@ export function BlockRenderer({ block, media, sliders, forms, postLists }: Block
           sliders={sliders}
           forms={forms}
           postLists={postLists}
+          documents={documents}
+          preview={preview}
         />
       );
     case 'row':
       return (
-        <Row block={block} media={media} sliders={sliders} forms={forms} postLists={postLists} />
+        <Row
+          block={block}
+          media={media}
+          sliders={sliders}
+          forms={forms}
+          postLists={postLists}
+          documents={documents}
+          preview={preview}
+        />
       );
     case 'column':
       return (
-        <Column block={block} media={media} sliders={sliders} forms={forms} postLists={postLists} />
+        <Column
+          block={block}
+          media={media}
+          sliders={sliders}
+          forms={forms}
+          postLists={postLists}
+          documents={documents}
+          preview={preview}
+        />
       );
     case 'rich_text':
       return <RichText block={block} />;
     case 'image':
       return <Image block={block} media={media} />;
     case 'media_text':
-      return <MediaText block={block} media={media} />;
+      return <MediaText block={block} media={media} documents={documents} preview={preview} />;
     case 'video':
       return <Video block={block} media={media} />;
     case 'map':
@@ -69,7 +99,7 @@ export function BlockRenderer({ block, media, sliders, forms, postLists }: Block
     case 'post_list':
       return <PostList block={block} media={media} posts={postLists?.[block.id]} />;
     case 'document':
-      return <DocBlock block={block} />;
+      return <DocBlock block={block} documents={documents} preview={preview} />;
     case 'slider':
       return <Slider block={block} media={media} slider={sliders?.[block.props.sliderId]} />;
     case 'html':

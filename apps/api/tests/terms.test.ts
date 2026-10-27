@@ -197,17 +197,13 @@ describe('PATCH /terms/:id per una categoria (D140-A)', () => {
   });
 });
 
-describe('categorie: solo nome e descrizione, nessuna gerarchia (D140-A, S9)', () => {
-  it.each([
-    ['parentId', (parentId: string) => ({ parentId }), 'TERM_FIELD_FIXED'],
-    ['position', () => ({ position: 5 }), 'TERM_FIELD_FIXED'],
-  ])('PATCH con %s è 400 %s e non cambia nulla', async (_campo, corpo, codice) => {
+describe('categorie: la posizione resta fissa (D140-A; il genitore è ammesso da DR-280)', () => {
+  it('PATCH con position è 400 TERM_FIELD_FIXED e non cambia nulla', async () => {
     const cat = await newCategory('Ferma');
-    const altra = await newCategory('Altra');
     const prima = await harness.db.select().from(schema.terms).where(eq(schema.terms.id, cat.id));
-    const risposta = await send('PATCH', `/terms/${cat.id}`, corpo(altra.id));
+    const risposta = await send('PATCH', `/terms/${cat.id}`, { position: 5 });
     expect(risposta.statusCode, risposta.body).toBe(400);
-    expect((risposta.json() as Err).error.code).toBe(codice);
+    expect((risposta.json() as Err).error.code).toBe('TERM_FIELD_FIXED');
     const dopo = await harness.db.select().from(schema.terms).where(eq(schema.terms.id, cat.id));
     expect(dopo).toEqual(prima);
   });
@@ -226,21 +222,16 @@ describe('categorie: solo nome e descrizione, nessuna gerarchia (D140-A, S9)', (
     });
   });
 
-  it('POST con parentId non nullo è 400 TERM_PARENT_NOT_ALLOWED; con null è ammesso', async () => {
+  it('POST con parentId di una categoria la crea sotto la genitrice; con null al primo livello', async () => {
     const madre = await newCategory('Madre');
-    const rifiutata = await send('POST', '/terms', {
+    const figlia = await send('POST', '/terms', {
       taxonomy: 'category',
       slug: 'figlia-sintetica',
       name: 'Figlia',
       parentId: madre.id,
     });
-    expect(rifiutata.statusCode, rifiutata.body).toBe(400);
-    expect((rifiutata.json() as Err).error.code).toBe('TERM_PARENT_NOT_ALLOWED');
-    const righe = await harness.db
-      .select()
-      .from(schema.terms)
-      .where(eq(schema.terms.slug, 'figlia-sintetica'));
-    expect(righe).toEqual([]);
+    expect(figlia.statusCode, figlia.body).toBe(201);
+    expect(figlia.json().path).toBe(`/category/${madre.slug}/figlia-sintetica/`);
 
     const ammessa = await send('POST', '/terms', {
       taxonomy: 'category',

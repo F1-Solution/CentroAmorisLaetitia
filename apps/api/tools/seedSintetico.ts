@@ -171,6 +171,12 @@ try {
         value: 'Un sito inventato per provare l’area amministrativa.',
         label: 'Descrizione del sito',
       },
+      // DR-270: i valori generali di WordPress, che il sito legge.
+      { key: 'site.locale', value: 'it_IT', label: 'Lingua del sito' },
+      { key: 'site.timezone', value: 'Europe/Rome', label: 'Fuso orario' },
+      { key: 'site.date_format', value: 'j F Y', label: 'Formato data' },
+      { key: 'site.time_format', value: 'G:i', label: 'Formato ora' },
+      { key: 'site.start_of_week', value: 1, label: 'Primo giorno della settimana' },
       { key: 'content.posts_per_page', value: 10, label: 'Articoli per pagina' },
       { key: 'seo.sitemap_enabled', value: true, label: 'Sitemap attiva' },
       {

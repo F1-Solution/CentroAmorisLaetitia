@@ -1,5 +1,6 @@
+import { SEO_SCHEMA_TYPES, type SeoSchemaType } from '@amoris/contracts';
 import { schema, type Database } from '@amoris/db';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { numericOption } from '../formSubmissions/service.js';
 
 /**
@@ -257,6 +258,8 @@ export interface ResolvedSeo {
   readonly ogDescription: string | null;
   readonly ogType: string;
   readonly ogImagePath: string | null;
+  /** Il tipo dei dati strutturati: sovrascrittura, poi modello, poi il predefinito del tipo (DR-278). */
+  readonly schemaType: SeoSchemaType;
 }
 
 /** Sostituisce i segnaposto dei template globali; quelli sconosciuti restano come sono. */
@@ -382,6 +385,19 @@ export async function publishedByPath(db: Database, path: string) {
   return { ...row, isHome: row.id === homeId || path === '/' };
 }
 
+/** Il primo tipo ammesso fra sovrascrittura e modello; altrimenti WebPage per le pagine, BlogPosting per le notizie. */
+export function schemaTypeOf(
+  override: string | null | undefined,
+  template: string | null | undefined,
+  type: 'page' | 'post',
+): SeoSchemaType {
+  const allowed = (value: string | null | undefined): value is SeoSchemaType =>
+    (SEO_SCHEMA_TYPES as readonly (string | null | undefined)[]).includes(value);
+  if (allowed(override)) return override;
+  if (allowed(template)) return template;
+  return type === 'post' ? 'BlogPosting' : 'WebPage';
+}
+
 export async function seoForContent(
   db: Database,
   content: {
@@ -430,6 +446,46 @@ export async function seoForContent(
     ogDescription: override?.ogDescription?.trim() || description || null,
     ogType: template?.ogType ?? (scope === 'home' ? 'website' : 'article'),
     ogImagePath: Object.values(ogImage)[0]?.publicPath ?? null,
+    schemaType: schemaTypeOf(override?.schemaType, template?.schemaType, content.type),
+  };
+}
+
+/**
+ * SEO dell'archivio di un termine come All in One SEO (DR-280): titolo e robots del
+ * modello `category`, sovrascritti da `term_seo`; descrizione propria, o del modello,
+ * o `#taxonomy_description`. Le categorie dei download restano senza sovrascrittura.
+ */
+export async function seoForTerm(
+  db: Database,
+  term: { id: string; taxonomy: string; name: string; description: string | null },
+  siteTitle: string,
+) {
+  const [template] = await db
+    .select()
+    .from(schema.seoTemplates)
+    .where(eq(schema.seoTemplates.scope, 'category'))
+    .limit(1);
+  const isCategory = term.taxonomy === 'category';
+  const [override] = isCategory
+    ? await db.select().from(schema.termSeo).where(eq(schema.termSeo.termId, term.id)).limit(1)
+    : [];
+  const values = { term_title: term.name, site_title: siteTitle };
+  const description = isCategory
+    ? override?.description?.trim() ||
+      (template?.descriptionTemplate ? fillTemplate(template.descriptionTemplate, values) : '') ||
+      term.description?.trim() ||
+      null
+    : null;
+  return {
+    title:
+      (override?.title?.trim() ? fillTemplate(override.title, values) : '') ||
+      fillTemplate(template?.titleTemplate ?? '{term_title} - {site_title}', values),
+    description,
+    robots: robotsDirectives(
+      override?.robotsNoindex ?? false,
+      override?.robotsNofollow ?? false,
+      template?.robotsDirectives ?? [],
+    ),
   };
 }
 
@@ -625,17 +681,37 @@ export function postSummary(
   return { summary: all.slice(0, limit).join(' '), summaryTruncated: all.length > limit };
 }
 
+/** `posts_per_page` di WordPress quando l'impostazione manca o è fuori dai limiti dell'API. */
+const DEFAULT_POSTS_PER_PAGE = 10;
+
+/**
+ * «Articoli per pagina» (DR-270): nella sorgente decide solo quanti articoli mostra
+ * un elenco Category Posts senza numero proprio (`num = get_option('posts_per_page')`).
+ */
+async function postsPerPage(db: Database): Promise<number> {
+  const [row] = await db
+    .select({ value: schema.settings.value })
+    .from(schema.settings)
+    .where(eq(schema.settings.key, 'content.posts_per_page'))
+    .limit(1);
+  const value = row?.value;
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 50
+    ? value
+    : DEFAULT_POSTS_PER_PAGE;
+}
+
 /** Una richiesta per ogni blocco: i loro parametri, non quelli dell'archivio, decidono (DR-116). */
 export async function postListsByRefs(
   db: Database,
   refs: readonly PostListRef[],
 ): Promise<Record<string, PublicPostListItem[]>> {
   const out: Record<string, PublicPostListItem[]> = {};
+  const fallback = refs.some((ref) => ref.limit === null) ? await postsPerPage(db) : null;
   for (const ref of refs) {
     const { rows } = await publishedPosts(db, {
       termIds: ref.termIds,
       page: 1,
-      perPage: ref.limit ?? 10,
+      perPage: ref.limit ?? fallback ?? DEFAULT_POSTS_PER_PAGE,
       offset: ref.offset,
       order: ref.order,
     });
@@ -993,6 +1069,14 @@ export async function sitemapEntries(db: Database) {
     .where(
       and(
         eq(schema.terms.taxonomy, 'category'),
+        // DR-280: un archivio escluso dai motori non si elenca, come i contenuti.
+        notInArray(
+          schema.terms.id,
+          db
+            .select({ id: schema.termSeo.termId })
+            .from(schema.termSeo)
+            .where(eq(schema.termSeo.robotsNoindex, true)),
+        ),
         inArray(
           schema.terms.id,
           db

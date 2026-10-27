@@ -1,15 +1,15 @@
 {
-  "misuratoIl": "2026-10-20",
+  "misuratoIl": "2026-10-27",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
   "soglia": 500,
   "sogliaPrecedente": 300,
   "sogliaModificataIl": "2026-09-21",
   "nucleo": 469,
-  "totale": 1298,
+  "totale": 1407,
   "esitoNucleo": "rispettata",
   "esitoTotale": "superata",
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "Misura del 2026-10-20 (wave 1G-W1, T6, correzioni della revisione di sicurezza): nucleo 469 su 500, totale 1298; deroga di DR-066 per il totale invariata, soglia di DR-070. ADR-007 §6 contromisura 3. Precedente (T3): nucleo 472, totale 1263.",
+  "conseguenza": "Misura del 2026-10-27 (wave 1G-W7, T2l, DR-288: password attuale per ogni modifica al proprio account, verifica condivisa con /auth/password): nucleo 469 su 500 invariato, totale 1407; deroga di DR-066 per il totale invariata, soglia di DR-070. ADR-007 §6 contromisura 3. Precedente (1G-W7, T2i, DR-282: nome ed email di un account da «Persone e permessi»): nucleo 469, totale 1335.",
   "misuraPrecedente": {
     "misuratoIl": "2026-09-20",
     "nucleo": 437,
@@ -27,11 +27,11 @@
     "auth/sessions.ts": 190,
     "plugins/auth.ts": 82,
     "plugins/csrf.ts": 30,
-    "modules/auth/routes.ts": 350,
+    "modules/auth/routes.ts": 341,
     "modules/auth/schemas.ts": 46,
-    "modules/auth/service.ts": 57,
-    "modules/accounts/routes.ts": 169,
-    "modules/accounts/schemas.ts": 8,
-    "modules/accounts/service.ts": 199
+    "modules/auth/service.ts": 94,
+    "modules/accounts/routes.ts": 222,
+    "modules/accounts/schemas.ts": 9,
+    "modules/accounts/service.ts": 226
   }
 }

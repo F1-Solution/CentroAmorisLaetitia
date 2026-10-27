@@ -245,9 +245,9 @@ describe('registro delle operazioni', () => {
       ),
     );
     renderPage();
-    const seo = (
-      await screen.findByText('Ha modificato il titolo SEO', { selector: 'td' })
-    ).closest('tr') as HTMLElement;
+    const seo = (await screen.findByText('Ha modificato la SEO', { selector: 'td' })).closest(
+      'tr',
+    ) as HTMLElement;
     expect(within(seo).getByText('contenuto non più presente')).toBeInTheDocument();
     expect(screen.getByText('/home/')).toBeInTheDocument();
     expect(screen.getAllByText('contenuto non più presente')).toHaveLength(1);

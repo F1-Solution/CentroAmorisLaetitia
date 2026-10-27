@@ -58,6 +58,27 @@ export interface PageContent {
   readonly isHome: boolean;
 }
 
+function isHiddenDocumentBlock(node: unknown, visible: ReadonlySet<string>): boolean {
+  if (node === null || typeof node !== 'object') return false;
+  const record = node as { type?: unknown; props?: { documentId?: unknown } | null };
+  if (record.type !== 'document') return false;
+  const documentId = record.props?.documentId;
+  return typeof documentId !== 'string' || !visible.has(documentId);
+}
+
+/** I blocchi senza i «Documento» non pubblici, a ogni profondità: né id né etichetta escono (DR-287). */
+export function withoutHiddenDocuments(node: unknown, visible: ReadonlySet<string>): unknown {
+  if (Array.isArray(node)) {
+    return node
+      .filter((child) => !isHiddenDocumentBlock(child, visible))
+      .map((child) => withoutHiddenDocuments(child, visible));
+  }
+  if (node === null || typeof node !== 'object') return node;
+  return Object.fromEntries(
+    Object.entries(node).map(([key, value]) => [key, withoutHiddenDocuments(value, visible)]),
+  );
+}
+
 /** La risposta intera di `GET /public/content` per un contenuto già risolto. */
 export async function assemblePage(db: Database, content: PageContent, title: string) {
   const refs = collectRefs(content.blocks);
@@ -94,7 +115,10 @@ export async function assemblePage(db: Database, content: PageContent, title: st
       pageLayout: content.pageLayout,
       gutterWidth: content.gutterWidth,
       excerpt: content.excerpt,
-      blocks: content.blocks,
+      blocks: withoutHiddenDocuments(
+        content.blocks,
+        new Set(documents.map((document) => document.id)),
+      ),
       featuredMediaId: content.featuredMediaId,
       publishedAt: iso(content.publishedAt),
       updatedAt: content.updatedAt.toISOString(),

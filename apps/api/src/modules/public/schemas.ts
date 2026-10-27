@@ -1,3 +1,4 @@
+import { SEO_SCHEMA_TYPES } from '@amoris/contracts';
 import { z } from 'zod';
 
 /** Un percorso del sito: assoluto, senza schema né dominio. */
@@ -36,6 +37,8 @@ const seoSchema = z.object({
   ogDescription: z.string().nullable(),
   ogType: z.string(),
   ogImagePath: z.string().nullable(),
+  /** Tipo dei dati strutturati della pagina (DR-278). */
+  schemaType: z.enum(SEO_SCHEMA_TYPES),
 });
 
 const termSchema = z.object({
@@ -230,7 +233,8 @@ export const searchQuery = z.object({
 
 export const termResponse = z.object({
   term: termSchema.extend({ description: z.string().nullable() }),
-  seo: z.object({ title: z.string(), robots: z.string() }),
+  /** La descrizione è quella SEO della categoria, o la sua descrizione (#taxonomy_description, DR-280). */
+  seo: z.object({ title: z.string(), description: z.string().nullable(), robots: z.string() }),
 });
 
 export const documentResponse = z.object({

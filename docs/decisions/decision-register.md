@@ -1692,3 +1692,65 @@ Nella stessa risposta l'utente ha dichiarato HO-032 eseguito (`qpdf version 12.4
 | DR-264 | 2026-10-26 | Codec video ammessi nei caricamenti (D160) | **Opzione A** — solo `h264`, `hevc` e `aac`; gli altri MP4 si rifiutano con «file non valido» | B — elenco largo (`h264`, `hevc`, `av1`, `vp9`, `aac`, `mp3`, `opus`) · C — nessun elenco | «D160=A» | Proprietario | API dei media, ADR-012 (termine: prima della 1F) | sì | revisione di sicurezza della `1G-W6` (M2); ADR-012 |
 
 Nella stessa risposta l'utente ha confermato commit e push della `1G-W6` e la cancellazione della cartella di lavoro della wave dopo il push, e ha chiesto il piano della `1G-W7`.
+
+## 88. Round 79 — risposta del 2026-10-26, decisioni della `1G-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-265 | 2026-10-26 | Dove si eseguono 1E-19 e la prova dell'anteprima, che entrano con un account e scrivono 4 salvataggi (D161) | **Opzione A** — sull'ambiente di collaudo appena creato, eseguite dall'utente con l'account sintetico di Redazione (HO-035); prima della `1G-W8` l'ambiente si ripristina, così i 4 salvataggi non restano nel collaudo | B — sul database di sviluppo, con copia di salvataggio · C — su una terza copia temporanea del database | «D161=A» | Proprietario | collaudo, database di collaudo, `1G-W7`, `1G-W8`, 1G-22 | sì | `W7-PLAN.md` §2.3, §3.1; HO-031 |
+| DR-266 | 2026-10-26 | Come convivono ambiente di sviluppo e ambiente di collaudo (D162) | **Opzione A** — copia di lavoro Git separata (`git worktree`, fuori dal repository) fissata sul commit da collaudare, con installazione e compilazioni proprie; porte 3300 (sito), 3301 (area), 3302 (API); database `amoris_collaudo` nello stesso Postgres; bucket `collaudo-public` e `collaudo-private` nello stesso MinIO; durante il collaudo i server di sviluppo si spengono | B — stessa copia di lavoro con cartella di compilazione configurabile · C — nessuna separazione, compilazioni rifatte | «D162=A» | Proprietario | ambiente di collaudo, `tools/collaudo/`, `1G-W7`, `1G-W8` | sì | `W7-PLAN.md` §2.4, §3.1, §5; DR-215, DR-223 |
+| DR-267 | 2026-10-26 | Che cosa conta come vista peggiorata nel confronto integrale (D163) | **Opzione A** — invariata se identica byte per byte all'ultima cattura accettata; altrimenti non peggiorata se la differenza dal riferimento non supera la percentuale accettata, peggiorata se la supera anche di poco; le peggiorate bloccano finché non sono corrette o accettate dall'utente una per una | B — ogni vista non identica mostrata per l'accettazione · C — come A con tolleranza di 0,05 punti | «D163=A» | Proprietario | parità visiva, `1G-W7`, 1G-21 | sì | `W7-PLAN.md` §2.3, §3.1, S5; DR-162, DR-203, `audit-1E-W7.md` |
+
+Nella stessa risposta l'utente ha approvato `W7-PLAN.md` e chiesto l'esecuzione della `1G-W7`, con fermata alle conferme previste.
+
+## 89. Round 80 — risposta del 2026-10-27, prima fermata della `1G-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-268 | 2026-10-27 | Da dove prende `ffmpeg` la CI, dopo due corse annullate per `apt` lento (D164) | **Opzione A** — binario statico di versione fissa scaricato da GitHub con l'impronta SHA-256 controllata, come `qpdf`; `runs-on: ubuntu-24.04` | B — `apt` con limite a 60 minuti · C — `apt` con cache dei pacchetti | «D164=A» | Proprietario | CI, ADR-012 | sì | DR-262, `W7-PLAN.md` S11 |
+| DR-269 | 2026-10-27 | Testi dell'area che dicono «la schermata dei media non esiste ancora» (D165) | **Opzione A** — corretti prima del commit su cui nasce il collaudo | B — alla `1G-W9` | «D165=A» | Proprietario | area amministrativa, `1G-W7` | sì | `docs/qa/contenuto-nel-codice.md`, T6 |
+| DR-270 | 2026-10-27 | Impostazioni modificabili che il sito non legge: lingua, fuso orario, formati di data e ora, primo giorno della settimana, articoli per pagina (D166) | **Opzione C** — il sito le legge e ne applica l'effetto | A — dichiarate senza effetto in Fase 1 (raccomandazione dell'agente, non scelta) · B — nascoste nell'area | «D166=C» | Proprietario | sito pubblico, API, `1G-W7` (codice prima della cattura integrale) | sì | `contenuto-nel-codice.md` D4 |
+| DR-271 | 2026-10-27 | Testi del sito scritti nel codice (D1-D7) e campi non offerti fuori da DR-218 (D167) | **Opzione B** — decisi voce per voce adesso | A — dopo il collaudo (raccomandazione dell'agente, non scelta) | «D167=B» | Proprietario | sito pubblico, area, matrice, `1G-W7` | sì | `contenuto-nel-codice.md` «Da decidere», `editability-matrix.csv` |
+| DR-272 | 2026-10-27 | Pianificare la 1F durante il collaudo (D168) | **Opzione A** — sì, solo pianificazione (staging, provider e costi, backup e ripristino), senza acquisti né deploy | B — dopo l'approvazione della 1G | «D168=S» (letto come «sì») | Proprietario | Fase 1F | sì | ROADMAP, `phase-plan.md` §5 |
+
+Nella stessa risposta l'utente ha dichiarato HO-053 fatto (9,2 GB liberi) e confermato commit e push del codice della wave e HO-034 (prova sui nomi di prova, poi creazione vera).
+
+## 90. Round 81 — risposta del 2026-10-27, testi del sito scritti nel codice (D167 = B, round 1)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-273 | 2026-10-27 | Nome del sito scritto a mano nel titolo di riserva e nella 404 (D169, voce D1) | **Opzione A** — letto da «Titolo del sito» nelle impostazioni | B — fisso, dichiarato | «D169=A» | Proprietario | sito pubblico, `1G-W7` | sì | `contenuto-nel-codice.md` D1 |
+| DR-274 | 2026-10-27 | Testi del tema: ricerca, paginazione, nessun risultato, 404 (D170, voce D2) | **Opzione A** — fissi, non modificabili in Fase 1, come nella sorgente | B — sezione «Testi del sito» | «D170=A» | Proprietario | sito pubblico, matrice | sì | idem D2 |
+| DR-275 | 2026-10-27 | Etichette della scheda di un documento (D171, voce D3) | **Opzione A** — fisse, non modificabili in Fase 1 | B — etichetta del pulsante per documento | «D171=A» | Proprietario | sito pubblico, matrice | sì | idem D3 |
+| DR-276 | 2026-10-27 | Etichette delle briciole nel JSON-LD (D172, voce D5) | **Opzione A** — fisse, non modificabili in Fase 1 | B — campi dei modelli SEO | «D172=A» | Proprietario | metadati, matrice | sì | idem D5 |
+| DR-277 | 2026-10-27 | Testi dei moduli di contatto (D173, voci D6 e D7) | **Opzione A** — sotto-etichette fisse (DR-218); selettore del prefisso telefonico verificato nel browser e tradotto in italiano ora se in inglese | B — selettore alla `1G-W9` · C — sotto-etichette modificabili | «D173=A» | Proprietario | sito pubblico, moduli, `1G-W7` | sì | idem D6, D7 |
+
+## 91. Round 82 — risposta del 2026-10-27, campi dell'area e decisioni nuove della `1G-W7`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-278 | 2026-10-27 | Campi di pagine e notizie senza interfaccia (D174) | **Opzione C** — modificabili tutti e cinque: mostrare il titolo, notizia in primo piano, immagine in evidenza delle pagine, larghezza dello spazio fra le colonne, tipo di dati strutturati (contenuto e modello SEO) | A — tutti dichiarati · B — solo titolo e primo piano (raccomandazione dell'agente, non scelta) | «D174=C» | Proprietario | area, API, sito, `1G-W7` | sì | `editability-matrix.csv` righe 15-17, 20, 49, 125 |
+| DR-279 | 2026-10-27 | Configurazione dei blocchi «Video», «Mappa», «Documento» (D175) | **Opzione B** — pannello di configurazione nell'editor | A — dichiarata non modificabile (raccomandazione dell'agente, non scelta) | «D175=B» | Proprietario | editor, sito, sicurezza degli embed, privacy | sì | righe 32, 34 |
+| DR-280 | 2026-10-27 | Categorie: descrizione, genitore, SEO dell'archivio, eliminazione (D176) | **Opzione C** — tutto modificabile | A — tutto dichiarato · B — solo «Elimina» (raccomandazione dell'agente, non scelta) | «D176=C» | Proprietario | API, area, sito, redirect | sì | righe 53-56 |
+| DR-281 | 2026-10-27 | Documenti: creazione ed eliminazione (D177) | **Opzione B** — creazione ed eliminazione di un documento con titolo, file e categoria; menu e caroselli: creazione e campi secondari dichiarati non modificabili in Fase 1 | A — tutto dichiarato | «D177=B» | Proprietario | API, area, sito `/download/` | sì | righe 57-58, 91-93, 101-103 |
+| DR-282 | 2026-10-27 | Impostazioni e account senza interfaccia (D178) | **Opzione B** — nome ed email di un account modificabili da «Persone e permessi»; `robots.txt`, sitemap e chiavi nuove dichiarati non modificabili in Fase 1 | A — tutto dichiarato (raccomandazione dell'agente, non scelta) | «D178=B» | Proprietario | API, area, sicurezza, dati personali | sì | righe 118, 120, 130 |
+| DR-283 | 2026-10-27 | Inserire immagini nuove dall'editor (D179) | **Opzione A** — blocco «Immagine» inseribile con il selettore dei media e il testo alternativo; video, mappa, modulo, documento non inseribili con motivo vero | B — solo testo corretto | «D179=A» | Proprietario | editor, `1G-W7` | sì | `tree.ts:48-49` |
+| DR-284 | 2026-10-27 | Attuazione di DR-273, nome del sito nella 404 (D180) | **Opzione A** — interruttore documentato di Next (`htmlLimitedBots`) perché i metadati arrivino prima della pagina, e titoli letti dalle impostazioni | B — rinuncia | «D180=A» | Proprietario | sito, configurazione di Next | sì | DR-273 |
+| DR-285 | 2026-10-27 | Date pubblicate quando cambia il fuso (D181) | **Opzione B** — tutte le date si mostrano nel fuso scelto; difformità dichiarata rispetto a WordPress | A — come WordPress | «D181=B» | Proprietario | sito, parità | sì | DR-270 |
+
+Nella stessa risposta l'utente ha chiesto che ogni round finisca con la tabella dello stato delle fasi e il prompt successivo.
+
+## 92. Round 83 — risposta del 2026-10-27, migrazione `0010` e titolo delle notizie
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-286 | 2026-10-27 | Due notizie che in WordPress nascondevano il titolo (D182) | **Opzione A** — «Mostra il titolo» vale anche per le notizie; le due tornano senza titolo come nella sorgente | B — solo pagine, difformità dichiarata | «D182=A» | Proprietario | sito pubblico, parità, `1G-W7` | sì | DR-278, rapporto della T2e |
+
+Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database di sviluppo con copia di sicurezza (eseguita il 2026-10-27: copia `amoris-prima-0010-2026-10-27.dump`, 468.284 byte, 34 tabelle; migrazioni 10 → 11; colonna vuota; altri conteggi invariati).
+
+## 93. Round 84 — risposta del 2026-10-27, blocco «Documento» e propria email
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-287 | 2026-10-27 | Resa del blocco «Documento» (D183) | **Opzione A** — sul sito il blocco porta alla scheda `/download/<slug>/` e diventa inseribile dall'editor | B — resta com'è, non inseribile, scelta del documento tolta | «D183=A» | Proprietario | sito pubblico, editor, `1G-W7` | sì | DR-279 |
+| DR-288 | 2026-10-27 | Modifiche al proprio account (D184) | **Opzione C** — la password attuale si chiede per **ogni** modifica al proprio account, compresa la reimpostazione della propria password | A — come oggi con condizione per il recupero via email; B — password solo per la propria email | «D184=C» | Proprietario | area, API degli account, ADR-007, `1G-W7` | sì | DR-282, ADR-007 |

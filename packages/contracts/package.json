@@ -8,7 +8,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./mediaRules": "./src/mediaRules.ts"
+    "./mediaRules": "./src/mediaRules.ts",
+    "./seoSchemaTypes": "./src/seoSchemaTypes.ts"
   },
   "scripts": {
     "lint": "eslint .",

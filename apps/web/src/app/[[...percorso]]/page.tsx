@@ -17,7 +17,6 @@ import {
   getDocuments,
   getPosts,
   getPreview,
-  getSettings,
   getTerm,
   SESSION_COOKIE_NAME,
   searchContents,
@@ -28,15 +27,18 @@ import {
   type SearchPage,
   type Term,
 } from '../../lib/api';
+import { settingsOnce } from '../../lib/settingsOnce';
 import { isPreviewPath, previewIdOf } from '../../lib/previewPath';
 import { siteUrl } from '../../lib/site';
 import {
   buildGraph,
+  graphKindOf,
   imageFromMedia,
   siteFromSettings,
   type GraphPage,
 } from '../../lib/structuredData';
 import type { MediaMap } from '@amoris/blocks';
+import { ogLocaleOf, siteDatesFrom } from '../../lib/wpDate';
 
 /**
  * Ogni percorso del sito pubblico passa di qui (`1E-W4`), resa sul server a ogni
@@ -59,6 +61,8 @@ type Resolved =
       kind: 'archive';
       term: Term & { description: string | null };
       seoTitle: string;
+      /** Meta description dell'archivio (DR-280); `null` senza. */
+      description: string | null;
       robots: string;
       page: number;
       posts: PostPage;
@@ -127,7 +131,8 @@ const resolve = cache(
       return { kind: 'search', query, page, posts };
     }
 
-    const archive = /^(\/category\/[^/]+\/)(?:page\/(\d+)\/)?$/.exec(path);
+    // DR-280: l'archivio di una figlia sta sotto la genitrice; `page/N/` resta in fondo.
+    const archive = /^(\/category\/(?:[^/]+\/)+?)(?:page\/(\d+)\/)?$/.exec(path);
     if (archive?.[1]) {
       const found = await getTerm(archive[1]);
       const page = Number(archive[2] ?? '1');
@@ -138,6 +143,7 @@ const resolve = cache(
             kind: 'archive',
             term: found.term,
             seoTitle: found.seo.title,
+            description: found.seo.description ?? null,
             robots: found.seo.robots,
             page,
             posts,
@@ -180,9 +186,6 @@ const resolve = cache(
   },
 );
 
-/** Le impostazioni pubbliche, lette una volta per richiesta fra metadati e pagina. */
-const settingsOnce = cache(getSettings);
-
 /** Title delle pagine senza SEO propria: titolo e sito, come All in One SEO. */
 const plainTitle = (title: string, siteTitle: string) => `${title} - ${siteTitle}`;
 
@@ -211,6 +214,7 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
     const suffix = resolved.page > 1 ? ` - Pagina ${resolved.page}` : '';
     return {
       title: `${resolved.seoTitle}${suffix}`,
+      ...(resolved.description ? { description: resolved.description } : {}),
       robots: resolved.robots,
       alternates: { canonical: path },
     };
@@ -231,6 +235,7 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
   }
 
   const { seo } = resolved.data;
+  const settings = await settingsOnce();
   return {
     title: seo.title,
     ...(seo.description ? { description: seo.description } : {}),
@@ -242,7 +247,7 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
       type: seo.ogType === 'website' ? 'website' : 'article',
       url: seo.canonicalPath,
       siteName: siteTitle,
-      locale: 'it_IT',
+      locale: ogLocaleOf(settings),
       ...(seo.ogImagePath ? { images: [seo.ogImagePath] } : {}),
     },
   };
@@ -301,9 +306,11 @@ function graphPageOf(resolved: Resolved, path: string, siteTitle: string): Graph
         dateModified: content.modifiedAt ?? content.updatedAt,
         image: imageFromMedia(media, content.featuredMediaId),
       };
-      return content.type === 'post'
-        ? { kind: 'post', ...common, category: crumbOf(terms, 'category') }
-        : { kind: 'webpage', ...common };
+      // Le briciole restano quelle del tipo di contenuto; il tipo del grafo è quello scelto (DR-278).
+      const category = content.type === 'post' ? crumbOf(terms, 'category') : null;
+      return graphKindOf(content.type, seo.schemaType) === 'post'
+        ? { kind: 'post', ...common, category }
+        : { kind: 'webpage', ...common, ...(category ? { parent: category } : {}) };
     }
   }
 }
@@ -322,6 +329,7 @@ export default async function Page({ params, searchParams }: Params) {
     siteFromSettings(settings, siteUrl()),
     graphPageOf(resolved, currentPath, settingString(settings, 'site.title')),
   );
+  const dates = siteDatesFrom(settings);
 
   return (
     <SiteShell
@@ -330,15 +338,25 @@ export default async function Page({ params, searchParams }: Params) {
     >
       <JsonLd graph={graph} />
       {resolved.kind === 'archive' ? (
-        <ArchiveView term={resolved.term} posts={resolved.posts} page={resolved.page} />
+        <ArchiveView
+          term={resolved.term}
+          posts={resolved.posts}
+          page={resolved.page}
+          dates={dates}
+        />
       ) : resolved.kind === 'search' ? (
-        <SearchView query={resolved.query} posts={resolved.posts} page={resolved.page} />
+        <SearchView
+          query={resolved.query}
+          posts={resolved.posts}
+          page={resolved.page}
+          dates={dates}
+        />
       ) : resolved.kind === 'downloadCategory' ? (
-        <DownloadCategoryView term={resolved.term} documents={resolved.documents} />
+        <DownloadCategoryView term={resolved.term} documents={resolved.documents} dates={dates} />
       ) : resolved.kind === 'document' ? (
-        <DocumentView document={resolved.document} media={resolved.media} />
+        <DocumentView document={resolved.document} media={resolved.media} dates={dates} />
       ) : (
-        <ContentView data={resolved.data} />
+        <ContentView data={resolved.data} dates={dates} />
       )}
     </SiteShell>
   );

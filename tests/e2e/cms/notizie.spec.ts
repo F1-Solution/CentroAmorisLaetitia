@@ -248,10 +248,11 @@ test.describe('notizie', () => {
     const riga = redazione
       .getByRole('row')
       .filter({ has: redazione.getByRole('cell', { name: nome, exact: true }) });
-    await riga.getByRole('button', { name: 'Rinomina' }).click();
-    const rinomina = redazione.getByRole('dialog', { name: 'Rinomina categoria' });
+    await riga.getByRole('button', { name: 'Modifica' }).click();
+    const rinomina = redazione.getByRole('dialog', { name: 'Modifica categoria' });
+    await expect(rinomina.getByLabel('Titolo SEO')).toBeEnabled();
     await rinomina.getByLabel('Nome', { exact: true }).fill(nomeNuovo);
-    await rinomina.getByRole('button', { name: 'Salva il nome' }).click();
+    await rinomina.getByRole('button', { name: 'Salva', exact: true }).click();
     await expect(rinomina).toHaveCount(0);
     await expect(redazione.getByRole('cell', { name: nomeNuovo, exact: true })).toBeVisible();
 

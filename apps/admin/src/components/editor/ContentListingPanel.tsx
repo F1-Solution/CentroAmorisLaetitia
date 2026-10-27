@@ -12,11 +12,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import type { FeaturedMedia, LastChange } from '../../lib/editor/roundtrip';
 
-/**
- * «Elenchi e archivi» di una notizia (S2): immagine in evidenza e categorie. Si
- * salva da solo, come «Pagina» e «Indirizzo»: non passa dalla copia di lavoro né
- * dal «Salva» dei blocchi, e non tocca le modifiche non salvate di «Contenuto».
- */
+/** Immagine in evidenza e categorie di una notizia, la sola immagine di una pagina (S2, DR-278), salvate da sole. */
 
 interface CategoryOption {
   readonly id: string;
@@ -46,6 +42,8 @@ export interface ListingSaved {
 
 export interface ContentListingPanelProps {
   readonly contentId: string;
+  /** Una pagina non ha categorie (S4). */
+  readonly type: 'page' | 'post';
   readonly featuredMedia: FeaturedMedia | null;
   readonly termIds: readonly string[];
   readonly disabled: boolean;
@@ -60,8 +58,15 @@ function sameIds(a: ReadonlySet<string>, b: readonly string[]): boolean {
   return a.size === b.length && b.every((id) => a.has(id));
 }
 
+/** Dove l'immagine conta sul sito: il tema della sorgente non la mostrava nel testo delle pagine (`divi_page_thumbnails`). */
+const IMAGE_DESCRIPTION: Readonly<Record<'page' | 'post', string>> = {
+  post: 'Compare nell’archivio della categoria, nella ricerca e in «Elenco articoli». Solo immagini pubbliche; il testo alternativo è quello del media.',
+  page: 'Come nel sito di partenza, il sito non la mostra nella pagina: compare nella ricerca e nei dati strutturati per i motori di ricerca. Solo immagini pubbliche; il testo alternativo è quello del media.',
+};
+
 export function ContentListingPanel({
   contentId,
+  type,
   featuredMedia,
   termIds,
   disabled,
@@ -87,6 +92,7 @@ export function ContentListingPanel({
   useEffect(() => setSelected(new Set(termIds)), [termsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (type !== 'post') return undefined;
     const controller = new AbortController();
     void (async () => {
       try {
@@ -101,7 +107,7 @@ export function ContentListingPanel({
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [type]);
 
   useEffect(() => {
     if (!picking) return undefined;
@@ -191,7 +197,7 @@ export function ContentListingPanel({
     <div className="amoris-editor__listing">
       <FieldGroup
         title="Immagine in evidenza"
-        description="Compare nell’archivio della categoria, nella ricerca e in «Elenco articoli». Solo immagini pubbliche; il testo alternativo è quello del media."
+        description={IMAGE_DESCRIPTION[type]}
         disabled={disabled || imageBusy}
       >
         {imageError ? (
@@ -220,52 +226,54 @@ export function ContentListingPanel({
         </div>
       </FieldGroup>
 
-      <FieldGroup
-        title="Categorie"
-        description="Una notizia pubblicata deve avere almeno una categoria, quindi l’ultima non si può togliere. Una bozza può non averne, ma per pubblicarla ne servirà almeno una."
-        disabled={disabled || termsBusy}
-      >
-        {categoriesError ? (
-          <Alert variant="error" title="Categorie non disponibili">
-            {categoriesError}
-          </Alert>
-        ) : null}
-        {termsError ? (
-          <Alert variant="error" title="Categorie non salvate">
-            {termsError}
-          </Alert>
-        ) : null}
-        {termsNotice ? (
-          <Alert variant="success" title="Categorie salvate">
-            Categorie salvate.
-          </Alert>
-        ) : null}
-        {categories === null && !categoriesError ? (
-          <p>Caricamento delle categorie in corso…</p>
-        ) : null}
-        {categories?.length === 0 ? (
-          <p>Non ci sono ancora categorie: si creano dalla schermata «Categorie».</p>
-        ) : null}
-        {categories?.map((category) => (
-          <CheckboxField
-            key={category.id}
-            label={category.name}
-            checked={selected.has(category.id)}
-            onChange={(event) => toggle(category.id, event.target.checked)}
-          />
-        ))}
-        <div className="amoris-editor__listing-actions">
-          <Button
-            variant="primary"
-            permitted={!disabled}
-            disabled={termsBusy || sameIds(selected, termIds)}
-            loading={termsBusy}
-            onClick={() => void saveTerms()}
-          >
-            Salva le categorie
-          </Button>
-        </div>
-      </FieldGroup>
+      {type === 'post' ? (
+        <FieldGroup
+          title="Categorie"
+          description="Una notizia pubblicata deve avere almeno una categoria, quindi l’ultima non si può togliere. Una bozza può non averne, ma per pubblicarla ne servirà almeno una."
+          disabled={disabled || termsBusy}
+        >
+          {categoriesError ? (
+            <Alert variant="error" title="Categorie non disponibili">
+              {categoriesError}
+            </Alert>
+          ) : null}
+          {termsError ? (
+            <Alert variant="error" title="Categorie non salvate">
+              {termsError}
+            </Alert>
+          ) : null}
+          {termsNotice ? (
+            <Alert variant="success" title="Categorie salvate">
+              Categorie salvate.
+            </Alert>
+          ) : null}
+          {categories === null && !categoriesError ? (
+            <p>Caricamento delle categorie in corso…</p>
+          ) : null}
+          {categories?.length === 0 ? (
+            <p>Non ci sono ancora categorie: si creano dalla schermata «Categorie».</p>
+          ) : null}
+          {categories?.map((category) => (
+            <CheckboxField
+              key={category.id}
+              label={category.name}
+              checked={selected.has(category.id)}
+              onChange={(event) => toggle(category.id, event.target.checked)}
+            />
+          ))}
+          <div className="amoris-editor__listing-actions">
+            <Button
+              variant="primary"
+              permitted={!disabled}
+              disabled={termsBusy || sameIds(selected, termIds)}
+              loading={termsBusy}
+              onClick={() => void saveTerms()}
+            >
+              Salva le categorie
+            </Button>
+          </div>
+        </FieldGroup>
+      ) : null}
 
       <MediaPicker
         open={picking}

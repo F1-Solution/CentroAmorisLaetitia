@@ -33,7 +33,7 @@ export function EditorPreview({
 }: EditorPreviewProps): React.JSX.Element {
   return (
     <PreviewPane viewport={viewport} onViewportChange={onViewportChange}>
-      <BlocksDocument document={document} />
+      <BlocksDocument document={document} preview />
     </PreviewPane>
   );
 }

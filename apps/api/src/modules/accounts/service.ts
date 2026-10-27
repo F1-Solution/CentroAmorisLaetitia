@@ -141,9 +141,13 @@ async function activeAdministrators(tx: Transaction): Promise<number> {
 /** Annulla la transazione quando resterebbe nessuna amministrazione attiva. */
 class LastAdministrator extends Error {}
 
+/** Campi d'identità davvero cambiati: il registro ne porta i nomi, mai i valori (DR-282). */
+export type IdentityField = 'email' | 'fullName';
+
 export type UpdateResult =
-  | { readonly kind: 'updated' }
+  | { readonly kind: 'updated'; readonly fields: readonly IdentityField[] }
   | { readonly kind: 'not_found' }
+  | { readonly kind: 'email_taken' }
   | { readonly kind: 'unknown_role' }
   | { readonly kind: 'last_admin' };
 
@@ -174,6 +178,26 @@ async function replaceRoles(
   return removed.length > 0;
 }
 
+/** Nome ed email confrontati come li confronta il database: l'indirizzo senza maiuscole (`citext`). */
+function changedIdentity(
+  current: { readonly email: string; readonly fullName: string },
+  patch: UpdateAccountBody,
+): IdentityField[] {
+  const fields: IdentityField[] = [];
+  if (patch.email !== undefined && patch.email !== current.email.toLowerCase()) {
+    fields.push('email');
+  }
+  if (patch.fullName !== undefined && patch.fullName !== current.fullName) fields.push('fullName');
+  return fields;
+}
+
+/** Vero se l'errore è la violazione d'unicità dell'indirizzo. */
+function isEmailClash(error: unknown): boolean {
+  const pg = (error as { cause?: unknown }).cause ?? error;
+  const { code, constraint_name: name } = pg as { code?: unknown; constraint_name?: unknown };
+  return code === '23505' && name === 'users_email_unique';
+}
+
 /**
  * Le modifiche agli account passano una alla volta (blocco consultivo della
  * transazione), così due richieste concorrenti non possono entrambe lasciare a
@@ -189,7 +213,7 @@ export async function updateAccount(
     const result = await db.transaction(async (tx): Promise<UpdateResult> => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext('accounts.administration'))`);
       const [target] = await tx
-        .select({ id: schema.users.id })
+        .select({ email: schema.users.email, fullName: schema.users.fullName })
         .from(schema.users)
         .where(eq(schema.users.id, id))
         .for('update');
@@ -198,10 +222,16 @@ export async function updateAccount(
       const roleIds = patch.roleKeys ? await roleIdsOf(tx, patch.roleKeys) : undefined;
       if (roleIds === null) return { kind: 'unknown_role' };
 
-      if (patch.fullName !== undefined || patch.isActive !== undefined) {
+      const fields = changedIdentity(target, patch);
+      if (fields.length > 0 || patch.isActive !== undefined) {
         await tx
           .update(schema.users)
-          .set({ fullName: patch.fullName, isActive: patch.isActive, updatedAt: new Date() })
+          .set({
+            fullName: fields.includes('fullName') ? patch.fullName : undefined,
+            email: fields.includes('email') ? patch.email : undefined,
+            isActive: patch.isActive,
+            updatedAt: new Date(),
+          })
           .where(eq(schema.users.id, id));
       }
       // Un ruolo tolto chiude le sessioni: la veste attiva potrebbe essere proprio quella (§6 caso 3).
@@ -209,12 +239,16 @@ export async function updateAccount(
       if ((patch.isActive === false || patch.roleKeys) && (await activeAdministrators(tx)) === 0) {
         throw new LastAdministrator();
       }
-      if (removedRole || patch.isActive === false) await revokeSessionsIn(tx, id);
-      return { kind: 'updated' };
+      // Un indirizzo nuovo chiude ogni sessione, anche quella di chi lo cambia per sé (DR-282).
+      if (removedRole || patch.isActive === false || fields.includes('email')) {
+        await revokeSessionsIn(tx, id);
+      }
+      return { kind: 'updated', fields };
     });
     return result;
   } catch (caught) {
     if (caught instanceof LastAdministrator) return { kind: 'last_admin' };
+    if (isEmailClash(caught)) return { kind: 'email_taken' };
     throw caught;
   }
 }

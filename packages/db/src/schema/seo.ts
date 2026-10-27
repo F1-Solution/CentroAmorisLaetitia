@@ -36,6 +36,8 @@ export const contentSeo = pgTable('content_seo', {
   ogImageId: uuid().references(() => media.id, { onDelete: 'set null' }),
   robotsNoindex: boolean().notNull().default(false),
   robotsNofollow: boolean().notNull().default(false),
+  /** `WebPage` o `BlogPosting`; vuota = quello del modello SEO (DR-278). */
+  schemaType: text(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 

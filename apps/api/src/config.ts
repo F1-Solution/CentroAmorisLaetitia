@@ -109,6 +109,7 @@ const configSchema = z.object({
   /** Programmi che ripuliscono i metadati di PDF e MP4 (ADR-012) e tempi massimi in millisecondi. */
   QPDF_PATH: z.string().min(1).default('qpdf'),
   FFMPEG_PATH: z.string().min(1).default('ffmpeg'),
+  FFPROBE_PATH: z.string().min(1).default('ffprobe'),
   SCRUB_PDF_TIMEOUT_MS: z.coerce.number().int().min(1).default(30000),
   SCRUB_VIDEO_TIMEOUT_MS: z.coerce.number().int().min(1).default(120000),
 });
@@ -139,6 +140,7 @@ export function scrubToolsOf(config: Config): ScrubTools {
   return {
     qpdfPath: config.QPDF_PATH,
     ffmpegPath: config.FFMPEG_PATH,
+    ffprobePath: config.FFPROBE_PATH,
     pdfTimeoutMs: config.SCRUB_PDF_TIMEOUT_MS,
     videoTimeoutMs: config.SCRUB_VIDEO_TIMEOUT_MS,
   };

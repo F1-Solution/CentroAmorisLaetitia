@@ -425,6 +425,7 @@ CREATE TABLE content_seo (
     og_image_id     uuid REFERENCES media(id) ON DELETE SET NULL,
     robots_noindex  boolean NOT NULL DEFAULT false,
     robots_nofollow boolean NOT NULL DEFAULT false,
+    schema_type     text,
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
 

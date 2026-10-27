@@ -1,6 +1,12 @@
 import { schema, type Database } from '@amoris/db';
 import { asc, count, eq, sql } from 'drizzle-orm';
 import type { z } from 'zod';
+import {
+  createCategory,
+  removeCategory,
+  updateCategory,
+  type CategoryWarnings,
+} from './category.js';
 import type { createBody, updateBody } from './schemas.js';
 
 /** Servizio del dominio `terms`. Le rotte non toccano il database (ADR-001 §3 punto 2). */
@@ -76,11 +82,17 @@ export async function findById(db: Database, id: string) {
 }
 
 export async function create(db: Database, input: CreateInput) {
-  // S9: nessuna gerarchia delle categorie.
-  if (input.taxonomy === 'category' && input.parentId) {
-    throw termError(400, 'TERM_PARENT_NOT_ALLOWED', 'Le categorie non hanno una categoria madre.');
-  }
   try {
+    // DR-280: l'archivio di una figlia discende dalla genitrice, letta sotto il blocco dei percorsi.
+    if (input.taxonomy === 'category') {
+      return await createCategory(db, {
+        slug: input.slug,
+        name: input.name,
+        description: input.description ?? null,
+        parentId: input.parentId ?? null,
+        position: input.position ?? 0,
+      });
+    }
     const [row] = await db
       .insert(schema.terms)
       .values({
@@ -100,25 +112,21 @@ export async function create(db: Database, input: CreateInput) {
   }
 }
 
-export async function update(db: Database, id: string, input: UpdateInput) {
+/** Il termine aggiornato con gli avvisi D132-A dello spostamento; `null` se non c'è. */
+export async function update(
+  db: Database,
+  id: string,
+  input: UpdateInput,
+  permissions: ReadonlySet<string>,
+): Promise<(Term & { warnings: CategoryWarnings }) | null> {
   const current = await findById(db, id);
   if (!current) return null;
-  // D140-A, S9: di una categoria si cambiano solo nome e descrizione; indirizzo e posto nell'albero restano.
   if (current.taxonomy === 'category') {
-    if (input.slug !== undefined) {
-      throw termError(
-        400,
-        'TERM_SLUG_FIXED',
-        'L’indirizzo di una categoria non si cambia: si può rinominare solo il nome.',
-      );
-    }
-    if (input.parentId !== undefined || input.position !== undefined) {
-      throw termError(
-        400,
-        'TERM_FIELD_FIXED',
-        'Di una categoria si cambiano solo il nome e la descrizione.',
-      );
-    }
+    assertCategoryFields(input);
+    const warnings = await updateCategory(db, id, input, permissions);
+    if (warnings === null) return null;
+    const row = await findById(db, id);
+    return row ? { ...row, warnings } : null;
   }
 
   const slug = input.slug ?? current.slug;
@@ -140,10 +148,38 @@ export async function update(db: Database, id: string, input: UpdateInput) {
   } catch (caught) {
     throw conflictFrom(caught) ?? caught;
   }
-  return findById(db, id);
+  const row = await findById(db, id);
+  return row ? { ...row, warnings: [] } : null;
 }
 
-export async function remove(db: Database, id: string): Promise<boolean> {
+type Term = NonNullable<Awaited<ReturnType<typeof findById>>>;
+
+/** D140-A, DR-280: di una categoria si cambiano nome, descrizione e genitrice; lo slug e la posizione restano. */
+function assertCategoryFields(input: UpdateInput): void {
+  if (input.slug !== undefined) {
+    throw termError(
+      400,
+      'TERM_SLUG_FIXED',
+      'L’indirizzo di una categoria non si cambia: si può rinominare solo il nome.',
+    );
+  }
+  if (input.position !== undefined) {
+    throw termError(
+      400,
+      'TERM_FIELD_FIXED',
+      'Di una categoria si cambiano il nome, la descrizione e la categoria genitrice.',
+    );
+  }
+}
+
+export async function remove(
+  db: Database,
+  id: string,
+  permissions: ReadonlySet<string>,
+): Promise<{ name: string; path: string } | null> {
+  const current = await findById(db, id);
+  if (!current) return null;
+  if (current.taxonomy === 'category') return removeCategory(db, id, permissions);
   const [used] = await db
     .select({ value: count() })
     .from(schema.contentTerms)
@@ -155,5 +191,5 @@ export async function remove(db: Database, id: string): Promise<boolean> {
     .delete(schema.terms)
     .where(eq(schema.terms.id, id))
     .returning({ id: schema.terms.id });
-  return rows.length > 0;
+  return rows.length > 0 ? { name: current.name, path: current.path } : null;
 }

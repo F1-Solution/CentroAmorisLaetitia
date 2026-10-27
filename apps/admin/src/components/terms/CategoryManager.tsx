@@ -6,21 +6,17 @@ import { api, ApiError } from '../../lib/api';
 import { useSession } from '../../lib/session';
 import { slugFromTitle } from '../ContentList';
 import { AreaShell } from '../AreaShell';
+import { CategoryDeleteAction } from './CategoryDeleteAction';
+import { CategoryEditDialog, type CategoryRow, type CategoryWarning } from './CategoryEditDialog';
 import './CategoryManager.css';
 
 /**
- * Schermata «Categorie»: elenco, creazione e rinomina, senza eliminazione né genitore e
- * con lo slug fisso dopo la creazione (S5, S6, S9, D140-A).
+ * Schermata «Categorie»: elenco, creazione, modifica di nome, descrizione, genitrice e
+ * SEO, eliminazione; lo slug resta fisso dopo la creazione (S5, S6, D140-A, DR-280).
  */
 
 /** Una categoria come la restituisce `GET /terms?taxonomy=category`. */
-interface Category {
-  readonly id: string;
-  readonly slug: string;
-  readonly name: string;
-  readonly path: string;
-  readonly contentCount: number;
-}
+type Category = CategoryRow;
 
 interface FieldErrors {
   readonly name?: string;
@@ -58,9 +54,37 @@ function FormAlert({
   );
 }
 
+const WARNINGS_TITLE = 'Riferimenti scritti a mano che non cambiano';
+
+/** Gli avvisi D132-A dopo uno spostamento, con le parole dell'editor dei contenuti. */
+function ManualReferences({
+  warnings,
+}: {
+  readonly warnings: readonly CategoryWarning[];
+}): React.JSX.Element {
+  return (
+    <section aria-label={WARNINGS_TITLE}>
+      <Alert variant="warning" title={WARNINGS_TITLE}>
+        <ul>
+          {warnings.map((warning) => (
+            <li key={`${warning.kind}-${warning.id}`}>
+              {warning.kind === 'canonical'
+                ? `L’indirizzo canonico di un contenuto indica ancora ${warning.value}.`
+                : `Una voce di menu personalizzata indica ancora ${warning.value}.`}
+            </li>
+          ))}
+        </ul>
+        <p>Non si riscrivono da soli: il redirect porta comunque al nuovo indirizzo.</p>
+      </Alert>
+    </section>
+  );
+}
+
 export function CategoryManager(): React.JSX.Element {
   const { user } = useSession();
   const canWrite = user?.permissions.includes('content.write') ?? false;
+  // DR-246: spostare ed eliminare cambiano un archivio pubblico, come per i contenuti.
+  const canPublish = user?.permissions.includes('content.publish') ?? false;
 
   const [categories, setCategories] = useState<readonly Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +97,8 @@ export function CategoryManager(): React.JSX.Element {
   const [slugEdited, setSlugEdited] = useState(false);
   const [createErrors, setCreateErrors] = useState<FieldErrors>({});
 
-  const [renaming, setRenaming] = useState<Category | null>(null);
-  const [renameName, setRenameName] = useState('');
-  const [renameErrors, setRenameErrors] = useState<FieldErrors>({});
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [warnings, setWarnings] = useState<readonly CategoryWarning[]>([]);
 
   const [busy, setBusy] = useState(false);
 
@@ -100,11 +123,6 @@ export function CategoryManager(): React.JSX.Element {
     setCreateErrors({});
   }
 
-  function closeRename(): void {
-    setRenaming(null);
-    setRenameErrors({});
-  }
-
   async function createCategory(): Promise<void> {
     setBusy(true);
     setCreateErrors({});
@@ -117,20 +135,6 @@ export function CategoryManager(): React.JSX.Element {
       await load();
     } catch (caught) {
       setCreateErrors(fieldErrorsFrom(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function renameCategory(category: Category): Promise<void> {
-    setBusy(true);
-    setRenameErrors({});
-    try {
-      await api(`/terms/${category.id}`, { method: 'PATCH', body: { name: renameName } });
-      closeRename();
-      await load();
-    } catch (caught) {
-      setRenameErrors(fieldErrorsFrom(caught));
     } finally {
       setBusy(false);
     }
@@ -172,33 +176,6 @@ export function CategoryManager(): React.JSX.Element {
     );
   }
 
-  function renderRenameDialog(): React.JSX.Element | null {
-    if (!renaming) return null;
-    return (
-      <Dialog open onClose={closeRename} title="Rinomina categoria">
-        <TextField
-          label="Nome"
-          value={renameName}
-          errorText={renameErrors.name ?? ''}
-          onChange={(event) => setRenameName(event.target.value)}
-        />
-        <p className="amoris-categories__address">
-          L&apos;indirizzo dell&apos;archivio resta <strong>{renaming.path}</strong>: rinominare la
-          categoria non lo cambia.
-        </p>
-        <FormAlert message={renameErrors.general} />
-        <div className="amoris-categories__dialog-actions">
-          <Button variant="secondary" onClick={closeRename} disabled={busy}>
-            Annulla
-          </Button>
-          <Button variant="primary" loading={busy} onClick={() => void renameCategory(renaming)}>
-            Salva il nome
-          </Button>
-        </div>
-      </Dialog>
-    );
-  }
-
   const columns = [
     { key: 'name', header: 'Nome', render: (row: Category) => row.name },
     { key: 'path', header: 'Indirizzo', render: (row: Category) => row.path },
@@ -214,15 +191,20 @@ export function CategoryManager(): React.JSX.Element {
             key: 'actions',
             header: 'Azioni',
             render: (row: Category) => (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setRenaming(row);
-                  setRenameName(row.name);
-                }}
-              >
-                Rinomina
-              </Button>
+              <div className="amoris-categories__row-actions">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setWarnings([]);
+                    setEditing(row);
+                  }}
+                >
+                  Modifica
+                </Button>
+                {canPublish ? (
+                  <CategoryDeleteAction id={row.id} name={row.name} onDeleted={() => void load()} />
+                ) : null}
+              </div>
             ),
           },
         ]
@@ -253,6 +235,8 @@ export function CategoryManager(): React.JSX.Element {
         }
       />
 
+      {warnings.length > 0 ? <ManualReferences warnings={warnings} /> : null}
+
       <DataTable<Category>
         caption="Categorie delle notizie"
         rows={[...categories]}
@@ -264,7 +248,19 @@ export function CategoryManager(): React.JSX.Element {
       />
 
       {renderCreateDialog()}
-      {renderRenameDialog()}
+      {editing ? (
+        <CategoryEditDialog
+          category={editing}
+          categories={categories}
+          canMove={canPublish}
+          onClose={() => setEditing(null)}
+          onSaved={(found) => {
+            setEditing(null);
+            setWarnings(found);
+            void load();
+          }}
+        />
+      ) : null}
     </AreaShell>
   );
 }

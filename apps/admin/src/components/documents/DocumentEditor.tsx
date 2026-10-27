@@ -9,6 +9,7 @@ import { uploadFile } from '../../lib/upload';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { humanSize } from '../media/MediaLibrary';
+import { DocumentDeleteAction } from './DocumentDeleteAction';
 import { lastUpdate, messageOf, type EditorialDocument } from './documentModel';
 import './DocumentEditor.css';
 
@@ -43,6 +44,9 @@ export function DocumentEditor({ documentId }: { readonly documentId: string }):
   const canWrite = user?.permissions.includes('content.write') ?? false;
   // La sostituzione passa da `PUT /media/:id/file`, che chiede `media.write`.
   const canReplace = user?.permissions.includes('media.write') ?? false;
+  // DR-281: l'eliminazione toglie anche il file e ritira il documento (DR-242).
+  const canDelete =
+    canWrite && canReplace && (user?.permissions.includes('content.publish') ?? false);
 
   const [document, setDocument] = useState<EditorialDocument | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -218,6 +222,9 @@ export function DocumentEditor({ documentId }: { readonly documentId: string }):
               >
                 Sostituisci il file
               </Button>
+              {canDelete ? (
+                <DocumentDeleteAction documentId={document.id} title={document.title} />
+              ) : null}
             </div>
           ) : null}
 

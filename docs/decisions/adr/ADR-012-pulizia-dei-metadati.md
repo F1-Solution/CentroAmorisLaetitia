@@ -41,15 +41,15 @@ distribuisce `qpdf` 11.9.0.
 generati (mai quello del caricamento) in una cartella propria che si cancella sempre, e le
 cartelle `amoris-scrub-*` rimaste da una pulizia interrotta si cancellano all'avvio dell'API se
 non cambiano da più di 10 minuti (una più recente può essere una pulizia in corso);
-tempo limite di **30 s** per un PDF e **120 s** per un MP4, con il processo ucciso allo
-scadere; uscita letta per al massimo 64 KB e mai copiata nel log; ambiente ridotto al solo
+tempo limite di **30 s** per un PDF e **120 s** per un MP4, che è una scadenza sola per file
+(`ffprobe` riceve il tempo che resta a `ffmpeg`), con il processo ucciso allo scadere; uscita letta per al massimo 64 KB e mai copiata nel log; ambiente ridotto al solo
 `PATH` (più `SystemRoot` su Windows), senza segreti né configurazione del servizio.
 
 **Comandi esatti.**
 
 - PDF: `qpdf --no-warn --remove-info --remove-metadata <ingresso> <uscita>`. L'uscita 0 e l'uscita 3
   (avvisi, file scritto) valgono come riuscita; ogni altra uscita è un file illeggibile.
-- MP4: `ffmpeg -nostdin -hide_banner -loglevel error -protocol_whitelist file -f mov -i <ingresso>
+- MP4: `ffmpeg -nostdin -hide_banner -loglevel error -protocol_whitelist file -codec_whitelist h264,hevc,aac -f mov -i <ingresso>
   -map 0:V? -map 0:a? -map_metadata -1 -map_chapters -1 -c copy -fflags +bitexact
   -movflags +faststart -fs <limite del tipo> -f mp4 -y <uscita>`. `-f mov` fa leggere il file solo come MP4,
   senza playlist, e i riferimenti esterni (`dref`) sono disattivati per default in `ffmpeg`:
@@ -59,16 +59,24 @@ scadere; uscita letta per al massimo 64 KB e mai copiata nel log; ambiente ridot
   sempre in testa. `-fs` ferma la scrittura appena oltre il limite di peso del tipo: un
   indice che ripete gli stessi byte non riempie il disco, e il file oltre il limite si
   rifiuta con `413 MEDIA_TOO_LARGE`.
+- MP4, controllo dei codec sul **file d'uscita**, dopo `ffmpeg` e dopo i controlli di peso:
+  `ffprobe -v error -protocol_whitelist file -codec_whitelist h264,hevc,aac -f mov
+  -show_entries stream=codec_type,codec_name -of json <uscita>`. L'MP4 si accetta se ha almeno
+  una traccia audio o video e ognuna ha il codec `h264`, `hevc` o `aac`; un'uscita non nulla,
+  un codec fuori elenco, un `codec_name` assente, un JSON illeggibile o nessuna traccia
+  audio o video danno `400 MEDIA_FILE_INVALID`. Sottotitoli e tracce dati non contano: la
+  mappa le ha già tolte, e nell'uscita non ci sono copertine.
 
 **Versioni minime.** `qpdf` **11.10** (le opzioni `--remove-info` e `--remove-metadata`
 esistono dalla 11.10.0; la CI usa la **12.4.2**); `ffmpeg` con i demuxer e i muxer MOV/MP4
-(in sviluppo la 9.0.2).
+e `ffprobe` della **stessa build** (la 9.0.2, in sviluppo e in CI).
 
 **Sicurezza.** `-c copy` non evita l'apertura dei decoder: `avformat_find_stream_info` apre
 quello dichiarato nel file, quindi la superficie esposta a un file ostile è il demuxer `mov`
-più i decoder raggiungibili. I programmi ricevono un ambiente ridotto e `ffmpeg` un limite di
-scrittura (`-fs`). Il limite di memoria è un requisito dell'immagine della 1F (DR-263);
-l'elenco dei codec ammessi è `h264`, `hevc` e `aac`, da attuare prima della 1F (DR-264).
+più i decoder raggiungibili. Per ridurla, `ffmpeg` gira con `-codec_whitelist` e `ffprobe` solo
+sul file d'uscita, anch'esso con la whitelist, così nessun decoder fuori elenco si apre (i parser di
+libavcodec non sono coperti dall'opzione). I programmi ricevono un ambiente ridotto e `ffmpeg` un limite di scrittura (`-fs`). Il limite di memoria è un requisito dell'immagine della 1F (DR-263);
+i codec ammessi sono `h264`, `hevc` e `aac`, attuati nella 1G-W7 (DR-264).
 
 **Posizione nel flusso.** `media/scrub.ts` si chiama nel caricamento e nella sostituzione,
 dopo il riconoscimento del tipo e prima dell'impronta: peso, impronta e byte salvati sono
@@ -84,7 +92,7 @@ di PDF e video è sospeso: il servizio non riesce a ripulire i file. Avvisa chi 
 sito.» Nessun file non ripulito si salva mai. Il log riporta solo programma, codice di
 uscita e durata, mai il nome del file né l'uscita del programma.
 
-**Configurazione.** `QPDF_PATH` e `FFMPEG_PATH` (default: il nome del programma, cercato
+**Configurazione.** `QPDF_PATH`, `FFMPEG_PATH` e `FFPROBE_PATH` (default: il nome del programma, cercato
 nel `PATH`), `SCRUB_PDF_TIMEOUT_MS` e `SCRUB_VIDEO_TIMEOUT_MS`.
 
 **Che cosa sparisce** (provato con file sintetici):
@@ -111,7 +119,7 @@ nel `PATH`), `SCRUB_PDF_TIMEOUT_MS` e `SCRUB_VIDEO_TIMEOUT_MS`.
 - JavaScript e `/OpenAction`;
 - il primo elemento di `/ID`.
 
-**CI.** Un passo prima delle prove installa `ffmpeg` da apt, scarica
+**CI.** Un passo prima delle prove scarica `ffmpeg` e `ffprobe` 9.0.2 come binario statico di versione fissa, con l'impronta controllata (DR-268); poi scarica
 `qpdf-12.4.2-bin-linux-x86_64.zip` dalla release ufficiale, ne controlla l'impronta SHA-256
 (`db367d897829f22c4198ce1094143c9d467bd6ee7dfabc44ba6f02056b24f8b1`) e si ferma se non
 coincide, poi stampa le versioni. Versione e impronta si aggiornano insieme. In sviluppo
@@ -131,7 +139,14 @@ più. Per la CI, scartati `ubuntu-26.04` con `qpdf` 12.3.2 da apt (anteprima pub
 - Un MP4 esce ricomposto con l'indice in testa: parte subito anche da un server che serve
   intervalli di byte.
 - L'immagine di produzione, che sceglie la 1F (ADR-009), **deve contenere `qpdf` 11.10 o più
-  recente e `ffmpeg`**, e i percorsi si impostano con `QPDF_PATH` e `FFMPEG_PATH`.
+  recente, `ffmpeg` e `ffprobe`** (della stessa build), e i percorsi si impostano con `QPDF_PATH`,
+  `FFMPEG_PATH` e `FFPROBE_PATH`.
+
+**Revisione del 2026-10-27 (1G-W7, DR-268).** La CI prende `ffmpeg` e `ffprobe` 9.0.2 come binario statico di versione fissa invece della 6.1.1 di `apt`.
+
+**Revisione del 2026-10-27 (1G-W7, DR-264).** I codec si controllano con `ffprobe` sul file
+d'uscita, dopo `ffmpeg`, perché `-codec_whitelist` da solo non rifiuta l'audio fuori elenco e
+resta come difesa in più; il programma si imposta con la nuova chiave `FFPROBE_PATH`.
 
 **Requisiti per la 1F** (DR-263, DR-264):
 
@@ -141,8 +156,8 @@ più. Per la CI, scartati `ubuntu-26.04` con `qpdf` 12.3.2 da apt (anteprima pub
 - i programmi girano in un contenitore separato, sotto un utente dedicato, senza rete, con
   il file system in sola lettura salvo la cartella temporanea e con un limite di memoria
   dell'ordine di 1 GB, oltre il quale il file si rifiuta (DR-263);
-- `ffmpeg` accetta solo i codec `h264`, `hevc` e `aac` (`-codec_whitelist`); gli altri MP4 si
-  rifiutano con «file non valido» (DR-264).
+- `ffmpeg` accetta solo i codec `h264`, `hevc` e `aac`, controllati con `ffprobe` sul file
+  d'uscita, e l'immagine contiene anche `ffprobe` (`FFPROBE_PATH`); gli altri MP4 si rifiutano con «file non valido» (DR-264, attuato nella 1G-W7).
 
 **Licenze, da far verificare a una persona prima della 1F.** `qpdf` è distribuito con
 licenza Apache-2.0. `ffmpeg` è LGPL o GPL secondo come è compilato. I due programmi si

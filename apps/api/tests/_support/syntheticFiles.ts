@@ -148,7 +148,16 @@ export interface Mp4Options {
   readonly withMetadata?: boolean;
   /** Copertina JPEG (traccia `attached_pic`) con un marcatore in un segmento COM. */
   readonly withCover?: boolean;
+  /** Formato della copertina: `jpeg` se assente; `png` prova una traccia `png` fuori elenco. */
+  readonly coverFormat?: 'jpeg' | 'png';
+  /** Codec video: `h264` se assente (DR-264); `mpeg4` serve a provare il rifiuto. */
+  readonly videoCodec?: 'h264' | 'hevc' | 'mpeg4';
+  /** Codec audio: `aac` se assente (DR-264); `mp3` e `ac3` servono a provare il rifiuto. */
+  readonly audioCodec?: 'aac' | 'mp3' | 'ac3';
 }
+
+const VIDEO_ENCODERS = { h264: 'libx264', hevc: 'libx265', mpeg4: 'mpeg4' } as const;
+const AUDIO_ENCODERS = { aac: 'aac', mp3: 'libmp3lame', ac3: 'ac3' } as const;
 
 /** JPEG sintetico con un commento che porta il marcatore, come farebbe un EXIF. */
 async function coverJpeg(): Promise<Buffer> {
@@ -163,6 +172,12 @@ async function coverJpeg(): Promise<Buffer> {
   comment.writeUInt16BE(text.length + 2, 2);
   return Buffer.concat([jpeg.subarray(0, 2), comment, text, jpeg.subarray(2)]);
 }
+
+/** PNG sintetico piccolo, come copertina. */
+const coverPng = (): Promise<Buffer> =>
+  sharp({ create: { width: 16, height: 16, channels: 3, background: '#2840c8' } })
+    .png()
+    .toBuffer();
 
 /** Riquadro `uuid` con il GUID dell'XMP, in coda al file. */
 function xmpUuidBox(): Buffer {
@@ -179,7 +194,15 @@ function xmpUuidBox(): Buffer {
 
 /** MP4 breve generato con `ffmpeg -f lavfi`; con `withMetadata` porta posizione, artista, capitoli, sottotitoli, timecode e XMP. */
 export async function buildMp4(options: Mp4Options = {}): Promise<Buffer> {
-  const { faststart = false, withAudio = true, withMetadata = true, withCover = false } = options;
+  const {
+    faststart = false,
+    withAudio = true,
+    withMetadata = true,
+    withCover = false,
+    coverFormat = 'jpeg',
+    videoCodec = 'h264',
+    audioCodec = 'aac',
+  } = options;
   const dir = await mkdtemp(join(tmpdir(), 'prova-mp4-'));
   try {
     const out = join(dir, 'out.mp4');
@@ -188,8 +211,9 @@ export async function buildMp4(options: Mp4Options = {}): Promise<Buffer> {
     if (withAudio) args.push('-f', 'lavfi', '-i', 'sine=frequency=440:duration=2');
     const maps = ['-map', '0:v'];
     if (withAudio) maps.push('-map', '1:a');
-    const codecs = ['-c:v', 'mpeg4'];
-    if (withAudio) codecs.push('-c:a', 'aac');
+    const codecs = ['-c:v', VIDEO_ENCODERS[videoCodec]];
+    if (videoCodec === 'h264') codecs.push('-pix_fmt', 'yuv420p');
+    if (withAudio) codecs.push('-c:a', AUDIO_ENCODERS[audioCodec]);
     const extra: string[] = [];
     if (withMetadata) {
       const srt = join(dir, 'sub.srt');
@@ -217,8 +241,8 @@ export async function buildMp4(options: Mp4Options = {}): Promise<Buffer> {
       );
     }
     if (withCover) {
-      const cover = join(dir, 'cover.jpg');
-      await writeFile(cover, await coverJpeg());
+      const cover = join(dir, coverFormat === 'png' ? 'cover.png' : 'cover.jpg');
+      await writeFile(cover, coverFormat === 'png' ? await coverPng() : await coverJpeg());
       const inputs = args.filter((one) => one === '-i').length;
       args.push('-i', cover);
       maps.push('-map', String(inputs));
@@ -355,6 +379,12 @@ export async function probeMp4(mp4: Buffer): Promise<Mp4Probe> {
 /** Vero se i byte contengono la stringa (in latino-1, come la si è scritta). */
 export const contains = (bytes: Buffer, text: string): boolean =>
   bytes.includes(Buffer.from(text, 'latin1'));
+
+/** Vero se `ffmpeg` ha l'encoder: le prove `hevc` saltano solo se manca (e lo dicono), mai in silenzio. */
+export async function hasEncoder(name: string): Promise<boolean> {
+  const { stdout } = await run(FFMPEG, ['-hide_banner', '-encoders']);
+  return stdout.split(/\r?\n/).some((line) => line.trim().split(/\s+/)[1] === name);
+}
 
 /** Fallisce con un messaggio chiaro se mancano i programmi: la CI non deve mai saltare queste prove. */
 export async function assertToolsInstalled(): Promise<void> {

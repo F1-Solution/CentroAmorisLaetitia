@@ -3,7 +3,7 @@ import { blockClassName } from './class-name';
 import { spacingVariables } from './spacing';
 import { BlockRenderer } from './BlockRenderer';
 import type { MediaMap } from './media';
-import type { SlidersMap, FormsMap, PostListsMap } from './data-maps';
+import type { SlidersMap, FormsMap, PostListsMap, DocumentsMap } from './data-maps';
 
 export interface RowComponentProps {
   readonly block: RowBlock;
@@ -11,9 +11,19 @@ export interface RowComponentProps {
   readonly sliders?: SlidersMap | undefined;
   readonly forms?: FormsMap | undefined;
   readonly postLists?: PostListsMap | undefined;
+  readonly documents?: DocumentsMap | undefined;
+  readonly preview?: boolean | undefined;
 }
 
-export function Row({ block, media, sliders, forms, postLists }: RowComponentProps) {
+export function Row({
+  block,
+  media,
+  sliders,
+  forms,
+  postLists,
+  documents,
+  preview,
+}: RowComponentProps) {
   return (
     <div
       className={blockClassName('row', block.props.classes)}
@@ -29,6 +39,8 @@ export function Row({ block, media, sliders, forms, postLists }: RowComponentPro
           sliders={sliders}
           forms={forms}
           postLists={postLists}
+          documents={documents}
+          preview={preview}
         />
       ))}
     </div>

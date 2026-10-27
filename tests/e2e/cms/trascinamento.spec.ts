@@ -29,6 +29,7 @@ function stato(page: Page): Locator {
 
 /** Prende la maniglia e porta il puntatore sulla fascia scelta, **senza** rilasciare. */
 async function portaSopra(page: Page, presa: Locator, arrivo: Locator, fascia: Fascia) {
+  await presa.scrollIntoViewIfNeeded();
   const da = await presa.boundingBox();
   if (!da) throw new Error('maniglia non visibile');
   await page.mouse.move(da.x + da.width / 2, da.y + da.height / 2);
@@ -37,6 +38,7 @@ async function portaSopra(page: Page, presa: Locator, arrivo: Locator, fascia: F
   await page.mouse.move(da.x + da.width / 2, da.y + da.height / 2 + 14, { steps: 4 });
   // La riga di arrivo si misura **dopo** l'avvio: all'inizio del trascinamento
   // la pagina può scorrere, e una misura presa prima punterebbe alla fascia sbagliata.
+  await arrivo.scrollIntoViewIfNeeded();
   const a = await arrivo.boundingBox();
   if (!a) throw new Error('riga di arrivo non visibile');
   await page.mouse.move(a.x + a.width / 2, a.y + a.height * QUOTA[fascia], { steps: 15 });
@@ -115,6 +117,8 @@ test.describe('menu', () => {
     await maniglia(page, sotto).focus();
     await page.keyboard.press('Space');
     await page.keyboard.press('ArrowUp');
+    // Prima che la freccia su sia annunciata, la freccia destra non troverebbe ancora la voce sopra.
+    await expect(stato(page)).toContainText(`«${sopra}»`);
     await page.keyboard.press('ArrowRight');
     await expect(stato(page)).toHaveText(`«${sotto}» andrà dentro «${sopra}».`);
     await page.keyboard.press('Space');

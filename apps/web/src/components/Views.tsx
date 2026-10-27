@@ -1,9 +1,10 @@
 import { Fragment } from 'react';
-import { BlocksDocument, type MediaMap } from '@amoris/blocks';
+import { BlocksDocument, type MediaMap, type PostListsMap } from '@amoris/blocks';
 import type { PostPage, PublicContent, PublicDocument, SearchPage, Term } from '../lib/api';
 import { archiveSummary, excerptLines, fileSize, longDate, postDate } from '../lib/format';
 import { featuredImageAttributes } from '../lib/featured';
-import { promoteFirstHeading } from '../lib/headings';
+import { hasH1, promoteFirstHeading } from '../lib/headings';
+import { DEFAULT_SITE_DATES, formatWpDate, type SiteDates } from '../lib/wpDate';
 
 /**
  * I template del sito pubblico, uno per tipo di pagina della sorgente. La forma
@@ -27,8 +28,29 @@ function pageHeading(content: PublicContent['content'], titleShown: boolean) {
   return { document, hidden: !hasH1 && content.title.trim() !== '' };
 }
 
-export function ContentView({ data }: { readonly data: PublicContent }) {
-  const { content, media, sliders, forms, postLists } = data;
+/** Le date degli elenchi Category Posts in «Formato data» (`preset_date_format = sitedate`, DR-270). */
+function datedPostLists(postLists: PostListsMap, dates: SiteDates): PostListsMap {
+  return Object.fromEntries(
+    Object.entries(postLists).map(([id, items]) => [
+      id,
+      items.map((item) =>
+        item.publishedAt
+          ? { ...item, dateText: formatWpDate(item.publishedAt, dates.dateFormat, dates) }
+          : item,
+      ),
+    ]),
+  );
+}
+
+export function ContentView({
+  data,
+  dates = DEFAULT_SITE_DATES,
+}: {
+  readonly data: PublicContent;
+  readonly dates?: SiteDates;
+}) {
+  const { content, media, sliders, forms, documents } = data;
+  const postLists = datedPostLists(data.postLists, dates);
   if (content.type === 'page' && isFullWidthLayout(content)) {
     // Le pagine costruite con Divi non mostrano il titolo: lo fa il loro contenuto.
     const { document, hidden } = pageHeading(content, false);
@@ -42,6 +64,7 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
             sliders={sliders}
             forms={forms}
             postLists={postLists}
+            documents={documents}
           />
         </div>
       </article>
@@ -52,9 +75,13 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
     // Articolo Divi a tutta larghezza: sezioni da bordo a bordo, titolo nel contenitore (DR-139).
     return (
       <article id={`post-${content.id}`} className="post et_pb_post single" data-builder="divi">
-        <div className="container">
-          <PostHeader title={content.title} publishedAt={content.publishedAt} />
-        </div>
+        {content.showTitle ? (
+          <div className="container">
+            <PostHeader title={content.title} publishedAt={content.publishedAt} dates={dates} />
+          </div>
+        ) : (
+          <HiddenPostTitle content={content} />
+        )}
         <div className="entry-content">
           <BlocksDocument
             document={content.blocks}
@@ -62,6 +89,7 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
             sliders={sliders}
             forms={forms}
             postLists={postLists}
+            documents={documents}
           />
         </div>
       </article>
@@ -80,7 +108,17 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
             data-builder={builtWithDivi ? 'divi' : undefined}
           >
             {content.type === 'post' ? (
-              <PostHeader title={content.title} publishedAt={content.publishedAt} />
+              // Divi `single.php:42`: a titolo spento la notizia a sezioni perde titolo e data; le altre il solo titolo, come `shk-hide-title` (DR-286).
+              content.showTitle ? (
+                <PostHeader title={content.title} publishedAt={content.publishedAt} dates={dates} />
+              ) : (
+                <>
+                  <HiddenPostTitle content={content} />
+                  {builtWithDivi ? null : (
+                    <PostHeader title={null} publishedAt={content.publishedAt} dates={dates} />
+                  )}
+                </>
+              )
             ) : titleShown ? (
               <h1 className="entry-title main_title">{content.title}</h1>
             ) : heading?.hidden ? (
@@ -93,6 +131,7 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
                 sliders={sliders}
                 forms={forms}
                 postLists={postLists}
+                documents={documents}
               />
             </div>
           </article>
@@ -104,12 +143,27 @@ export function ContentView({ data }: { readonly data: PublicContent }) {
   );
 }
 
-function PostHeader({ title, publishedAt }: { title: string; publishedAt: string | null }) {
+/** A titolo spento la notizia tiene un solo `h1`, per i lettori di schermo, se il testo non ne ha uno (spirito di DR-040). */
+function HiddenPostTitle({ content }: { content: PublicContent['content'] }) {
+  if (hasH1(content.blocks) || content.title.trim() === '') return null;
+  return <h1 className="screen-reader-text">{content.title}</h1>;
+}
+
+function PostHeader({
+  title,
+  publishedAt,
+  dates,
+}: {
+  /** `null`: titolo spento, resta la data. */
+  title: string | null;
+  publishedAt: string | null;
+  dates: SiteDates;
+}) {
   return (
     <div className="et_post_meta_wrapper">
-      <h1 className="entry-title">{title}</h1>
+      {title === null ? null : <h1 className="entry-title">{title}</h1>}
       <p className="post-meta">
-        <span className="published">{postDate(publishedAt)}</span>
+        <span className="published">{postDate(publishedAt, dates)}</span>
       </p>
     </div>
   );
@@ -161,11 +215,13 @@ function PostListing({
   posts,
   page,
   pageHref,
+  dates,
 }: {
   readonly heading: string;
   readonly posts: PostPage | SearchPage;
   readonly page: number;
   readonly pageHref: (n: number) => string;
+  readonly dates: SiteDates;
 }) {
   const pages = Math.max(1, Math.ceil(posts.meta.total / posts.meta.perPage));
   return (
@@ -182,7 +238,7 @@ function PostListing({
                 <a href={post.path}>{post.title}</a>
               </h2>
               <p className="post-meta">
-                <span className="published">{postDate(post.publishedAt)}</span>
+                <span className="published">{postDate(post.publishedAt, dates)}</span>
               </p>
               {/* Nella ricerca l'estratto è delle sole notizie (DR-248); l'archivio ha solo notizie. */}
               <ListingText
@@ -214,13 +270,16 @@ export function ArchiveView({
   term,
   posts,
   page,
+  dates = DEFAULT_SITE_DATES,
 }: {
   readonly term: Term;
   readonly posts: PostPage;
   readonly page: number;
+  readonly dates?: SiteDates;
 }) {
   return (
     <PostListing
+      dates={dates}
       heading={term.name}
       posts={posts}
       page={page}
@@ -240,10 +299,12 @@ export function SearchView({
   query,
   posts,
   page,
+  dates = DEFAULT_SITE_DATES,
 }: {
   readonly query: string;
   readonly posts: SearchPage;
   readonly page: number;
+  readonly dates?: SiteDates;
 }) {
   if (posts.items.length === 0) {
     return (
@@ -265,6 +326,7 @@ export function SearchView({
   }
   return (
     <PostListing
+      dates={dates}
       heading={`Risultati della ricerca per: ${query}`}
       posts={posts}
       page={page}
@@ -276,9 +338,11 @@ export function SearchView({
 export function DocumentView({
   document,
   media,
+  dates = DEFAULT_SITE_DATES,
 }: {
   readonly document: PublicDocument;
   readonly media: MediaMap;
+  readonly dates?: SiteDates;
 }) {
   const file = media[document.mediaId];
   return (
@@ -286,7 +350,7 @@ export function DocumentView({
       <div id="content-area" className="clearfix">
         <div id="left-area">
           <article className="wpdmpro et_pb_post single">
-            <PostHeader title={document.title} publishedAt={document.publishedAt} />
+            <PostHeader title={document.title} publishedAt={document.publishedAt} dates={dates} />
             <div className="entry-content">
               {/* Scheda del pacchetto di Download Manager, senza il contatore dei download (D75, DR-161). */}
               <div className="w3eden">
@@ -308,12 +372,12 @@ export function DocumentView({
                       </li>
                       <li className="list-group-item">
                         Data di creazione{' '}
-                        <span className="badge">{longDate(document.publishedAt)}</span>
+                        <span className="badge">{longDate(document.publishedAt, dates)}</span>
                       </li>
                       <li className="list-group-item">
                         Ultimo aggiornamento{' '}
                         <span className="badge">
-                          {longDate(document.modifiedAt ?? document.publishedAt)}
+                          {longDate(document.modifiedAt ?? document.publishedAt, dates)}
                         </span>
                       </li>
                     </ul>
@@ -341,9 +405,11 @@ export function DocumentView({
 export function DownloadCategoryView({
   term,
   documents,
+  dates = DEFAULT_SITE_DATES,
 }: {
   readonly term: Term;
   readonly documents: readonly PublicDocument[];
+  readonly dates?: SiteDates;
 }) {
   return (
     <div className="container">
@@ -363,7 +429,7 @@ export function DownloadCategoryView({
                   <a href={href}>{document.title}</a>
                 </h2>
                 <p className="post-meta">
-                  <span className="published">{postDate(document.publishedAt)}</span>
+                  <span className="published">{postDate(document.publishedAt, dates)}</span>
                 </p>
               </article>
             );

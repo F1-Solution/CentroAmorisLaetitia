@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { FEED_ITEMS, renderFeed } from './lib/feed';
+import { languageOf } from './lib/wpDate';
 import { asNextParams, isPreviewPath } from './lib/previewPath';
 import { siteUrl } from './lib/site';
 
@@ -10,7 +11,7 @@ import { siteUrl } from './lib/site';
  *   si chiede all'API se per il percorso vale una regola. Così il codice di stato
  *   è quello registrato — 301 — e non il 308 che Next usa per i propri
  *   reindirizzamenti (criteri 1E-9 e 1E-13).
- * - **Feed RSS** (`/feed/`, `/category/<slug>/feed/`) e il **302** di
+ * - **Feed RSS** (`/feed/`, `/category/<slug>/feed/`, anche sotto una genitrice) e il **302** di
  *   `/wp-sitemap.xml` verso `/sitemap.xml`: indirizzi di sistema della sorgente,
  *   non visivi, che non meritano una pagina propria.
  */
@@ -62,6 +63,7 @@ async function feed(prefix: string): Promise<NextResponse | null> {
       description: siteDescription,
       path: prefix,
       items: posts.items,
+      language: languageOf(settings),
     }),
     { headers: { 'content-type': 'application/rss+xml; charset=UTF-8' } },
   );
@@ -85,7 +87,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/sitemap.xml', request.nextUrl.origin), 302);
   }
 
-  const feedPrefix = /^(\/|\/category\/[^/]+\/)feed\/$/.exec(path)?.[1];
+  const feedPrefix = /^(\/|\/category\/(?:[^/]+\/)+?)feed\/$/.exec(path)?.[1];
   if (feedPrefix) {
     const response = await feed(feedPrefix);
     if (response) return response;

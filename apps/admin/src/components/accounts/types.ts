@@ -16,3 +16,9 @@ export interface CreateAccountBody {
   readonly fullName: string;
   readonly roleKeys: readonly AccountRoleKey[];
 }
+
+/** Campi d'identità modificabili da «Persone e permessi» (DR-282): si mandano solo quelli cambiati. */
+export interface UpdateIdentityBody {
+  readonly fullName?: string;
+  readonly email?: string;
+}

@@ -5,18 +5,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Logger } from './derivatives.js';
 
-/** Pulizia dei metadati di PDF e MP4 con `qpdf` e `ffmpeg` in un processo separato (DR-254, ADR-012). */
+/** Pulizia dei metadati di PDF e MP4 con `qpdf`, `ffmpeg` e `ffprobe` in processi separati (DR-254, DR-264, ADR-012). */
 
 export interface ScrubTools {
   readonly qpdfPath: string;
   readonly ffmpegPath: string;
+  readonly ffprobePath: string;
   readonly pdfTimeoutMs: number;
   readonly videoTimeoutMs: number;
 }
 
 /** Dati non personali di un'esecuzione: mai il nome del file né l'uscita del programma. */
 export interface ScrubTrace {
-  readonly tool: 'qpdf' | 'ffmpeg';
+  readonly tool: 'qpdf' | 'ffmpeg' | 'ffprobe';
   readonly exitCode: number | null;
   readonly durationMs: number;
 }
@@ -84,39 +85,61 @@ export function toolEnv(
   };
 }
 
-/** Esegue il programma senza shell, con tempo massimo, uscita limitata e ambiente ridotto; restituisce il codice di uscita. */
-function runTool(
+/** Esito di un'esecuzione: la traccia e l'uscita standard (al massimo `MAX_OUTPUT_BYTES`). */
+interface ToolRun {
+  readonly trace: ScrubTrace;
+  readonly stdout: string;
+}
+
+/** Esegue il programma senza shell, con tempo massimo, uscita limitata e ambiente ridotto; restituisce traccia e uscita standard. */
+function execTool(
+  tool: ScrubTrace['tool'],
+  command: string,
+  args: readonly string[],
+  timeoutMs: number,
+): Promise<ToolRun> {
+  const started = Date.now();
+  return new Promise((resolve, reject) => {
+    try {
+      execFile(
+        command,
+        [...args],
+        {
+          timeout: timeoutMs,
+          killSignal: 'SIGKILL',
+          maxBuffer: MAX_OUTPUT_BYTES,
+          windowsHide: true,
+          env: toolEnv(),
+        },
+        (error, stdout) => {
+          const durationMs = Date.now() - started;
+          if (!error) return resolve({ trace: { tool, exitCode: 0, durationMs }, stdout });
+          const verdict = classifyFailure(error as ExecFailure);
+          if (typeof verdict === 'number') {
+            return resolve({ trace: { tool, exitCode: verdict, durationMs }, stdout: '' });
+          }
+          const trace = { tool, exitCode: null, durationMs };
+          return reject(
+            verdict === 'unavailable'
+              ? new ScrubUnavailableError(trace)
+              : new ScrubUnreadableError(trace),
+          );
+        },
+      );
+    } catch {
+      // Un errore sincrono all'avvio (per esempio EINVAL su Windows con un `.cmd`) è un programma non eseguibile.
+      reject(new ScrubUnavailableError({ tool, exitCode: null, durationMs: Date.now() - started }));
+    }
+  });
+}
+
+async function runTool(
   tool: ScrubTrace['tool'],
   command: string,
   args: readonly string[],
   timeoutMs: number,
 ): Promise<ScrubTrace> {
-  const started = Date.now();
-  return new Promise((resolve, reject) => {
-    execFile(
-      command,
-      [...args],
-      {
-        timeout: timeoutMs,
-        killSignal: 'SIGKILL',
-        maxBuffer: MAX_OUTPUT_BYTES,
-        windowsHide: true,
-        env: toolEnv(),
-      },
-      (error) => {
-        const durationMs = Date.now() - started;
-        if (!error) return resolve({ tool, exitCode: 0, durationMs });
-        const verdict = classifyFailure(error as ExecFailure);
-        if (typeof verdict === 'number') return resolve({ tool, exitCode: verdict, durationMs });
-        const trace = { tool, exitCode: null, durationMs };
-        return reject(
-          verdict === 'unavailable'
-            ? new ScrubUnavailableError(trace)
-            : new ScrubUnreadableError(trace),
-        );
-      },
-    );
-  });
+  return (await execTool(tool, command, args, timeoutMs)).trace;
 }
 
 /** Cancella una cartella temporanea; se non si riesce lo annota senza il percorso e l'esito non cambia (L2). */
@@ -130,7 +153,7 @@ async function removeDir(dir: string, log: Logger | undefined): Promise<boolean>
   }
 }
 
-/** Età oltre la quale una cartella della pulizia è un residuo: ben oltre il tempo massimo di un MP4 (120 s). */
+/** Età oltre la quale una cartella della pulizia è un residuo: ben oltre la scadenza di un MP4 (120 s). */
 export const LEFTOVER_MIN_AGE_MS = 10 * 60 * 1000;
 
 /** Vero se la cartella non cambia da più di `LEFTOVER_MIN_AGE_MS`; se non si legge, non si tocca. */
@@ -142,7 +165,7 @@ async function isStale(dir: string, now: number): Promise<boolean> {
   }
 }
 
-/** Cancella all'avvio le cartelle lasciate da una pulizia interrotta, che contengono originali non ripuliti (L2). */
+/** Cancella all'avvio le cartelle di una pulizia interrotta, che contengono originali non ripuliti (L2). */
 export async function removeLeftoverScrubDirs(
   log?: Logger,
   base: string = tmpdir(),
@@ -174,6 +197,70 @@ function pdfArgs(input: string, output: string): string[] {
   return ['--no-warn', '--remove-info', '--remove-metadata', input, output];
 }
 
+/** Codec audio e video ammessi in un MP4 (DR-264): ogni altro fa rifiutare il file. */
+const ALLOWED_CODECS: readonly string[] = ['h264', 'hevc', 'aac'];
+
+/** Tracce di un MP4 lette da `ffprobe`. */
+interface ProbedStream {
+  readonly codec_type?: unknown;
+  readonly codec_name?: unknown;
+}
+
+/** Vero se c'è almeno una traccia audio o video e ognuna ha un codec ammesso; sottotitoli e dati non contano. */
+export function hasOnlyAllowedCodecs(json: string): boolean {
+  let streams: unknown;
+  try {
+    streams = (JSON.parse(json) as { streams?: unknown } | null)?.streams;
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(streams)) return false;
+  const media = (streams as (ProbedStream | null)[]).filter(
+    (stream) => stream?.codec_type === 'video' || stream?.codec_type === 'audio',
+  );
+  return (
+    media.length > 0 &&
+    media.every(
+      (stream) =>
+        typeof stream?.codec_name === 'string' && ALLOWED_CODECS.includes(stream.codec_name),
+    )
+  );
+}
+
+/** Argomenti di `ffprobe` sul file d'uscita: stesse protezioni di `ffmpeg`, con la whitelist dei codec. */
+export function probeArgs(input: string): string[] {
+  return [
+    '-v',
+    'error',
+    '-protocol_whitelist',
+    'file',
+    '-codec_whitelist',
+    ALLOWED_CODECS.join(','),
+    '-f',
+    'mov',
+    '-show_entries',
+    'stream=codec_type,codec_name',
+    '-of',
+    'json',
+    input,
+  ];
+}
+
+/** Rifiuta l'uscita con un codec audio o video fuori elenco: la sola `-codec_whitelist` di `ffmpeg` non rifiuta l'audio. */
+async function assertAllowedCodecs(
+  output: string,
+  tools: ScrubTools,
+  timeoutMs: number,
+): Promise<void> {
+  const { trace, stdout } = await execTool(
+    'ffprobe',
+    tools.ffprobePath,
+    probeArgs(output),
+    timeoutMs,
+  );
+  if (trace.exitCode !== 0 || !hasOnlyAllowedCodecs(stdout)) throw new ScrubUnreadableError(trace);
+}
+
 function mp4Args(input: string, output: string, maxBytes: number): string[] {
   return [
     '-nostdin',
@@ -182,6 +269,8 @@ function mp4Args(input: string, output: string, maxBytes: number): string[] {
     'error',
     '-protocol_whitelist',
     'file',
+    '-codec_whitelist',
+    ALLOWED_CODECS.join(','),
     '-f',
     'mov',
     '-i',
@@ -239,6 +328,14 @@ export async function scrubFile(
     const { size } = await stat(target);
     if (size === 0) throw new ScrubUnreadableError(trace);
     if (size > maxBytes) throw new ScrubTooLargeError();
+    // Scadenza unica per file: `ffprobe` riceve il tempo che resta a `ffmpeg`.
+    if (!isPdf) {
+      await assertAllowedCodecs(
+        target,
+        tools,
+        Math.max(1, tools.videoTimeoutMs - trace.durationMs),
+      );
+    }
     return await readFile(target);
   } finally {
     await removeDir(dir, log);

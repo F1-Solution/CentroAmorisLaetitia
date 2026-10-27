@@ -10,6 +10,7 @@ import { previewResponse } from '../public/schemas.js';
 import { previewPage } from './preview.js';
 import { deletionBlockers, removeContent } from './deletion.js';
 import { applyAddressChange, parentOptions, planAddressChange } from './address.js';
+import { assertBlockReferencesValid } from './blockReferences.js';
 import {
   addressChangeBody,
   addressChangeResponse,
@@ -27,6 +28,7 @@ import {
   listQuery,
   listResponse,
   updateBody,
+  updateFieldLabels,
 } from './schemas.js';
 import {
   assertTitleAllowed,
@@ -241,6 +243,10 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      request.auditTarget = {
+        entityId: request.params.id,
+        detail: { fields: updateFieldLabels(request.body) },
+      };
       const row = await update(app.db, request.params.id, request.body);
       if (!row) return reply.callNotFound();
       return reply.send(serialiseDetail(row));
@@ -372,6 +378,12 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       const content = await findById(app.db, request.params.id);
       if (!content) return reply.callNotFound();
       assertTitleAllowed(request.body.title, content.title);
+      // L'anteprima rende la copia di lavoro: valgono le stesse regole del salvataggio (DR-279).
+      await assertBlockReferencesValid(
+        app.db,
+        request.body.blocks,
+        content.blocks as { blocks?: unknown },
+      );
 
       const row = await saveDraft(
         app.db,

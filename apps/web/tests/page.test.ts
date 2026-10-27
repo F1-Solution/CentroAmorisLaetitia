@@ -98,6 +98,8 @@ describe('metadataBase (DR-188, DR-196)', () => {
   it('assoluto da SITE_URL, letto alla richiesta', async () => {
     vi.stubEnv('SITE_URL', 'https://sito.example.invalid/');
     const { generateMetadata } = await import('../src/app/layout');
-    expect(generateMetadata().metadataBase?.toString()).toBe('https://sito.example.invalid/');
+    expect((await generateMetadata()).metadataBase?.toString()).toBe(
+      'https://sito.example.invalid/',
+    );
   });
 });

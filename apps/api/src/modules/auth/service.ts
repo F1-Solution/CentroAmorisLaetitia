@@ -1,5 +1,7 @@
 import { schema, type Database } from '@amoris/db';
 import { eq } from 'drizzle-orm';
+import { AUTH_ACTIONS, writeAudit } from '../../auth/audit.js';
+import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../auth/loginAttempts.js';
 import type { Config } from '../../config.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 
@@ -56,6 +58,53 @@ export async function checkPassword(
     return false;
   }
   return verifyPassword(candidate.passwordHash, password);
+}
+
+/** Chi agisce con la propria sessione: i dati che servono a contare e registrare un fallimento. */
+export interface SessionActor {
+  readonly userId: string;
+  readonly email: string;
+  readonly fullName: string;
+  readonly sessionId: string;
+}
+
+export type CurrentPasswordVerdict = 'ok' | 'invalid' | 'blocked';
+
+/**
+ * Verifica la password attuale della sessione con il conteggio dei tentativi del
+ * controllo 8, unico per `/auth/password` e per le modifiche al proprio account
+ * (DR-288); un fallimento lascia la riga a registro che il conteggio legge.
+ */
+export async function verifyCurrentPassword(
+  db: Database,
+  config: Config,
+  actor: SessionActor,
+  password: string,
+  ipHash: Buffer | null,
+): Promise<CurrentPasswordVerdict> {
+  const attempts = await evaluateAttempts(
+    db,
+    config,
+    actor.email,
+    ipHash,
+    AUTH_ACTIONS.passwordChanged,
+  );
+  if (attempts.delayMs > 0) await new Promise((resolve) => setTimeout(resolve, attempts.delayMs));
+  if (attempts.blocked) return 'blocked';
+  const owner = await findByEmail(db, actor.email);
+  if (await checkPassword(owner, password, config)) return 'ok';
+  await writeAudit(db, {
+    action: AUTH_ACTIONS.passwordChanged,
+    outcome: 'failure',
+    actorUserId: actor.userId,
+    actorLabel: actor.fullName,
+    // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
+    entityType: IDENTIFIER_ENTITY,
+    entityId: identifierDigest(actor.email),
+    sessionId: actor.sessionId,
+    ipHash,
+  });
+  return 'invalid';
 }
 
 export async function setPassword(

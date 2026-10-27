@@ -36,6 +36,8 @@ const config: NextConfig = {
       { source: '/forms/:path*', destination: `${API_URL}/forms/:path*` },
     ];
   },
+  // DR-284: `/.*/` porta i metadati nell'`<head>` per ogni client con user agent; senza user agent restano in streaming.
+  htmlLimitedBots: /.*/,
   poweredByHeader: false,
   // Il pacchetto resta leggero: il sito pubblico deve superare PageSpeed 80 (RC-08).
   productionBrowserSourceMaps: false,

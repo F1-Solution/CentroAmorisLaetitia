@@ -71,3 +71,15 @@
 .amoris-accounts__error {
   margin-bottom: var(--amoris-space-3);
 }
+
+.amoris-accounts__edit {
+  display: grid;
+  gap: var(--amoris-space-3);
+}
+
+.amoris-accounts__notice {
+  margin: 0;
+  color: var(--amoris-text-secondary);
+  font-size: var(--amoris-text-sm-size);
+  line-height: var(--amoris-text-sm-line);
+}

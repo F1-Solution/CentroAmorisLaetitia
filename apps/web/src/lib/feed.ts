@@ -23,8 +23,10 @@ export function renderFeed(options: {
   readonly description: string;
   readonly path: string;
   readonly items: readonly FeedItem[];
+  /** «Lingua del sito» in BCP 47, come `get_bloginfo_rss('language')` (DR-270). */
+  readonly language: string;
 }): string {
-  const { siteUrl, title, description, path, items } = options;
+  const { siteUrl, title, description, path, items, language } = options;
   const entries = items
     .map(
       (item) => `
@@ -44,7 +46,7 @@ export function renderFeed(options: {
     <atom:link href="${escapeXml(`${siteUrl}${path}feed/`)}" rel="self" type="application/rss+xml" />
     <link>${escapeXml(siteUrl + path)}</link>
     <description>${escapeXml(description)}</description>
-    <language>it-IT</language>${entries}
+    <language>${escapeXml(language)}</language>${entries}
   </channel>
 </rss>
 `;

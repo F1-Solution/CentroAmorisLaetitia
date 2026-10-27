@@ -23,7 +23,7 @@ function hasDiviFormTitle(node: unknown): boolean {
   return hasDiviFormTitle(block.children);
 }
 
-function hasH1(document: BlockDocument): boolean {
+export function hasH1(document: BlockDocument): boolean {
   return /<h1[\s>]/i.test(JSON.stringify(document.blocks)) || hasDiviFormTitle(document.blocks);
 }
 

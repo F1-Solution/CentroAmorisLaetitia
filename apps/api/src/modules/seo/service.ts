@@ -1,5 +1,6 @@
 import { schema, type Database } from '@amoris/db';
 import { asc, eq } from 'drizzle-orm';
+import { SEO_SCHEMA_SCOPE_MESSAGE, SEO_SCHEMA_SCOPES } from '@amoris/contracts';
 import type { z } from 'zod';
 import type { contentSeoBody, templateBody } from './schemas.js';
 
@@ -23,6 +24,15 @@ export async function findTemplate(db: Database, scope: string) {
     .where(eq(schema.seoTemplates.scope, scope))
     .limit(1);
   return row ?? null;
+}
+
+/** Il tipo di dati strutturati vale solo nei modelli che rendono un contenuto (DR-278). */
+export function assertSchemaTypeScope(scope: string, schemaType: string | null | undefined): void {
+  if (schemaType !== null && schemaType !== undefined && !SEO_SCHEMA_SCOPES.includes(scope))
+    throw Object.assign(new Error(SEO_SCHEMA_SCOPE_MESSAGE), {
+      statusCode: 400,
+      code: 'SEO_SCHEMA_TYPE_SCOPE',
+    });
 }
 
 export async function upsertTemplate(
@@ -72,6 +82,7 @@ export async function upsertContentSeo(db: Database, contentId: string, input: C
     ogImageId: input.ogImageId === undefined ? (current?.ogImageId ?? null) : input.ogImageId,
     robotsNoindex: input.robotsNoindex ?? current?.robotsNoindex ?? false,
     robotsNofollow: input.robotsNofollow ?? current?.robotsNofollow ?? false,
+    schemaType: input.schemaType === undefined ? (current?.schemaType ?? null) : input.schemaType,
     updatedAt: new Date(),
   };
   await db

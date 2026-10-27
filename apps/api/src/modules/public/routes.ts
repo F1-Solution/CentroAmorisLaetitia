@@ -27,21 +27,18 @@ import {
   fallbackDescription,
   summaryTextStart,
   fileByPublicPath,
-  fillTemplate,
   mediaByIds,
   publicMenu,
   publicSettings,
   publishedByPath,
   publishedPosts,
   resolveRedirect,
-  robotsDirectives,
   sitemapEntries,
+  seoForTerm,
   termByPath,
 } from './service.js';
 import { searchPublished } from './search.js';
 import { assemblePage, publicDocument, siteTitle } from './page.js';
-import { schema } from '@amoris/db';
-import { eq } from 'drizzle-orm';
 import { parseByteRange } from '../../lib/objectStore.js';
 
 /**
@@ -200,21 +197,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const term = await termByPath(app.db, request.query.path);
       if (!term) return reply.callNotFound();
-      const [template] = await app.db
-        .select()
-        .from(schema.seoTemplates)
-        .where(eq(schema.seoTemplates.scope, 'category'))
-        .limit(1);
-      return reply.send({
-        term,
-        seo: {
-          title: fillTemplate(template?.titleTemplate ?? '{term_title} - {site_title}', {
-            term_title: term.name,
-            site_title: await siteTitle(app.db),
-          }),
-          robots: robotsDirectives(false, false, template?.robotsDirectives ?? []),
-        },
-      });
+      return reply.send({ term, seo: await seoForTerm(app.db, term, await siteTitle(app.db)) });
     },
   );
 

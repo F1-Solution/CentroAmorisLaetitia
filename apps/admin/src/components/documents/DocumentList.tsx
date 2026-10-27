@@ -1,16 +1,24 @@
 'use client';
 
-import { DataTable, PageHeader } from '@amoris/ui';
+import { Button, DataTable, PageHeader } from '@amoris/ui';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { useSession } from '../../lib/session';
 import { siteUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
 import { humanSize } from '../media/MediaLibrary';
+import { DocumentCreateDialog } from './DocumentCreateDialog';
 import { lastUpdate, messageOf, type EditorialDocument } from './documentModel';
 
 /** Schermata «Documenti»: i documenti scaricabili del sito, con il collegamento alla scheda e alla pagina pubblica. */
 export function DocumentList(): React.JSX.Element {
+  const { user } = useSession();
+  // DR-281: creare tocca anche il file e pubblica subito il documento (DR-242).
+  const canCreate = ['content.write', 'media.write', 'content.publish'].every(
+    (permission) => user?.permissions.includes(permission) ?? false,
+  );
+  const [creating, setCreating] = useState(false);
   const [documents, setDocuments] = useState<readonly EditorialDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +46,14 @@ export function DocumentList(): React.JSX.Element {
     >
       <PageHeader
         title="Documenti"
-        summary="I documenti scaricabili del sito: se ne cambiano titolo, descrizione e file."
+        summary="I documenti scaricabili del sito: se ne creano di nuovi e se ne cambiano titolo, descrizione e file."
+        action={
+          canCreate ? (
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              Nuovo documento
+            </Button>
+          ) : undefined
+        }
       />
 
       <DataTable<EditorialDocument>
@@ -83,6 +98,8 @@ export function DocumentList(): React.JSX.Element {
           },
         ]}
       />
+
+      {creating ? <DocumentCreateDialog onClose={() => setCreating(false)} /> : null}
     </AreaShell>
   );
 }

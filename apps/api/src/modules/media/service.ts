@@ -153,6 +153,7 @@ async function scrubBody(
       throw mediaError('MEDIA_SCRUB_UNAVAILABLE', mediaMessages.scrubUnavailable());
     }
     if (error instanceof ScrubUnreadableError) {
+      context.log?.warn?.({ ...error.trace }, 'file rifiutato dalla pulizia dei metadati');
       throw mediaError('MEDIA_FILE_INVALID', mediaMessages.fileInvalid(fileName));
     }
     throw error;
@@ -641,6 +642,37 @@ async function citedBy(db: Database | Transaction, id: string, paths: readonly s
       ),
     )
     .limit(10);
+}
+
+/** Vero se il media resta citato da contenuti, caroselli o documenti diversi da quello indicato (DR-281). */
+export async function citedOutside(
+  db: Database | Transaction,
+  id: string,
+  exceptDocumentId: string,
+): Promise<boolean> {
+  const [media] = await db
+    .select({ publicPath: schema.media.publicPath })
+    .from(schema.media)
+    .where(eq(schema.media.id, id));
+  if (!media) return false;
+  const variants = await db
+    .select({ publicPath: schema.mediaVariants.publicPath })
+    .from(schema.mediaVariants)
+    .where(eq(schema.mediaVariants.mediaId, id));
+  const contents = await citedBy(db, id, [media.publicPath, ...variants.map((v) => v.publicPath)]);
+  const [other] = await db
+    .select({ id: schema.documents.id })
+    .from(schema.documents)
+    .where(
+      and(eq(schema.documents.mediaId, id), sql`${schema.documents.id} <> ${exceptDocumentId}`),
+    )
+    .limit(1);
+  const [slide] = await db
+    .select({ id: schema.sliderSlides.id })
+    .from(schema.sliderSlides)
+    .where(eq(schema.sliderSlides.mediaId, id))
+    .limit(1);
+  return contents.length > 0 || Boolean(other) || Boolean(slide);
 }
 
 export interface RemoveOptions {

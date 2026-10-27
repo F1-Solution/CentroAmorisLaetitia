@@ -26,4 +26,6 @@ export type {
   FormsMap,
   PostListItem,
   PostListsMap,
+  DocumentLinkData,
+  DocumentsMap,
 } from './data-maps';

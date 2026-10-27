@@ -160,5 +160,8 @@ Decisioni delle wave che cambiano le wave successive:
 | ~~**D158**~~ | `qpdf` ≥ 11.10 in CI | **DR-262**: binario ufficiale 12.4.2 scaricato con l'impronta SHA-256 controllata |
 | ~~**D159**~~ | Limite di memoria di `qpdf` e `ffmpeg` | **DR-263**: contenitore separato con limite di memoria, senza rete, utente dedicato; requisito dell'immagine della 1F |
 | ~~**D160**~~ | Codec video ammessi nei caricamenti | **DR-264**: solo `h264`, `hevc` e `aac`, da attuare prima della 1F |
+| ~~**D161**~~ | Dove si eseguono 1E-19 e l'anteprima | **DR-265**: sull'ambiente di collaudo, dall'utente (HO-035); ripristino prima della `1G-W8` |
+| ~~**D162**~~ | Convivenza di sviluppo e collaudo | **DR-266**: `git worktree` separato, porte 3300-3302, `amoris_collaudo`, bucket `collaudo-*` |
+| ~~**D163**~~ | Vista peggiorata nel confronto integrale | **DR-267**: identica all'ultima accettata, oppure entro la percentuale accettata verso il riferimento; oltre, correzione o accettazione voce per voce |
 
 Nessuna wave parte con una decisione bloccante aperta.

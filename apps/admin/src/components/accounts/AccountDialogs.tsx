@@ -3,6 +3,7 @@
 import { Alert, Button, CheckboxField, Dialog } from '@amoris/ui';
 import { useState } from 'react';
 import { ROLE_OPTIONS } from './accountLabels';
+import { CurrentPasswordField, useCurrentPassword } from './CurrentPasswordField';
 import type { Account, AccountRoleKey } from './types';
 
 interface ConfirmProps {
@@ -67,19 +68,29 @@ export function ConfirmAccountDialog({
 }
 
 export interface RolesDialogProps extends ConfirmProps {
-  readonly onSave: (roleKeys: readonly AccountRoleKey[]) => void;
+  /** Vero sul proprio account: il salvataggio chiede la password attuale (DR-288). */
+  readonly isSelf?: boolean;
+  /** Rifiuto della password attuale da parte dell'API, mostrato sul campo. */
+  readonly passwordError?: string | null;
+  /** Quanti rifiuti della password: ognuno svuota il campo e gli rende il fuoco. */
+  readonly passwordRefusals?: number;
+  readonly onSave: (roleKeys: readonly AccountRoleKey[], currentPassword?: string) => void;
 }
 
 /** Scelta dei ruoli di un account esistente; almeno uno. */
 export function RolesDialog({
   account,
+  isSelf = false,
   busy,
   error,
+  passwordError = null,
+  passwordRefusals = 0,
   onClose,
   onSave,
 }: RolesDialogProps): React.JSX.Element {
   const [roles, setRoles] = useState<readonly string[]>(account.roleKeys);
   const [localError, setLocalError] = useState<string | null>(null);
+  const currentPassword = useCurrentPassword(passwordError, passwordRefusals);
 
   function save(): void {
     if (roles.length === 0) {
@@ -87,7 +98,13 @@ export function RolesDialog({
       return;
     }
     setLocalError(null);
-    onSave(ROLE_OPTIONS.map((role) => role.key).filter((key) => roles.includes(key)));
+    const chosen = ROLE_OPTIONS.map((role) => role.key).filter((key) => roles.includes(key));
+    if (!isSelf) {
+      onSave(chosen);
+      return;
+    }
+    if (currentPassword.isMissing()) return;
+    onSave(chosen, currentPassword.value);
   }
 
   const shown = localError ?? error;
@@ -122,6 +139,7 @@ export function RolesDialog({
           />
         ))}
       </fieldset>
+      {isSelf ? <CurrentPasswordField state={currentPassword} disabled={busy} /> : null}
       <div className="amoris-accounts__actions">
         <Button variant="secondary" onClick={onClose} disabled={busy}>
           Annulla

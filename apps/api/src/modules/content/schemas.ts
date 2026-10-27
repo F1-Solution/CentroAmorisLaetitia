@@ -59,9 +59,21 @@ export const contentSummary = z.object({
 /** Layout della pagina, ex `_et_pb_page_layout` (DR-139). */
 export const pageLayoutSchema = z.enum(['right_sidebar', 'full_width', 'no_sidebar']);
 
+/** Spazio fra le colonne, ex `_et_pb_gutter_width`: da 1 a 4, `null` = valore del tema (DR-149, DR-278). */
+const GUTTER_MESSAGE = {
+  error: 'Lo spazio fra le colonne è un valore da 1 a 4, o vuoto per quello del tema.',
+};
+export const gutterWidthSchema = z
+  .number(GUTTER_MESSAGE)
+  .int(GUTTER_MESSAGE)
+  .min(1, GUTTER_MESSAGE)
+  .max(4, GUTTER_MESSAGE)
+  .nullable();
+
 export const contentDetail = contentSummary.extend({
   showTitle: z.boolean(),
   pageLayout: pageLayoutSchema,
+  gutterWidth: gutterWidthSchema,
   isSticky: z.boolean(),
   excerpt: z.string().nullable(),
   blocks: blockDocument,
@@ -151,12 +163,29 @@ export const updateBody = createBody
   .partial()
   .extend({
     title: z.string().max(500).optional(),
+    gutterWidth: gutterWidthSchema.optional(),
     isSticky: z.boolean().optional(),
     featuredMediaId: z.string().uuid().nullable().optional(),
     contentHtml: z.string().optional(),
     contentText: z.string().optional(),
   })
   .strict();
+
+/** Nomi in italiano dei campi di una modifica, per il registro delle operazioni: mai i valori (DR-278). */
+const UPDATE_FIELD_LABELS: readonly (readonly [keyof z.infer<typeof updateBody>, string])[] = [
+  ['title', 'Titolo'],
+  ['excerpt', 'Estratto'],
+  ['showTitle', 'Mostrare il titolo'],
+  ['pageLayout', 'Layout della pagina'],
+  ['gutterWidth', 'Spazio fra le colonne'],
+  ['isSticky', 'Notizia in primo piano'],
+  ['featuredMediaId', 'Immagine in evidenza'],
+  ['blocks', 'Contenuto'],
+];
+
+export function updateFieldLabels(body: z.infer<typeof updateBody>): string[] {
+  return UPDATE_FIELD_LABELS.filter(([key]) => body[key] !== undefined).map(([, label]) => label);
+}
 
 export const idParam = z.object({ id: z.string().uuid() });
 

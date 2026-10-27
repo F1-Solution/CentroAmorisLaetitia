@@ -1,6 +1,11 @@
 'use client';
 
-import { Alert, Button, DataTable, SidePanel, TextArea, TextField } from '@amoris/ui';
+import { Alert, Button, DataTable, SelectField, SidePanel, TextArea, TextField } from '@amoris/ui';
+import {
+  SEO_SCHEMA_SCOPES,
+  SEO_SCHEMA_TYPE_LABELS,
+  SEO_SCHEMA_TYPES,
+} from '@amoris/contracts/seoSchemaTypes';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { useSession } from '../../lib/session';
@@ -33,6 +38,15 @@ const SCOPE_LABEL: Readonly<Record<string, string>> = {
   search: 'Risultati di ricerca',
 };
 
+/** Vuoto vale il predefinito del sito; gli altri sono i tipi che sa produrre (DR-278). */
+const SCHEMA_TYPE_OPTIONS = [
+  {
+    value: '',
+    label: 'Predefinito: pagina web per pagine e pagina iniziale, articolo di blog per le notizie',
+  },
+  ...SEO_SCHEMA_TYPES.map((value) => ({ value, label: SEO_SCHEMA_TYPE_LABELS[value] })),
+];
+
 function messageOf(caught: unknown): string {
   return caught instanceof ApiError
     ? caught.fullMessage
@@ -47,7 +61,13 @@ export function SeoTemplates(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<SeoTemplate | null>(null);
-  const [draft, setDraft] = useState({ title: '', description: '', robots: '', ogType: '' });
+  const [draft, setDraft] = useState({
+    title: '',
+    description: '',
+    robots: '',
+    ogType: '',
+    schemaType: '',
+  });
   const [panelError, setPanelError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -74,6 +94,7 @@ export function SeoTemplates(): React.JSX.Element {
       description: row.descriptionTemplate ?? '',
       robots: row.robotsDirectives.join(', '),
       ogType: row.ogType ?? '',
+      schemaType: row.schemaType ?? '',
     });
     setPanelError(null);
   }
@@ -93,7 +114,10 @@ export function SeoTemplates(): React.JSX.Element {
             .map((entry) => entry.trim())
             .filter(Boolean),
           ogType: draft.ogType.trim() || null,
-          schemaType: editing.schemaType,
+          // Fuori da pagina iniziale, pagine e notizie il tipo non si sceglie: resta com'è.
+          schemaType: SEO_SCHEMA_SCOPES.includes(editing.scope)
+            ? draft.schemaType || null
+            : editing.schemaType,
         },
       });
       setEditing(null);
@@ -181,6 +205,16 @@ export function SeoTemplates(): React.JSX.Element {
             disabled={!canWrite || busy}
             onChange={(event) => setDraft({ ...draft, ogType: event.target.value })}
           />
+          {SEO_SCHEMA_SCOPES.includes(editing.scope) ? (
+            <SelectField
+              label="Tipo di dati strutturati"
+              options={SCHEMA_TYPE_OPTIONS}
+              value={draft.schemaType}
+              disabled={!canWrite || busy}
+              helpText="Il tipo di pagina che il sito dichiara ai motori di ricerca; ogni contenuto può sceglierne un altro nella sua SEO."
+              onChange={(event) => setDraft({ ...draft, schemaType: event.target.value })}
+            />
+          ) : null}
 
           <div className="amoris-seo__actions">
             <Button

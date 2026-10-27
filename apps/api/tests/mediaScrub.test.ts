@@ -15,6 +15,8 @@ import {
   ScrubUnavailableError,
   ScrubUnreadableError,
   classifyFailure,
+  hasOnlyAllowedCodecs,
+  probeArgs,
   removeLeftoverScrubDirs,
   scrubFile,
   toolEnv,
@@ -29,6 +31,7 @@ import {
 } from './_support/harness.js';
 import {
   FFMPEG,
+  FFPROBE,
   MARKERS,
   QPDF,
   assertToolsInstalled,
@@ -36,6 +39,7 @@ import {
   buildPdf,
   buildRepeatedOffsetMp4,
   contains,
+  hasEncoder,
   pdfPageCount,
   probeMp4,
 } from './_support/syntheticFiles.js';
@@ -50,6 +54,7 @@ const run = promisify(execFile);
 const TOOLS: ScrubTools = {
   qpdfPath: QPDF,
   ffmpegPath: FFMPEG,
+  ffprobePath: FFPROBE,
   pdfTimeoutMs: 30_000,
   videoTimeoutMs: 120_000,
 };
@@ -79,6 +84,16 @@ function multipartOf(who: Signed, fileName: string, body: Buffer) {
     payload: Buffer.concat([head, body, Buffer.from(`\r\n--${boundary}--\r\n`)]),
     headers: { ...who.writeHeaders, 'content-type': `multipart/form-data; boundary=${boundary}` },
   };
+}
+
+/** L'errore con cui fallisce la pulizia, per controllare quale programma ha rifiutato il file. */
+async function failureOf(task: Promise<unknown>): Promise<unknown> {
+  try {
+    await task;
+  } catch (error) {
+    return error;
+  }
+  throw new Error('la pulizia doveva fallire');
 }
 
 const sha256 = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
@@ -255,6 +270,207 @@ describe('MP4 (S12)', () => {
     await expect(
       scrubFile('video/mp4', input, { ...TOOLS, videoTimeoutMs: 1 }),
     ).rejects.toBeInstanceOf(ScrubUnavailableError);
+  });
+});
+
+describe('codec ammessi (DR-264)', () => {
+  const hevcAvailable = hasEncoder('libx265');
+
+  it('h264 con aac si accetta e si ripulisce', async () => {
+    const input = await buildMp4({ videoCodec: 'h264', audioCodec: 'aac', withMetadata: true });
+    const output = await scrubFile('video/mp4', input, TOOLS);
+    expect(contains(output, MARKERS.location)).toBe(false);
+    expect((await probeMp4(output)).types.slice().sort()).toEqual(['audio', 'video']);
+  });
+
+  it('h264 con aac, sottotitoli e traccia dati si accetta e ne esce senza (S2)', async () => {
+    const input = await buildMp4({ videoCodec: 'h264', audioCodec: 'aac', withMetadata: true });
+    const before = await probeMp4(input);
+    expect(before.types).toContain('subtitle');
+    expect(before.types).toContain('data');
+    const output = await scrubFile('video/mp4', input, TOOLS);
+    expect(contains(output, MARKERS.subtitle)).toBe(false);
+    expect((await probeMp4(output)).types.slice().sort()).toEqual(['audio', 'video']);
+  });
+
+  it('hevc con aac si accetta', async (context) => {
+    if (!(await hevcAvailable)) {
+      // Salta solo se l'ffmpeg locale non ha libx265, e lo dice: mai in silenzio.
+      console.warn('SALTATA: ffmpeg senza libx265, prova hevc non eseguibile');
+      context.skip();
+    }
+    const input = await buildMp4({ videoCodec: 'hevc', withMetadata: false });
+    const output = await scrubFile('video/mp4', input, TOOLS);
+    expect((await probeMp4(output)).types.slice().sort()).toEqual(['audio', 'video']);
+  });
+
+  it('un video h264 senza audio si accetta', async () => {
+    const output = await scrubFile(
+      'video/mp4',
+      await buildMp4({ withAudio: false, withMetadata: false }),
+      TOOLS,
+    );
+    expect((await probeMp4(output)).types).toEqual(['video']);
+  });
+
+  it('un video mpeg4 si rifiuta come illeggibile', async () => {
+    const input = await buildMp4({ videoCodec: 'mpeg4', withMetadata: false });
+    const error = await failureOf(scrubFile('video/mp4', input, TOOLS));
+    expect(error).toBeInstanceOf(ScrubUnreadableError);
+  });
+
+  // `libmp3lame` c'è nelle compilazioni di sviluppo e di CI: se mancasse, `buildMp4` fallirebbe in chiaro.
+  it('un audio mp3 si rifiuta come illeggibile, per mano di ffprobe', async () => {
+    const input = await buildMp4({ audioCodec: 'mp3', withMetadata: false });
+    const error = await failureOf(scrubFile('video/mp4', input, TOOLS));
+    expect(error).toBeInstanceOf(ScrubUnreadableError);
+    expect((error as ScrubUnreadableError).trace.tool).toBe('ffprobe');
+  });
+
+  it('un audio ac3 si rifiuta come illeggibile', async (context) => {
+    if (!(await hasEncoder('ac3'))) {
+      console.warn('SALTATA: ffmpeg senza encoder ac3, prova non eseguibile');
+      context.skip();
+    }
+    const input = await buildMp4({ audioCodec: 'ac3', withMetadata: false });
+    const error = await failureOf(scrubFile('video/mp4', input, TOOLS));
+    expect(error).toBeInstanceOf(ScrubUnreadableError);
+    expect((error as ScrubUnreadableError).trace.tool).toBe('ffprobe');
+  });
+
+  it('la copertina PNG con video h264 e audio aac passa e non resta nell’uscita', async () => {
+    const input = await buildMp4({ withCover: true, coverFormat: 'png', withMetadata: false });
+    expect((await probeMp4(input)).attachedPics).toBe(1);
+    const output = await scrubFile('video/mp4', input, TOOLS);
+    const after = await probeMp4(output);
+    expect(after.attachedPics).toBe(0);
+    expect(after.types.slice().sort()).toEqual(['audio', 'video']);
+  });
+
+  it('ffprobe riceve la whitelist dei codec e le protezioni di ffmpeg', () => {
+    const args = probeArgs('uscita');
+    expect(args).toEqual(expect.arrayContaining(['-protocol_whitelist', 'file', '-f', 'mov']));
+    expect(args[args.indexOf('-codec_whitelist') + 1]).toBe('h264,hevc,aac');
+  });
+
+  const V = '{"codec_type":"video","codec_name":"h264"}';
+  const A = '{"codec_type":"audio","codec_name":"aac"}';
+  it.each([
+    ['h264 e aac', `{"streams":[${V},${A}]}`, true],
+    ['solo hevc', '{"streams":[{"codec_type":"video","codec_name":"hevc"}]}', true],
+    [
+      'sottotitoli e dati ignorati',
+      `{"streams":[${V},{"codec_type":"subtitle","codec_name":"mov_text"},{"codec_type":"data"}]}`,
+      true,
+    ],
+    ['nessuna traccia', '{"streams":[]}', false],
+    ['solo sottotitoli', '{"streams":[{"codec_type":"subtitle","codec_name":"mov_text"}]}', false],
+    ['codec_name assente', '{"streams":[{"codec_type":"video"}]}', false],
+    ['audio fuori elenco', `{"streams":[${V},{"codec_type":"audio","codec_name":"mp3"}]}`, false],
+    [
+      'copertina png non ammessa',
+      `{"streams":[${V},{"codec_type":"video","codec_name":"png"}]}`,
+      false,
+    ],
+    ['senza streams', '{}', false],
+    ['JSON illeggibile', 'non è JSON', false],
+    ['JSON null', 'null', false],
+  ])('controllo dei codec: %s', (_name, json, expected) => {
+    expect(hasOnlyAllowedCodecs(json)).toBe(expected);
+  });
+
+  it('un errore sincrono all’avvio del programma è ScrubUnavailableError', async () => {
+    // Un percorso con un byte nullo fa lanciare `execFile` in modo sincrono, come l'EINVAL di un `.cmd` su Windows.
+    const input = await buildMp4({ withMetadata: false });
+    const error = await failureOf(
+      scrubFile('video/mp4', input, { ...TOOLS, ffmpegPath: 'ffmpeg\0x' }),
+    );
+    expect(error).toBeInstanceOf(ScrubUnavailableError);
+    expect((error as ScrubUnavailableError).trace.tool).toBe('ffmpeg');
+  });
+
+  it('il tempo scaduto di ffmpeg su un MP4 è ScrubUnavailableError di ffmpeg', async () => {
+    const input = await buildMp4({ withMetadata: false });
+    const error = await failureOf(scrubFile('video/mp4', input, { ...TOOLS, videoTimeoutMs: 1 }));
+    expect(error).toBeInstanceOf(ScrubUnavailableError);
+    expect((error as ScrubUnavailableError).trace.tool).toBe('ffmpeg');
+  });
+
+  it('la copertina con video h264 e audio aac continua a passare', async () => {
+    const input = await buildMp4({ withCover: true, withMetadata: false });
+    expect((await probeMp4(input)).attachedPics).toBe(1);
+    const output = await scrubFile('video/mp4', input, TOOLS);
+    const after = await probeMp4(output);
+    expect(after.attachedPics).toBe(0);
+    expect(after.types.slice().sort()).toEqual(['audio', 'video']);
+  });
+
+  it('ffprobe assente → ScrubUnavailableError, come ffmpeg', async () => {
+    const input = await buildMp4({ withMetadata: false });
+    await expect(
+      scrubFile('video/mp4', input, { ...TOOLS, ffprobePath: 'ffprobe-che-non-esiste-xyz' }),
+    ).rejects.toBeInstanceOf(ScrubUnavailableError);
+  });
+
+  it('un MP4 che ffprobe non legge è ScrubUnreadableError', async () => {
+    const fake = Buffer.concat([
+      Buffer.from([0, 0, 0, 16]),
+      Buffer.from('ftypisom'),
+      Buffer.alloc(8),
+    ]);
+    await expect(scrubFile('video/mp4', fake, TOOLS)).rejects.toBeInstanceOf(ScrubUnreadableError);
+  });
+
+  it.each([
+    ['video mpeg4', { videoCodec: 'mpeg4' as const }],
+    ['audio mp3', { audioCodec: 'mp3' as const }],
+  ])('%s: la rotta risponde 400 MEDIA_FILE_INVALID e non scrive nulla', async (_name, codec) => {
+    const who = await signIn(harness, { area: 'redazione' });
+    const before = harness.store.puts.length;
+    const { payload, headers } = multipartOf(
+      who,
+      'clip.mp4',
+      await buildMp4({ ...codec, withMetadata: false }),
+    );
+    const response = await harness.app.inject({ method: 'POST', url: '/media', headers, payload });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe('MEDIA_FILE_INVALID');
+    expect(harness.store.puts.length).toBe(before);
+  });
+
+  it('PUT /media/:id/file con un codec fuori elenco è 400 MEDIA_FILE_INVALID e non scrive nulla', async () => {
+    const who = await signIn(harness, { area: 'redazione' });
+    const first = multipartOf(who, 'clip.mp4', await buildMp4({ withMetadata: false }));
+    const created = await harness.app.inject({
+      method: 'POST',
+      url: '/media',
+      headers: first.headers,
+      payload: first.payload,
+    });
+    expect(created.statusCode).toBe(201);
+    const { id, storageKey } = created.json();
+    const key = `media-public/${storageKey}`;
+    const objectBefore = harness.store.objects.get(key);
+    const [rowBefore] = await harness.db.select().from(schema.media).where(eq(schema.media.id, id));
+    const putsBefore = harness.store.puts.length;
+
+    const next = multipartOf(
+      who,
+      'clip.mp4',
+      await buildMp4({ audioCodec: 'mp3', withMetadata: false }),
+    );
+    const response = await harness.app.inject({
+      method: 'PUT',
+      url: `/media/${id}/file`,
+      headers: next.headers,
+      payload: next.payload,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe('MEDIA_FILE_INVALID');
+    expect(harness.store.puts.length).toBe(putsBefore);
+    expect(harness.store.objects.get(key)?.equals(objectBefore ?? Buffer.alloc(0))).toBe(true);
+    const [rowAfter] = await harness.db.select().from(schema.media).where(eq(schema.media.id, id));
+    expect(rowAfter).toEqual(rowBefore);
   });
 });
 
@@ -597,6 +813,7 @@ describe('caricamento e sostituzione (S9)', () => {
     const broken = await createHarness('api_media_scrub_img', {
       QPDF_PATH: 'qpdf-che-non-esiste-xyz',
       FFMPEG_PATH: 'ffmpeg-che-non-esiste-xyz',
+      FFPROBE_PATH: 'ffprobe-che-non-esiste-xyz',
     });
     try {
       const who = await signIn(broken, { area: 'redazione' });
@@ -699,6 +916,46 @@ describe('programma assente o lento (S11)', () => {
     expect(harness.store.objects.get(key)?.equals(objectBefore ?? Buffer.alloc(0))).toBe(true);
     const [rowAfter] = await harness.db.select().from(schema.media).where(eq(schema.media.id, id));
     expect(rowAfter).toEqual(rowBefore);
+  });
+
+  it('un MP4 rifiutato è 400 e il log riceve solo strumento, uscita e durata', async () => {
+    const { app, who, lines } = await appWithLog({});
+    try {
+      const { payload, headers } = multipartOf(
+        who,
+        'clip-maria-rossi-sintetica.mp4',
+        await buildMp4({ audioCodec: 'mp3', withMetadata: false }),
+      );
+      const response = await app.inject({ method: 'POST', url: '/media', headers, payload });
+      expect(response.statusCode).toBe(400);
+    } finally {
+      await app.close();
+    }
+    const entry = lines.find((line) => line.includes('file rifiutato dalla pulizia'));
+    expect(entry).toBeDefined();
+    expect(entry).toContain('"tool":"ffprobe"');
+    expect(entry).not.toContain('maria-rossi');
+  });
+
+  it('il video con ffprobe assente è 503, nessuna scrittura e nome del file fuori dal log', async () => {
+    const { app, who, lines } = await appWithLog({ FFPROBE_PATH: 'ffprobe-che-non-esiste-xyz' });
+    try {
+      const putsBefore = harness.store.puts.length;
+      const { payload, headers } = multipartOf(
+        who,
+        'clip-maria-rossi-sintetica.mp4',
+        await buildMp4({ withMetadata: false }),
+      );
+      const response = await app.inject({ method: 'POST', url: '/media', headers, payload });
+      expect(response.statusCode).toBe(503);
+      expect(response.json().error.code).toBe('MEDIA_SCRUB_UNAVAILABLE');
+      expect(harness.store.puts.length).toBe(putsBefore);
+    } finally {
+      await app.close();
+    }
+    const text = lines.join('');
+    expect(text).toContain('ffprobe');
+    expect(text).not.toContain('maria-rossi');
   });
 
   it('il video con ffmpeg assente è 503 e con file illeggibile 400', async () => {

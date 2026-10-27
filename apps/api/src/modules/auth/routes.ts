@@ -27,7 +27,13 @@ import {
   revokedCount,
   sessionSummary,
 } from './schemas.js';
-import { checkPassword, findByEmail, markLogin, setPassword } from './service.js';
+import {
+  checkPassword,
+  findByEmail,
+  markLogin,
+  setPassword,
+  verifyCurrentPassword,
+} from './service.js';
 
 /**
  * Modulo `auth`. Attua ADR-007 §3: sessioni opache, cookie `HttpOnly`, token
@@ -309,17 +315,15 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const session = sessionOf(request);
       // La risposta porta i cookie della sessione rinnovata: non va in cache.
       reply.header('Cache-Control', 'no-store');
-      const ipHash = ipOf(request.ip);
       // Controllo 8 come per l'accesso: i fallimenti si contano per account e per indirizzo.
-      const attempts = await evaluateAttempts(
+      const verdict = await verifyCurrentPassword(
         app.db,
         app.config,
-        session.user.email,
-        ipHash,
-        AUTH_ACTIONS.passwordChanged,
+        { ...session.user, sessionId: session.sessionId },
+        request.body.currentPassword,
+        ipOf(request.ip),
       );
-      if (attempts.delayMs > 0) await pause(attempts.delayMs);
-      if (attempts.blocked) {
+      if (verdict === 'blocked') {
         return reply.code(429).send({
           error: {
             code: 'TOO_MANY_ATTEMPTS',
@@ -328,21 +332,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
           },
         });
       }
-      const owner = await findByEmail(app.db, session.user.email);
-      const ok = await checkPassword(owner, request.body.currentPassword, app.config);
-
-      if (!ok) {
-        await writeAudit(app.db, {
-          action: AUTH_ACTIONS.passwordChanged,
-          outcome: 'failure',
-          actorUserId: session.user.userId,
-          actorLabel: session.user.fullName,
-          // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
-          entityType: IDENTIFIER_ENTITY,
-          entityId: identifierDigest(session.user.email),
-          sessionId: session.sessionId,
-          ipHash,
-        });
+      if (verdict === 'invalid') {
         return reply.code(403).send({
           error: {
             code: 'INVALID_CREDENTIALS',

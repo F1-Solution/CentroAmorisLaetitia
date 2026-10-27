@@ -53,6 +53,10 @@ export interface ContentDetail {
   readonly excerpt: string | null;
   readonly showTitle: boolean;
   readonly pageLayout: PageLayout;
+  /** Spazio fra le colonne, 1-4; `null` = valore del tema (DR-149, DR-278). */
+  readonly gutterWidth?: number | null;
+  /** Notizia in primo piano (DR-278). */
+  readonly isSticky?: boolean;
   readonly blocks: unknown;
   readonly contentHtml: string;
   readonly updatedAt: string;
@@ -63,7 +67,7 @@ export interface ContentDetail {
   readonly isHome?: boolean;
   /** Categorie assegnate a una notizia (wave 1G-W4). */
   readonly termIds?: readonly string[];
-  /** Immagine in evidenza di una notizia, o nulla (wave 1G-W4). */
+  /** Immagine in evidenza di una notizia o di una pagina, o nulla (wave 1G-W4, DR-278). */
   readonly featuredMedia?: FeaturedMedia | null;
 }
 

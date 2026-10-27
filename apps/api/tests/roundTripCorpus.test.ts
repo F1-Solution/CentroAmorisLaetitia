@@ -48,16 +48,22 @@ beforeAll(async () => {
 
   for (const entry of corpus.entries) {
     const document = entry.document as BlockDocument;
-    const creata = await harness.app.inject({
-      method: 'POST',
-      url: '/contents',
-      headers: signed.writeHeaders,
-      payload: { type: 'page', slug: entry.slug, title: entry.name, blocks: document },
-    });
-    if (creata.statusCode !== 201) {
-      throw new Error(`creazione di ${entry.slug} fallita: ${creata.statusCode} ${creata.body}`);
-    }
-    const id = (creata.json() as { id: string }).id;
+    // Il corpus ha la forma dei contenuti importati, con riferimenti a media e documenti che
+    // qui non esistono: si scrive come lo scrive l'importer, non passando da `POST /contents`,
+    // che rifiuterebbe quei riferimenti (DR-279). Il giro sotto prova la rotta di salvataggio.
+    const [creata] = await harness.db
+      .insert(schema.contents)
+      .values({
+        type: 'page',
+        status: 'draft',
+        slug: entry.slug,
+        path: `/${entry.slug}/`,
+        title: entry.name,
+        blocks: document,
+      })
+      .returning({ id: schema.contents.id });
+    if (!creata) throw new Error(`creazione di ${entry.slug} fallita`);
+    const id = creata.id;
     created.set(entry.slug, id);
 
     // Primo salvataggio: porta l'HTML e il testo, come fa l'editor alla prima
