@@ -22,7 +22,7 @@ succede se lo si tocca. Il criterio vale se l'avviso è comprensibile a chi non 
 
 | Dato | Valore |
 |---|---|
-| Contenuto | indirizzo compilato dall'agente prima del collaudo: ____________ (sono 8 i blocchi di riserva in tutto il sito; ultima risorsa, se resta vuoto: cerca un contenuto che ne abbia uno e annota quale; se non lo trovi in 10 minuti, annota anche questo) |
+| Contenuto | `http://127.0.0.1:3300/litighiamo-oggi/` (pagina Gutenberg con due blocchi di riserva, scelta dall'agente il 2026-10-28) (sono 8 i blocchi di riserva in tutto il sito; ultima risorsa, se resta vuoto: cerca un contenuto che ne abbia uno e annota quale; se non lo trovi in 10 minuti, annota anche questo) |
 | Frase da cambiare | aggiungi `[prova collaudo 1G-4]` all'inizio di un paragrafo vicino al blocco |
 
 Prima di cominciare salva una fotografia a pagina intera della pagina pubblica.

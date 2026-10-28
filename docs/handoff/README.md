@@ -41,25 +41,25 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-031 | [Prove dell'anteprima e di 1E-19 sui contenuti veri](HO-031-prove-anteprima-e-1E-19-1G-W5.md) | 1G | ✅ fatto il 2026-10-26 con §3-bis (account sintetico `qa-1g-w5@locale.invalid`): anteprima 106/106 identici, 1E-19 4/4 |
 | HO-032 | [Installare `qpdf` sulla macchina di sviluppo](HO-032-installare-qpdf-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: `qpdf` 12.4.2 in `C:\Program Files\qpdf 12.4.2\bin`, fuori dal `PATH` di sistema; le prove lo trovano con `QPDF_PATH` |
 | HO-033 | [Migrazione `0009` sul database di sviluppo](HO-033-migrazione-0009-1G-W6.md) | 1G | ✅ fatto il 2026-10-26: migrazione `0009` (copia `amoris-prima-HO-033-2026-10-26.dump`), esito nel §6 |
-| HO-034 | [Ambiente di collaudo](HO-034-ambiente-di-collaudo-1G-W7.md) | 1G | ⏳ **aperto** — creazione su conferma, poi i due account sintetici |
-| HO-035 | [1E-19 e anteprima sul collaudo](HO-035-prove-sul-collaudo-1G-W7.md) | 1G | ⏳ **aperto** — dopo HO-034 (DR-265) |
-| HO-036 | [Compito 1G-1 — creare una pagina, pubblicarla, metterla nel menu](HO-036-creare-pagina-e-menu-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; testo alternativo dell'immagine inserita (DR-283) |
-| HO-037 | [Compito 1G-2 — testo e immagine di una pagina Gutenberg](HO-037-testo-e-immagine-gutenberg-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: titolo nascosto e immagine in evidenza di una pagina (DR-278) |
-| HO-038 | [Compito 1G-3 — testo e immagine di una pagina Divi convertita](HO-038-testo-e-immagine-divi-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: spazio fra le colonne, titolo delle pagine a sezioni (DR-278), video e mappa (DR-279) |
-| HO-039 | [Compito 1G-4 — contenuto con un blocco di riserva](HO-039-blocco-di-riserva-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-040 | [Compito 1G-5 — sostituire un'immagine e il testo alternativo](HO-040-sostituire-immagine-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-041 | [Compito 1G-6 — cambiare l'ordine di due voci del menu](HO-041-ordine-del-menu-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-042 | [Compito 1G-7 — titolo SEO e suo effetto](HO-042-titolo-seo-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prova accessoria: tipo di dati strutturati (DR-278) |
-| HO-043 | [Compito 1G-8 — creare un redirect](HO-043-redirect-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-044 | [Compito 1G-9 — chi ha modificato un contenuto e quando](HO-044-chi-ha-modificato-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-045 | [Compito 1G-10 — la pagina pubblica corrisponde all'anteprima](HO-045-anteprima-e-sito-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-046 | [Compito 1G-11 — indirizzo e pagina genitore](HO-046-indirizzo-e-genitore-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-047 | [Compito 1G-12 — estratto, immagine in evidenza e categorie](HO-047-notizie-e-categorie-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prove accessorie: titolo e primo piano di una notizia (DR-278, DR-286), categorie complete (DR-280) |
-| HO-048 | [Compito 1G-13 — eliminare un contenuto](HO-048-eliminare-contenuti-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-049 | [Compito 1G-14 — file non ammessi rifiutati in italiano](HO-049-file-rifiutati-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
-| HO-050 | [Compito 1G-15 — documento scaricabile e carosello](HO-050-documenti-e-caroselli-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; prova accessoria: documento nuovo, blocco «Documento» ed eliminazione (DR-281, DR-287) |
-| HO-051 | [Compito 1G-16 — account, password e impostazioni del sito](HO-051-account-e-impostazioni-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8`; Parte B con le impostazioni lette dal sito (DR-270, DR-273, DR-282); Parte C: nome ed email di un account (DR-282) e il proprio account con una seconda amministrazione (DR-288) |
-| HO-052 | [Compito 1G-17 — accessi negati alla redazione](HO-052-accessi-negati-alla-redazione-1G-W8.md) | 1G | ⏳ **aperto** — collaudo della `1G-W8` |
+| HO-034 | [Ambiente di collaudo](HO-034-ambiente-di-collaudo-1G-W7.md) | 1G | ✅ fatto il 2026-10-27 (account verificati in sola lettura); ripristinato il 2026-10-27 sul commit `e61d20b` per la `1G-W8`: account sintetici da ricreare (§4.3) |
+| HO-035 | [1E-19 e anteprima sul collaudo](HO-035-prove-sul-collaudo-1G-W7.md) | 1G | ✅ fatto il 2026-10-27: anteprima 106/106 identici, 1E-19 4/4 |
+| HO-036 | [Compito 1G-1 — creare una pagina, pubblicarla, metterla nel menu](HO-036-creare-pagina-e-menu-1G-W8.md) | 1G | ✅ fatto il 2026-10-27: riuscito con difficoltà, 2 minuti; difetti W8-01, W8-03, W8-04, W8-05 (`docs/qa/collaudo-1G-W8.md`) |
+| HO-037 | [Compito 1G-2 — testo e immagine di una pagina Gutenberg](HO-037-testo-e-immagine-gutenberg-1G-W8.md) | 1G | ✅ fatto il 2026-10-28: riuscito; immagine aggiunta invece che sostituita (W8-06); prove accessorie da riportare allo stato iniziale |
+| HO-038 | [Compito 1G-3 — testo e immagine di una pagina Divi convertita](HO-038-testo-e-immagine-divi-1G-W8.md) | 1G | ✅ fatto il 2026-10-28 dall'utente: riuscito; andata e ritorno riuscita (W8-07: confronto dell'handoff troppo severo) |
+| HO-039 | [Compito 1G-4 — contenuto con un blocco di riserva](HO-039-blocco-di-riserva-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-040 | [Compito 1G-5 — sostituire un'immagine e il testo alternativo](HO-040-sostituire-immagine-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (`docs/qa/collaudo-1G-W8.md`) |
+| HO-041 | [Compito 1G-6 — cambiare l'ordine di due voci del menu](HO-041-ordine-del-menu-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-042 | [Compito 1G-7 — titolo SEO e suo effetto](HO-042-titolo-seo-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-043 | [Compito 1G-8 — creare un redirect](HO-043-redirect-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (`docs/qa/collaudo-1G-W8.md`) |
+| HO-044 | [Compito 1G-9 — chi ha modificato un contenuto e quando](HO-044-chi-ha-modificato-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-045 | [Compito 1G-10 — la pagina pubblica corrisponde all'anteprima](HO-045-anteprima-e-sito-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (`docs/qa/collaudo-1G-W8.md`) |
+| HO-046 | [Compito 1G-11 — indirizzo e pagina genitore](HO-046-indirizzo-e-genitore-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-047 | [Compito 1G-12 — estratto, immagine in evidenza e categorie](HO-047-notizie-e-categorie-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-048 | [Compito 1G-13 — eliminare un contenuto](HO-048-eliminare-contenuti-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (`docs/qa/collaudo-1G-W8.md`) |
+| HO-049 | [Compito 1G-14 — file non ammessi rifiutati in italiano](HO-049-file-rifiutati-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-050 | [Compito 1G-15 — documento scaricabile e carosello](HO-050-documenti-e-caroselli-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
+| HO-051 | [Compito 1G-16 — account, password e impostazioni del sito](HO-051-account-e-impostazioni-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (parte C) (`docs/qa/collaudo-1G-W8.md`) |
+| HO-052 | [Compito 1G-17 — accessi negati alla redazione](HO-052-accessi-negati-alla-redazione-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
 | HO-053 | [Liberare memoria per la cattura integrale](HO-053-liberare-memoria-per-la-cattura-1G-W7.md) | 1G | ⏳ **aperto** — serve alla T4 della `1G-W7` |
 
 ## Chiuse nel Round 3 del 2026-09-14

@@ -21,7 +21,7 @@ e vedere i cambiamenti sul sito senza che nient'altro si muova.
 
 | Dato | Valore |
 |---|---|
-| Pagina | indirizzo compilato dall'agente prima del collaudo: ____________ (ultima risorsa, se resta vuoto: scegline una qualunque con più colonne e annota quale) |
+| Pagina | `http://127.0.0.1:3300/sostegno-alla-genitorialita/` (Divi, tre colonne, scelta dall'agente il 2026-10-28) (ultima risorsa, se resta vuoto: scegline una qualunque con più colonne e annota quale) |
 | Frase da cambiare | aggiungi `[prova collaudo 1G-3]` all'inizio di un paragrafo |
 | Immagine nuova | `prova-1g-3.png`, con il comando sotto; testo alternativo `Immagine di prova collaudo 1G-3` |
 
@@ -54,7 +54,7 @@ Sei prove accessorie: prima l'andata e ritorno, poi le altre nell'ordine che pre
 **Andata e ritorno (1D-36).** Obiettivo: aprire la pagina e salvarla senza toccare nulla non cambia niente. Salva l'HTML pubblico prima e dopo il salvataggio a vuoto e confrontali:
 
 ```powershell
-$indirizzo = 'sostituisci-con-l-indirizzo-della-pagina'  # senza barre iniziali e finali
+$indirizzo = 'sostegno-alla-genitorialita'  # senza barre iniziali e finali
 New-Item -ItemType Directory -Force "$HOME\collaudo" | Out-Null
 Invoke-WebRequest "http://127.0.0.1:3300/$indirizzo/" -UseBasicParsing -OutFile "$HOME\collaudo\1g-3-prima.html"
 # dopo il salvataggio senza modifiche, ripeti con un altro nome:
@@ -71,20 +71,20 @@ Deve risultare `True`. Se risulta `False`, esegui `Compare-Object (Get-Content "
 **Spazio fra le colonne (DR-278).** Obiettivo: cambiare lo spazio fra le colonne della pagina del compito con un valore diverso da quello di partenza (annotalo), riconoscerlo sul sito e riportarlo com'era. Sul sito il valore è la classe `et_pb_gutters` seguita dal numero, sul contenitore della pagina, e cambia i margini fra le colonne del piè di pagina:
 
 ```powershell
-$indirizzo = 'sostituisci-con-l-indirizzo-della-pagina'  # senza barre iniziali e finali
+$indirizzo = 'sostegno-alla-genitorialita'  # senza barre iniziali e finali
 (Invoke-WebRequest "http://127.0.0.1:3300/$indirizzo/" -UseBasicParsing).Content | Select-String -Pattern 'et_pb_gutters\d' -AllMatches | ForEach-Object { $_.Matches.Value }
 ```
 
 **Titolo di una pagina a sezioni (DR-278).** Obiettivo: accertare se per la pagina del compito puoi scegliere di mostrarne il titolo. Come nel sito di partenza, le pagine costruite a sezioni non mostrano mai il titolo: se la scelta non è disponibile, annota se l'area ti spiega il perché e con quali parole.
 
-**Video e mappa (DR-279).** Pagine con un blocco video e con una mappa: indirizzi compilati dall'agente prima del collaudo, video ____________, mappa ____________ (ultima risorsa, se restano vuoti: cercale nel sito e annota quali). Obiettivi:
+**Video e mappa (DR-279).** Pagine con un blocco video e con una mappa: indirizzi compilati dall'agente prima del collaudo, video `http://127.0.0.1:3300/dal-vizioso-al-virtuoso/`, mappa `http://127.0.0.1:3300/dove-siamo/` (ultima risorsa, se restano vuoti: cercale nel sito e annota quali). Obiettivi:
 
 - il blocco video mostra sul sito un altro video, scelto fra quelli già caricati nel sito; un indirizzo che non è di YouTube (`https://www.youtube.com.esempio.invalid/watch?v=abcdefghijk`) e uno YouTube senza `https` (`http://www.youtube.com/watch?v=abcdefghijk`) sono rifiutati con un messaggio in italiano e il video sul sito non cambia;
 - la mappa ha uno zoom diverso e un segnaposto con il titolo `Segnaposto di prova collaudo 1G-3`, che compare nel sorgente della pagina pubblica; il testo del fumetto dei segnaposto già presenti non si modifica;
 - alla fine video e mappa tornano come erano: annota i valori di partenza prima di cambiarli.
 
 ```powershell
-$mappa = 'sostituisci-con-l-indirizzo-della-pagina-con-la-mappa'  # senza barre iniziali e finali
+$mappa = 'sostegno-alla-genitorialita'  # senza barre iniziali e finali
 (Invoke-WebRequest "http://127.0.0.1:3300/$mappa/" -UseBasicParsing).Content | Select-String -Pattern 'Segnaposto di prova collaudo 1G-3' -AllMatches | ForEach-Object { $_.Matches.Value }
 ```
 
@@ -104,12 +104,12 @@ Per il compito: **esito** (riuscito / riuscito con difficoltà / non riuscito), 
 
 In più, per questo compito:
 
+
 - Indirizzo della pagina usata
 
 ## 8. Se qualcosa non va
 
 Annota quello che vedi, con il testo esatto di ogni messaggio, e vai avanti. Un difetto trovato è un risultato del collaudo, non un tuo errore. Se l'ambiente sembra rotto (pagine bianche, risposte 500), scrivilo e ripristinalo con HO-035 prima di ripetere.
-
 ## 9. Come segnalare il completamento
 
 Nel prompt successivo copia e compila:

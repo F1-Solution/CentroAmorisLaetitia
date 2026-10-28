@@ -24,7 +24,7 @@ Contenuto esistente della copia: una pagina pubblicata con testo e almeno un'imm
 
 | Dato | Valore |
 |---|---|
-| Pagina | indirizzo compilato dall'agente prima del collaudo: ____________ (ultima risorsa, se resta vuoto: scegline una qualunque con testo e immagine e annota quale; la famiglia sarà accertata dopo) |
+| Pagina | `http://127.0.0.1:3300/reinventa-la-tua-vita/` (Gutenberg, scelta dall'agente il 2026-10-28) (ultima risorsa, se resta vuoto: scegline una qualunque con testo e immagine e annota quale; la famiglia sarà accertata dopo) |
 | Frase da cambiare | una frase qualunque della pagina: la riscrivi aggiungendo all'inizio `[prova collaudo 1G-2]` |
 | Immagine nuova | generata da te, `prova-1g-2.png`, con il comando sotto; testo alternativo `Immagine di prova collaudo 1G-2`, didascalia `Didascalia di prova collaudo 1G-2` |
 

@@ -1760,3 +1760,33 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-289 | 2026-10-27 | Accettazione nominativa delle viste cambiate dalla Fase 1G (1G-21) | **Accettate tutte e 18**: le 12 del §13 (DR-243, DR-248: estratti in `/category/news/` pagine 1-3 e `/?s=corso`) e le 6 del §14 (DR-286: titolo e data tolti dalle due notizie che nella sorgente li nascondevano) | accettare solo il §14; non accettare | «Accetto tutte e 18» | Proprietario | sito pubblico, parità, `1G-W7` | sì | `visual-parity-report.md` §13-14, `confronto/esiti-1G-W7.csv`, DR-210 |
+
+## 95. Round 86 — risposta del 2026-10-28, chi esegue il collaudo
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-290 | 2026-10-28 | Chi esegue i compiti rimasti del collaudo (D185, modifica DR-214) | **Tutto all'agente** — l'agente esegue con Playwright i compiti e le prove accessorie di HO-038 (mappa), da HO-039 a HO-052; HO-036 e HO-037 restano eseguiti dall'utente. La condizione 7 non contiene più la prova che la redazione riesce da sola nei compiti eseguiti dall'agente: indebolimento del gate accettato esplicitamente | ibrido (agente per la verifica, utente per 1G-4…1G-9); sospendere il collaudo | «Il collaudo è troppo lungo per i tempi che ho a disposizione oggi e domani»; scelta «Tutto all'agente» | Proprietario | Fase 1G, condizione 7 del gate, `acceptance-criteria.md` §5 | sì | DR-214, DR-221 |
+| DR-291 | 2026-10-28 | Account con cui l'agente entra nell'area del collaudo (D186) | **Account dell'agente** — due account sintetici solo sul collaudo, `@example.invalid`, password generate a caso e conservate in `C:\work\amoris-collaudo.stato`, fuori da Git e mai stampate | usare gli account dell'utente | scelta «Account agente» | Proprietario | ambiente di collaudo | sì | DR-290, HO-034 |
+
+## 96. Round 87 — risposta del 2026-10-28, chiusura del collaudo
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-292 | 2026-10-28 | Campi della matrice con compito ma non verificati nel collaudo (D187) | **Passata di copertura** — un agente verifica con Playwright i 16 campi rimasti e riporta lo stato iniziale, prima della chiusura della `1G-W8` | chiudere con 16 righe «non verificato» | scelta «Passata di copertura» | Proprietario | `1G-W8`, `editability-matrix.csv` | sì | DR-290 |
+| DR-293 | 2026-10-28 | «Salva» e «Salva il layout» su un contenuto pubblicato (D188, W8-13) | **Lasciare com'è, ma dirlo** — continuano ad aggiornare subito il sito; il pulsante diventa «Salva e aggiorna il sito» con un avviso, e HO-045 §4.2 si corregge | «Salva» solo nella copia di lavoro; lasciare tutto com'è | scelta «Lasciare com'è, ma dirlo» | Proprietario | editor, `1G-W9`, HO-045 | sì | DR-068 |
+| DR-294 | 2026-10-28 | Cambiare l'immagine di un blocco Immagine (D189, W8-06) | **«Cambia immagine» nel blocco** — l'ispettore apre il selettore e chiede il testo alternativo; il cambio vale solo per quel blocco; «Sostituisci il file» in Media resta per cambiarlo ovunque | solo da Media, con l'avviso migliorato | scelta «Cambia immagine» | Proprietario | editor, `1G-W9` | sì | DR-283 |
+
+## 97. Round 88 — risposta del 2026-10-28, pianificazione della 1F (DR-272)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-295 | 2026-10-28 | Fornitore del server (D6a) | **Rinviata a un confronto** fra Hetzner, un fornitore italiano e OVH, con prezzi, collocazione dei dati, DPA e backup; verificare che le VPS di OVH siano davvero disponibili in Europa | scegliere subito Hetzner, un fornitore italiano o OVH | «Prepara un confronto tra i 3 fornitori. Verifica che le VPS di OVH siano effettivamente disponibili in Europa» | Proprietario | Fase 1F, ADR-009 §6 | sì | D6, ADR-009 |
+| DR-296 | 2026-10-28 | Forma dello staging (D190) | **Stesso server, progetto separato** — porte, database e volumi propri sul VPS di produzione | server piccolo separato; solo in locale | scelta «Stesso server, progetto separato» | Proprietario | Fase 1F | sì | ADR-009 |
+| DR-297 | 2026-10-28 | Storage a oggetti in produzione (D191) | **MinIO sullo stesso server**, come in sviluppo; backup a nostro carico | S3 gestito in UE | scelta raccomandata | Proprietario | Fase 1F, ADR-009 §4.2 | sì | DR-005, ADR-004 |
+| DR-298 | 2026-10-28 | Destinazione dei backup fuori dal server (D192) | **Altro fornitore UE, backup cifrati prima dell'invio**, con la chiave custodita dall'utente | stesso fornitore con servizio separato; disco o NAS del Centro | scelta raccomandata | Proprietario | Fase 1F, ADR-009 §4.5 | sì | RN-05 |
+
+## 98. Round 89 — risposta del 2026-10-28, chiusura della `1G-W8`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-299 | 2026-10-28 | Chiusura della `1G-W8` con il criterio 1G-24 non soddisfatto | **Chiusa**, con 1G-24 (nessun errore in console) rinviato alla `1G-W9` insieme a W8-09 e W8-32; commit e push dei documenti confermati | tenere aperta la wave fino alla correzione | «Approvo la chiusura della 1G-W8 (1G-24 alla 1G-W9) e confermo commit e push dei documenti» | Proprietario | `1G-W8`, `1G-W9`, `acceptance-criteria.md` | sì | `collaudo-1G-W8.md` §3, DR-290, DR-292 |

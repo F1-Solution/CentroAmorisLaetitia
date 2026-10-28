@@ -154,6 +154,11 @@ senza assistenza, entro un tempo ragionevole, e l'esito si registra.
 Se anche un solo compito richiede l'intervento dell'agente, la condizione 7 **non è
 soddisfatta**, indipendentemente dalla qualità della parità visiva.
 
+**DR-290 (2026-10-28):** dopo HO-036 e HO-037, eseguiti dall'utente, i compiti rimasti
+li esegue l'agente con Playwright. Per quei compiti la condizione 7 attesta che la
+funzione riesce, non che la redazione ci riesce da sola: è un indebolimento del gate
+accettato esplicitamente dall'utente.
+
 ## 6. Accessibilità di base — parte della condizione 6
 
 Non è una certificazione WCAG: è il minimo osservabile che `CLAUDE.md` richiede
