@@ -329,7 +329,11 @@ function shorten(value: string, max = 60): string {
 }
 
 /** Il riepilogo che compare nell'albero. Mai il contenuto intero. */
-export function labelOf(block: ModelBlock, documentTitles?: ReadonlyMap<string, string>): string {
+export function labelOf(
+  block: ModelBlock,
+  documentTitles?: ReadonlyMap<string, string>,
+  mediaNames?: ReadonlyMap<string, string>,
+): string {
   switch (block.type) {
     case 'rich_text':
       return (
@@ -338,7 +342,12 @@ export function labelOf(block: ModelBlock, documentTitles?: ReadonlyMap<string, 
     case 'html':
       return block.props.detail ?? TYPE_SUMMARY.html;
     case 'image':
-      return shorten(block.props.alt) || shorten(block.props.caption ?? '') || TYPE_SUMMARY.image;
+      return (
+        shorten(block.props.alt) ||
+        shorten(block.props.caption ?? '') ||
+        shorten(mediaNames?.get(block.props.mediaId ?? '') ?? '') ||
+        TYPE_SUMMARY.image
+      );
     case 'document':
       return (
         shorten(block.props.label ?? '') ||
@@ -363,19 +372,33 @@ export function labelOf(block: ModelBlock, documentTitles?: ReadonlyMap<string, 
   }
 }
 
+/** I media delle immagini senza testo alternativo né didascalia, che l'albero chiama col nome del media (W9-N6). */
+export function imageMediaWithoutAlt(blocks: readonly ModelBlock[]): string[] {
+  return blocks.flatMap((block) => [
+    ...(block.type === 'image' &&
+    block.props.mediaId &&
+    !block.props.alt.trim() &&
+    !(block.props.caption ?? '').trim()
+      ? [block.props.mediaId]
+      : []),
+    ...imageMediaWithoutAlt(block.children),
+  ]);
+}
+
 /** Traduce il documento nell'albero che `BlockTreeEditor` sa disegnare. */
 export function toTreeNodes(
   blocks: readonly ModelBlock[],
   documentTitles?: ReadonlyMap<string, string>,
+  mediaNames?: ReadonlyMap<string, string>,
 ): TreeNode[] {
   return blocks.map((block) => {
-    const label = labelOf(block, documentTitles);
+    const label = labelOf(block, documentTitles, mediaNames);
     return ALLOWED_CHILDREN[block.type].length > 0
       ? {
           id: block.id,
           type: block.type,
           label,
-          children: toTreeNodes(block.children, documentTitles),
+          children: toTreeNodes(block.children, documentTitles, mediaNames),
         }
       : { id: block.id, type: block.type, label };
   });

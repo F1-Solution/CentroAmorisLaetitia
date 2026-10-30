@@ -4,10 +4,11 @@ import { Alert, Button, ConfirmDestructive, Dialog } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { contentName } from '../../lib/contentName';
 
 /**
  * «Elimina» nell'intestazione dell'editor: anteprima degli impedimenti, poi conferma
- * scrivendo il titolo (S7, D142-A).
+ * scrivendo il titolo, o «Senza titolo» se manca (S7, D142-A, DR-331).
  */
 
 interface DeletionPreview {
@@ -49,7 +50,7 @@ function BlockedReasons({ preview }: { readonly preview: DeletionPreview }): Rea
           <ul>
             {preview.children.map((child) => (
               <li key={child.id}>
-                {child.title} ({child.path})
+                {contentName(child.title)} ({child.path})
               </li>
             ))}
           </ul>
@@ -149,7 +150,7 @@ export function ContentDeleteAction({
           onConfirm={() => void remove()}
           title="Elimina il contenuto"
           description={confirmDescription(preview)}
-          objectName={title}
+          objectName={contentName(title)}
           loading={deleting}
           {...(deleteError ? { errorText: deleteError } : {})}
         />

@@ -13,6 +13,7 @@ import {
 } from '@amoris/ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { contentName } from '../../lib/contentName';
 import {
   buildTree,
   indent,
@@ -45,6 +46,7 @@ import './MenuManager.css';
 interface ContentSummary {
   readonly id: string;
   readonly title: string;
+  readonly isHome?: boolean;
 }
 
 interface ContentListResponse {
@@ -202,7 +204,7 @@ export function MenuManager(): React.JSX.Element {
   }, [loadItems, menuKey]);
 
   const contentNames = useMemo(
-    () => new Map(contents.map((row) => [row.id, row.title])),
+    () => new Map(contents.map((row) => [row.id, contentName(row.title, row.isHome)])),
     [contents],
   );
   const termNames = useMemo(() => new Map(terms.map((row) => [row.id, row.name])), [terms]);
@@ -417,7 +419,10 @@ export function MenuManager(): React.JSX.Element {
                   ? []
                   : [
                       { value: '', label: 'Scegli un contenuto' },
-                      ...contents.map((row) => ({ value: row.id, label: row.title })),
+                      ...contents.map((row) => ({
+                        value: row.id,
+                        label: contentName(row.title, row.isHome),
+                      })),
                     ]
               }
               emptyText="Nessun contenuto."

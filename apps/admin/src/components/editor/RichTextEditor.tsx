@@ -14,6 +14,7 @@ import {
   analysePastedHtml,
   normaliseEditorHtml,
   richTextExtensions,
+  syncSelectionFromDom,
 } from '../../lib/editor/richtext';
 import './RichTextEditor.css';
 
@@ -70,13 +71,8 @@ export function RichTextEditor({
   const [representationWarning, setRepresentationWarning] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
-  /**
-   * L'ultimo valore che **questo** editor ha prodotto. Serve a distinguere
-   * «il testo è cambiato perché lo sto scrivendo io» da «il testo è cambiato
-   * perché è stato selezionato un altro blocco»: senza, ogni battuta
-   * ricaricherebbe il contenuto e il cursore tornerebbe in testa.
-   */
-  const emitted = useRef<string | null>(null);
+  /** I valori prodotti qui e non ancora ripassati: tornando sono un'eco e non ricaricano il testo (W9-N2). */
+  const pendingEchoes = useRef<string[]>([]);
 
   const editor = useEditor({
     extensions: richTextExtensions(),
@@ -89,13 +85,17 @@ export function RichTextEditor({
         setNotice(outcome.notice);
         return outcome.html;
       },
+      handleKeyDown(view, event) {
+        syncSelectionFromDom(view, event);
+        return false;
+      },
     },
     onUpdate({ editor: instance, transaction }) {
       if (!transaction.docChanged) return;
       const normalised = normaliseEditorHtml(instance.getHTML());
       setNotice(normalised.notice);
       if (!normalised.ok) return;
-      emitted.current = normalised.html;
+      pendingEchoes.current = [...pendingEchoes.current, normalised.html];
       onChange(normalised.html);
     },
   });
@@ -104,7 +104,13 @@ export function RichTextEditor({
   // è una diagnosi sul testo salvato, non un controllo sulla digitazione.
   useEffect(() => {
     if (!editor) return;
-    if (value === emitted.current) return;
+    const echo = pendingEchoes.current.lastIndexOf(value);
+    if (echo >= 0) {
+      // Questo valore e quelli prima sono tornati o superati.
+      pendingEchoes.current = pendingEchoes.current.slice(echo + 1);
+      return;
+    }
+    pendingEchoes.current = [];
     editor.commands.setContent(value, { emitUpdate: false });
     setNotice(null);
     setRepresentationWarning(

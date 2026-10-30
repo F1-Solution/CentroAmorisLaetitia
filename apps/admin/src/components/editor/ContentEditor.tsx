@@ -22,6 +22,7 @@ import {
   creatableChildTypes,
   findBlock,
   canDropBlock,
+  imageMediaWithoutAlt,
   insertBlock,
   labelOf,
   moveBlockBy,
@@ -54,6 +55,7 @@ import { ImageInsertPicker } from './ImageInsertPicker';
 import { DocumentInsertDialog } from '../documents/DocumentInsertDialog';
 import { usePublicDocuments } from '../documents/usePublicDocuments';
 import { EditorPreview } from './EditorPreview';
+import { useMediaNames } from './useMediaNames';
 import './ContentEditor.css';
 
 /**
@@ -246,11 +248,14 @@ export function ContentEditor({
   // scritto qualcosa nel frattempo, che la rilettura non deve cancellare (DR-102).
   const lastEdit = useRef<EditorState | null>(null);
   const editCount = useRef(0);
+  // Quante modifiche contiene ogni stato: la copia di lavoro sa così che cosa ha salvato (W9-N2).
+  const editsIn = useRef(new WeakMap<EditorState, number>());
 
   /** Ogni modifica passa di qui: un solo punto che segna il documento da salvare. */
   const mutate = useCallback((next: EditorState) => {
     lastEdit.current = next;
     editCount.current += 1;
+    editsIn.current.set(next, editCount.current);
     setState(next);
     setPending(true);
     setActionError(null);
@@ -259,6 +264,7 @@ export function ContentEditor({
   const saveDraft = useRef<() => Promise<boolean>>(async () => true);
   saveDraft.current = async () => {
     if (!state || !content) return true;
+    const editsBefore = editsIn.current.get(state) ?? editCount.current;
     try {
       const saved = await api<DraftDetail>(`/contents/${contentId}/draft`, {
         method: 'PUT',
@@ -270,7 +276,8 @@ export function ContentEditor({
         },
       });
       rememberDraft(saved.updatedAt);
-      setPending(false);
+      // Ciò che si è scritto mentre la copia viaggiava resta da salvare (W9-N2).
+      if (editCount.current === editsBefore) setPending(false);
       return true;
     } catch (caught) {
       setActionError(
@@ -427,6 +434,11 @@ export function ContentEditor({
     () => new Map((publicDocuments.documents ?? []).map((item) => [item.id, item.title])),
     [publicDocuments.documents],
   );
+  const imagesWithoutAlt = useMemo(
+    () => (state ? imageMediaWithoutAlt(state.document.blocks) : []),
+    [state],
+  );
+  const mediaNames = useMediaNames(imagesWithoutAlt);
   const isHome = content?.isHome ?? false;
   const homeNoteId = useId();
   // Il titolo importato non si cambia: se è vuoto, la pagina iniziale si riconosce comunque.
@@ -678,6 +690,7 @@ export function ContentEditor({
               featuredMedia={content.featuredMedia ?? null}
               termIds={content.termIds ?? []}
               disabled={readOnly}
+              published={publishedNow}
               onSaved={(saved) => {
                 // Solo immagine, categorie e ultima modifica: il documento sullo schermo resta com'è (§6 caso 2).
                 setContent((current) =>
@@ -766,11 +779,11 @@ export function ContentEditor({
               onDrop={onDrop}
               describe={(id) => {
                 const block = findBlock(state.document.blocks, id);
-                return block ? labelOf(block, documentTitles) : id;
+                return block ? labelOf(block, documentTitles, mediaNames) : id;
               }}
             >
               <BlockTreeEditor
-                blocks={toTreeNodes(state.document.blocks, documentTitles)}
+                blocks={toTreeNodes(state.document.blocks, documentTitles, mediaNames)}
                 {...(selectedId ? { selectedId } : {})}
                 onSelect={setSelectedId}
                 onMoveUp={(id) =>

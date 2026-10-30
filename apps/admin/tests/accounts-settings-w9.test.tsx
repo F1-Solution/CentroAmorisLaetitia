@@ -303,6 +303,32 @@ describe('W8-38: logo e pagina iniziale si scelgono da elenco', () => {
     );
   });
 
+  it('W9-N3: la pagina iniziale senza titolo si chiama «Pagina iniziale», le altre «Senza titolo»', async () => {
+    apiMock.mockImplementation(async (path: string) => {
+      if (path === '/settings')
+        return [setting('site.home_content_id', HOME_ID, 'Pagina iniziale')];
+      if (path === '/settings/choices/home') {
+        return {
+          items: [
+            { id: HOME_ID, title: '', path: '/home/' },
+            { id: OTHER_PAGE_ID, title: '', path: '/senza-titolo-inventata/' },
+          ],
+          current: { id: HOME_ID, title: '', path: '/home/' },
+        };
+      }
+      return {};
+    });
+    show(<SiteSettings />);
+    const select = await screen.findByRole('combobox', { name: 'Pagina iniziale' });
+    await waitFor(() =>
+      expect(
+        within(select)
+          .getAllByRole('option')
+          .map((option) => option.textContent),
+      ).toEqual(['Pagina iniziale (/home/)', 'Senza titolo (/senza-titolo-inventata/)']),
+    );
+  });
+
   it('la pagina iniziale attuale si mostra anche quando resta fuori dall’elenco (revisione, M2)', async () => {
     // L'elenco ha un tetto: la pagina attuale arriva a parte, come per il logo.
     apiMock.mockImplementation(async (path: string) => {
@@ -326,6 +352,48 @@ describe('W8-38: logo e pagina iniziale si scelgono da elenco', () => {
       ).toEqual(['Casa inventata (/casa/)', 'Chi siamo inventato (/chi-siamo/)']),
     );
     expect(select).toHaveValue(HOME_ID);
+  });
+
+  it('W9-N3: dopo «Salva» il nome «Pagina iniziale» passa alla pagina scelta', async () => {
+    let savedHome = HOME_ID;
+    apiMock.mockImplementation(
+      async (path: string, options?: { method?: string; body?: unknown }) => {
+        if (options?.method === 'PUT') {
+          savedHome = (options.body as { value: string }).value;
+          return {};
+        }
+        if (path === '/settings')
+          return [setting('site.home_content_id', savedHome, 'Pagina iniziale')];
+        if (path === '/settings/choices/home') {
+          return {
+            items: [
+              { id: HOME_ID, title: '', path: '/home/' },
+              { id: OTHER_PAGE_ID, title: '', path: '/altra-inventata/' },
+            ],
+            current: { id: HOME_ID, title: '', path: '/home/' },
+          };
+        }
+        return {};
+      },
+    );
+    const user = show(<SiteSettings />);
+    const select = await screen.findByRole('combobox', { name: 'Pagina iniziale' });
+    const labels = () =>
+      within(select)
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+    await waitFor(() =>
+      expect(labels()).toEqual(['Pagina iniziale (/home/)', 'Senza titolo (/altra-inventata/)']),
+    );
+    await user.selectOptions(select, OTHER_PAGE_ID);
+    await user.click(screen.getByRole('button', { name: 'Salva «Pagina iniziale»' }));
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('combobox', { name: 'Pagina iniziale' }))
+          .getAllByRole('option')
+          .map((option) => option.textContent),
+      ).toEqual(['Senza titolo (/home/)', 'Pagina iniziale (/altra-inventata/)']),
+    );
   });
 
   it('un rifiuto del servizio si mostra in italiano sotto il campo', async () => {

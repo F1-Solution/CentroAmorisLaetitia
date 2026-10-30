@@ -3,6 +3,7 @@
 import { Alert, Button, MediaPicker, SelectField, type MediaPickerItem } from '@amoris/ui';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { contentName } from '../../lib/contentName';
 import { siteUrl } from '../../lib/siteUrl';
 import type { Setting } from './SiteSettings';
 
@@ -228,11 +229,16 @@ export function HomeSettingRow({ setting, canWrite, onSaved }: RowProps): React.
     return () => controller.abort();
   }, []);
 
+  // La pagina iniziale è quella salvata: dopo «Salva» le impostazioni si rileggono.
+  const homeId = typeof setting.value === 'string' ? setting.value : null;
   const known = pages.some((page) => page.id === value);
   const options = [
     // Un valore che non è fra le pagine pubblicate non si mostra come se lo fosse.
     ...(known ? [] : [{ value, label: 'Scegli una pagina pubblicata' }]),
-    ...pages.map((page) => ({ value: page.id, label: `${page.title} (${page.path})` })),
+    ...pages.map((page) => ({
+      value: page.id,
+      label: `${contentName(page.title, page.id === homeId)} (${page.path})`,
+    })),
   ];
 
   return (

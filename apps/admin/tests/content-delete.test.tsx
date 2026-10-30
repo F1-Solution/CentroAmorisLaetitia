@@ -156,6 +156,50 @@ describe('«Elimina» nell’editor', () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  it('una pagina figlia senza titolo compare come «Senza titolo» (DR-331)', async () => {
+    preview = {
+      ...free,
+      blocked: true,
+      children: [{ id: 'f1', title: '', path: '/pagina-di-prova/figlia/' }],
+    };
+    const user = userEvent.setup();
+    renderEditor();
+    await user.click(await screen.findByRole('button', { name: 'Elimina' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Non si può eliminare' });
+    expect(within(dialog).getByRole('listitem')).toHaveTextContent(
+      'Senza titolo (/pagina-di-prova/figlia/)',
+    );
+  });
+
+  // DR-331: con il titolo vuoto la conferma si accendeva senza scrivere nulla, perché il testo
+  // digitato (vuoto) coincideva con il nome dell'oggetto; ora va scritto «Senza titolo».
+  it.each([
+    ['vuoto', ''],
+    ['di soli spazi', '   '],
+  ])(
+    'con un titolo %s la conferma chiede di scrivere «Senza titolo» (DR-331)',
+    async (_case, title) => {
+      content = { ...syntheticContent, status: 'draft', title };
+      const user = userEvent.setup();
+      renderEditor();
+      await user.click(await screen.findByRole('button', { name: 'Elimina' }));
+
+      const dialog = await screen.findByRole('dialog', { name: 'Elimina il contenuto' });
+      const confirm = within(dialog).getByRole('button', { name: 'Elimina definitivamente' });
+      expect(confirm).toBeDisabled();
+      const field = within(dialog).getByLabelText('Digita «Senza titolo» per confermare');
+      if (title) {
+        await user.type(field, title);
+        expect(confirm).toBeDisabled();
+        await user.clear(field);
+      }
+      await user.type(field, 'Senza titolo');
+      expect(confirm).toBeEnabled();
+      expect(writesTo('DELETE')).toHaveLength(0);
+    },
+  );
+
   it('elenca nella conferma le regole di redirect che restano (D143-A)', async () => {
     preview = { ...free, redirectsToPath: [{ source: '/vecchio-indirizzo/' }] };
     const user = userEvent.setup();

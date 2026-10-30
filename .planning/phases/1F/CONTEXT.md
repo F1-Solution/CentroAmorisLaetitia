@@ -70,3 +70,7 @@ Il Regno Unito è fuori dall'UE: va escluso o motivato.
 - DR-310 (D201): schermata «Compilazioni» in sola lettura con permesso del solo amministratore e registro delle consultazioni, nella 1F prima della produzione e dopo il parere MI-06. Oggi l'API non ha né la rotta di lettura né il permesso, e non invia email.
 
 Resta da decidere il fornitore del server (DR-295), dopo il confronto verificato.
+
+## 6. Rinviati dalla 1G
+
+- DR-330 (D221): W9-N7, salvataggi della copia di lavoro che si superano su rete lenta (`docs/qa/collaudo-1G-W9.md` §5).

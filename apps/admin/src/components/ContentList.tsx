@@ -288,7 +288,7 @@ export function ContentList({
           <TextField
             label="Indirizzo"
             value={newSlug}
-            helpText="L'ultima parte dell'indirizzo pubblico. Si puo' correggere."
+            helpText="L'ultima parte dell'indirizzo pubblico. Si può correggere."
             onChange={(event) => setNewSlug(event.target.value)}
           />
           {createError ? (

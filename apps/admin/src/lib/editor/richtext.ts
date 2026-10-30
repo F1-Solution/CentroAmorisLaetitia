@@ -28,6 +28,8 @@ import { Image } from '@tiptap/extension-image';
 import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
+import { TextSelection } from '@tiptap/pm/state';
+import type { EditorView } from '@tiptap/pm/view';
 import { StarterKit } from '@tiptap/starter-kit';
 import type { Extensions } from '@tiptap/react';
 
@@ -103,6 +105,35 @@ export function richTextExtensions(): Extensions {
     Subscript,
     Superscript,
   ];
+}
+
+const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
+
+/** Prima di un tasto porta nell'editor il cursore che il browser ha già spostato da sé (W9-N2). */
+export function syncSelectionFromDom(view: EditorView, event: KeyboardEvent): void {
+  if (event.isComposing || event.keyCode === 229 || MODIFIER_KEYS.has(event.key)) return;
+  const { selection, doc } = view.state;
+  if (view.composing || !(selection instanceof TextSelection)) return;
+  const browser = view.dom.ownerDocument.getSelection();
+  const anchorNode = browser?.anchorNode;
+  const focusNode = browser?.focusNode;
+  if (!browser || !anchorNode || !focusNode) return;
+  if (!view.dom.contains(anchorNode) || !view.dom.contains(focusNode)) return;
+  let anchor: number;
+  let head: number;
+  try {
+    anchor = view.posAtDOM(anchorNode, browser.anchorOffset, 1);
+    head = view.posAtDOM(focusNode, browser.focusOffset, 1);
+  } catch {
+    return;
+  }
+  const size = doc.content.size;
+  if (anchor < 0 || head < 0 || anchor > size || head > size) return;
+  if (anchor === selection.anchor && head === selection.head) return;
+  const $anchor = doc.resolve(anchor);
+  const $head = doc.resolve(head);
+  if (!$anchor.parent.inlineContent || !$head.parent.inlineContent) return;
+  view.dispatch(view.state.tr.setSelection(TextSelection.between($anchor, $head)));
 }
 
 export interface PasteOutcome {

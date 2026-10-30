@@ -507,6 +507,15 @@ describe('scheda del carosello', () => {
     );
   });
 
+  it('W9-N3: un contenuto senza titolo in «Dove compare» si chiama «Senza titolo»', async () => {
+    current = sliderWith([slide(1)], [{ id: 'p1', title: '', type: 'page' }]);
+    await ready();
+    expect(screen.getByRole('link', { name: 'Senza titolo' })).toHaveAttribute(
+      'href',
+      '/redazione/pagine/p1',
+    );
+  });
+
   it('se nessuna pagina lo mostra lo dice e spiega come farlo vedere', async () => {
     await ready();
     expect(screen.getByText(/Nessuna pagina lo mostra\./)).toHaveTextContent(

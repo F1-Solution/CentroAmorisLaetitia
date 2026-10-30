@@ -297,6 +297,135 @@ describe('immagine in evidenza di una pagina (DR-278)', () => {
   });
 });
 
+describe('W9-N5: l’immagine in evidenza dice che è salvata, e se il sito cambia subito (DR-329)', () => {
+  const featured = {
+    id: MEDIA_PUBLIC,
+    title: 'Sala di prova',
+    thumbnailUrl: '/media/pubblica.jpg',
+  };
+  const draftPage: ContentDetail = { ...page, status: 'draft' };
+
+  async function openImageTab(user: ReturnType<typeof userEvent.setup>): Promise<HTMLElement> {
+    await screen.findByLabelText('Titolo');
+    await user.click(screen.getByRole('tab', { name: 'Immagine in evidenza' }));
+    return screen.findByRole('group', { name: 'Immagine in evidenza' });
+  }
+
+  async function choose(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+    await user.click(await screen.findByRole('button', { name: 'Scegli un’immagine' }));
+    const panel = await screen.findByRole('dialog', { name: 'Scegli un media' });
+    await user.click(await within(panel).findByText('Sala di prova'));
+    await user.click(within(panel).getByRole('button', { name: 'Usa questo media' }));
+  }
+
+  it('pubblicato: la nota sotto i pulsanti, e dopo la scelta «Il sito usa già la nuova immagine in evidenza.»', async () => {
+    const user = userEvent.setup();
+    renderEditor(page);
+    const group = await openImageTab(user);
+    const note = within(group).getByText(
+      'L’immagine scelta o tolta cambia subito sul sito, senza passare dall’anteprima.',
+    );
+    expect(within(group).getByRole('button', { name: 'Scegli un’immagine' })).toHaveAttribute(
+      'aria-describedby',
+      note.id,
+    );
+    await choose(user);
+    const notice = await within(group).findByRole('status');
+    expect(notice).toHaveTextContent('Immagine salvata');
+    expect(notice).toHaveTextContent('Il sito usa già la nuova immagine in evidenza.');
+  });
+
+  it('pubblicato: dopo «Togli l’immagine» «Il sito non usa più un’immagine in evidenza.»', async () => {
+    const user = userEvent.setup();
+    renderEditor({ ...page, featuredMedia: featured });
+    const group = await openImageTab(user);
+    const remove = within(group).getByRole('button', { name: 'Togli l’immagine' });
+    expect(remove).toHaveAttribute('aria-describedby');
+    await user.click(remove);
+    const notice = await within(group).findByRole('status');
+    expect(notice).toHaveTextContent('Immagine tolta');
+    expect(notice).toHaveTextContent('Il sito non usa più un’immagine in evidenza.');
+  });
+
+  it('in bozza: nessuna nota, e gli avvisi dicono solo che l’immagine è salvata o tolta', async () => {
+    const user = userEvent.setup();
+    renderEditor(draftPage);
+    const group = await openImageTab(user);
+    expect(within(group).queryByText(/cambia subito sul sito/)).toBeNull();
+    expect(within(group).getByRole('button', { name: 'Scegli un’immagine' })).not.toHaveAttribute(
+      'aria-describedby',
+    );
+    await choose(user);
+    expect(await within(group).findByRole('status')).toHaveTextContent(
+      'Immagine salvataImmagine in evidenza salvata.',
+    );
+    await user.click(within(group).getByRole('button', { name: 'Togli l’immagine' }));
+    await waitFor(() =>
+      expect(within(group).getByRole('status')).toHaveTextContent(
+        'Immagine toltaImmagine in evidenza tolta.',
+      ),
+    );
+  });
+});
+
+describe('W9-N6: nell’albero un’immagine senza testo alternativo proprio usa quello del media', () => {
+  const imageDocument = blockDocumentSchema.parse({
+    schema: 1,
+    blocks: [
+      {
+        type: 'image',
+        id: 'b_0000000000f3',
+        props: { mediaId: MEDIA_PUBLIC, alt: '' },
+        children: [],
+      },
+    ],
+  });
+  const imagePage: ContentDetail = {
+    ...page,
+    blocks: imageDocument,
+    contentHtml: serializeBlockDocument(imageDocument),
+  };
+
+  function withMedia(altText: string | null): void {
+    const base = apiMock.getMockImplementation()!;
+    apiMock.mockImplementation((path: string, options?: { method?: string }) =>
+      path === `/media/${MEDIA_PUBLIC}`
+        ? Promise.resolve({ ...mediaList.items[0], altText, caption: null })
+        : base(path, options),
+    );
+  }
+
+  it('il testo alternativo del media dà il nome all’immagine', async () => {
+    withMedia('Sala riunioni con le sedie in cerchio');
+    renderEditor(imagePage);
+    expect(
+      await screen.findByRole('button', {
+        name: 'Immagine — Sala riunioni con le sedie in cerchio',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('se il media non si legge l’immagine resta «immagine»', async () => {
+    const base = apiMock.getMockImplementation()!;
+    apiMock.mockImplementation((path: string, options?: { method?: string }) =>
+      path === `/media/${MEDIA_PUBLIC}`
+        ? Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'))
+        : base(path, options),
+    );
+    renderEditor(imagePage);
+    expect(await screen.findByRole('button', { name: 'Immagine — immagine' })).toBeInTheDocument();
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith(`/media/${MEDIA_PUBLIC}`, undefined));
+  });
+
+  it('senza testo alternativo nel media si usa il suo titolo', async () => {
+    withMedia(null);
+    renderEditor(imagePage);
+    expect(
+      await screen.findByRole('button', { name: 'Immagine — Sala di prova' }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe('tipo di dati strutturati (DR-278)', () => {
   function renderSeo() {
     return render(

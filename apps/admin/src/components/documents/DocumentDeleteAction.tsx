@@ -4,6 +4,7 @@ import { Alert, Button, ConfirmDestructive, Dialog } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { contentName } from '../../lib/contentName';
 
 /**
  * «Elimina» nella scheda di un documento (DR-281): anteprima di ciò che lo trattiene, poi
@@ -40,7 +41,7 @@ function BlockedReasons({ preview }: { readonly preview: DocumentDeletion }): Re
           <ul>
             {preview.contents.map((content) => (
               <li key={content.id}>
-                {content.title} ({content.path})
+                {contentName(content.title)} ({content.path})
               </li>
             ))}
           </ul>

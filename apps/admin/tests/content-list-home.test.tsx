@@ -1,5 +1,6 @@
 import { DensityProvider } from '@amoris/ui';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as ApiModule from '../src/lib/api';
 import type * as SessionModule from '../src/lib/session';
@@ -90,5 +91,29 @@ describe('elenco delle pagine e pagina iniziale (W8-24)', () => {
     expect(within(home).getByText(/Pagina iniziale/)).toBeInTheDocument();
     const comune = screen.getByRole('row', { name: /Pagina comune/ });
     expect(within(comune).queryByText(/Pagina iniziale/)).toBeNull();
+  });
+
+  it('W9-N4: l’aiuto di «Indirizzo» nella nuova pagina è scritto con l’accento', async () => {
+    const user = userEvent.setup();
+    render(
+      <DensityProvider>
+        <ContentList
+          type="page"
+          sectionId="pagine"
+          title="Pagine"
+          summary="Le pagine del sito."
+          searchLabel="Cerca una pagina"
+          emptyText="Nessuna pagina."
+          caption="Elenco delle pagine"
+          basePath="/redazione/pagine"
+          createLabel="Nuova pagina"
+        />
+      </DensityProvider>,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Nuova pagina' }));
+    const finestra = screen.getByRole('dialog', { name: 'Nuova pagina' });
+    expect(
+      within(finestra).getByText("L'ultima parte dell'indirizzo pubblico. Si può correggere."),
+    ).toBeInTheDocument();
   });
 });

@@ -356,6 +356,24 @@ describe('«Elimina» nella scheda', () => {
     expect(within(conferma).getByText(/\/vecchio-modulo\//)).toBeInTheDocument();
   });
 
+  it('W9-N3: un contenuto senza titolo che lo cita si chiama «Senza titolo»', async () => {
+    apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path === `/documents/${DOC.id}` && !options?.method) return DOC;
+      if (path === `/documents/${DOC.id}/deletion`) {
+        return {
+          ...LIBERO,
+          blocked: true,
+          contents: [{ id: 'c1', title: '', path: '/pagina-senza-titolo/' }],
+        };
+      }
+      throw new Error(`chiamata non prevista: ${path}`);
+    });
+    const user = await ready();
+    await user.click(screen.getByRole('button', { name: 'Elimina' }));
+    const motivo = await screen.findByRole('dialog', { name: 'Non si può eliminare' });
+    expect(within(motivo).getByText('Senza titolo (/pagina-senza-titolo/)')).toBeInTheDocument();
+  });
+
   it('se un blocco o un menu lo cita spiega il motivo e non offre la conferma', async () => {
     apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
       if (path === `/documents/${DOC.id}` && !options?.method) return DOC;

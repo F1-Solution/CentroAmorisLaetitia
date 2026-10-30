@@ -12,6 +12,7 @@ import { Alert, Button, MediaPicker, PageHeader, type MediaPickerItem } from '@a
 import Link from 'next/link';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { contentName } from '../../lib/contentName';
 import { useSession } from '../../lib/session';
 import { siteUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
@@ -384,7 +385,7 @@ export function SliderEditor({ sliderId }: { readonly sliderId: string }): React
                     <Link
                       href={`/redazione/${content.type === 'post' ? 'notizie' : 'pagine'}/${content.id}`}
                     >
-                      {content.title}
+                      {contentName(content.title)}
                     </Link>
                   </li>
                 ))}

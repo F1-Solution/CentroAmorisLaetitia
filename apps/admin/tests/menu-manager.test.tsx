@@ -71,6 +71,8 @@ const voce = (id: string, label: string, position: number, parentId: string | nu
   visibleToRoles: [] as string[],
 });
 
+let contenuti: Array<{ id: string; title: string; isHome?: boolean }> = [];
+
 let items: ReturnType<typeof voce>[] | Record<string, unknown>[] = [
   voce('v1', 'Prima voce', 0),
   voce('v2', 'Seconda voce', 1),
@@ -93,12 +95,13 @@ function writes(): { path: string; options: { method?: string; body?: unknown } 
 describe('menu di navigazione', () => {
   beforeEach(() => {
     items = [voce('v1', 'Prima voce', 0), voce('v2', 'Seconda voce', 1)];
+    contenuti = [{ id: 'c1', title: 'Pagina inventata' }];
     apiMock.mockReset();
     apiMock.mockImplementation((path: string, options?: { method?: string }) => {
       if (path === '/menus')
         return Promise.resolve([{ id: 'menu1', key: 'principale', label: 'Menu principale' }]);
       if (path.startsWith('/contents')) {
-        return Promise.resolve({ items: [{ id: 'c1', title: 'Pagina inventata' }] });
+        return Promise.resolve({ items: contenuti });
       }
       if (path === '/terms')
         return Promise.resolve([{ id: 't1', name: 'Avvisi', taxonomy: 'category' }]);
@@ -309,6 +312,38 @@ describe('menu di navigazione', () => {
     expect(screen.getByRole('button', { name: 'Elimina: Pagina inventata' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Prendi «Pagina inventata» per spostarlo' }),
+    ).toBeInTheDocument();
+  });
+
+  it('W9-N3: in «Contenuto» la pagina iniziale e i contenuti senza titolo hanno un nome', async () => {
+    contenuti = [
+      { id: 'home', title: '', isHome: true },
+      { id: 'c2', title: '', isHome: false },
+      { id: 'c1', title: 'Pagina inventata' },
+    ];
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    const opzioni = within(within(dialogo).getByLabelText('Contenuto')).getAllByRole('option');
+    expect(opzioni.map((opzione) => opzione.textContent)).toEqual([
+      'Scegli un contenuto',
+      'Pagina iniziale',
+      'Senza titolo',
+      'Pagina inventata',
+    ]);
+  });
+
+  it('W9-N3: una voce senza etichetta verso la pagina iniziale senza titolo si chiama «Pagina iniziale»', async () => {
+    contenuti = [{ id: 'home', title: '', isHome: true }];
+    items = [{ ...voce('v1', '', 0), kind: 'content' as const, contentId: 'home', url: null }];
+    renderManager();
+    expect(
+      await screen.findByRole('button', { name: 'Elimina: Pagina iniziale' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Prendi «Pagina iniziale» per spostarlo' }),
     ).toBeInTheDocument();
   });
 

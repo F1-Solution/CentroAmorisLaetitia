@@ -4,6 +4,7 @@ import {
   createBlock,
   creatableChildTypes,
   findBlock,
+  imageMediaWithoutAlt,
   insertBlock,
   labelOf,
   moveBlockBy,
@@ -242,6 +243,34 @@ describe('albero e riepiloghi', () => {
     expect(parentIdOf(syntheticDocument.blocks, RESERVE)).toBeNull();
     expect(parentIdOf(syntheticDocument.blocks, FIRST_TEXT)).toBe(COLUMN);
     expect(parentIdOf(syntheticDocument.blocks, 'b_0000000000ff')).toBeUndefined();
+  });
+
+  it('W9-N6: un’immagine senza testo alternativo proprio si chiama col testo alternativo o il titolo del media', () => {
+    const MEDIA = '88888888-8888-4888-8888-888888888888';
+    const image = (props: Record<string, unknown>) =>
+      ({
+        id: 'b_0000000000f2',
+        type: 'image',
+        children: [],
+        props: { mediaId: MEDIA, src: null, alt: '', caption: null, ...props },
+      }) as never;
+    const names = new Map([[MEDIA, 'Sala riunioni inventata']]);
+    expect(labelOf(image({}), undefined, names)).toBe('Sala riunioni inventata');
+    expect(toTreeNodes([image({})], undefined, names)[0]?.label).toBe('Sala riunioni inventata');
+    // Il testo del blocco e la didascalia vengono prima; senza nulla resta «immagine».
+    expect(labelOf(image({ alt: 'Testo del blocco' }), undefined, names)).toBe('Testo del blocco');
+    expect(labelOf(image({ caption: 'Didascalia inventata' }), undefined, names)).toBe(
+      'Didascalia inventata',
+    );
+    expect(labelOf(image({}))).toBe('immagine');
+    // Con testo alternativo o didascalia propri il media non serve all'albero e non si chiede.
+    expect(
+      imageMediaWithoutAlt([
+        image({}),
+        image({ alt: 'Testo del blocco' }),
+        image({ caption: 'Didascalia inventata' }),
+      ]),
+    ).toEqual([MEDIA]);
   });
 
   it('W8-33: «Documento» e «Media e testo» si distinguono nell’albero', () => {

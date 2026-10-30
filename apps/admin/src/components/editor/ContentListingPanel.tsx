@@ -8,7 +8,7 @@ import {
   MediaPicker,
   type MediaPickerItem,
 } from '@amoris/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { siteUrl } from '../../lib/siteUrl';
 import type { FeaturedMedia, LastChange } from '../../lib/editor/roundtrip';
@@ -48,6 +48,8 @@ export interface ContentListingPanelProps {
   readonly featuredMedia: FeaturedMedia | null;
   readonly termIds: readonly string[];
   readonly disabled: boolean;
+  /** Pubblicato, il sito usa subito l'immagine scelta o tolta (DR-329). */
+  readonly published?: boolean;
   readonly onSaved: (saved: ListingSaved) => void;
 }
 
@@ -65,12 +67,36 @@ const IMAGE_DESCRIPTION: Readonly<Record<'page' | 'post', string>> = {
   page: 'Come nel sito di partenza, il sito non la mostra nella pagina: compare nella ricerca e nei dati strutturati per i motori di ricerca. Solo immagini pubbliche; il testo alternativo è quello del media.',
 };
 
+interface ImageNotice {
+  readonly title: string;
+  readonly text: string;
+}
+
+/** Gli avvisi dopo la scelta e la rimozione (DR-329). */
+function imageNoticeOf(chosen: boolean, published: boolean): ImageNotice {
+  if (chosen) {
+    return {
+      title: 'Immagine salvata',
+      text: published
+        ? 'Il sito usa già la nuova immagine in evidenza.'
+        : 'Immagine in evidenza salvata.',
+    };
+  }
+  return {
+    title: 'Immagine tolta',
+    text: published
+      ? 'Il sito non usa più un’immagine in evidenza.'
+      : 'Immagine in evidenza tolta.',
+  };
+}
+
 export function ContentListingPanel({
   contentId,
   type,
   featuredMedia,
   termIds,
   disabled,
+  published = false,
   onSaved,
 }: ContentListingPanelProps): React.JSX.Element {
   const [categories, setCategories] = useState<readonly CategoryOption[] | null>(null);
@@ -86,7 +112,12 @@ export function ContentListingPanel({
   const [mediaLoading, setMediaLoading] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [imageNotice, setImageNotice] = useState<ImageNotice | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const imageNoteId = useId();
+  // L'avviso dice che cosa fa il sito: con lo stato cambiato non vale più.
+  useEffect(() => setImageNotice(null), [published]);
+  const describedByNote = published ? { 'aria-describedby': imageNoteId } : {};
 
   // Una chiave stabile: l'elenco arriva da fuori e un array nuovo a ogni resa azzererebbe la scelta.
   const termsKey = termIds.join(',');
@@ -149,6 +180,7 @@ export function ContentListingPanel({
   async function changeImage(next: MediaPickerItem | null): Promise<void> {
     setImageBusy(true);
     setImageError(null);
+    setImageNotice(null);
     try {
       const saved = await api<{ updatedAt?: string }>(`/contents/${contentId}`, {
         method: 'PATCH',
@@ -160,6 +192,7 @@ export function ContentListingPanel({
           : null,
         ...(saved?.updatedAt !== undefined ? { updatedAt: saved.updatedAt } : {}),
       });
+      setImageNotice(imageNoticeOf(next !== null, published));
     } catch (caught) {
       setImageError(messageOf(caught, 'L’immagine in evidenza non è stata salvata.'));
     } finally {
@@ -211,6 +244,11 @@ export function ContentListingPanel({
             {imageError}
           </Alert>
         ) : null}
+        {imageNotice ? (
+          <Alert variant="success" title={imageNotice.title}>
+            {imageNotice.text}
+          </Alert>
+        ) : null}
         {featuredMedia ? (
           <img
             className="amoris-editor__listing-preview"
@@ -221,15 +259,30 @@ export function ContentListingPanel({
           <p>Nessuna immagine in evidenza.</p>
         )}
         <div className="amoris-editor__listing-actions">
-          <Button variant="secondary" permitted={!disabled} onClick={() => setPicking(true)}>
+          <Button
+            variant="secondary"
+            permitted={!disabled}
+            onClick={() => setPicking(true)}
+            {...describedByNote}
+          >
             {featuredMedia ? 'Cambia l’immagine' : 'Scegli un’immagine'}
           </Button>
           {featuredMedia ? (
-            <Button variant="tertiary" permitted={!disabled} onClick={() => void changeImage(null)}>
+            <Button
+              variant="tertiary"
+              permitted={!disabled}
+              onClick={() => void changeImage(null)}
+              {...describedByNote}
+            >
               Togli l’immagine
             </Button>
           ) : null}
         </div>
+        {published ? (
+          <p id={imageNoteId}>
+            L’immagine scelta o tolta cambia subito sul sito, senza passare dall’anteprima.
+          </p>
+        ) : null}
       </FieldGroup>
 
       {type === 'post' ? (
