@@ -46,6 +46,7 @@
   color: var(--amoris-text-secondary);
 }
 
+.amoris-user-menu__action,
 .amoris-user-menu__signout {
   width: 100%;
   text-align: left;
@@ -54,11 +55,15 @@
   border: none;
   border-radius: var(--amoris-radius);
   background: transparent;
-  color: var(--amoris-danger);
+  color: var(--amoris-text-primary);
   font-family: var(--amoris-font-family);
   font-size: var(--amoris-text-base-size);
   cursor: pointer;
 }
+.amoris-user-menu__signout {
+  color: var(--amoris-danger);
+}
+.amoris-user-menu__action:hover,
 .amoris-user-menu__signout:hover {
   background: var(--amoris-surface-hover);
 }

@@ -231,7 +231,9 @@ describe('«Nuovo documento» nell’elenco', () => {
     );
     await user.click(within(dialogo).getByRole('button', { name: 'Crea il documento' }));
 
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith(`/redazione/documenti/${NUOVO_DOC}`));
+    await waitFor(() =>
+      expect(pushMock).toHaveBeenCalledWith(`/redazione/documenti/${NUOVO_DOC}?creato=1`),
+    );
     expect(uploadMock).toHaveBeenCalledWith('/media', file, undefined);
     expect(callsTo('POST')).toEqual([
       [
@@ -336,7 +338,7 @@ describe('«Elimina» nella scheda', () => {
     await waitFor(() =>
       expect(callsTo('DELETE')).toEqual([[`/documents/${DOC.id}`, { method: 'DELETE' }]]),
     );
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/redazione/documenti'));
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith('/redazione/documenti?eliminato=1'));
   });
 
   it('con il file usato altrove la conferma dice che il file resta, e nomina i redirect', async () => {

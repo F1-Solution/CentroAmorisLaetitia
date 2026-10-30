@@ -256,7 +256,7 @@ describe('scheda «Pagina»: titolo, spazio fra le colonne, primo piano (DR-278)
     const user = userEvent.setup();
     renderEditor({ ...page, showTitle: false, gutterWidth: 3 });
     await screen.findByLabelText('Titolo');
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await screen.findByText('Nessuna modifica: il contenuto non è stato riscritto.');
     expect(allWrites()).toHaveLength(0);
   });

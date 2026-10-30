@@ -2,6 +2,7 @@ import type { AuditContentOption, AuditItem, LastChange } from '@amoris/contract
 import { schema, type Database } from '@amoris/db';
 import { and, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import { DEFAULT_VIEW_ACTIONS } from './actions.js';
+import { seoScopeLabel } from './objectLabel.js';
 import { encodeCursor, type AuditQuery } from './schemas.js';
 
 /** Sola lettura di `audit_log`, che resta append-only. */
@@ -28,6 +29,10 @@ function conditions(query: AuditQuery): SQL[] {
     // L'impronta dell'identificativo di un accesso fallito non si ritrova per id (caso 4).
     where.push(sql`${auditLog.entityType} is distinct from 'auth.identifier'`);
   }
+  // La riga di conteggio di una password errata in una modifica dell'account non è un'azione (W8-30).
+  where.push(
+    sql`not (${auditLog.action} = 'auth.password_changed' and coalesce(${auditLog.detail}->>'source', '') = 'account')`,
+  );
   if (query.actorUserId) where.push(eq(auditLog.actorUserId, query.actorUserId));
   if (query.outcome) where.push(eq(auditLog.outcome, query.outcome));
   if (query.from) {
@@ -52,6 +57,41 @@ function deletedTitle(row: Row & { action: string; detail: unknown }): string | 
   if (row.action !== 'content.delete' || row.entityType !== 'content') return null;
   const detail = row.detail as { title?: unknown } | null;
   return typeof detail?.title === 'string' && detail.title ? detail.title : null;
+}
+
+/** Titoli conservati dalle righe «Ha eliminato», per le righe degli stessi contenuti (W8-29). */
+async function deletedTitles(db: Database, rows: readonly Row[]): Promise<Map<string, string>> {
+  const ids = [
+    ...new Set(
+      rows.flatMap((r) =>
+        (r.entityType === 'content' || r.entityType === 'content_seo') && r.entityId
+          ? [r.entityId]
+          : [],
+      ),
+    ),
+  ];
+  if (ids.length === 0) return new Map();
+  const { auditLog } = schema;
+  const found = await db
+    .select({
+      entityId: auditLog.entityId,
+      title: sql<string | null>`${auditLog.detail}->>'title'`,
+    })
+    .from(auditLog)
+    .where(
+      and(
+        eq(auditLog.entityType, 'content'),
+        eq(auditLog.action, 'content.delete'),
+        eq(auditLog.outcome, 'success'),
+        inArray(auditLog.entityId, ids),
+      ),
+    )
+    .orderBy(desc(auditLog.occurredAt), desc(auditLog.id));
+  const titles = new Map<string, string>();
+  for (const f of found) {
+    if (f.entityId && f.title && !titles.has(f.entityId)) titles.set(f.entityId, f.title);
+  }
+  return titles;
 }
 
 /** Un'interrogazione per tipo di oggetto e per pagina, mai una per riga. */
@@ -118,6 +158,21 @@ async function labelsFor(
 const labelKey = (row: Row): string =>
   `${row.entityType === 'content_seo' ? 'content' : row.entityType}:${row.entityId}`;
 
+/** Il nome vivo; poi quello conservato alla scrittura; poi, per i contenuti eliminati, il titolo di «Ha eliminato». */
+function entityLabelOf(
+  row: Row & { action: string; detail: unknown; savedLabel: string | null },
+  labels: ReadonlyMap<string, string>,
+  titles: ReadonlyMap<string, string>,
+): string | null {
+  const live = labels.get(labelKey(row));
+  if (live) return live;
+  if (row.entityType === 'seo_template' && row.entityId) return seoScopeLabel(row.entityId);
+  const saved = deletedTitle(row) ?? row.savedLabel;
+  if (saved) return saved;
+  const isContent = row.entityType === 'content' || row.entityType === 'content_seo';
+  return isContent && row.entityId ? (titles.get(row.entityId) ?? null) : null;
+}
+
 export async function listAudit(
   db: Database,
   query: AuditQuery,
@@ -138,6 +193,7 @@ export async function listAudit(
       entityId: auditLog.entityId,
       outcome: auditLog.outcome,
       detail: auditLog.detail,
+      savedLabel: sql<string | null>`${auditLog.detail}->>'label'`,
     })
     .from(auditLog)
     .where(where.length ? and(...where) : undefined)
@@ -151,6 +207,7 @@ export async function listAudit(
       ? encodeCursor({ occurredAt: last.occurredAtText, id: String(last.id) })
       : null;
   const { labels, types } = await labelsFor(db, page);
+  const titles = await deletedTitles(db, page);
   const items = page.map((row) => ({
     id: String(row.id),
     occurredAt: row.occurredAt.toISOString(),
@@ -162,7 +219,7 @@ export async function listAudit(
     entityType: row.entityType,
     // Per l'accesso fallito l'id e' l'impronta dell'identificativo: non si mostra.
     entityId: row.entityType === 'auth.identifier' ? null : row.entityId,
-    entityLabel: labels.get(labelKey(row)) ?? deletedTitle(row),
+    entityLabel: entityLabelOf(row, labels, titles),
     contentType: types.get(labelKey(row)) ?? null,
     outcome: row.outcome,
   }));

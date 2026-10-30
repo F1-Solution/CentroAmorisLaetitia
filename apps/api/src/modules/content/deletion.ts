@@ -50,7 +50,7 @@ export async function deletionBlockers(
     .from(schema.redirects)
     .where(eq(schema.redirects.targetPath, content.path))
     .orderBy(sql`${schema.redirects.sourcePath} collate "C"`);
-  const isHome = (await homeContentId(exec)) === id;
+  const isHome = await isHomeContent(exec, id);
 
   return {
     blocked: children.length > 0 || menuItems.length > 0 || isHome,
@@ -60,6 +60,20 @@ export async function deletionBlockers(
     isHome,
     redirectsToPath: redirects,
   };
+}
+
+/** Vero se `id` è la pagina iniziale; l'impostazione può essere in maiuscolo (I1 della T7). */
+export async function isHomeContent(exec: Executor, id: string): Promise<boolean> {
+  return (await homeContentId(exec))?.toLowerCase() === id.toLowerCase();
+}
+
+/** Il rifiuto comune a eliminazione e ritiro della pagina iniziale (DR-314). */
+export function homeContentError(): Error {
+  return deletionError(
+    'CONTENT_IS_HOME',
+    'Il contenuto è la pagina iniziale del sito: scegli prima un’altra pagina iniziale.',
+    409,
+  );
 }
 
 const listOf = (names: readonly string[]): string => names.map((name) => `«${name}»`).join(', ');
@@ -81,13 +95,7 @@ function assertDeletable(preview: DeletionPreview): void {
       409,
     );
   }
-  if (preview.isHome) {
-    throw deletionError(
-      'CONTENT_IS_HOME',
-      'Il contenuto è la pagina iniziale del sito: scegli prima un’altra pagina iniziale.',
-      409,
-    );
-  }
+  if (preview.isHome) throw homeContentError();
 }
 
 /**

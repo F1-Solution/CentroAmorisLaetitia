@@ -387,3 +387,29 @@ sviluppo sono le sole due notizie con il titolo spento, invariate dall'importazi
 
 **Stato:** le 6 viste del §14 e le 12 del §13 sono state accettate nominativamente dal
 Proprietario il 2026-10-27 (DR-289).
+
+## 15. Confronto integrale della `1G-W9` (2026-10-29)
+
+Ricattura integrale del sito nuovo dopo le correzioni della `1G-W9` (criterio W9-4). Stessi
+strumenti del §14 (Playwright 1.63.0, Chromium 153.0.8010.12, `pixelmatch` 7.2.0, `pngjs`
+7.0.0, lockfile invariato), sito nuovo con `next start` su `127.0.0.1:3200` e
+`SITE_URL=http://127.0.0.1:3200`, build del 2026-10-29 con le modifiche T1-T9 non ancora
+committate (fotografia `a242931`), database di sviluppo con la migrazione 0011 (DR-312).
+Catture in `docs/qa/screenshots/sito/`, quelle del §14 in
+`docs/qa/screenshots/sito-2026-10-29-prima-1G-W9/`, fuori da Git. Durata 19 minuti.
+
+**Rispetto al riferimento:** 591 righe (585 viste distinte), 40 superate, 3 da esaminare,
+548 fallite, 0 senza immagine: gli stessi numeri dei §11 e §14, con
+[`confronto/esiti.csv`](confronto/esiti.csv) identico byte per byte a quello del §14.
+
+**Rispetto alle catture accettate** (DR-289 per 558 viste, `1G-W6` per 15, DR-243 per 9,
+DR-248 per 3; esiti con le impronte in
+[`confronto/esiti-1G-W9.csv`](confronto/esiti-1G-W9.csv)): **585 viste identiche** (stessa
+impronta SHA-256), 0 cambiate, **0 peggiorate**, 0 errori.
+
+Le correzioni della `1G-W9` che toccano il sito (W8-10, W8-11, W8-12, W8-26) non cambiano
+nessuna vista catturata: nel database di sviluppo nessun blocco Immagine ha una didascalia,
+il titolo dell'immagine è un attributo non visibile e nessuna pagina mostra un carosello.
+Restano da verificare a vista nel collaudo (T11).
+
+**Stato:** nessuna vista nuova da accettare.

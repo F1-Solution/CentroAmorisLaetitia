@@ -15,6 +15,7 @@ import {
   type MediaPickerItem,
 } from '@amoris/ui';
 import { useState } from 'react';
+import { siteUrl } from '../../lib/siteUrl';
 import { CheckedTextField, usePublicMedia } from './embedInspectorParts';
 
 export interface VideoInspectorProps {
@@ -149,14 +150,16 @@ export function VideoInspector({
         loading={pickerOpen && images.items === null && images.error === null}
         items={(images.items ?? []).map<MediaPickerItem>((item) => ({
           id: item.id,
-          thumbnailUrl: item.publicPath,
+          thumbnailUrl: siteUrl(item.publicPath),
           title: item.title ?? item.fileName,
         }))}
         {...(images.error !== null ? { errorText: images.error } : {})}
         searchValue={search}
         onSearchChange={setSearch}
         onSelect={(item) => {
-          setProps({ posterSrc: item.thumbnailUrl, posterMediaId: null });
+          // Nel blocco resta il percorso relativo: l'indirizzo del sito serve solo a mostrare la miniatura.
+          const chosen = images.items?.find((candidate) => candidate.id === item.id);
+          setProps({ posterSrc: chosen?.publicPath ?? item.thumbnailUrl, posterMediaId: null });
           setPickerOpen(false);
         }}
       />

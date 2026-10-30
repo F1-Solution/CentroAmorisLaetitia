@@ -118,6 +118,17 @@ export default function PasswordPage(): React.JSX.Element | null {
         <Button type="submit" loading={busy}>
           Cambia password
         </Button>
+        {user.mustChangePassword ? null : (
+          // Nel cambio volontario si torna all'area senza uscire; la radice porta all'area attiva.
+          <Button
+            type="button"
+            variant="tertiary"
+            disabled={busy}
+            onClick={() => router.replace('/')}
+          >
+            Annulla
+          </Button>
+        )}
         <Button
           type="button"
           variant="tertiary"

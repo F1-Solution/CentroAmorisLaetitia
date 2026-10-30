@@ -28,12 +28,12 @@ const VISIBILITY_OPTIONS: readonly { value: MenuVisibility; label: string; note:
   {
     value: 'authenticated',
     label: 'Solo a chi ha fatto accesso',
-    note: 'La voce compare a chi è entrato, quale che sia il suo ruolo.',
+    note: 'Oggi il sito non ha un accesso per i visitatori, quindi nessuno vede questa voce.',
   },
   {
     value: 'roles',
     label: 'Solo ad alcuni ruoli',
-    note: 'La voce compare soltanto a chi ha uno dei ruoli indicati qui sotto.',
+    note: 'Oggi il sito non ha un accesso per i visitatori, quindi nessuno vede questa voce, qualunque ruolo si indichi.',
   },
   { value: 'hidden', label: 'Nascosta', note: 'La voce non compare a nessuno, e resta scritta.' },
 ];

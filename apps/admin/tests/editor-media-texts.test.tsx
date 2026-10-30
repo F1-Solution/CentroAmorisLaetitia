@@ -27,10 +27,10 @@ describe('testi dell’editor sui media (DR-269)', () => {
         <BlockInspector block={immagine} onChange={vi.fn()} onColumnStructureChange={vi.fn()} />
       </DensityProvider>,
     );
-    expect(screen.getByText('Il file dell’immagine si cambia da «Media»')).toBeInTheDocument();
+    expect(screen.getByText('Due modi per cambiare il file')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Qui si modifica ciò che accompagna l’immagine; il file si sostituisce da Corredo › Media, con «Sostituisci il file».',
+        '«Cambia immagine» cambia il file solo di questo blocco; «Sostituisci il file» in Corredo › Media lo cambia in tutte le pagine che usano l’immagine.',
       ),
     ).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('non esiste ancora');

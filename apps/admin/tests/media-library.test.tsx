@@ -153,6 +153,38 @@ describe('archivio dei media', () => {
     });
   });
 
+  it('l’aiuto del testo alternativo concorda col soggetto: «Le pagine lo usano…»', async () => {
+    const panel = await openPanel();
+    expect(
+      within(panel).getByText(
+        /Le pagine lo usano quando il blocco dell’immagine non ha un testo suo/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('DR-313: l’aiuto del titolo dice che nelle pagine vale solo il titolo del blocco', async () => {
+    const panel = await openPanel();
+    expect(
+      within(panel).getByText(
+        'Serve a ritrovare il file nell’area; nelle pagine compare solo il titolo scritto nel blocco.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('DR-312: l’aiuto della didascalia dice che non compare sotto le immagini già presenti nei contenuti ripresi', async () => {
+    // Il segno sta sui blocchi delle pagine importate, non sul file: lo stesso
+    // media scelto in un blocco nuovo mostra la didascalia.
+    const panel = await openPanel();
+    expect(
+      within(panel).getByText(
+        /Non compare sotto le immagini che c’erano già nelle pagine e nelle notizie riprese dal sito precedente\./,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(panel).queryByText(/Le immagini riprese dal sito precedente non la mostrano/),
+    ).not.toBeInTheDocument();
+  });
+
   async function chooseReplacement(panel: HTMLElement, file: File, applyAccept = true) {
     const user = userEvent.setup({ applyAccept });
     await user.upload(within(panel).getByLabelText(/Scegli il file che sostituisce/), file);

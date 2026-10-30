@@ -81,6 +81,8 @@ export async function verifyCurrentPassword(
   actor: SessionActor,
   password: string,
   ipHash: Buffer | null,
+  /** `account`: la verifica viene da una modifica dell'account, e la riga di conteggio non si mostra nel registro. */
+  source: 'password' | 'account' = 'password',
 ): Promise<CurrentPasswordVerdict> {
   const attempts = await evaluateAttempts(
     db,
@@ -103,6 +105,7 @@ export async function verifyCurrentPassword(
     entityId: identifierDigest(actor.email),
     sessionId: actor.sessionId,
     ipHash,
+    detail: source === 'account' ? { source } : {},
   });
   return 'invalid';
 }

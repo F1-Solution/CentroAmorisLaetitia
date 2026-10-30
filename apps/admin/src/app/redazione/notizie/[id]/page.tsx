@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { ContentEditor } from '../../../../components/editor/ContentEditor';
+import { AreaGate } from '../../../../components/AreaShell';
 
 /** Editor di una notizia. Stessa schermata delle pagine: `contents` e' una tabella sola. */
 export default function NotiziaEditorPage({
@@ -11,11 +12,13 @@ export default function NotiziaEditorPage({
 }): React.JSX.Element {
   const { id } = use(params);
   return (
-    <ContentEditor
-      contentId={id}
-      sectionId="notizie"
-      listHref="/redazione/notizie"
-      listLabel="Notizie"
-    />
+    <AreaGate area="redazione">
+      <ContentEditor
+        contentId={id}
+        sectionId="notizie"
+        listHref="/redazione/notizie"
+        listLabel="Notizie"
+      />
+    </AreaGate>
   );
 }

@@ -35,3 +35,25 @@
   color: var(--amoris-success);
   font-size: var(--amoris-text-sm-size);
 }
+
+/* Logo del sito scelto dal selettore dei media (W8-38). */
+.amoris-settings__media {
+  display: flex;
+  align-items: center;
+  gap: var(--amoris-space-3);
+}
+
+.amoris-settings__thumb {
+  max-width: 160px;
+  max-height: 80px;
+  object-fit: contain;
+  border: 1px solid var(--amoris-border);
+  border-radius: var(--amoris-radius);
+  background: var(--amoris-bg-surface);
+}
+
+.amoris-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--amoris-space-2);
+}

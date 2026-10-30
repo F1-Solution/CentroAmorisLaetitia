@@ -29,6 +29,52 @@ export interface AreaShellProps {
 }
 
 /**
+ * Decide il rinvio per chi non è entrato o non indossa `area`, e dice se la
+ * schermata può mostrarsi: finché non può, nessuna schermata deve chiamare
+ * l'API, perché i rifiuti attesi finirebbero in console (W8-32, criterio 1G-24).
+ */
+export function useAreaAccess(area: AreaId): boolean {
+  const router = useRouter();
+  const { user, loading } = useSession();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace('/accesso');
+      return;
+    }
+    if (user.mustChangePassword) {
+      router.replace('/password');
+      return;
+    }
+    if (!user.activeArea) {
+      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
+      return;
+    }
+    // Arrivati in un'area diversa da quella indossata: non si indovina, si
+    // manda a scegliere. Cambiare veste da solo al posto della persona
+    // vanificherebbe il punto 2 del §4.4, che è proprio non poterlo fare per
+    // distrazione; il percorso di arrivo si conserva per dopo la scelta.
+    if (user.activeArea !== area) {
+      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
+    }
+  }, [loading, user, area, router]);
+
+  return !loading && !!user && !user.mustChangePassword && user.activeArea === area;
+}
+
+/** Monta la schermata solo dopo che il guscio l'ha ammessa, così i suoi caricamenti non partono prima del rinvio. */
+export function AreaGate({
+  area,
+  children,
+}: {
+  readonly area: AreaId;
+  readonly children: ReactNode;
+}): React.JSX.Element | null {
+  return useAreaAccess(area) ? <>{children}</> : null;
+}
+
+/**
  * Guscio di un'area. Mette insieme i componenti 1-7 di `packages/ui` e li lega
  * alla sessione vera, che è la parte che `1D-W7` non poteva avere.
  *
@@ -58,36 +104,14 @@ export function AreaShell({
   registerBar,
 }: AreaShellProps): React.JSX.Element | null {
   const router = useRouter();
-  const { user, loading, signOut, chooseVestment } = useSession();
+  const { user, signOut, chooseVestment } = useSession();
   const [collapsed, setCollapsed] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const allowed = useAreaAccess(area);
 
   const vestments = vestmentsOf(user);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.replace('/accesso');
-      return;
-    }
-    if (user.mustChangePassword) {
-      router.replace('/password');
-      return;
-    }
-    if (!user.activeArea) {
-      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
-      return;
-    }
-    // Arrivati in un'area diversa da quella indossata: non si indovina, si
-    // manda a scegliere. Cambiare veste da solo al posto della persona
-    // vanificherebbe il punto 2 del §4.4, che è proprio non poterlo fare per
-    // distrazione; il percorso di arrivo si conserva per dopo la scelta.
-    if (user.activeArea !== area) {
-      router.replace(choiceUrlFor(window.location.pathname, window.location.search));
-    }
-  }, [loading, user, area, router]);
-
-  if (loading || !user || user.mustChangePassword || user.activeArea !== area) return null;
+  if (!allowed || !user) return null;
 
   const definition = AREA_DEFINITIONS[area];
   const ownedAreas = [...new Set(vestments.map((vestment) => vestment.area))];
@@ -124,6 +148,13 @@ export function AreaShell({
             <UserMenu
               name={user.fullName}
               email={user.email}
+              actions={[
+                {
+                  id: 'password',
+                  label: 'Cambia la password',
+                  onSelect: () => router.push('/password'),
+                },
+              ]}
               onSignOut={() => {
                 void signOut().then(() => router.replace('/accesso'));
               }}

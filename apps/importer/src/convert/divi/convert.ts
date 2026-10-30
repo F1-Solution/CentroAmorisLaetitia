@@ -457,6 +457,8 @@ function convertImage(node: ParsedShortcode, ctx: ConvertContext) {
     alt: node.attrs.alt ?? '',
     title: node.attrs.title_text ?? null,
     caption: null,
+    // Il modulo Divi non rende la didascalia del media (DR-312).
+    useMediaCaption: false,
     linkUrl: node.attrs.url ?? null,
     linkNewWindow,
     align,

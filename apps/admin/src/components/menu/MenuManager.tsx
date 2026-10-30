@@ -38,7 +38,7 @@ import './MenuManager.css';
  *
  * Lo spostamento si fa qui e non nel componente: `MenuTreeEditor` conosce
  * l'albero ma non il servizio, e l'albero vive piatto a database. Ogni comando
- * ricostruisce l'albero in memoria, rinumera i fratelli e manda **solo** le
+ * ricostruisce l'albero in memoria e manda **solo** le
  * voci la cui collocazione è cambiata — non tutto il menu a ogni clic.
  */
 
@@ -49,6 +49,28 @@ interface ContentSummary {
 
 interface ContentListResponse {
   readonly items: readonly ContentSummary[];
+  readonly meta?: { readonly total: number };
+}
+
+const CONTENTS_PER_PAGE = 100;
+// Tetto di sicurezza: 20 pagine da cento, cioè duemila contenuti.
+const MAX_CONTENT_PAGES = 20;
+
+/** Tutte le pagine dell'elenco: il servizio ne dà al massimo cento per volta. */
+async function loadAllContents(): Promise<ContentListResponse> {
+  const first = await api<ContentListResponse>(`/contents?perPage=${CONTENTS_PER_PAGE}&page=1`);
+  const total = first.meta?.total ?? first.items.length;
+  const pages = Math.min(Math.ceil(total / CONTENTS_PER_PAGE), MAX_CONTENT_PAGES);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(pages - 1, 0) }, (_, index) =>
+      api<ContentListResponse>(`/contents?perPage=${CONTENTS_PER_PAGE}&page=${index + 2}`),
+    ),
+  );
+  const all = [first, ...rest].flatMap((page) => page.items);
+  // Il servizio può ripetere un contenuto fra due pagine: si tiene la prima occorrenza.
+  return {
+    items: all.filter((row, index) => all.findIndex((other) => other.id === row.id) === index),
+  };
 }
 
 interface TermSummary {
@@ -69,6 +91,22 @@ function messageOf(caught: unknown): string {
     : 'Non è stato possibile contattare il servizio.';
 }
 
+/** Nome mostrato di una voce: etichetta, altrimenti titolo del contenuto o nome della categoria. */
+function nameOf(
+  item: MenuItem,
+  contents: ReadonlyMap<string, string>,
+  terms: ReadonlyMap<string, string>,
+): string {
+  if (item.label) return item.label;
+  const fallback =
+    item.kind === 'content'
+      ? contents.get(item.contentId ?? '')
+      : item.kind === 'term'
+        ? terms.get(item.termId ?? '')
+        : undefined;
+  return fallback ?? 'voce senza nome';
+}
+
 function toDisplayTree(
   nodes: readonly MenuNode<MenuItem>[],
   contents: ReadonlyMap<string, string>,
@@ -85,7 +123,7 @@ function toDisplayTree(
           : (item.url ?? '');
     return {
       id: item.id,
-      label: item.label,
+      label: nameOf(item, contents, terms),
       linkType,
       linkTarget: target,
       children: toDisplayTree(node.children, contents, terms),
@@ -116,6 +154,7 @@ export function MenuManager(): React.JSX.Element {
   const [newTargetId, setNewTargetId] = useState('');
   const [newUrl, setNewUrl] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +162,7 @@ export function MenuManager(): React.JSX.Element {
       try {
         const [loadedMenus, loadedContents, loadedTerms, loadedRoles] = await Promise.all([
           api<MenuSummary[]>('/menus'),
-          api<ContentListResponse>('/contents?perPage=100'),
+          loadAllContents(),
           api<TermSummary[]>('/terms'),
           api<RoleOption[]>('/roles'),
         ]);
@@ -174,11 +213,17 @@ export function MenuManager(): React.JSX.Element {
     [tree, contentNames, termNames],
   );
 
+  function displayName(id: string): string {
+    const item = items.find((row) => row.id === id);
+    return item ? nameOf(item, contentNames, termNames) : id;
+  }
+
   const selected = items.find((item) => item.id === selectedId) ?? null;
 
   async function restructure(next: readonly MenuNode<MenuItem>[]): Promise<void> {
     const patches = patchesFor(items, next);
     if (patches.length === 0) return;
+    setNotice(null);
     setBusy(true);
     try {
       for (const patch of patches) {
@@ -197,13 +242,23 @@ export function MenuManager(): React.JSX.Element {
   }
 
   async function saveItem(id: string, patch: Partial<MenuItem>): Promise<void> {
+    setNotice(null);
     await api(`/menu-items/${id}`, { method: 'PATCH', body: patch });
     await loadItems(menuKey);
   }
 
   async function createItem(): Promise<void> {
-    setBusy(true);
     setCreateError(null);
+    setNotice(null);
+    if (newKind !== 'custom' && newTargetId === '') {
+      setCreateError(
+        newKind === 'content'
+          ? 'Scegli il contenuto a cui punta la voce.'
+          : 'Scegli la categoria a cui punta la voce.',
+      );
+      return;
+    }
+    setBusy(true);
     try {
       const body =
         newKind === 'content'
@@ -215,9 +270,10 @@ export function MenuManager(): React.JSX.Element {
         method: 'POST',
         // In coda alle voci di primo livello: una voce nuova non si infila in
         // mezzo alle altre senza che nessuno l'abbia chiesto.
-        body: { ...body, position: tree.length },
+        body: { ...body, position: Math.max(-1, ...tree.map((node) => node.item.position)) + 1 },
       });
       setCreating(false);
+      setNotice('Voce aggiunta.');
       await loadItems(menuKey);
     } catch (caught) {
       setCreateError(messageOf(caught));
@@ -230,10 +286,12 @@ export function MenuManager(): React.JSX.Element {
     if (!deleting) return;
     setBusy(true);
     setDeleteError(null);
+    setNotice(null);
     try {
       await api(`/menu-items/${deleting.id}`, { method: 'DELETE' });
       setDeleting(null);
       if (selectedId === deleting.id) setSelectedId(null);
+      setNotice('Voce eliminata.');
       await loadItems(menuKey);
     } catch (caught) {
       setDeleteError(messageOf(caught));
@@ -278,12 +336,18 @@ export function MenuManager(): React.JSX.Element {
         onChange={(event) => {
           setMenuKey(event.target.value);
           setSelectedId(null);
+          setNotice(null);
         }}
       />
 
       {error ? (
         <Alert variant="error" title="Non è stato possibile">
           {error}
+        </Alert>
+      ) : null}
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
         </Alert>
       ) : null}
 
@@ -298,7 +362,7 @@ export function MenuManager(): React.JSX.Element {
           const next = moveItemTo(tree, activeId, targetId, zone);
           if (next) void restructure(next);
         }}
-        describe={(id) => items.find((item) => item.id === id)?.label ?? id}
+        describe={(id) => displayName(id)}
       >
         <MenuTreeEditor
           items={displayTree}
@@ -348,7 +412,14 @@ export function MenuManager(): React.JSX.Element {
             <SelectField
               label="Contenuto"
               value={newTargetId}
-              options={contents.map((row) => ({ value: row.id, label: row.title }))}
+              options={
+                contents.length === 0
+                  ? []
+                  : [
+                      { value: '', label: 'Scegli un contenuto' },
+                      ...contents.map((row) => ({ value: row.id, label: row.title })),
+                    ]
+              }
               emptyText="Nessun contenuto."
               onChange={(event) => setNewTargetId(event.target.value)}
             />
@@ -357,7 +428,14 @@ export function MenuManager(): React.JSX.Element {
             <SelectField
               label="Categoria"
               value={newTargetId}
-              options={terms.map((row) => ({ value: row.id, label: row.name }))}
+              options={
+                terms.length === 0
+                  ? []
+                  : [
+                      { value: '', label: 'Scegli una categoria' },
+                      ...terms.map((row) => ({ value: row.id, label: row.name })),
+                    ]
+              }
               emptyText="Nessuna categoria."
               onChange={(event) => setNewTargetId(event.target.value)}
             />
@@ -392,7 +470,7 @@ export function MenuManager(): React.JSX.Element {
           onConfirm={() => void removeItem()}
           title="Elimina la voce di menu"
           description="La voce esce dal menu insieme a tutte le voci annidate sotto di lei. I contenuti collegati restano al loro posto."
-          objectName={deleting.label}
+          objectName={nameOf(deleting, contentNames, termNames)}
           loading={busy}
           {...(deleteError ? { errorText: deleteError } : {})}
         />

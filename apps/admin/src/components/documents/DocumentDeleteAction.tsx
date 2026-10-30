@@ -96,7 +96,7 @@ export function DocumentDeleteAction({
     setDeleteError(null);
     try {
       await api(`/documents/${documentId}`, { method: 'DELETE' });
-      router.push('/redazione/documenti');
+      router.push('/redazione/documenti?eliminato=1');
     } catch (caught) {
       setDeleteError(errorText(caught, 'L’eliminazione non è riuscita.'));
     } finally {

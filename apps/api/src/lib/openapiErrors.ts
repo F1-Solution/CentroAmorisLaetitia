@@ -29,7 +29,7 @@ const descriptions: Record<number, string> = {
   415: 'Tipo di file non ammesso',
   422: 'Dati non elaborabili',
   429: 'Troppi tentativi',
-  503: 'Servizio occupato o archivio non raggiungibile: riprovare più tardi',
+  503: 'Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile',
 };
 
 export function errorResponses<const Codes extends readonly number[]>(

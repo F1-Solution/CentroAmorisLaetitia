@@ -1,6 +1,6 @@
 # HO-038 — Modificare testo e immagine di una pagina Divi convertita (compito 1G-3)
 
-Fase 1G, wave `1G-W8`, compito 1G-3. Scritto il 2026-10-26, aggiornato il 2026-10-27 (DR-278, DR-279).
+Fase 1G, wave `1G-W8`, compito 1G-3. Scritto il 2026-10-26, aggiornato il 2026-10-27 (DR-278, DR-279) e il 2026-10-29 (W8-07: andata e ritorno confrontata senza i dati rigenerati a ogni richiesta).
 
 Questo documento dice **che cosa** ottenere e come riconoscerlo sul sito, non **come** farlo: il collaudo misura se la redazione ci riesce da sola (`acceptance-criteria.md` §5). Durante il compito non chiedere aiuto all'agente. Se ti blocchi, annota dove e passa oltre.
 
@@ -59,10 +59,17 @@ New-Item -ItemType Directory -Force "$HOME\collaudo" | Out-Null
 Invoke-WebRequest "http://127.0.0.1:3300/$indirizzo/" -UseBasicParsing -OutFile "$HOME\collaudo\1g-3-prima.html"
 # dopo il salvataggio senza modifiche, ripeti con un altro nome:
 Invoke-WebRequest "http://127.0.0.1:3300/$indirizzo/" -UseBasicParsing -OutFile "$HOME\collaudo\1g-3-dopo-vuoto.html"
-(Get-FileHash "$HOME\collaudo\1g-3-prima.html").Hash -eq (Get-FileHash "$HOME\collaudo\1g-3-dopo-vuoto.html").Hash
+# confronto senza i dati che il sito rigenera a ogni richiesta (le righe self.__next_f.push):
+$senzaIdratazione = { param($file) [regex]::Replace((Get-Content -Raw -Encoding UTF8 $file), '<script>self\.__next_f\.push\([\s\S]*?\)</script>', '') }
+(& $senzaIdratazione "$HOME\collaudo\1g-3-prima.html") -ceq (& $senzaIdratazione "$HOME\collaudo\1g-3-dopo-vuoto.html")
 ```
 
-Deve risultare `True`. Se risulta `False`, esegui `Compare-Object (Get-Content "$HOME\collaudo\1g-3-prima.html") (Get-Content "$HOME\collaudo\1g-3-dopo-vuoto.html")` e annota che cosa differisce (se solo valori generati a ogni richiesta, scrivilo come tale).
+Deve risultare `True`. Non confrontare i due file interi, per esempio con `Get-FileHash`: il sito scrive i dati per il browser (le righe `self.__next_f.push`) in un ordine che cambia a ogni richiesta anche senza salvataggi, e il confronto risulterebbe sempre `False` (W8-07). È la stessa regola delle prove automatiche (DR-202). Se risulta `False`, esegui nella **stessa** finestra di PowerShell e annota che cosa differisce:
+
+```powershell
+# $senzaIdratazione è quella definita sopra: in una finestra nuova non esiste, riesegui prima il blocco precedente.
+Compare-Object ((& $senzaIdratazione "$HOME\collaudo\1g-3-prima.html") -split "`n") ((& $senzaIdratazione "$HOME\collaudo\1g-3-dopo-vuoto.html") -split "`n")
+```
 
 **Colonne.** Obiettivo: cambiare la ripartizione delle colonne di una riga, e vederla sul sito, a larghezza piena e da telefono, senza colonne sfasate né spazi nuovi.
 

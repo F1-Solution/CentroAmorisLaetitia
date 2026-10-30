@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, SelectField } from '@amoris/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import type { PageLayout } from '../../lib/editor/roundtrip';
 
@@ -21,6 +21,8 @@ export interface ContentLayoutPanelProps {
   readonly contentId: string;
   readonly initial: PageLayout;
   readonly disabled: boolean;
+  /** Su un contenuto pubblicato il salvataggio cambia subito il sito, e il pulsante lo dice. */
+  readonly published?: boolean;
   /** `updatedAt` è la data di modifica che il PATCH ha dato al contenuto. */
   readonly onSaved: (layout: PageLayout, updatedAt?: string) => void;
 }
@@ -29,12 +31,14 @@ export function ContentLayoutPanel({
   contentId,
   initial,
   disabled,
+  published = false,
   onSaved,
 }: ContentLayoutPanelProps): React.JSX.Element {
   const [layout, setLayout] = useState<PageLayout>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const noteId = useId();
 
   useEffect(() => setLayout(initial), [initial]);
 
@@ -76,12 +80,16 @@ export function ContentLayoutPanel({
         helpText="Come nel sito di partenza: la barra a destra restringe la colonna e traccia il filetto verticale."
         onChange={(event) => setLayout(event.target.value as PageLayout)}
       />
+      {published ? (
+        <p id={noteId}>Il nuovo layout compare subito sul sito, senza passare dall’anteprima.</p>
+      ) : null}
       <Button
         variant="primary"
         disabled={disabled || busy || layout === initial}
         onClick={() => void save()}
+        {...(published ? { 'aria-describedby': noteId } : {})}
       >
-        Salva il layout
+        {published ? 'Salva il layout e aggiorna il sito' : 'Salva il layout'}
       </Button>
     </div>
   );

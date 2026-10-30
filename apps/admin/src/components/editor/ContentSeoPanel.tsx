@@ -14,6 +14,7 @@ import {
 import { SEO_SCHEMA_TYPE_LABELS, SEO_SCHEMA_TYPES } from '@amoris/contracts/seoSchemaTypes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { siteUrl } from '../../lib/siteUrl';
 
 /**
  * Metadati SEO di un singolo contenuto, dentro l'editor del contenuto
@@ -114,11 +115,20 @@ export function ContentSeoPanel({
   const [picking, setPicking] = useState(false);
   const [mediaSearch, setMediaSearch] = useState('');
   const [media, setMedia] = useState<readonly MediaItem[]>([]);
+  // L'immagine già scelta si legge a parte: l'elenco del selettore si carica solo quando è aperto.
+  const [chosen, setChosen] = useState<MediaItem | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const row = await api<ContentSeo>(`/seo/contents/${contentId}`);
+      // Senza sovrascrittura l'API risponde 204, che il client consegna come `undefined` (1G-24).
+      const row = await api<ContentSeo | undefined>(`/seo/contents/${contentId}`);
+      if (!row) {
+        setDraft((current) => mergeUntouched(current, EMPTY, touched.current));
+        setExists(false);
+        setError(null);
+        return;
+      }
       const loaded: SeoDraft = {
         title: row.title ?? '',
         description: row.description ?? '',
@@ -179,6 +189,21 @@ export function ContentSeoPanel({
     };
   }, [picking, mediaSearch]);
 
+  useEffect(() => {
+    const id = draft.ogImageId;
+    if (id === null || media.some((item) => item.id === id) || chosen?.id === id) return;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const item = await api<MediaItem>(`/media/${id}`, { signal: controller.signal });
+        if (!controller.signal.aborted) setChosen(item);
+      } catch {
+        // Senza il nome la scheda dice solo che l'immagine c'è: non è un errore da mostrare.
+      }
+    })();
+    return () => controller.abort();
+  }, [draft.ogImageId, media, chosen]);
+
   async function save(): Promise<void> {
     setBusy(true);
     setError(null);
@@ -209,7 +234,18 @@ export function ContentSeoPanel({
     }
   }
 
-  const chosenImage = media.find((item) => item.id === draft.ogImageId);
+  const chosenImage =
+    draft.ogImageId === null
+      ? undefined
+      : (media.find((item) => item.id === draft.ogImageId) ??
+        (chosen?.id === draft.ogImageId ? chosen : undefined));
+
+  const shareImageName =
+    draft.ogImageId === null
+      ? null
+      : chosenImage
+        ? (chosenImage.title ?? chosenImage.fileName)
+        : 'immagine scelta';
 
   return (
     <section className="amoris-editor__seo" aria-label="SEO del contenuto">
@@ -239,9 +275,24 @@ export function ContentSeoPanel({
         onDescriptionChange={(value) => edit({ description: value })}
         resultUrl={path}
         disabled={disabled || busy}
-        {...(chosenImage ? { shareImageAlt: chosenImage.title ?? chosenImage.fileName } : {})}
+        {...(shareImageName !== null ? { shareImageAlt: shareImageName } : {})}
         onPickShareImage={() => setPicking(true)}
       />
+      {shareImageName !== null ? (
+        <p className="amoris-editor__seo-image">Immagine di condivisione: {shareImageName}</p>
+      ) : null}
+      {draft.ogImageId !== null ? (
+        <div className="amoris-editor__seo-actions">
+          <Button
+            variant="tertiary"
+            permitted={!disabled}
+            disabled={busy}
+            onClick={() => edit({ ogImageId: null })}
+          >
+            Togli l’immagine
+          </Button>
+        </div>
+      ) : null}
 
       <FieldGroup
         title="Indicizzazione"
@@ -312,9 +363,10 @@ export function ContentSeoPanel({
       <MediaPicker
         open={picking}
         onClose={() => setPicking(false)}
+        requireAlt={false}
         items={media.map<MediaPickerItem>((item) => ({
           id: item.id,
-          thumbnailUrl: item.publicPath,
+          thumbnailUrl: siteUrl(item.publicPath),
           title: item.title ?? item.fileName,
         }))}
         searchValue={mediaSearch}

@@ -1,0 +1,25 @@
+Sottoinsieme di `fontawesome-webfont.ttf` (Font Awesome 4.7.0, revisione del
+font 4.007) del plugin Slider Revolution, dall'installazione WordPress sorgente
+del 2026-09-13 (`wp-content/plugins/revslider/public/assets/fonts/font-awesome/fonts/`),
+ridotto con fontTools al solo glifo del cuore U+F004 (`.fa-heart`, DR-311).
+
+Comando (fontTools installato fuori dal progetto, eseguito con uvx):
+
+  uvx --from fonttools --with brotli pyftsubset fontawesome-webfont.ttf --unicodes=U+F004 --layout-features= --flavor=woff2 --output-file=fontawesome-heart-subset.woff2
+
+Il risultato contiene due glifi (`.notdef` e il cuore) e un solo carattere.
+
+Licenza dichiarata nella sorgente: l'intestazione di `font-awesome.css` del
+plugin dice «License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS:
+MIT License)». Il font riporta «Copyright Dave Gandy 2016. All rights
+reserved.» e rimanda a http://fontawesome.io/license/; la sorgente non contiene
+il testo della licenza: `OFL.txt` qui accanto è il testo OFL 1.1 di un altro
+font della sorgente (`themes/twentytwentyfour/assets/fonts/jost/OFL.txt`) con
+la riga di copyright e l'indirizzo della licenza dichiarati dal font. Il CSS
+del sito è scritto nel progetto, non copiato da Font Awesome.
+
+Il sottoinsieme conserva il nome interno «FontAwesome» (pyftsubset non lo
+cambia) e la sorgente non dichiara nomi riservati («Reserved Font Name»): se la
+verifica da parte di una persona ne trova uno, il sottoinsieme va rinominato.
+
+La licenza va verificata da una persona prima del rilascio in produzione.

@@ -3,12 +3,14 @@
 import { MediaPicker, type MediaPickerItem } from '@amoris/ui';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { siteUrl } from '../../lib/siteUrl';
 
 interface MediaItem {
   readonly id: string;
   readonly publicPath: string;
   readonly fileName: string;
   readonly title: string | null;
+  readonly altText?: string | null;
   readonly isPrivate: boolean;
 }
 
@@ -19,7 +21,8 @@ interface MediaListResponse {
 export interface ImageInsertPickerProps {
   readonly open: boolean;
   readonly onClose: () => void;
-  readonly onInsert: (mediaId: string, alt: string) => void;
+  /** `mediaAlt` è il testo alternativo scritto in Media, per chi non ripiega su di esso (DR-321). */
+  readonly onInsert: (mediaId: string, alt: string, decorative: boolean, mediaAlt: string) => void;
 }
 
 /** Passo «quale immagine?» dell'inserimento del blocco «Immagine»: solo media pubblici, con il testo alternativo (DR-283). */
@@ -75,13 +78,14 @@ export function ImageInsertPicker({
       loading={loading}
       items={media.map<MediaPickerItem>((item) => ({
         id: item.id,
-        thumbnailUrl: item.publicPath,
+        thumbnailUrl: siteUrl(item.publicPath),
         title: item.title ?? item.fileName,
+        altText: item.altText ?? null,
       }))}
       {...(error !== null ? { errorText: error } : {})}
       searchValue={search}
       onSearchChange={setSearch}
-      onSelect={(item, alt) => onInsert(item.id, alt)}
+      onSelect={(item, alt, decorative) => onInsert(item.id, alt, decorative, item.altText ?? '')}
     />
   );
 }

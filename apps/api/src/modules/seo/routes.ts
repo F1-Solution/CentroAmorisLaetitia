@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
-import { errorResponses } from '../../lib/openapiErrors.js';
+import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
 import {
   contentIdParam,
@@ -84,14 +84,22 @@ export async function seoRoutes(app: FastifyInstance): Promise<void> {
       onRequest: app.requirePermission(PERMISSIONS.contentRead),
       schema: {
         tags: ['seo'],
-        summary: 'Sovrascrittura SEO di un contenuto',
+        summary: 'Sovrascrittura SEO di un contenuto; 204 se il contenuto non ne ha',
         params: contentIdParam,
-        response: { 200: contentSeoSchema, ...errorResponses(401, 403, 404) },
+        response: {
+          200: contentSeoSchema,
+          204: noContent.describe('Nessuna sovrascrittura SEO'),
+          ...errorResponses(401, 403, 404),
+        },
       },
     },
     async (request, reply) => {
       const row = await findContentSeo(app.db, request.params.id);
-      if (!row) return reply.callNotFound();
+      // L'assenza della sovrascrittura è il caso normale, non un errore (1G-24); 404 resta per il contenuto inesistente.
+      if (!row) {
+        if (!(await contentExists(app.db, request.params.id))) return reply.callNotFound();
+        return reply.code(204).send(null);
+      }
       return reply.send(withDate(row));
     },
   );

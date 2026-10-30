@@ -1,5 +1,6 @@
 /** Un indirizzo del sito pubblico: assoluto con `NEXT_PUBLIC_SITE_URL`, altrimenti relativo alla radice. */
 export function siteUrl(path: string): string {
+  if (/^https?:\/\//.test(path)) return path;
   const site = (process.env.NEXT_PUBLIC_SITE_URL ?? '').trim().replace(/\/+$/, '');
   return `${site}${path}`;
 }

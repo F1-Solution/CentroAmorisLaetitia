@@ -26,3 +26,9 @@
   gap: var(--amoris-space-2);
   flex-wrap: wrap;
 }
+
+.amoris-save-bar__note {
+  font-size: var(--amoris-text-base-size);
+  color: var(--amoris-text-secondary);
+  font-weight: 600;
+}

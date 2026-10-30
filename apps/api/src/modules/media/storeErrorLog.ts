@@ -32,3 +32,7 @@ export const isStoreError = (error: unknown): boolean =>
 /** Che cosa mettere nel campo `err` del log: l'errore ridotto se viene dall'archivio, altrimenti l'errore. */
 export const loggableError = (error: unknown): unknown =>
   isStoreError(error) ? storeErrorFields(error) : error;
+
+/** Vero se l'archivio non ha risposto entro i tempi di `createObjectStore` (W6-6: un rifiuto 503, mai un 500). */
+export const isStoreTimeout = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'TimeoutError';

@@ -61,10 +61,12 @@ Il Regno Unito è fuori dall'UE: va escluso o motivato.
 - Non esistono `docs/deploy/` né i Dockerfile delle applicazioni.
 - La CI esistente (DR-008) va estesa con la costruzione e la pubblicazione delle immagini.
 
-## 5. Ancora da decidere (secondo round)
+## 5. Decisioni del secondo round (2026-10-28)
 
-- D193: registrar, DNS ed eventuale Cloudflare (ADR-009 §6, punti 2-3; DR-107: nessuna terza parte nel sito pubblico).
-- D194: fornitore e configurazione dell'invio email (ADR-010).
-- D195: chi sostiene i costi ricorrenti (ADR-009 §6, punto 6).
-- D196: tempi di MI-06, perché il professionista va coinvolto prima della produzione.
-- Il fornitore del server (DR-295), dopo il confronto verificato.
+- DR-300 (D193): dominio e DNS restano su Aruba, senza Cloudflare; al passaggio si cambiano solo i record A/AAAA.
+- DR-301 (D194): invio dei moduli con l'SMTP di Aruba e una casella del Centro.
+- DR-302 (D195): contratti e account intestati al Centro, che paga.
+- DR-303 (D196): MI-06 avviata subito, con un documento di ambito senza dati reali.
+- DR-310 (D201): schermata «Compilazioni» in sola lettura con permesso del solo amministratore e registro delle consultazioni, nella 1F prima della produzione e dopo il parere MI-06. Oggi l'API non ha né la rotta di lettura né il permesso, e non invia email.
+
+Resta da decidere il fornitore del server (DR-295), dopo il confronto verificato.

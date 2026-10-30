@@ -167,3 +167,61 @@ describe('moveItemTo — trascinamento a due esiti (DR-082)', () => {
     expect(moveItemTo(alberoConFiglio, 'a', 'z', 'after')).toBeNull();
   });
 });
+
+describe('W8-16 — posizioni sparse come quelle importate', () => {
+  const sparse: Voce[] = [
+    voce('a', null, 1),
+    voce('b', null, 2),
+    voce('c', null, 3),
+    voce('d', null, 9),
+    voce('e', null, 11),
+  ];
+
+  it('scambiare due fratelli scrive solo quei due, senza rinumerare gli altri', () => {
+    const patches = patchesFor(sparse, moveUp(buildTree(sparse), 'b'));
+    expect(patches).toEqual([
+      { id: 'b', parentId: null, position: 1 },
+      { id: 'a', parentId: null, position: 2 },
+    ]);
+  });
+
+  it('annidare una voce scrive solo quella voce', () => {
+    const patches = patchesFor(sparse, indent(buildTree(sparse), 'c'));
+    expect(patches).toEqual([{ id: 'c', parentId: 'b', position: 0 }]);
+  });
+
+  it('riportare al livello superiore sfrutta il vuoto fra le posizioni', () => {
+    const conFiglio: Voce[] = [voce('a', null, 1), voce('a1', 'a', 0), voce('b', null, 9)];
+    const patches = patchesFor(conFiglio, outdent(buildTree(conFiglio), 'a1'));
+    expect(patches).toEqual([{ id: 'a1', parentId: null, position: 2 }]);
+  });
+
+  it('senza vuoto disponibile rinumera solo il gruppo toccato', () => {
+    const patches = patchesFor(annidato, outdent(buildTree(annidato), 'a1'));
+    expect(patches.map((patch) => patch.id).sort()).toEqual(['a1', 'b']);
+  });
+});
+
+describe('W8-16 — giro 1: posizioni doppie e spostamenti lunghi', () => {
+  it('(I1) un gruppo con posizioni doppie si rinumera da zero e «Sposta su» scrive', () => {
+    const doppie: Voce[] = [voce('a', null, 0), voce('b', null, 3), voce('n', null, 3)];
+    const patches = patchesFor(doppie, moveUp(buildTree(doppie), 'n'));
+    expect(patches.length).toBeGreaterThan(0);
+    const posizioni = new Map(patches.map((patch) => [patch.id, patch.position]));
+    expect(posizioni.get('n')).toBeLessThan(posizioni.get('b') ?? 99);
+  });
+
+  it('(I1) un gruppo con posizioni doppie lasciato com’è si rinumera comunque', () => {
+    const doppie: Voce[] = [voce('a', null, 3), voce('b', null, 3)];
+    const ids = patchesFor(doppie, buildTree(doppie)).map((patch) => patch.id);
+    expect(ids).toEqual(['a', 'b']);
+  });
+
+  it('(M4) portare l’ultima di cinque voci in cima scrive una sola voce', () => {
+    const cinque: Voce[] = ['a', 'b', 'c', 'd', 'e'].map((id, index) => voce(id, null, index + 10));
+    const patches = patchesFor(cinque, moveItemTo(buildTree(cinque), 'e', 'a', 'before')!);
+    expect(patches).toHaveLength(1);
+    expect(patches[0]?.id).toBe('e');
+    expect(patches[0]?.position).toBeLessThan(10);
+  });
+});

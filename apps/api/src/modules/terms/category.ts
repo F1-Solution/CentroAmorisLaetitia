@@ -3,6 +3,7 @@ import { schema, type Database } from '@amoris/db';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
+import { redirectSourcesOf } from '../audit/redirectChanges.js';
 import {
   planMoveRedirects,
   touchesExistingRules,
@@ -28,6 +29,14 @@ type TermDeletion = z.infer<typeof termDeletionSchema>;
 type TermSeoInput = z.infer<typeof termSeoBody>;
 type UpdateInput = z.infer<typeof updateBody>;
 export type CategoryWarnings = AddressPlan['warnings'];
+
+/** Avvisi dello spostamento e indirizzi di partenza delle regole che ha toccato, per il registro. */
+export interface CategoryUpdate {
+  readonly warnings: CategoryWarnings;
+  readonly redirectSources: ReadonlySet<string>;
+}
+
+const UNMOVED: CategoryUpdate = { warnings: [], redirectSources: new Set() };
 
 function categoryError(statusCode: 400 | 403 | 409, code: string, message: string): Error {
   return Object.assign(new Error(message), { statusCode, code });
@@ -155,11 +164,11 @@ async function moveLocked(
   current: Locked,
   parentId: string | null,
   permissions: ReadonlySet<string>,
-): Promise<CategoryWarnings> {
+): Promise<CategoryUpdate> {
   const path = `${await categoryParentPath(tx, parentId, current)}${current.slug}/`;
   if (path === current.path) {
     await tx.update(t).set({ parentId }).where(eq(t.id, current.id));
-    return [];
+    return UNMOVED;
   }
   if (!permissions.has(PERMISSIONS.contentPublish)) throw notAuthorized();
   const moves = await movesOf(tx, current.path, path);
@@ -177,19 +186,19 @@ async function moveLocked(
       .where(and(eq(t.taxonomy, CATEGORY), sql`starts_with(${t.path}, ${current.path})`));
     await tx.update(t).set({ parentId }).where(eq(t.id, current.id));
   });
-  return plan.warnings;
+  return { warnings: plan.warnings, redirectSources: redirectSourcesOf(plan) };
 }
 
 /**
  * Nome, descrizione e genitrice in una sola transazione: un rifiuto dello spostamento
- * non lascia scritto il nome. Restituisce gli avvisi D132-A, o `null` se la categoria non c'è.
+ * non lascia scritto il nome. Restituisce gli avvisi D132-A con le regole toccate, o `null` se la categoria non c'è.
  */
 export function updateCategory(
   db: Database,
   id: string,
   input: UpdateInput,
   permissions: ReadonlySet<string>,
-): Promise<CategoryWarnings | null> {
+): Promise<CategoryUpdate | null> {
   return underPathLock(db, async (tx) => {
     const [current] = await tx
       .select({
@@ -204,9 +213,9 @@ export function updateCategory(
       .where(eq(t.id, id))
       .for('update');
     if (current?.taxonomy !== CATEGORY) return null;
-    const warnings =
+    const moved =
       input.parentId === undefined
-        ? []
+        ? UNMOVED
         : await moveLocked(tx, current, input.parentId, permissions);
     if (input.name !== undefined || input.description !== undefined) {
       await tx
@@ -218,7 +227,7 @@ export function updateCategory(
         })
         .where(eq(t.id, id));
     }
-    return warnings;
+    return moved;
   });
 }
 

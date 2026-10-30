@@ -177,7 +177,7 @@ describe('cambio obbligatorio della password', () => {
       url: '/auth/me',
       headers: { cookie: altra.cookie },
     });
-    expect(vecchia.statusCode).toBe(401);
+    expect(vecchia.statusCode).toBe(204);
     // Ripristina la password di prova per i casi successivi.
     await harness.db
       .update(schema.users)

@@ -73,11 +73,10 @@ export function SessionProvider({ children }: { children: ReactNode }): React.JS
 
   const refresh = useCallback(async () => {
     try {
-      setUser(await api<CurrentUser>('/auth/me'));
+      // Senza sessione l'API risponde 204, che il client consegna come `undefined` (1G-24).
+      setUser((await api<CurrentUser | undefined>('/auth/me')) ?? null);
     } catch (caught) {
-      // 401 non è un guasto: è il caso normale di chi non ha ancora fatto
-      // accesso. Tutto il resto risale, perché nasconderlo farebbe sembrare
-      // «non autenticato» un servizio che è semplicemente rotto.
+      // Un 401 vale ancora «nessuna sessione»; tutto il resto risale, perché nasconderlo farebbe sembrare «non autenticato» un servizio rotto.
       if (caught instanceof ApiError && caught.status === 401) setUser(null);
       else throw caught;
     } finally {

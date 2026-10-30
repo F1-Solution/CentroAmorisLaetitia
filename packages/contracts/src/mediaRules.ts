@@ -46,6 +46,7 @@ export const MEDIA_ERROR_STATUS = {
   MEDIA_BUSY: 503,
   MEDIA_RATE_LIMITED: 429,
   MEDIA_SCRUB_UNAVAILABLE: 503,
+  MEDIA_STORE_TIMEOUT: 503,
 } as const;
 
 export type MediaErrorCode = keyof typeof MEDIA_ERROR_STATUS;
@@ -138,6 +139,8 @@ export const mediaMessages = {
   scrubUnavailable: () =>
     'Il caricamento di PDF e video è sospeso: il servizio non riesce a ripulire i file. Avvisa chi gestisce il sito.',
   busy: () => 'Il servizio sta elaborando altri file: riprova fra qualche istante.',
+  storeTimeout: () =>
+    "Il servizio che conserva i file non ha risposto in tempo: l'operazione non è stata completata. Riprova fra qualche minuto; se succede ancora, avvisa chi gestisce il sito.",
   animatedNotAllowed: (fileName: string) =>
     `L'immagine «${fileName}» è animata e non si ammette: si possono caricare solo immagini ferme. Esporta un solo fotogramma e riprova.`,
 } as const;

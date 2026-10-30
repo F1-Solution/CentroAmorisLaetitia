@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Button } from './Button';
 import './SaveBar.css';
 
@@ -8,6 +9,10 @@ export interface SaveBarProps {
    */
   statusText: string;
   onSave: () => void;
+  /** Il testo del pulsante di salvataggio; «Salva» se assente. */
+  saveLabel?: string;
+  /** Un avviso breve accanto al pulsante, per esempio «le modifiche compaiono subito sul sito». */
+  saveNote?: string;
   onPreview?: () => void;
   /** Assente quando pubblicare non è permesso nel ruolo attivo (DR-057). */
   onPublish?: () => void;
@@ -20,6 +25,8 @@ export interface SaveBarProps {
 export function SaveBar({
   statusText,
   onSave,
+  saveLabel = 'Salva',
+  saveNote,
   onPreview,
   onPublish,
   saving = false,
@@ -27,6 +34,7 @@ export function SaveBar({
   errorText,
 }: SaveBarProps): React.JSX.Element {
   const hasError = Boolean(errorText);
+  const noteId = useId();
 
   return (
     <div className="amoris-save-bar" aria-busy={saving || undefined}>
@@ -38,14 +46,25 @@ export function SaveBar({
       >
         {hasError ? errorText : statusText}
       </p>
+      {saveNote ? (
+        <p id={noteId} className="amoris-save-bar__note">
+          {saveNote}
+        </p>
+      ) : null}
       <div className="amoris-save-bar__actions">
         {onPreview ? (
           <Button variant="secondary" onClick={onPreview} disabled={disabled}>
             Anteprima
           </Button>
         ) : null}
-        <Button variant="secondary" onClick={onSave} loading={saving} disabled={disabled}>
-          Salva
+        <Button
+          variant="secondary"
+          onClick={onSave}
+          loading={saving}
+          disabled={disabled}
+          {...(saveNote ? { 'aria-describedby': noteId } : {})}
+        >
+          {saveLabel}
         </Button>
         {onPublish ? (
           <Button variant="primary" onClick={onPublish} disabled={disabled} loading={saving}>

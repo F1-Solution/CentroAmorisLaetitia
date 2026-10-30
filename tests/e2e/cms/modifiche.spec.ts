@@ -95,7 +95,7 @@ test.describe('blocchi', () => {
     await page
       .getByRole('textbox', { name: 'Didascalia', exact: true })
       .fill('Didascalia scritta dalla prova.');
-    await page.getByRole('button', { name: 'Salva', exact: true }).click();
+    await page.getByRole('button', { name: 'Salva e aggiorna il sito', exact: true }).click();
 
     await expect
       .poll(async () => {
@@ -198,11 +198,11 @@ test.describe('SEO', () => {
 
     await expect
       .poll(async () => {
-        // 404 finché la riga SEO non esiste: si riprova, non si fallisce.
+        // 204 finché la riga SEO non esiste: si riprova, non si fallisce.
         const risposta = await page.request.get(`${API_URL}/seo/contents/${id}`, {
           headers: await intestazioniApi(page),
         });
-        if (!risposta.ok()) return [`stato ${risposta.status()}`];
+        if (risposta.status() !== 200) return [`stato ${risposta.status()}`];
         const seo = (await risposta.json()) as { title: string | null; description: string | null };
         return [seo.title, seo.description];
       })

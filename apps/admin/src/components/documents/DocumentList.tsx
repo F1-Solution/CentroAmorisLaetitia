@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, DataTable, PageHeader } from '@amoris/ui';
+import { Alert, Button, DataTable, PageHeader } from '@amoris/ui';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
@@ -9,7 +9,7 @@ import { siteUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
 import { humanSize } from '../media/MediaLibrary';
 import { DocumentCreateDialog } from './DocumentCreateDialog';
-import { lastUpdate, messageOf, type EditorialDocument } from './documentModel';
+import { lastUpdate, messageOf, takeArrivalFlag, type EditorialDocument } from './documentModel';
 
 /** Schermata «Documenti»: i documenti scaricabili del sito, con il collegamento alla scheda e alla pagina pubblica. */
 export function DocumentList(): React.JSX.Element {
@@ -22,6 +22,12 @@ export function DocumentList(): React.JSX.Element {
   const [documents, setDocuments] = useState<readonly EditorialDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
+
+  // Dopo «Elimina» nella scheda si arriva qui con l'indicatore, letto una volta sola.
+  useEffect(() => {
+    if (takeArrivalFlag('eliminato')) setRemoved(true);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -55,6 +61,12 @@ export function DocumentList(): React.JSX.Element {
           ) : undefined
         }
       />
+
+      {removed ? (
+        <Alert variant="success" title="Fatto">
+          Documento eliminato.
+        </Alert>
+      ) : null}
 
       <DataTable<EditorialDocument>
         caption="Documenti scaricabili"

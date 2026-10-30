@@ -57,6 +57,17 @@ async function accedi(): Promise<{ cookie: string; csrf: string }> {
   const cookie = `amoris_sessione=${sessione}; amoris_csrf=${csrf}`;
 
   // Dalla wave 1G-W1 `editor` porta alla sola area «redazione» (DR-227), ma chi ha più vesti la sceglie dopo l'accesso: si sceglie `redazione` se non è già attiva.
+  try {
+    await scegliRedazione(risposta, cookie, csrf);
+  } catch (errore) {
+    // La sessione è già aperta: si chiude anche se la scelta dell'area fallisce.
+    await esci(cookie, csrf);
+    throw errore;
+  }
+  return { cookie, csrf };
+}
+
+async function scegliRedazione(risposta: Response, cookie: string, csrf: string): Promise<void> {
   const corpo = (await risposta.json()) as {
     activeArea: string | null;
     rolesHeld: { roleId: string; areas: string[] }[];
@@ -71,7 +82,6 @@ async function accedi(): Promise<{ cookie: string; csrf: string }> {
     });
     if (!scelta.ok) throw new Error(`scelta della veste fallita: ${scelta.status}`);
   }
-  return { cookie, csrf };
 }
 
 interface Campione {
@@ -129,8 +139,25 @@ async function paginaPubblica(p: string): Promise<string> {
   return formaConfrontabile(risposta.status, await risposta.text());
 }
 
+/** Chiude la sessione di prova, che altrimenti resterebbe valida 12 ore (DR-261). */
+async function esci(cookie: string, csrf: string): Promise<void> {
+  const risposta = await fetch(`${API}/auth/logout`, {
+    method: 'POST',
+    headers: { cookie, 'x-csrf-token': csrf },
+  });
+  if (!risposta.ok) console.error(`uscita non riuscita: ${risposta.status}`);
+}
+
 async function main(): Promise<void> {
   const { cookie, csrf } = await accedi();
+  try {
+    await prova(cookie, csrf);
+  } finally {
+    await esci(cookie, csrf);
+  }
+}
+
+async function prova(cookie: string, csrf: string): Promise<void> {
   const scelti = await campione();
   console.log(
     `campione: ${scelti.length} contenuti (home, pagine senza titolo, form, uno per tipo)`,

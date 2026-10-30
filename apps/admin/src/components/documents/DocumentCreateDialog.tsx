@@ -103,7 +103,7 @@ export function DocumentCreateDialog({ onClose }: DocumentCreateDialogProps): Re
         method: 'POST',
         body: { title: title.trim(), description: description.trim(), termId, mediaId },
       });
-      router.push(`/redazione/documenti/${created.id}`);
+      router.push(`/redazione/documenti/${created.id}?creato=1`);
     } catch (caught) {
       setErrors({ general: messageOf(caught) });
       // Il file caricato non resta orfano nella libreria; se anche questo fallisce resta lì.

@@ -1,12 +1,7 @@
 import { schema, type Database } from '@amoris/db';
 import { asc, count, eq, sql } from 'drizzle-orm';
 import type { z } from 'zod';
-import {
-  createCategory,
-  removeCategory,
-  updateCategory,
-  type CategoryWarnings,
-} from './category.js';
+import { createCategory, removeCategory, updateCategory, type CategoryUpdate } from './category.js';
 import type { createBody, updateBody } from './schemas.js';
 
 /** Servizio del dominio `terms`. Le rotte non toccano il database (ADR-001 §3 punto 2). */
@@ -112,21 +107,21 @@ export async function create(db: Database, input: CreateInput) {
   }
 }
 
-/** Il termine aggiornato con gli avvisi D132-A dello spostamento; `null` se non c'è. */
+/** Il termine aggiornato con gli avvisi D132-A e le regole toccate dallo spostamento; `null` se non c'è. */
 export async function update(
   db: Database,
   id: string,
   input: UpdateInput,
   permissions: ReadonlySet<string>,
-): Promise<(Term & { warnings: CategoryWarnings }) | null> {
+): Promise<(Term & CategoryUpdate) | null> {
   const current = await findById(db, id);
   if (!current) return null;
   if (current.taxonomy === 'category') {
     assertCategoryFields(input);
-    const warnings = await updateCategory(db, id, input, permissions);
-    if (warnings === null) return null;
+    const moved = await updateCategory(db, id, input, permissions);
+    if (moved === null) return null;
     const row = await findById(db, id);
-    return row ? { ...row, warnings } : null;
+    return row ? { ...row, ...moved } : null;
   }
 
   const slug = input.slug ?? current.slug;
@@ -149,7 +144,7 @@ export async function update(
     throw conflictFrom(caught) ?? caught;
   }
   const row = await findById(db, id);
-  return row ? { ...row, warnings: [] } : null;
+  return row ? { ...row, warnings: [], redirectSources: new Set<string>() } : null;
 }
 
 type Term = NonNullable<Awaited<ReturnType<typeof findById>>>;

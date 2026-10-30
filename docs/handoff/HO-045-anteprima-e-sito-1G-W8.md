@@ -40,9 +40,9 @@ Differenze di soli identificativi generati a ogni richiesta si annotano come tal
 ## 4. Come riconoscere la riuscita sul sito
 
 1. Per ciascuna delle cinque modifiche: stessa pagina in anteprima e sul sito, a larghezza piena e da telefono. Annota per ognuna uguale / diversa e dove.
-2. **Il lavoro in corso non tocca il sito:** dopo aver salvato una modifica senza pubblicarla, `http://127.0.0.1:3300/prova-collaudo-1g-10/` resta com'era; cambia solo alla pubblicazione.
+2. **Il lavoro in corso non tocca il sito, finché non si sceglie di aggiornarlo:** la copia di lavoro automatica e l'anteprima non cambiano `http://127.0.0.1:3300/prova-collaudo-1g-10/`. Su un contenuto pubblicato il pulsante «Salva e aggiorna il sito» (e, nella scheda «Pagina», «Salva il layout e aggiorna il sito») scrive subito sul sito, come dice l'avviso accanto: dopo averlo premuto, la pagina pubblica mostra la modifica. Su un contenuto non pubblicato il pulsante «Salva» non la rende visibile finché non si pubblica.
 3. L'anteprima non è raggiungibile da chi non è entrato: dalla finestra privata, il suo indirizzo risponde 404 e non mostra la bozza (1G-19).
-4. **Andata e ritorno:** apri `Pagina di prova collaudo 1G-10` e salvala senza modifiche: la pagina pubblica non cambia (confronto dell'HTML prima e dopo, come nel compito 1G-3).
+4. **Andata e ritorno:** apri `Pagina di prova collaudo 1G-10` e premi «Salva e aggiorna il sito» senza aver modificato nulla: la pagina pubblica non cambia (confronto dell'HTML prima e dopo, come nel compito 1G-3).
 5. Riporta in una riga le pubblicazioni dei compiti precedenti in cui anteprima e sito differivano.
 
 ## 5. Verifiche collegate (criteri della 1D e HO-006)

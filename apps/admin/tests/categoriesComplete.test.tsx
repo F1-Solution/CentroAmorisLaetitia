@@ -151,6 +151,13 @@ describe('«Modifica»: descrizione e categoria genitrice', () => {
     expect(opzioni).toEqual(['Nessuna: primo livello', 'Altra di prova']);
   });
 
+  it('W8-22: «Categoria genitrice» spiega che le categorie che stanno sotto questa non compaiono', async () => {
+    const { dialogo } = await openEdit(/Madre di prova/);
+    expect(within(dialogo).getByLabelText('Categoria genitrice')).toHaveAccessibleDescription(
+      'Le categorie che stanno sotto questa non compaiono: una categoria non può avere come genitrice una sua discendente.',
+    );
+  });
+
   it('salva la descrizione con un PATCH dei soli campi cambiati', async () => {
     routes((path, options) =>
       path === `/terms/${MADRE.id}` && options?.method === 'PATCH' ? MADRE : undefined,

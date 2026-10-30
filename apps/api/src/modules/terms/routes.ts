@@ -84,6 +84,8 @@ export async function termRoutes(app: FastifyInstance): Promise<void> {
         sessionOf(request).permissions,
       );
       if (!row) return reply.callNotFound();
+      const { redirectSources, ...term } = row;
+      request.auditRedirectSources = redirectSources;
       request.auditTarget = {
         entityId: row.id,
         detail: {
@@ -91,7 +93,7 @@ export async function termRoutes(app: FastifyInstance): Promise<void> {
           ...(before && before.path !== row.path ? { from: before.path, to: row.path } : {}),
         },
       };
-      return reply.send(row);
+      return reply.send(term);
     },
   );
 

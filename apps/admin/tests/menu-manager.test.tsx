@@ -71,7 +71,10 @@ const voce = (id: string, label: string, position: number, parentId: string | nu
   visibleToRoles: [] as string[],
 });
 
-let items = [voce('v1', 'Prima voce', 0), voce('v2', 'Seconda voce', 1)];
+let items: ReturnType<typeof voce>[] | Record<string, unknown>[] = [
+  voce('v1', 'Prima voce', 0),
+  voce('v2', 'Seconda voce', 1),
+];
 
 function renderManager() {
   return render(
@@ -235,6 +238,188 @@ describe('menu di navigazione', () => {
     });
   });
 
+  it('W8-04: «Contenuto» parte da «Scegli…» e senza scelta non parte alcuna richiesta', async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    const elenco = within(dialogo).getByLabelText('Contenuto');
+    expect(within(elenco).getAllByRole('option')[0]).toHaveTextContent('Scegli un contenuto');
+    await user.type(within(dialogo).getByLabelText('Etichetta'), 'Voce nuova');
+    await user.click(within(dialogo).getByRole('button', { name: 'Aggiungi' }));
+
+    expect(
+      await within(dialogo).findByText('Scegli il contenuto a cui punta la voce.'),
+    ).toBeInTheDocument();
+    expect(writes()).toEqual([]);
+    expect(dialogo).not.toHaveTextContent('Invalid UUID');
+  });
+
+  it('W8-04: lo stesso vale per «Categoria»', async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    await user.selectOptions(within(dialogo).getByLabelText('La voce punta a'), 'term');
+    const elenco = within(dialogo).getByLabelText('Categoria');
+    expect(within(elenco).getAllByRole('option')[0]).toHaveTextContent('Scegli una categoria');
+    await user.click(within(dialogo).getByRole('button', { name: 'Aggiungi' }));
+
+    expect(
+      await within(dialogo).findByText('Scegli la categoria a cui punta la voce.'),
+    ).toBeInTheDocument();
+    expect(writes()).toEqual([]);
+  });
+
+  it('W8-05: tutti i contenuti sono sceglibili, anche oltre la prima pagina', async () => {
+    const reads = apiMock.getMockImplementation();
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.startsWith('/contents')) {
+        const page = Number(new URL(path, 'http://x').searchParams.get('page') ?? '1');
+        const all = Array.from({ length: 110 }, (_, i) => ({ id: `c${i}`, title: `Pagina ${i}` }));
+        return Promise.resolve({
+          items: all.slice((page - 1) * 100, page * 100),
+          meta: { total: 110, page, perPage: 100 },
+        });
+      }
+      return reads?.(path, options) as unknown;
+    });
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    await waitFor(() => {
+      expect(
+        within(within(dialogo).getByLabelText('Contenuto')).getAllByRole('option'),
+      ).toHaveLength(111);
+    });
+  });
+
+  it('W8-15: i pulsanti di una voce senza etichetta usano il titolo del contenuto', async () => {
+    items = [{ ...voce('v1', '', 0), kind: 'content' as const, contentId: 'c1', url: null }];
+    renderManager();
+    expect(
+      await screen.findByRole('button', { name: 'Sposta su: Pagina inventata' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Elimina: Pagina inventata' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Prendi «Pagina inventata» per spostarlo' }),
+    ).toBeInTheDocument();
+  });
+
+  it('W8-16: spostare tra voci con posizioni sparse scrive solo le voci che cambiano', async () => {
+    items = [
+      voce('v1', 'Uno', 1),
+      voce('v2', 'Due', 2),
+      voce('v3', 'Tre', 3),
+      voce('v4', 'Quattro', 9),
+    ];
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Uno/ });
+    const letture = () =>
+      apiMock.mock.calls.filter(
+        (call) =>
+          (call[0] as string).startsWith('/menus/') &&
+          (call[1] as { method?: string } | undefined)?.method === undefined,
+      ).length;
+    const prima = letture();
+    await user.click(screen.getByRole('button', { name: 'Annida: Tre' }));
+    await waitFor(() => expect(letture()).toBeGreaterThan(prima));
+    expect(writes()).toEqual([
+      {
+        path: '/menu-items/v3',
+        options: { method: 'PATCH', body: { parentId: 'v2', position: 0 } },
+      },
+    ]);
+  });
+
+  it('(I1) la voce nuova va dopo tutte quelle di primo livello, anche con posizioni sparse', async () => {
+    items = [voce('v1', 'Uno', 1), voce('v2', 'Due', 2), voce('v3', 'Tre', 9)];
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Uno/ });
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    await user.selectOptions(within(dialogo).getByLabelText('La voce punta a'), 'custom');
+    await user.type(within(dialogo).getByLabelText('Etichetta'), 'Nuova');
+    await user.type(within(dialogo).getByLabelText('Indirizzo'), '/nuova/');
+    await user.click(within(dialogo).getByRole('button', { name: 'Aggiungi' }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual({
+        path: '/menus/principale/items',
+        options: {
+          method: 'POST',
+          body: { kind: 'custom', label: 'Nuova', url: '/nuova/', position: 10 },
+        },
+      });
+    });
+  });
+
+  it('(M2) senza contenuti né categorie l’elenco dice che non ce ne sono', async () => {
+    const reads = apiMock.getMockImplementation();
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.startsWith('/contents')) return Promise.resolve({ items: [] });
+      if (path === '/terms') return Promise.resolve([]);
+      return reads?.(path, options) as unknown;
+    });
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    expect(within(dialogo).getByText('Nessun contenuto.')).toBeInTheDocument();
+    await user.selectOptions(within(dialogo).getByLabelText('La voce punta a'), 'term');
+    expect(within(dialogo).getByText('Nessuna categoria.')).toBeInTheDocument();
+  });
+
+  it('(M3) una voce di categoria senza etichetta usa il nome della categoria ovunque', async () => {
+    items = [{ ...voce('v1', '', 0), kind: 'term' as const, termId: 't1', url: null }];
+    const user = userEvent.setup();
+    renderManager();
+    expect(await screen.findByRole('button', { name: 'Sposta su: Avvisi' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Prendi «Avvisi» per spostarlo' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Elimina: Avvisi' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getAllByText(/Avvisi/).length).toBeGreaterThan(0);
+  });
+
+  it('(M1) il caricamento dei contenuti ha un tetto di pagine e toglie i doppioni', async () => {
+    const reads = apiMock.getMockImplementation();
+    const chiamate: string[] = [];
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.startsWith('/contents')) {
+        chiamate.push(path);
+        const page = Number(new URL(path, 'http://x').searchParams.get('page') ?? '1');
+        return Promise.resolve({
+          items: [
+            { id: `c${page}`, title: `Pagina ${page}` },
+            { id: 'ripetuto', title: 'Pagina ripetuta' },
+          ],
+          meta: { total: 100000, page, perPage: 100 },
+        });
+      }
+      return reads?.(path, options) as unknown;
+    });
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole('button', { name: /^Prima voce/ });
+    await waitFor(() => expect(chiamate.length).toBe(20));
+    await user.click(screen.getByRole('button', { name: 'Aggiungi una voce' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Aggiungi una voce' });
+    // 20 contenuti distinti, un solo «ripetuto», più «Scegli…».
+    expect(within(within(dialogo).getByLabelText('Contenuto')).getAllByRole('option')).toHaveLength(
+      22,
+    );
+  });
+
   describe('i quattro casi di visibilità', () => {
     async function openPanel() {
       const user = userEvent.setup();
@@ -244,7 +429,7 @@ describe('menu di navigazione', () => {
       return { user, panel: screen.getByRole('dialog', { name: 'Prima voce' }) };
     }
 
-    it('sono tutti e quattro scegliibili', async () => {
+    it('sono tutti e quattro sceglibili', async () => {
       const { panel } = await openPanel();
       for (const label of [
         'Visibile a tutti',

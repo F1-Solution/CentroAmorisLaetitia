@@ -15,7 +15,7 @@ import {
   type DropZone,
   type PreviewViewport,
 } from '@amoris/ui';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import {
   UNCREATABLE_REASON,
@@ -52,6 +52,7 @@ import { ContentSeoPanel } from './ContentSeoPanel';
 import { SliderInsertDialog } from '../sliders/SliderInsertDialog';
 import { ImageInsertPicker } from './ImageInsertPicker';
 import { DocumentInsertDialog } from '../documents/DocumentInsertDialog';
+import { usePublicDocuments } from '../documents/usePublicDocuments';
 import { EditorPreview } from './EditorPreview';
 import './ContentEditor.css';
 
@@ -100,6 +101,10 @@ const STATUS_LABEL: Record<ContentDetail['status'], string> = {
 function startsWithSection(blocks: unknown): boolean {
   const first = (blocks as { blocks?: readonly { type?: unknown }[] } | null)?.blocks?.[0];
   return first?.type === 'section';
+}
+
+function containsBlockType(blocks: readonly ModelBlock[], type: BlockType): boolean {
+  return blocks.some((block) => block.type === type || containsBlockType(block.children, type));
 }
 
 function timeOf(iso: string): string {
@@ -164,50 +169,74 @@ export function ContentEditor({
   const canPublish = user?.permissions.includes('content.publish') ?? false;
   const readOnly = !canWrite;
 
-  const load = useCallback(async () => {
-    setReloading(true);
-    try {
-      const fresh = await api<ContentDetail>(`/contents/${contentId}`);
-      const outcome = openContent(fresh);
-      setContent(fresh);
-      if (!outcome.ok) {
-        setLoadError(outcome.reason);
-        return;
-      }
-      setState(outcome.state);
-      setWarnings(outcome.warnings);
-      setLoadError(null);
+  // Esiste una copia di lavoro sul servizio: così non si chiede di scartarne una che non c'è.
+  const draftExists = useRef(false);
+  const rememberDraft = useCallback((savedAt: string | null) => {
+    draftExists.current = savedAt !== null;
+    setDraftSavedAt(savedAt);
+  }, []);
 
-      // La copia di lavoro si riprende solo se il contenuto non è cambiato
-      // sotto: riprenderla comunque significherebbe riscrivere il lavoro di
-      // qualcun altro senza dirlo.
+  /** `resumeDraft` è falso dopo che la copia di lavoro è stata eliminata o non c'è mai stata. */
+  const load = useCallback(
+    async (resumeDraft = true) => {
+      setReloading(true);
       try {
-        const draft = await api<DraftDetail>(`/contents/${contentId}/draft`);
-        if (draft.stillCurrent) {
-          setState({ title: draft.title, excerpt: draft.excerpt, document: draft.blocks as never });
-          setDraftSavedAt(draft.updatedAt);
-          setNotice(
-            `Ripresa la copia di lavoro salvata alle ${timeOf(draft.updatedAt)}. Il contenuto pubblicato non è cambiato.`,
-          );
-        } else {
-          setWarnings((previous) => [
-            ...previous,
-            'Esiste una copia di lavoro più vecchia del contenuto: il contenuto è cambiato dopo che la copia era stata aperta, quindi la copia non è stata ripresa.',
-          ]);
+        const fresh = await api<ContentDetail>(`/contents/${contentId}`);
+        const outcome = openContent(fresh);
+        setContent(fresh);
+        if (!outcome.ok) {
+          setLoadError(outcome.reason);
+          return;
+        }
+        setState(outcome.state);
+        setWarnings(outcome.warnings);
+        setLoadError(null);
+
+        if (!resumeDraft) {
+          rememberDraft(null);
+          return;
+        }
+        // La copia di lavoro si riprende solo se il contenuto non è cambiato
+        // sotto: riprenderla comunque significherebbe riscrivere il lavoro di
+        // qualcun altro senza dirlo.
+        try {
+          // Senza copia di lavoro l'API risponde 204, che il client consegna come `undefined` (1G-24).
+          const draft = await api<DraftDetail | undefined>(`/contents/${contentId}/draft`);
+          if (!draft) {
+            // Nessuna copia da riprendere: si resta sul contenuto appena letto.
+          } else if (draft.stillCurrent) {
+            setState({
+              title: draft.title,
+              excerpt: draft.excerpt,
+              document: draft.blocks as never,
+            });
+            rememberDraft(draft.updatedAt);
+            setNotice(
+              `Ripresa la copia di lavoro salvata alle ${timeOf(draft.updatedAt)}. Il contenuto pubblicato non è cambiato.`,
+            );
+          } else {
+            // La copia superata non si riprende, ma esiste: la scrittura successiva la elimina.
+            draftExists.current = true;
+            setWarnings((previous) => [
+              ...previous,
+              'Esiste una copia di lavoro più vecchia del contenuto: il contenuto è cambiato dopo che la copia era stata aperta, quindi la copia non è stata ripresa.',
+            ]);
+          }
+        } catch (caught) {
+          if (!(caught instanceof ApiError) || caught.status !== 404) throw caught;
         }
       } catch (caught) {
-        if (!(caught instanceof ApiError) || caught.status !== 404) throw caught;
+        setLoadError(
+          caught instanceof ApiError
+            ? caught.fullMessage
+            : 'Non è stato possibile contattare il servizio.',
+        );
+      } finally {
+        setReloading(false);
       }
-    } catch (caught) {
-      setLoadError(
-        caught instanceof ApiError
-          ? caught.fullMessage
-          : 'Non è stato possibile contattare il servizio.',
-      );
-    } finally {
-      setReloading(false);
-    }
-  }, [contentId]);
+    },
+    [contentId, rememberDraft],
+  );
 
   useEffect(() => {
     void load();
@@ -240,7 +269,7 @@ export function ContentEditor({
           baseUpdatedAt: content.updatedAt,
         },
       });
-      setDraftSavedAt(saved.updatedAt);
+      rememberDraft(saved.updatedAt);
       setPending(false);
       return true;
     } catch (caught) {
@@ -338,8 +367,10 @@ export function ContentEditor({
       }
       // Riversata nel contenuto, la copia di lavoro non ha più ragione di
       // esistere: è uno dei tre casi di eliminazione dichiarati (DR-068).
-      await api(`/contents/${contentId}/draft`, { method: 'DELETE' }).catch(() => undefined);
-      setDraftSavedAt(null);
+      if (draftExists.current) {
+        await api(`/contents/${contentId}/draft`, { method: 'DELETE' }).catch(() => undefined);
+      }
+      rememberDraft(null);
       setPending(false);
       setNotice(
         publish === null
@@ -348,7 +379,7 @@ export function ContentEditor({
             ? 'Contenuto pubblicato.'
             : 'Contenuto ritirato: non è più raggiungibile dal pubblico.',
       );
-      await load();
+      await load(false);
       const editedMeanwhile = lastEdit.current;
       if (editCount.current !== editsBefore && editedMeanwhile) {
         setState(editedMeanwhile);
@@ -367,10 +398,10 @@ export function ContentEditor({
 
   async function discardDraft(): Promise<void> {
     await api(`/contents/${contentId}/draft`, { method: 'DELETE' }).catch(() => undefined);
-    setDraftSavedAt(null);
+    rememberDraft(null);
     setPending(false);
     setNotice('Copia di lavoro scartata: è tornato il contenuto salvato.');
-    await load();
+    await load(false);
   }
 
   /** Rilegge solo «ultima modifica»: lo stato dell'editor non si tocca. */
@@ -386,6 +417,21 @@ export function ContentEditor({
   }, [contentId]);
 
   const lastChange = lastChangeText(content?.lastChange);
+  // I titoli dei documenti si chiedono, con una sola richiesta, solo se la pagina contiene un blocco Documento.
+  const hasDocumentBlock = useMemo(
+    () => (state ? containsBlockType(state.document.blocks, 'document') : false),
+    [state],
+  );
+  const publicDocuments = usePublicDocuments(hasDocumentBlock);
+  const documentTitles = useMemo(
+    () => new Map((publicDocuments.documents ?? []).map((item) => [item.id, item.title])),
+    [publicDocuments.documents],
+  );
+  const isHome = content?.isHome ?? false;
+  const homeNoteId = useId();
+  // Il titolo importato non si cambia: se è vuoto, la pagina iniziale si riconosce comunque.
+  const headerTitle = content?.title || (isHome ? 'Pagina iniziale' : 'Contenuto');
+  const publishedNow = content?.status === 'published';
 
   const statusText = (() => {
     if (!content || !state) return 'Caricamento in corso…';
@@ -434,11 +480,12 @@ export function ContentEditor({
     setSliderStepParent(undefined);
   }
 
-  function onInsertImage(mediaId: string, alt: string): void {
+  function onInsertImage(mediaId: string, alt: string, decorative: boolean): void {
     if (!state || imageStepParent === undefined) return;
     const { document, insertedId } = insertBlock(state.document, imageStepParent, 'image', {
       mediaId,
       alt,
+      decorative,
     });
     mutate({ ...state, document });
     setSelectedId(insertedId);
@@ -486,12 +533,16 @@ export function ContentEditor({
       breadcrumbs={[
         { label: 'Redazione', href: '/redazione/pagine' },
         { label: listLabel, href: listHref },
-        { label: content?.title ?? 'Contenuto' },
+        { label: headerTitle },
       ]}
     >
       <PageHeader
-        title={content?.title ?? 'Contenuto'}
-        {...(content ? { summary: `${content.path} — ${STATUS_LABEL[content.status]}` } : {})}
+        title={headerTitle}
+        {...(content
+          ? {
+              summary: `${content.path} — ${STATUS_LABEL[content.status]}${isHome ? ' — pagina iniziale' : ''}`,
+            }
+          : {})}
         {...(content
           ? {
               action: (
@@ -507,7 +558,8 @@ export function ContentEditor({
                     <Button
                       variant="secondary"
                       onClick={() => void writeToContent(false)}
-                      disabled={busy}
+                      disabled={busy || isHome}
+                      {...(isHome ? { 'aria-describedby': homeNoteId } : {})}
                     >
                       Ritira
                     </Button>
@@ -527,6 +579,12 @@ export function ContentEditor({
       />
 
       {lastChange ? <p className="amoris-editor__last-change">{lastChange}</p> : null}
+      {/* DR-314: la pagina iniziale non si ritira, l'API lo rifiuta comunque. */}
+      {isHome && canPublish && content?.status === 'published' ? (
+        <p id={homeNoteId} className="amoris-editor__last-change">
+          La pagina iniziale non si può ritirare: prima scegline un’altra nelle Impostazioni.
+        </p>
+      ) : null}
 
       {loadError ? (
         <Alert variant="error" title="Il contenuto non si apre">
@@ -574,6 +632,7 @@ export function ContentEditor({
               contentId={contentId}
               initial={content.pageLayout}
               disabled={readOnly}
+              published={publishedNow}
               onSaved={(pageLayout, updatedAt) => {
                 setContent((current) =>
                   current
@@ -707,11 +766,11 @@ export function ContentEditor({
               onDrop={onDrop}
               describe={(id) => {
                 const block = findBlock(state.document.blocks, id);
-                return block ? labelOf(block) : id;
+                return block ? labelOf(block, documentTitles) : id;
               }}
             >
               <BlockTreeEditor
-                blocks={toTreeNodes(state.document.blocks)}
+                blocks={toTreeNodes(state.document.blocks, documentTitles)}
                 {...(selectedId ? { selectedId } : {})}
                 onSelect={setSelectedId}
                 onMoveUp={(id) =>
@@ -795,6 +854,12 @@ export function ContentEditor({
         saving={busy}
         disabled={readOnly || !state}
         onSave={() => void writeToContent(null)}
+        {...(publishedNow
+          ? {
+              saveLabel: 'Salva e aggiorna il sito',
+              saveNote: 'Le modifiche salvate compaiono subito sul sito.',
+            }
+          : {})}
         {...(canPublish ? { onPublish: () => void writeToContent(true) } : {})}
       />
     </AreaShell>

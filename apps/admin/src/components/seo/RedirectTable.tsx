@@ -43,6 +43,9 @@ interface ListResponse {
   readonly meta: { readonly total: number; readonly page: number; readonly perPage: number };
 }
 
+/** Lunghezza massima di una ricerca accettata dall'API dei redirect. */
+const SEARCH_MAX_LENGTH = 200;
+
 const ACTIVE_OPTIONS = [
   { value: '', label: 'Attivi e spenti' },
   { value: 'true', label: 'Solo attivi' },
@@ -96,6 +99,7 @@ export function RedirectTable(): React.JSX.Element {
     isActive: true,
   });
   const [panelError, setPanelError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -138,6 +142,7 @@ export function RedirectTable(): React.JSX.Element {
       isActive: true,
     });
     setPanelError(null);
+    setNotice(null);
     setCreating(true);
   }
 
@@ -152,6 +157,7 @@ export function RedirectTable(): React.JSX.Element {
       isActive: row.isActive,
     });
     setPanelError(null);
+    setNotice(null);
   }
 
   async function save(): Promise<void> {
@@ -170,8 +176,15 @@ export function RedirectTable(): React.JSX.Element {
           method: 'PATCH',
           body: { ...body, isActive: draft.isActive },
         });
+        setNotice('Modifiche salvate.');
       } else {
-        await api('/redirects', { method: 'POST', body });
+        const created = await api<Redirect | undefined>('/redirects', { method: 'POST', body });
+        // W8-17: l'elenco è alfabetico e paginato, quindi si filtra sul redirect appena creato, entro il limite della ricerca.
+        const source = created?.sourcePath ?? body.sourcePath.trim();
+        setSearch(source.slice(0, SEARCH_MAX_LENGTH));
+        setActive('');
+        setPage(1);
+        setNotice('Redirect creato. Per rivedere tutti i redirect, svuota la ricerca.');
       }
       setEditing(null);
       setCreating(false);
@@ -254,6 +267,12 @@ export function RedirectTable(): React.JSX.Element {
 
   return (
     <>
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
+        </Alert>
+      ) : null}
+
       <div className="amoris-seo__toolbar-row">
         <TableToolbar
           searchLabel="Cerca fra i redirect"

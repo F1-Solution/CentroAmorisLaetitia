@@ -37,6 +37,7 @@ interface ContentSummary {
   readonly title: string;
   readonly path: string;
   readonly updatedAt: string;
+  readonly isHome?: boolean;
 }
 
 interface ListResponse {
@@ -250,7 +251,14 @@ export function ContentList({
           {
             key: 'title',
             header: 'Titolo',
-            render: (row) => <Link href={`${basePath}/${row.id}`}>{row.title}</Link>,
+            render: (row) => (
+              <>
+                <Link href={`${basePath}/${row.id}`}>{row.title || 'Senza titolo'}</Link>
+                {row.isHome ? (
+                  <span className="amoris-content-list__home"> — Pagina iniziale</span>
+                ) : null}
+              </>
+            ),
           },
           { key: 'path', header: 'Indirizzo', render: (row) => row.path },
           {

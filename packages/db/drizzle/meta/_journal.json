@@ -78,6 +78,13 @@
       "when": 1793085761000,
       "tag": "0010_tipo_dati_strutturati",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793229925364,
+      "tag": "0011_immagini_importate_senza_didascalia_del_media",
+      "breakpoints": true
     }
   ]
 }

@@ -148,7 +148,9 @@ describe('la copia di lavoro non tocca il contenuto', () => {
       url: `/contents/${contentId}/draft`,
       headers: { cookie: signed.cookie },
     });
-    expect(letta.statusCode).toBe(404);
+    // Dalla 1G-W9 (criterio 1G-24) l'assenza della copia è 204 senza corpo, non 404.
+    expect(letta.statusCode).toBe(204);
+    expect(letta.body).toBe('');
   });
 });
 

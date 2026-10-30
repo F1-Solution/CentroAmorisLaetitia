@@ -1,6 +1,24 @@
 'use client';
 
+import { slideTitleAlignment, slideTitleIcons } from '@amoris/blocks/model';
 import { Alert, Button, TextArea, TextField } from '@amoris/ui';
+import { siteUrl } from '../../lib/siteUrl';
+
+const ALIGNMENT_NOTES = {
+  left: 'Sul sito il titolo è allineato a sinistra e va a capo dove va a capo qui.',
+  center: 'Sul sito il titolo è centrato e va a capo dove va a capo qui.',
+  right: 'Sul sito il titolo è allineato a destra e va a capo dove va a capo qui.',
+} as const;
+
+/** Come appare sul sito un titolo formattato, detto a parole. */
+function layoutNote(markup: string): string {
+  const align = slideTitleAlignment(markup);
+  const note = align ? ALIGNMENT_NOTES[align] : 'Sul sito il titolo va a capo dove va a capo qui.';
+  // Il cuore non si vede nel campo, quindi la nota lo dice (revisione T2b, M2).
+  return slideTitleIcons(markup).length > 0
+    ? `${note} Sul sito il titolo termina con un cuore.`
+    : note;
+}
 
 /** Una slide come la mostra la schermata: i campi sono quelli che si salvano. */
 export interface SlideDraft {
@@ -8,6 +26,10 @@ export interface SlideDraft {
   readonly id?: string;
   readonly mediaId: string | null;
   readonly heading: string;
+  /** Il titolo importato con HTML, com'è nel database: si rimanda se il testo mostrato non cambia. */
+  readonly markupHeading?: string;
+  /** Il titolo semplice com'è nel database: si rimanda se il testo mostrato non cambia. */
+  readonly plainHeading?: string;
   readonly body: string;
   readonly imageUrl: string | null;
   readonly fileName: string | null;
@@ -59,7 +81,7 @@ export function SliderSlideRow({
         {slide.imageUrl ? (
           <img
             className="amoris-slider__thumb"
-            src={slide.imageUrl}
+            src={siteUrl(slide.imageUrl)}
             alt={`Anteprima: ${slide.fileName ?? `slide ${index + 1}`}`}
           />
         ) : (
@@ -69,14 +91,29 @@ export function SliderSlideRow({
         )}
       </div>
       <div className="amoris-slider__fields">
-        <TextField
-          label="Titolo"
-          value={slide.heading}
-          disabled={locked}
-          helpText="È anche la descrizione dell’immagine per chi usa un lettore di schermo."
-          {...(errors.heading ? { errorText: errors.heading } : {})}
-          onChange={(event) => onChange({ heading: event.target.value })}
-        />
+        {slide.markupHeading !== undefined ? (
+          <>
+            <TextArea
+              label="Titolo"
+              value={slide.heading}
+              disabled={locked}
+              rows={2}
+              helpText="È anche la descrizione dell’immagine per chi usa un lettore di schermo."
+              {...(errors.heading ? { errorText: errors.heading } : {})}
+              onChange={(event) => onChange({ heading: event.target.value })}
+            />
+            <p className="amoris-slider__note">{layoutNote(slide.markupHeading)}</p>
+          </>
+        ) : (
+          <TextField
+            label="Titolo"
+            value={slide.heading}
+            disabled={locked}
+            helpText="È anche la descrizione dell’immagine per chi usa un lettore di schermo."
+            {...(errors.heading ? { errorText: errors.heading } : {})}
+            onChange={(event) => onChange({ heading: event.target.value })}
+          />
+        )}
         <TextArea
           label="Testo"
           value={slide.body}

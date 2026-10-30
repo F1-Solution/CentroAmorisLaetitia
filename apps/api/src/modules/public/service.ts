@@ -1,6 +1,7 @@
 import { SEO_SCHEMA_TYPES, type SeoSchemaType } from '@amoris/contracts';
 import { schema, type Database } from '@amoris/db';
 import { and, asc, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
+import { sanitizeSlideTitle } from '@amoris/blocks/model';
 import { numericOption } from '../formSubmissions/service.js';
 
 /**
@@ -541,7 +542,11 @@ export async function slidersByIds(db: Database, ids: Iterable<string>) {
         ...slider,
         slides: slides
           .filter((slide) => slide.sliderId === slider.id)
-          .map(({ sliderId: _sliderId, ...slide }) => slide),
+          .map(({ sliderId: _sliderId, ...slide }) => ({
+            ...slide,
+            // DR-307: il titolo importato può contenere HTML, se ne ammette solo un sottoinsieme.
+            heading: slide.heading === null ? null : sanitizeSlideTitle(slide.heading),
+          })),
       },
     ]),
   );
@@ -998,7 +1003,11 @@ export async function resolveRedirect(db: Pick<Database, 'select'>, path: string
   if (published && published.id !== homeId) return null;
 
   const [exact] = await db
-    .select({ targetPath: schema.redirects.targetPath, statusCode: schema.redirects.statusCode })
+    .select({
+      id: schema.redirects.id,
+      targetPath: schema.redirects.targetPath,
+      statusCode: schema.redirects.statusCode,
+    })
     .from(schema.redirects)
     .where(
       and(
@@ -1012,6 +1021,7 @@ export async function resolveRedirect(db: Pick<Database, 'select'>, path: string
 
   const [prefix] = await db
     .select({
+      id: schema.redirects.id,
       sourcePath: schema.redirects.sourcePath,
       targetPath: schema.redirects.targetPath,
       statusCode: schema.redirects.statusCode,
@@ -1032,9 +1042,18 @@ export async function resolveRedirect(db: Pick<Database, 'select'>, path: string
   // nell'indirizzo di un altro dominio.
   if (!prefix.targetPath.startsWith('/') || prefix.targetPath.startsWith('//')) return null;
   return {
+    id: prefix.id,
     targetPath: prefix.targetPath + path.slice(prefix.sourcePath.length),
     statusCode: prefix.statusCode,
   };
+}
+
+/** DR-308: conta l'uso di una regola (+1 e ultimo utilizzo), senza dati di chi ha chiesto. */
+export async function recordRedirectHit(db: Pick<Database, 'update'>, id: string): Promise<void> {
+  await db
+    .update(schema.redirects)
+    .set({ hitCount: sql`${schema.redirects.hitCount} + 1`, lastHitAt: sql`now()` })
+    .where(eq(schema.redirects.id, id));
 }
 
 // ── Mappa del sito ───────────────────────────────────────────────────────────
@@ -1062,32 +1081,44 @@ export async function sitemapEntries(db: Database) {
       ),
     )
     .orderBy(asc(schema.contents.path));
-  const contents = rows.map(({ id, ...row }) => (id === homeId ? { ...row, path: '/' } : row));
-  const terms = await db
-    .select({ path: schema.terms.path, updatedAt: schema.terms.updatedAt })
-    .from(schema.terms)
-    .where(
-      and(
-        eq(schema.terms.taxonomy, 'category'),
-        // DR-280: un archivio escluso dai motori non si elenca, come i contenuti.
-        notInArray(
-          schema.terms.id,
-          db
-            .select({ id: schema.termSeo.termId })
-            .from(schema.termSeo)
-            .where(eq(schema.termSeo.robotsNoindex, true)),
-        ),
-        inArray(
-          schema.terms.id,
-          db
-            .select({ id: schema.contentTerms.termId })
-            .from(schema.contentTerms)
-            .innerJoin(schema.contents, eq(schema.contents.id, schema.contentTerms.contentId))
-            .where(eq(schema.contents.status, 'published')),
-        ),
-      ),
-    )
-    .orderBy(asc(schema.terms.path));
+  // Come per le meta robots: il `noindex` del modello del tipo vale quanto quello della pagina.
+  const templates = await db
+    .select({ scope: schema.seoTemplates.scope, directives: schema.seoTemplates.robotsDirectives })
+    .from(schema.seoTemplates);
+  const noindexScopes = new Set(
+    templates.filter((t) => t.directives.includes('noindex')).map((t) => t.scope as string),
+  );
+  const contents = rows
+    .filter((row) => !noindexScopes.has(row.id === homeId ? 'home' : row.type))
+    .map(({ id, ...row }) => (id === homeId ? { ...row, path: '/' } : row));
+  // Il `noindex` del modello `category` esclude ogni archivio, come nelle meta robots.
+  const terms = noindexScopes.has('category')
+    ? []
+    : await db
+        .select({ path: schema.terms.path, updatedAt: schema.terms.updatedAt })
+        .from(schema.terms)
+        .where(
+          and(
+            eq(schema.terms.taxonomy, 'category'),
+            // DR-280: un archivio escluso dai motori non si elenca, come i contenuti.
+            notInArray(
+              schema.terms.id,
+              db
+                .select({ id: schema.termSeo.termId })
+                .from(schema.termSeo)
+                .where(eq(schema.termSeo.robotsNoindex, true)),
+            ),
+            inArray(
+              schema.terms.id,
+              db
+                .select({ id: schema.contentTerms.termId })
+                .from(schema.contentTerms)
+                .innerJoin(schema.contents, eq(schema.contents.id, schema.contentTerms.contentId))
+                .where(eq(schema.contents.status, 'published')),
+            ),
+          ),
+        )
+        .orderBy(asc(schema.terms.path));
   // DR-177, DR-181: i documenti pubblici e le categorie dei download che ne hanno.
   const publicDocument = and(
     eq(schema.documents.isPrivate, false),
@@ -1103,23 +1134,29 @@ export async function sitemapEntries(db: Database) {
     .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
     .where(publicDocument)
     .orderBy(asc(schema.documents.slug));
-  const downloadCategories = await db
-    .select({ path: schema.terms.path, updatedAt: schema.terms.updatedAt })
-    .from(schema.terms)
-    .where(
-      and(
-        eq(schema.terms.taxonomy, 'wpdmcategory'),
-        inArray(
-          schema.terms.id,
-          db
-            .select({ id: schema.documentTerms.termId })
-            .from(schema.documentTerms)
-            .innerJoin(schema.documents, eq(schema.documents.id, schema.documentTerms.documentId))
-            .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
-            .where(publicDocument),
-        ),
-      ),
-    )
-    .orderBy(asc(schema.terms.path));
+  // W8-36: il modello `category` dà `noindex` anche agli archivi dei download, che escono dalla mappa.
+  const downloadCategories = noindexScopes.has('category')
+    ? []
+    : await db
+        .select({ path: schema.terms.path, updatedAt: schema.terms.updatedAt })
+        .from(schema.terms)
+        .where(
+          and(
+            eq(schema.terms.taxonomy, 'wpdmcategory'),
+            inArray(
+              schema.terms.id,
+              db
+                .select({ id: schema.documentTerms.termId })
+                .from(schema.documentTerms)
+                .innerJoin(
+                  schema.documents,
+                  eq(schema.documents.id, schema.documentTerms.documentId),
+                )
+                .innerJoin(schema.media, eq(schema.media.id, schema.documents.mediaId))
+                .where(publicDocument),
+            ),
+          ),
+        )
+        .orderBy(asc(schema.terms.path));
   return { contents, terms, documents, downloadCategories };
 }

@@ -1790,3 +1790,57 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-299 | 2026-10-28 | Chiusura della `1G-W8` con il criterio 1G-24 non soddisfatto | **Chiusa**, con 1G-24 (nessun errore in console) rinviato alla `1G-W9` insieme a W8-09 e W8-32; commit e push dei documenti confermati | tenere aperta la wave fino alla correzione | «Approvo la chiusura della 1G-W8 (1G-24 alla 1G-W9) e confermo commit e push dei documenti» | Proprietario | `1G-W8`, `1G-W9`, `acceptance-criteria.md` | sì | `collaudo-1G-W8.md` §3, DR-290, DR-292 |
+
+## 99. Round 90 — risposta del 2026-10-28, secondo round della 1F
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-300 | 2026-10-28 | Dominio, DNS e Cloudflare (D193) | **Opzione A** — dominio e DNS restano su Aruba, senza Cloudflare; al passaggio si cambiano solo i record A/AAAA, la posta non si tocca | B — DNS presso il fornitore del server · C — DNS su Cloudflare senza proxy | «D193=A» | Proprietario | Fase 1F, ADR-009 §6 punti 2-3 | sì | DR-107 |
+| DR-301 | 2026-10-28 | Invio delle email dei moduli (D194) | **Opzione A** — SMTP di Aruba con una casella del Centro | B — servizio transazionale UE · C — server di posta proprio | «D194=A» | Proprietario | Fase 1F, ADR-010 §4.5 | sì | DR-032 |
+| DR-302 | 2026-10-28 | Costi ricorrenti (D195) | **Opzione A** — contratti e account intestati al Centro, che paga | B — l'utente paga e rifattura · C — intestati al Centro, anticipo dell'utente | «D195=A» | Proprietario | Fase 1F, ADR-009 §6 punto 6 | sì | DR-295 |
+| DR-303 | 2026-10-28 | Tempi della verifica privacy e legale MI-06 (D196) | **Opzione A** — subito, in parallelo con la `1G-W9` e la pianificazione della 1F, con un documento di ambito preparato dall'agente senza dati reali | B — a staging pronto · C — subito prima della produzione | «D196=A» | Proprietario | MI-06, Fase 1F | sì | DR-073, DR-107 |
+| DR-304 | 2026-10-28 | Piano della `1G-W9` | **Approvato** `W9-PLAN.md`; si eseguono T0 e T3-T8, D197-D200 al prossimo round | — | «Approvo W9-PLAN.md» | Proprietario | `1G-W9` | sì | DR-299 |
+
+## 100. Round 91 — risposta del 2026-10-28, decisioni della `1G-W9`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-305 | 2026-10-28 | Testo alternativo e didascalia di Media (D197, W8-10) | **Opzione B** — se il blocco li lascia vuoti il sito usa quelli di Media anche dopo; il blocco li sovrascrive solo se compilati; «decorativa» salvata a parte | A — come WordPress, solo proposti all'inserimento · C — Media prevale sempre | «D197=B» | Proprietario | editor, sito, `1G-W9` T1 | sì | DR-283 |
+| DR-306 | 2026-10-28 | Voci di menu riservate (D198, W8-14) | **Opzione A** — le opzioni restano; l'aiuto dice che oggi nessun visitatore vede quelle voci | B — tolte, 3 voci a «Nascosta» · C — visibili a chi è in Redazione | «D198=A» | Proprietario | menu, `1G-W9` T2 | sì | — |
+| DR-307 | 2026-10-28 | Titoli delle slide con HTML importato (D199, W8-26) | **Opzione A** — il sito rende un sottoinsieme ammesso (a capo, centratura, icona) come la sorgente; l'editor lo mostra formattato; revisione di sicurezza | B — testo semplice con difformità | «D199=A» | Proprietario | sito, caroselli, `1G-W9` T2 | sì | — |
+| DR-308 | 2026-10-28 | Contatore degli usi dei redirect (D200, W8-18) | **Opzione A** — contatore e data aggiornati a ogni uso, senza far attendere il visitatore | B — colonne tolte | «D200=A» | Proprietario | redirect, `1G-W9` T2 | sì | — |
+| DR-309 | 2026-10-28 | Documento di ambito MI-06, §3.6 sull'assistente di programmazione | **Resta** nel documento | toglierlo | «Documento MI-06: lascia il §3.6» | Proprietario | MI-06, HO-054 | sì | DR-303 |
+
+## 101. Round 92 — risposta del 2026-10-28, compilazioni dei moduli
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-310 | 2026-10-28 | Leggere le compilazioni dei moduli (D201) | **Opzione A** — schermata «Compilazioni» in sola lettura (elenco e dettaglio), permesso nuovo al solo amministratore, ogni consultazione nel registro; nella Fase 1F, prima della produzione e dopo il parere MI-06 | B — subito nella `1G-W9` · C — nessuna schermata, solo email | «D201=A» | Proprietario | Fase 1F, ADR-010 §4.5-4.6, permessi | sì | DR-301, DR-303, MI-06 |
+
+## 102. Round 93 — risposta del 2026-10-29, decisioni emerse dalle revisioni della `1G-W9`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-311 | 2026-10-29 | Cuore nei titoli delle slide (D202, W8-26) | **Opzione A** — sottoinsieme locale di Font Awesome con il solo cuore, licenza da verificare | B — glifo del font Divi · C — carattere ♥ di sistema · D — difformità accettata | «D202=A» | Proprietario | sito, caroselli, `1G-W9` | sì | DR-307 |
+| DR-312 | 2026-10-29 | Didascalia del media sui blocchi Immagine importati (D203, W8-10) | **Opzione B** — i blocchi importati non usano la didascalia del media (indicatore messo dall'importatore e sui blocchi già importati) | A — differenza accettata · C — didascalia tolta dal media | «D203=B» | Proprietario | sito, importatore, `1G-W9` | sì | DR-305 |
+| DR-313 | 2026-10-29 | Titolo del media come riserva (D204, W8-12) | **Opzione A** — vale solo il titolo del blocco; l'aiuto di Media lo dice | B — riserva per i soli blocchi nuovi · C — riserva sempre | «D204=A» | Proprietario | sito, Media, `1G-W9` | sì | DR-305 |
+| DR-314 | 2026-10-29 | Ritiro della pagina iniziale (D205) | **Opzione A** — ritirare la pagina iniziale è bloccato come eliminarla | B — lasciare com'è | «D205=A» | Proprietario | API dei contenuti, editor, `1G-W9` | sì | W8-38 |
+| DR-315 | 2026-10-29 | Conservazione dei nomi nel registro delle attività (D206) | **Opzione A** — regola di conservazione da definire, con validazione privacy umana | B — conservazione illimitata accettata | «D206=A» | Proprietario | registro, privacy, MI-06 | sì | DR-303, W8-20 |
+
+## 103. Round 94 — risposta del 2026-10-29, secondo round della `1G-W9`
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-316 | 2026-10-29 | Messaggio dopo «Elimina definitivamente» in Media (D207, W8-19) | **Opzione B** — «File eliminato.» | A — «Media eliminato.» | «D207=B» | Proprietario | Media, `1G-W9` | sì | W8-19, W8-25 |
+| DR-317 | 2026-10-29 | Avviso «Indirizzo cambiato: entra di nuovo con il nuovo indirizzo.» dopo un accesso non riuscito (D208, W8-23) | **Opzione B** — resta finché non si entra | A — sparisce al primo tentativo | «D208=B» | Proprietario | accesso all'area, `1G-W9` | sì | W8-23 |
+| DR-318 | 2026-10-29 | Le schermate di Redazione aspettano la verifica dell'accesso prima di leggere i dati (D209, W8-32) | **Opzione A** — sì, anche le 12 schermate di Redazione | B — solo le 3 di Impostazioni | «D209=A» | Proprietario | area, `1G-W9` T8 | sì | W8-32 |
+| DR-319 | 2026-10-29 | `/auth/me` senza sessione (D210, W8-09) | **Opzione A** — risponde 204 | B — 401 come prima | «D210=A» | Proprietario | API di autenticazione, `1G-W9` T8 | sì | W8-09 |
+| DR-320 | 2026-10-29 | «Media e testo» ed «Elenco di contenuti» nell'editor (D211, W9-N1) | **Opzione A** — un pannello per ciascuno: scelta dell'immagine come nel blocco Immagine per «Media e testo», categorie e numero di articoli per «Elenco di contenuti»; il messaggio usa i nomi italiani e resta solo per moduli e contenitori | B — scelta dell'immagine per «Media e testo», «Elenco di contenuti» tolto dall'inseritore · C — entrambi tolti dall'inseritore · D — solo il messaggio corretto | «D211=A» | Proprietario | editor, `1G-W9` | sì | ADR-006 §3.2, W9-N1 |
+
+## 104. Round 95 — risposta del 2026-10-29, revisione della T10b
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-321 | 2026-10-29 | Testo alternativo del media nel blocco «Media e testo» (D212) | **Sì** — il selettore delle immagini passa anche il testo alternativo del media, senza seconda richiesta; si toccano `ImageInsertPicker.tsx` e 2 righe di `image-media-w9.test.tsx`, il blocco Immagine non cambia | no — nessun testo copiato | «Sì, tocca i due file» | Proprietario | editor, `1G-W9` T10b | sì | DR-320, DR-305 |
+| DR-322 | 2026-10-29 | Messaggio senza categorie nel pannello di «Elenco di contenuti» (D213) | **Sì** — «Non ci sono ancora categorie: si creano dalla schermata «Categorie».», come nel pannello delle notizie | no — gruppo vuoto senza messaggio | «Sì, lo stesso testo» | Proprietario | editor, `1G-W9` T10b | sì | DR-320 |
+| DR-323 | 2026-10-29 | Errore del campo «Numero di notizie» (D214) | **«Il numero di notizie è un intero da 1 a 50, o vuoto.»** | «Scrivi un numero da 1 a 50, oppure lascia vuoto.» | «Sì, così» | Proprietario | editor, `1G-W9` T10b | sì | DR-320 |

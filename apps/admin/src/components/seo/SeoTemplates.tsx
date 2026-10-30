@@ -69,6 +69,7 @@ export function SeoTemplates(): React.JSX.Element {
     schemaType: '',
   });
   const [panelError, setPanelError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -97,6 +98,7 @@ export function SeoTemplates(): React.JSX.Element {
       schemaType: row.schemaType ?? '',
     });
     setPanelError(null);
+    setNotice(null);
   }
 
   async function save(): Promise<void> {
@@ -121,6 +123,7 @@ export function SeoTemplates(): React.JSX.Element {
         },
       });
       setEditing(null);
+      setNotice('Modifiche salvate.');
       await load();
     } catch (caught) {
       setPanelError(messageOf(caught));
@@ -131,6 +134,12 @@ export function SeoTemplates(): React.JSX.Element {
 
   return (
     <>
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
+        </Alert>
+      ) : null}
+
       <DataTable<SeoTemplate>
         caption="Template SEO globali"
         rows={[...rows]}

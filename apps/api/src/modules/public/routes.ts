@@ -32,6 +32,7 @@ import {
   publicSettings,
   publishedByPath,
   publishedPosts,
+  recordRedirectHit,
   resolveRedirect,
   sitemapEntries,
   seoForTerm,
@@ -113,7 +114,16 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const rule = await resolveRedirect(app.db, request.query.path);
       if (!rule) return reply.callNotFound();
-      return reply.send(rule);
+      // La scrittura non fa attendere la risposta; un errore va nel log senza dati della richiesta.
+      if ('id' in rule) {
+        recordRedirectHit(app.db, rule.id).catch((error: unknown) =>
+          app.log.error(
+            { err: error instanceof Error ? error.message : 'errore sconosciuto' },
+            'Contatore dei redirect non aggiornato.',
+          ),
+        );
+      }
+      return reply.send({ targetPath: rule.targetPath, statusCode: rule.statusCode });
     },
   );
 

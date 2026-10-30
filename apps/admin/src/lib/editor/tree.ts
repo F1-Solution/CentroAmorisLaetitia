@@ -197,6 +197,7 @@ export interface CreateBlockOptions {
   readonly sliderId?: string;
   readonly mediaId?: string;
   readonly alt?: string;
+  readonly decorative?: boolean;
   readonly documentId?: string;
 }
 
@@ -241,7 +242,11 @@ export function createBlock(type: BlockType, options: CreateBlockOptions = {}): 
       return {
         type,
         id,
-        props: imagePropsSchema.parse({ mediaId: options.mediaId, alt: options.alt ?? '' }),
+        props: imagePropsSchema.parse({
+          mediaId: options.mediaId,
+          alt: options.alt ?? '',
+          ...(options.decorative ? { decorative: true } : {}),
+        }),
         children: [],
       };
     case 'document':
@@ -324,7 +329,7 @@ function shorten(value: string, max = 60): string {
 }
 
 /** Il riepilogo che compare nell'albero. Mai il contenuto intero. */
-export function labelOf(block: ModelBlock): string {
+export function labelOf(block: ModelBlock, documentTitles?: ReadonlyMap<string, string>): string {
   switch (block.type) {
     case 'rich_text':
       return (
@@ -334,6 +339,17 @@ export function labelOf(block: ModelBlock): string {
       return block.props.detail ?? TYPE_SUMMARY.html;
     case 'image':
       return shorten(block.props.alt) || shorten(block.props.caption ?? '') || TYPE_SUMMARY.image;
+    case 'document':
+      return (
+        shorten(block.props.label ?? '') ||
+        shorten(documentTitles?.get(block.props.documentId) ?? '') ||
+        TYPE_SUMMARY.document
+      );
+    case 'media_text':
+      return (
+        shorten(block.props.mediaAlt) ||
+        `immagine a ${block.props.mediaPosition === 'right' ? 'destra' : 'sinistra'}`
+      );
     case 'video':
       return shorten(block.props.src);
     case 'map':
@@ -348,11 +364,19 @@ export function labelOf(block: ModelBlock): string {
 }
 
 /** Traduce il documento nell'albero che `BlockTreeEditor` sa disegnare. */
-export function toTreeNodes(blocks: readonly ModelBlock[]): TreeNode[] {
+export function toTreeNodes(
+  blocks: readonly ModelBlock[],
+  documentTitles?: ReadonlyMap<string, string>,
+): TreeNode[] {
   return blocks.map((block) => {
-    const label = labelOf(block);
+    const label = labelOf(block, documentTitles);
     return ALLOWED_CHILDREN[block.type].length > 0
-      ? { id: block.id, type: block.type, label, children: toTreeNodes(block.children) }
+      ? {
+          id: block.id,
+          type: block.type,
+          label,
+          children: toTreeNodes(block.children, documentTitles),
+        }
       : { id: block.id, type: block.type, label };
   });
 }

@@ -1,8 +1,9 @@
 import { databaseNow, schema, type Database } from '@amoris/db';
-import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 import { newContentPath, withPathLock } from './address.js';
 import { assertBlockReferencesValid } from './blockReferences.js';
+import { homeContentError, isHomeContent } from './deletion.js';
 import type { createBody, draftBody, listQuery, updateBody } from './schemas.js';
 
 /**
@@ -43,7 +44,7 @@ export async function list(db: Database, query: ListQuery) {
     .select(summaryColumns)
     .from(schema.contents)
     .where(where)
-    .orderBy(desc(schema.contents.updatedAt))
+    .orderBy(desc(schema.contents.updatedAt), asc(schema.contents.id))
     .limit(query.perPage)
     .offset((query.page - 1) * query.perPage);
 
@@ -259,6 +260,8 @@ export async function setPublication(db: Database, id: string, published: boolea
       .where(eq(schema.contents.id, id))
       .for('update');
     if (!current) return false;
+    // DR-314: la pagina iniziale non si ritira, come non si elimina; prima si sceglie un'altra pagina.
+    if (!published && (await isHomeContent(tx, id))) throw homeContentError();
 
     if (published && current.type === 'post') {
       // Contano solo le categorie: un legame di un'altra tassonomia non basta (m-1).

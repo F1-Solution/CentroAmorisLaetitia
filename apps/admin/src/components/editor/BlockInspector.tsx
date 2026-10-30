@@ -1,19 +1,14 @@
 'use client';
 
-import {
-  Alert,
-  ColumnRatioControl,
-  HtmlFallbackEditor,
-  RadioGroup,
-  SelectField,
-  TextArea,
-  TextField,
-} from '@amoris/ui';
+import { Alert, ColumnRatioControl, HtmlFallbackEditor, RadioGroup, SelectField } from '@amoris/ui';
 import type { BlockNode as ModelBlock } from '@amoris/blocks';
 import Link from 'next/link';
 import { useSliders } from '../sliders/useSliders';
 import { DocumentBlockInspector } from './DocumentBlockInspector';
+import { ImageInspector } from './ImageInspector';
 import { MapInspector } from './MapInspector';
+import { MediaTextInspector } from './MediaTextInspector';
+import { PostListInspector } from './PostListInspector';
 import { RichTextEditor } from './RichTextEditor';
 import { VideoInspector } from './VideoInspector';
 import './BlockInspector.css';
@@ -39,6 +34,15 @@ const SEPARATOR_OPTIONS = [
   { value: 'wide', label: 'Largo' },
   { value: 'dots', label: 'Puntini' },
 ];
+
+/** Che cosa si può fare dei blocchi senza pannello, con il loro nome italiano (DR-320). */
+const NOT_EDITABLE_HERE: Readonly<Record<'section' | 'column' | 'form', string>> = {
+  section:
+    'Il blocco «Sezione» contiene altri blocchi: per modificarli, sceglili nell’albero. La sezione si può spostare o eliminare.',
+  column:
+    'Il blocco «Colonna» contiene altri blocchi: per modificarli, sceglili nell’albero. La colonna si può spostare o eliminare.',
+  form: 'I campi del modulo non si modificano in questa fase: il blocco «Modulo» si può spostare o eliminare.',
+};
 
 /** Scelta del carosello di un blocco «slider» e collegamento alla schermata delle sue immagini. */
 function SliderInspector({
@@ -88,10 +92,9 @@ function SliderInspector({
  * Che cosa si modifica del blocco selezionato.
  *
  * Il perimetro è quello di ADR-006 §3.2: **testo e immagini dentro i blocchi
- * esistenti**, non la modifica fine degli stili. Dove la modifica richiede di
- * scegliere una riga che l'area amministrativa non sa ancora elencare — un
- * modulo — il pannello lo **dice** invece di mostrare
- * un campo che scriverebbe un identificatore a mano.
+ * esistenti**, non la modifica fine degli stili. Sezioni e colonne si modificano
+ * nei blocchi che contengono; i campi di un modulo non si modificano in questa
+ * fase, e il pannello lo **dice** con il nome italiano del blocco (DR-320).
  */
 export function BlockInspector({
   block,
@@ -130,49 +133,7 @@ export function BlockInspector({
 
     case 'image':
       return (
-        <div className="amoris-inspector">
-          <TextField
-            label="Testo alternativo"
-            value={block.props.alt}
-            disabled={disabled}
-            helpText="Che cosa mostra l’immagine, per chi non la vede."
-            onChange={(event) =>
-              onChange({ ...block, props: { ...block.props, alt: event.target.value } })
-            }
-          />
-          <TextField
-            label="Titolo"
-            value={block.props.title ?? ''}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...block,
-                props: {
-                  ...block.props,
-                  title: event.target.value === '' ? null : event.target.value,
-                },
-              })
-            }
-          />
-          <TextArea
-            label="Didascalia"
-            value={block.props.caption ?? ''}
-            disabled={disabled}
-            onChange={(event) =>
-              onChange({
-                ...block,
-                props: {
-                  ...block.props,
-                  caption: event.target.value === '' ? null : event.target.value,
-                },
-              })
-            }
-          />
-          <Alert variant="info" title="Il file dell’immagine si cambia da «Media»">
-            Qui si modifica ciò che accompagna l’immagine; il file si sostituisce da Corredo ›
-            Media, con «Sostituisci il file».
-          </Alert>
-        </div>
+        <ImageInspector key={block.id} block={block} onChange={onChange} disabled={disabled} />
       );
 
     case 'separator':
@@ -237,12 +198,22 @@ export function BlockInspector({
         />
       );
 
+    // Inseribili dall'editor e ora anche configurabili (DR-320).
+    case 'media_text':
+      return (
+        <MediaTextInspector key={block.id} block={block} onChange={onChange} disabled={disabled} />
+      );
+
+    case 'post_list':
+      return (
+        <PostListInspector key={block.id} block={block} onChange={onChange} disabled={disabled} />
+      );
+
     default:
       return (
         <div className="amoris-inspector">
           <Alert variant="info" title="Questo blocco non si modifica qui">
-            Un blocco di tipo «{block.type}» rimanda a qualcosa che vive altrove, come un modulo. In
-            questa fase si può spostarlo o eliminarlo, non riconfigurarlo.
+            {NOT_EDITABLE_HERE[block.type]}
           </Alert>
         </div>
       );

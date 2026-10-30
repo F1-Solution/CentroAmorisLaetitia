@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { ApiUnavailable, getSettings, settingString } from './api';
+import { htmlLangOf } from './wpDate';
 
 /** Le impostazioni pubbliche, lette una volta per richiesta fra metadati e pagina. */
 export const settingsOnce = cache(getSettings);
@@ -12,6 +13,16 @@ export async function siteTitleOrDefault(): Promise<string> {
     return settingString(await settingsOnce(), 'site.title') || SITE_TITLE_DEFAULT;
   } catch (caught) {
     if (caught instanceof ApiUnavailable) return SITE_TITLE_DEFAULT;
+    throw caught;
+  }
+}
+
+/** `lang` dell'HTML da «Lingua del sito» (DR-270), con «it» se l'API non risponde. */
+export async function htmlLangOrDefault(): Promise<string> {
+  try {
+    return htmlLangOf(await settingsOnce());
+  } catch (caught) {
+    if (caught instanceof ApiUnavailable) return htmlLangOf({});
     throw caught;
   }
 }

@@ -4,6 +4,11 @@ import { Alert, Button, DataTable, PageHeader } from '@amoris/ui';
 import type { DataTableColumn } from '@amoris/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import {
+  ACCESS_NOTICE_KEY,
+  EMAIL_CHANGED_NOTICE,
+  ROLES_CHANGED_NOTICE,
+} from '../../lib/accessNotice';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { ConfirmAccountDialog, RolesDialog } from './AccountDialogs';
@@ -21,6 +26,15 @@ import './Accounts.css';
 
 type Pending = { kind: 'deactivate' | 'reset' | 'roles' | 'identity'; account: Account };
 type Revealed = { personName: string; password: string };
+
+/** Lascia l'avviso alla schermata di accesso; senza memoria del browser l'avviso semplicemente non compare. */
+function rememberAccessNotice(code: string): void {
+  try {
+    window.sessionStorage.setItem(ACCESS_NOTICE_KEY, code);
+  } catch {
+    // Memoria del browser non disponibile: l'accesso funziona lo stesso.
+  }
+}
 
 /**
  * «Persone e permessi»: elenco, creazione, nome ed email (DR-282), ruoli,
@@ -42,6 +56,7 @@ export function AccountsScreen(): React.JSX.Element {
   const [actionError, setActionError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordRefusals, setPasswordRefusals] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -64,6 +79,7 @@ export function AccountsScreen(): React.JSX.Element {
     setBusy(true);
     setActionError(null);
     setPasswordError(null);
+    setNotice(null);
     try {
       await task();
     } catch (caught) {
@@ -84,16 +100,38 @@ export function AccountsScreen(): React.JSX.Element {
         body,
       });
       setCreating(false);
+      setNotice('Account creato.');
       setRevealed({ personName: result.account.fullName, password: result.temporaryPassword });
       await load();
     });
 
-  const update = (account: Account, body: Record<string, unknown>): Promise<void> =>
+  const update = (account: Account, body: Record<string, unknown>, done: string): Promise<void> =>
     run(async () => {
       await api(`/accounts/${encodeURIComponent(account.id)}`, { method: 'PATCH', body });
       setPending(null);
+      setNotice(done);
       await load();
     });
+
+  /** Togliersi un ruolo chiude la propria sessione: l'avviso lo mostra la schermata di accesso (W8-28). */
+  const updateRoles = (
+    account: Account,
+    roleKeys: readonly AccountRoleKey[],
+    currentPassword?: string,
+  ): Promise<void> => {
+    const body = currentPassword === undefined ? { roleKeys } : { roleKeys, currentPassword };
+    const ownRoleRemoved =
+      account.id === user?.userId &&
+      account.roleKeys.some((key) => !roleKeys.includes(key as AccountRoleKey));
+    if (!ownRoleRemoved) return update(account, body, 'Modifiche salvate.');
+    return run(async () => {
+      await api(`/accounts/${encodeURIComponent(account.id)}`, { method: 'PATCH', body });
+      setPending(null);
+      rememberAccessNotice(ROLES_CHANGED_NOTICE);
+      // La sessione è chiusa: rileggerla porta all'accesso, rileggere l'elenco darebbe solo un 401.
+      await refresh();
+    });
+  };
 
   /** Sul proprio account si rilegge la sessione: un indirizzo nuovo l'ha chiusa e l'area riporta all'accesso. */
   const updateIdentity = (
@@ -107,6 +145,10 @@ export function AccountsScreen(): React.JSX.Element {
         body: currentPassword === undefined ? body : { ...body, currentPassword },
       });
       setPending(null);
+      const ownEmail = account.id === user?.userId && body.email !== undefined;
+      // Il proprio indirizzo nuovo chiude la sessione: l'avviso lo mostra la schermata di accesso.
+      if (ownEmail) rememberAccessNotice(EMAIL_CHANGED_NOTICE);
+      else setNotice('Modifiche salvate.');
       if (account.id === user?.userId) await refresh();
       // Con un indirizzo proprio nuovo la sessione è chiusa: rileggere l'elenco darebbe solo un 401.
       if (account.id !== user?.userId || body.email === undefined) await load();
@@ -187,7 +229,7 @@ export function AccountsScreen(): React.JSX.Element {
                     variant="tertiary"
                     aria-label={`Riattiva ${row.fullName}`}
                     disabled={busy}
-                    onClick={() => void update(row, { isActive: true })}
+                    onClick={() => void update(row, { isActive: true }, 'Account riattivato.')}
                   >
                     Riattiva
                   </Button>
@@ -231,6 +273,12 @@ export function AccountsScreen(): React.JSX.Element {
       {error ? (
         <Alert variant="error" title="Non è stato possibile">
           {error}
+        </Alert>
+      ) : null}
+
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
         </Alert>
       ) : null}
 
@@ -283,7 +331,7 @@ export function AccountsScreen(): React.JSX.Element {
           onConfirm={() =>
             void (pending.kind === 'reset'
               ? reset(pending.account)
-              : update(pending.account, { isActive: false }))
+              : update(pending.account, { isActive: false }, 'Account disattivato.'))
           }
         />
       ) : null}
@@ -313,10 +361,7 @@ export function AccountsScreen(): React.JSX.Element {
           passwordRefusals={passwordRefusals}
           onClose={() => setPending(null)}
           onSave={(roleKeys: readonly AccountRoleKey[], currentPassword?: string) =>
-            void update(
-              pending.account,
-              currentPassword === undefined ? { roleKeys } : { roleKeys, currentPassword },
-            )
+            void updateRoles(pending.account, roleKeys, currentPassword)
           }
         />
       ) : null}

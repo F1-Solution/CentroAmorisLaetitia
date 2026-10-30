@@ -10,19 +10,36 @@ export interface ImageComponentProps {
 }
 
 export function Image({ block, media }: ImageComponentProps) {
-  const { mediaId, src, variant, alt, caption, linkUrl, linkNewWindow } = block.props;
+  const {
+    mediaId,
+    src,
+    variant,
+    alt,
+    title,
+    caption,
+    decorative,
+    useMediaCaption,
+    linkUrl,
+    linkNewWindow,
+  } = block.props;
   const resolved = mediaId !== null ? media?.[mediaId] : undefined;
+  // Testo alternativo e didascalia vuoti nel blocco si leggono dal media a ogni resa (DR-305).
+  const altText = decorative ? '' : alt || resolved?.altText || '';
+  const titleText = title || undefined;
   const img = resolved ? (
-    <img alt={alt || resolved.altText || ''} {...imageAttributes(resolved, variant)} />
+    <img alt={altText} title={titleText} {...imageAttributes(resolved, variant)} />
   ) : media && mediaId === null && src ? (
-    <img alt={alt} src={src} />
+    <img alt={altText} title={titleText} src={src} />
   ) : (
     <img
-      alt={alt}
+      alt={altText}
+      title={titleText}
       data-media-id={mediaId ?? undefined}
       data-src={mediaId === null ? (src ?? undefined) : undefined}
     />
   );
+  // I blocchi importati non leggono la didascalia del media (DR-312).
+  const figureCaption = caption ?? (useMediaCaption === false ? null : (resolved?.caption ?? null));
   return (
     <figure
       className={blockClassName('image', block.props.classes)}
@@ -40,7 +57,7 @@ export function Image({ block, media }: ImageComponentProps) {
       ) : (
         img
       )}
-      {caption !== null ? <figcaption>{caption}</figcaption> : null}
+      {figureCaption !== null ? <figcaption>{figureCaption}</figcaption> : null}
     </figure>
   );
 }

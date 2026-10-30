@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Un identificativo nella forma che PostgreSQL accetta per `uuid`: il resto non arriva alla query. */
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const settingSchema = z.object({
   key: z.string(),
   value: z.unknown(),
@@ -29,6 +32,12 @@ const integer = (min: number, max: number) =>
     z.number().int().min(min).max(max),
   );
 
+/** Un identificativo salvato in minuscolo, come lo restituisce il database: il resto del codice lo confronta come testo. */
+const referenceId = z
+  .string()
+  .regex(UUID)
+  .transform((id) => id.toLowerCase());
+
 export const keyParam = z.object({ key: z.string().min(1).max(200) });
 
 /**
@@ -56,6 +65,9 @@ export const SETTING_VALUE_SCHEMAS: Readonly<Record<string, z.ZodType>> = {
   // Lingua nella forma di WordPress: «it_IT», «en», «de_DE_formal».
   'site.locale': z.string().regex(/^[a-z]{2,3}(?:_(?:[A-Z]{2}|\d{3}))?(?:_[A-Za-z0-9]+)?$/),
   'site.timezone': z.string().refine(isTimeZone),
+  // W8-38: identificativi controllati poi a database; il logo si può togliere, la pagina iniziale no.
+  'site.logo_media_id': referenceId.nullable(),
+  'site.home_content_id': referenceId,
 };
 
 /** Il motivo del rifiuto, in italiano, per le chiavi che il sito pubblico legge (DR-270). */
@@ -67,10 +79,35 @@ export const SETTING_VALUE_MESSAGES: Readonly<Record<string, string>> = {
   'site.time_format': '«Formato ora» deve essere un testo di al massimo 100 caratteri.',
   'site.locale': '«Lingua del sito» deve essere un codice come it_IT o en_US.',
   'site.timezone': '«Fuso orario» deve essere un fuso come Europe/Rome o UTC.',
+  'site.logo_media_id': '«Logo del sito» deve essere un’immagine pubblica scelta fra i media.',
+  'site.home_content_id': '«Pagina iniziale» deve essere una pagina pubblicata.',
 };
 
 export const updateBody = z.object({
   value: z.unknown(),
   label: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).nullable().optional(),
+});
+
+export const logoChoicesQuery = z.object({ search: z.string().max(200).optional() });
+
+const logoChoice = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  fileName: z.string(),
+  publicPath: z.string(),
+});
+
+/** Le immagini pubbliche fra cui scegliere «Logo del sito», e quello attuale (W8-38). */
+export const logoChoicesResponse = z.object({
+  items: z.array(logoChoice),
+  current: logoChoice.nullable(),
+});
+
+const homeChoice = z.object({ id: z.string(), title: z.string(), path: z.string() });
+
+/** Le pagine pubblicate fra cui scegliere «Pagina iniziale», e quella attuale (W8-38). */
+export const homeChoicesResponse = z.object({
+  items: z.array(homeChoice),
+  current: homeChoice.nullable(),
 });

@@ -5,6 +5,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
+import {
+  HOME_SETTING_KEY,
+  HomeSettingRow,
+  LOGO_SETTING_KEY,
+  LogoSettingRow,
+} from './ReferenceSettings';
 import './SiteSettings.css';
 
 /**
@@ -205,14 +211,23 @@ export function SiteSettings(): React.JSX.Element {
       ) : null}
 
       <ul className="amoris-settings__list">
-        {rows.map((setting) => (
-          <SettingRow
-            key={setting.key}
-            setting={setting}
-            canWrite={canWrite}
-            onSaved={() => void load()}
-          />
-        ))}
+        {rows.map((setting) => {
+          // Logo e pagina iniziale si scelgono da elenco, non si scrivono (W8-38).
+          const Row =
+            setting.key === LOGO_SETTING_KEY && !setting.isSecret
+              ? LogoSettingRow
+              : setting.key === HOME_SETTING_KEY && !setting.isSecret
+                ? HomeSettingRow
+                : SettingRow;
+          return (
+            <Row
+              key={setting.key}
+              setting={setting}
+              canWrite={canWrite}
+              onSaved={() => void load()}
+            />
+          );
+        })}
       </ul>
     </AreaShell>
   );

@@ -98,7 +98,7 @@ export const contentDetailWithChange = contentDetail.extend({
 });
 
 export const listResponse = z.object({
-  items: z.array(contentSummary),
+  items: z.array(contentSummary.extend({ isHome: z.boolean() })),
   meta: z.object({
     total: z.number().int(),
     page: z.number().int(),
@@ -181,10 +181,15 @@ const UPDATE_FIELD_LABELS: readonly (readonly [keyof z.infer<typeof updateBody>,
   ['isSticky', 'Notizia in primo piano'],
   ['featuredMediaId', 'Immagine in evidenza'],
   ['blocks', 'Contenuto'],
+  ['contentHtml', 'Contenuto'],
+  ['contentText', 'Contenuto'],
 ];
 
 export function updateFieldLabels(body: z.infer<typeof updateBody>): string[] {
-  return UPDATE_FIELD_LABELS.filter(([key]) => body[key] !== undefined).map(([, label]) => label);
+  const labels = UPDATE_FIELD_LABELS.filter(([key]) => body[key] !== undefined).map(
+    ([, label]) => label,
+  );
+  return [...new Set(labels)];
 }
 
 export const idParam = z.object({ id: z.string().uuid() });

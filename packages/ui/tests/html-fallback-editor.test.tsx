@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { HtmlFallbackEditor } from '../src/editor/HtmlFallbackEditor.js';
 
 describe('HtmlFallbackEditor — componente 45', () => {
-  it("mostra sempre l'avviso che il blocco non è stato convertito", () => {
+  it("mostra sempre l'avviso, in parole semplici (W8-21)", () => {
     render(<HtmlFallbackEditor value="<div>ciao</div>" onChange={vi.fn()} />);
     expect(
-      screen.getByText('Questo blocco non è stato convertito, modificarlo può alterare la resa.'),
+      screen.getByText(
+        'Questo è codice del vecchio sito, non trasformato in blocchi. Se lo cambi, la pagina può apparire diversa; alcune parti, come i commenti, possono non vedersi sul sito.',
+      ),
     ).toBeDefined();
+    expect(screen.queryByText(/resa/)).toBeNull();
   });
 
   it("non è un editor di testo ricco: nessun comando di formattazione, solo un'area di testo", () => {

@@ -68,7 +68,7 @@ test('il blocco «Documento» inserito da una pagina apre la scheda del document
     .getByRole('dialog')
     .getByRole('button', { name: /^Media e testo/ })
     .click();
-  await redazione.getByRole('button', { name: 'Aggiungi blocco in «media e testo»' }).click();
+  await redazione.getByRole('button', { name: 'Aggiungi blocco in «immagine a sinistra»' }).click();
   await redazione
     .getByRole('dialog')
     .getByRole('button', { name: /^Documento/ })

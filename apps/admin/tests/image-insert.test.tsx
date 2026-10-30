@@ -241,7 +241,7 @@ describe('editor: inserimento dell’immagine', () => {
     );
     expect(screen.queryByRole('listbox', { name: 'Media disponibili' })).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await waitFor(() => {
       const patch = apiMock.mock.calls.find(
         (call) =>
@@ -280,7 +280,8 @@ describe('editor: inserimento dell’immagine', () => {
     );
     // Il testo alternativo del pannello del blocco appena inserito resta: conta il dettaglio del selettore.
     expect(screen.queryByRole('button', { name: 'Usa questo media' })).toBeNull();
-    expect(screen.queryByRole('checkbox', { name: /puramente decorativa/ })).toBeNull();
+    // Resta solo la spunta dell'ispettore del blocco appena inserito, non quella del selettore.
+    expect(screen.getAllByRole('checkbox', { name: /puramente decorativa/ })).toHaveLength(1);
   });
 
   it('un’immagine dichiarata decorativa si inserisce con alt vuoto', async () => {

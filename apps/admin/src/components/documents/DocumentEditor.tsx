@@ -10,7 +10,7 @@ import { useSession } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
 import { humanSize } from '../media/MediaLibrary';
 import { DocumentDeleteAction } from './DocumentDeleteAction';
-import { lastUpdate, messageOf, type EditorialDocument } from './documentModel';
+import { lastUpdate, messageOf, takeArrivalFlag, type EditorialDocument } from './documentModel';
 import './DocumentEditor.css';
 
 const NOT_FOUND = 'Il documento non esiste o non è più pubblico.';
@@ -58,6 +58,11 @@ export function DocumentEditor({ documentId }: { readonly documentId: string }):
   const [busy, setBusy] = useState(false);
   const [pendingReplacement, setPendingReplacement] = useState<File | null>(null);
   const replaceInput = useRef<HTMLInputElement>(null);
+
+  // Dopo «Crea il documento» si arriva qui con l'indicatore, letto una volta sola.
+  useEffect(() => {
+    if (takeArrivalFlag('creato')) setNotice('Documento creato.');
+  }, []);
 
   const fill = useCallback((loaded: EditorialDocument): void => {
     setDocument(loaded);

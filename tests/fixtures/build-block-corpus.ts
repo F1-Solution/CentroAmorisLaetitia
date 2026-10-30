@@ -129,6 +129,7 @@ add(
       lightbox: true,
       centerOnMobile: true,
       classes: ['center-on-mobile', 'in-lightbox'],
+      useMediaCaption: false,
     }),
     node('image', { src: '/media/2026/01/senza-media-id.png', alt: '' }),
   ],

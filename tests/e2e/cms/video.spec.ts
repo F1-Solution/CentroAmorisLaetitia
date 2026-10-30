@@ -89,7 +89,7 @@ test('il video di un blocco si cambia con un MP4 della libreria e il sito lo mos
       risposta.url() === `${API_URL}/contents/${idPagina}` &&
       risposta.request().method() === 'PATCH',
   );
-  await redazione.getByRole('button', { name: 'Salva', exact: true }).click();
+  await redazione.getByRole('button', { name: 'Salva e aggiorna il sito', exact: true }).click();
   expect((await salvato).ok(), 'salvataggio della pagina').toBe(true);
 
   // Dopo: il blocco porta il file della libreria e, al clic, il lettore lo carica.

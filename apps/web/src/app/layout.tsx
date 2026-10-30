@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
-import { getSettings } from '../lib/api';
-import { siteTitleOrDefault } from '../lib/settingsOnce';
+import { htmlLangOrDefault, siteTitleOrDefault } from '../lib/settingsOnce';
 import { siteUrl } from '../lib/site';
-import { htmlLangOf } from '../lib/wpDate';
 import 'intl-tel-input/styles';
 import '../styles/open-sans.css';
 import '../styles/etmodules.css';
@@ -28,7 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // Le impostazioni si leggono alla richiesta, mai alla compilazione (DR-105).
   await connection();
-  const lang = htmlLangOf(await getSettings());
+  // Come il titolo di riserva: «it» se l'API non risponde, invece di un errore su ogni pagina.
+  const lang = await htmlLangOrDefault();
   return (
     <html lang={lang}>
       <body>{children}</body>

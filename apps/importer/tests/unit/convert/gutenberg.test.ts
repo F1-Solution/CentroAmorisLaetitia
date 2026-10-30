@@ -49,6 +49,26 @@ describe('convertContent — famiglia Gutenberg', () => {
     expect(block.props.src).toContain('prova.jpg');
   });
 
+  it('DR-312: wp:image non usa la didascalia del media, con o senza figcaption', () => {
+    const withCaption = convertContent({ legacyContentId: 312, postContent: imageSample });
+    const first = withCaption.document.blocks[0]!;
+    if (first.type !== 'image') throw new Error('atteso image');
+    expect(first.props.useMediaCaption).toBe(false);
+    expect(first.props.caption).toBe('Una didascalia di prova');
+
+    const bare = convertContent({
+      legacyContentId: 313,
+      postContent:
+        '<!-- wp:image {"id":9} -->\n' +
+        '<figure class="wp-block-image"><img src="/wp-content/uploads/2022/09/sintetica.jpg" alt=""/></figure>\n' +
+        '<!-- /wp:image -->',
+    });
+    const second = bare.document.blocks[0]!;
+    if (second.type !== 'image') throw new Error('atteso image');
+    expect(second.props.useMediaCaption).toBe(false);
+    expect(second.props.caption).toBeNull();
+  });
+
   it('D59: wp:image con dimensione ridotta ricorda la variante, se il media si risolve', () => {
     const postContent =
       '<!-- wp:image {"id":9,"sizeSlug":"large"} -->\n' +

@@ -270,6 +270,7 @@
               "alt": "Fotografia di prova",
               "title": null,
               "caption": "Didascalia con & entità",
+              "useMediaCaption": false,
               "linkUrl": null,
               "linkNewWindow": false,
               "align": "center",

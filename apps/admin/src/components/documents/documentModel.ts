@@ -34,3 +34,13 @@ export function messageOf(caught: unknown): string {
     ? caught.details.map((detail) => detail.message).join(' ')
     : caught.message;
 }
+
+/** Legge una volta l'indicatore lasciato da chi ha portato qui e lo toglie dall'indirizzo, senza voce nuova in cronologia. */
+export function takeArrivalFlag(name: string): boolean {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(name)) return false;
+  const found = url.searchParams.get(name) === '1';
+  url.searchParams.delete(name);
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  return found;
+}

@@ -1,4 +1,4 @@
-import { MEDIA_ERROR_STATUS } from '@amoris/contracts';
+import { MEDIA_ERROR_STATUS, mediaMessages } from '@amoris/contracts';
 import { createDatabase, type Database } from '@amoris/db';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -26,11 +26,12 @@ import { accountRoutes } from './modules/accounts/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { contentRoutes } from './modules/content/routes.js';
 import {
+  isMediaStoreRoute,
   isMediaUploadRoute,
   maxMediaBytes,
   mediaMultipartError,
 } from './modules/media/multipartErrors.js';
-import { loggableError } from './modules/media/storeErrorLog.js';
+import { isStoreTimeout, loggableError, storeErrorFields } from './modules/media/storeErrorLog.js';
 import { serializeLogError } from './lib/errorLog.js';
 import { mediaRoutes } from './modules/media/routes.js';
 import { removeLeftoverScrubDirs } from './modules/media/scrub.js';
@@ -230,6 +231,18 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
     if (media) {
       return reply.code(media.status).send({
         error: { code: media.code, message: media.message, requestId: request.id },
+      });
+    }
+
+    // L'archivio che non risponde in tempo sulle rotte dei media è un rifiuto 503 spiegato (W6-6).
+    if (isMediaStoreRoute(request.method, request.routeOptions.url) && isStoreTimeout(caught)) {
+      request.log.error({ err: storeErrorFields(caught) }, 'archivio dei file senza risposta');
+      return reply.code(MEDIA_ERROR_STATUS.MEDIA_STORE_TIMEOUT).send({
+        error: {
+          code: 'MEDIA_STORE_TIMEOUT',
+          message: mediaMessages.storeTimeout(),
+          requestId: request.id,
+        },
       });
     }
 

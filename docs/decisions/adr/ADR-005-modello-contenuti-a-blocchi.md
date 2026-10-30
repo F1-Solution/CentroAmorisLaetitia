@@ -12,6 +12,7 @@
 
 | Data | Revisione |
 |---|---|
+| 2026-10-29 | **§5, rischio residuo annotato** nella `1G-W9` T9 (minore parcheggiato dalla `1G-W7` T9): la gara fra l'eliminazione di un documento e il salvataggio di un contenuto che lo cita nel blocco «Documento». Nessuna regola cambia |
 | 2026-10-09 | **§3.3 regola 2 riformulata**, attuazione di **DR-071** nella `1E-W0`: le spaziature per modulo di Divi si conservano come **valori** in proprietà personalizzate CSS sul contenitore del blocco; le **regole** che li usano stanno nel foglio di stile. Il divieto di stile in linea resta per le regole |
 
 ---
@@ -268,6 +269,19 @@ locale e **mai** riportati nella documentazione né in Git.
 **Nuovo obbligo:** ogni tipo di blocco esiste in due esemplari coerenti — un
 componente di resa nel sito pubblico e un editor nell'area amministrativa. Se i due
 divergono, l'anteprima mente, ed è il difetto più insidioso di un CMS.
+
+**Rischio residuo noto (2026-10-29, `1G-W9` T9).** Il salvataggio di un contenuto
+verifica che il documento citato da un blocco «Documento» sia pubblico, ma fuori dalla
+transazione che scrive il contenuto e senza bloccarne la riga. Se nello stesso istante
+qualcuno elimina quel documento, entrambe le operazioni possono riuscire: l'eliminazione
+non vede ancora il blocco che lo cita, il salvataggio ha già visto il documento. Il danno
+è nullo per DR-287: sul sito un blocco che cita un documento assente non lascia traccia,
+mai un collegamento a una pagina inesistente; il blocco resta nel contenuto finché
+qualcuno non lo toglie, e cambiarlo senza scegliere un altro documento è rifiutato con
+«Il documento scelto non è fra i documenti pubblici.». La
+correzione (verifica e scrittura nella stessa transazione, con la riga del documento
+bloccata in condivisione) tocca creazione, salvataggio e copia di lavoro dei contenuti;
+si rinvia a quando quel codice si riapre.
 
 ## 6. Reversibilità
 

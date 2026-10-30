@@ -238,7 +238,7 @@ describe('scheda «Indirizzo»: conferma, permessi ed esiti', () => {
     renderEditor();
     await waitForEditor();
     await user.type(screen.getByRole('textbox', { name: 'Titolo' }), ' ritoccata');
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await user.click(screen.getByRole('tab', { name: 'Indirizzo' }));
     await screen.findByRole('combobox', { name: 'Pagina genitore' });
 

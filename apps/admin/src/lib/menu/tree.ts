@@ -7,9 +7,8 @@
  * spostare sono le operazioni che il criterio 1D-32 chiede, e si provano meglio
  * su un elenco che dentro un componente.
  *
- * Dopo ogni spostamento le posizioni si **rinumerano fra fratelli**, da zero.
- * È l'unica convenzione che rende l'ordine ricostruibile raggruppando per
- * genitore, e toglie di mezzo i buchi che l'import lascia.
+ * Le posizioni contano solo come ordine fra fratelli: uno spostamento riusa i
+ * buchi che l'import lascia e rinumera un gruppo da zero solo se non ce n'è.
  */
 import type { DropZone } from '@amoris/ui';
 
@@ -102,16 +101,110 @@ export function flatten<T extends FlatMenuItem>(
   ]);
 }
 
-/** Le sole voci la cui collocazione è cambiata: nessuna scrittura inutile. */
+/** Indici della sottosequenza strettamente crescente più lunga fra le posizioni salvate. */
+function longestIncreasing(stay: readonly (number | null)[]): Set<number> {
+  const length: number[] = [];
+  const from: number[] = [];
+  let best = -1;
+  stay.forEach((value, index) => {
+    length[index] = value === null ? 0 : 1;
+    from[index] = -1;
+    if (value === null) return;
+    for (let before = 0; before < index; before += 1) {
+      const earlier = stay[before];
+      if (earlier !== null && earlier !== undefined && earlier < value) {
+        if ((length[before] ?? 0) + 1 > (length[index] ?? 0)) {
+          length[index] = (length[before] ?? 0) + 1;
+          from[index] = before;
+        }
+      }
+    }
+    if (best < 0 || (length[index] ?? 0) > (length[best] ?? 0)) best = index;
+  });
+  const chosen = new Set<number>();
+  for (let at = best; at >= 0; at = from[at] ?? -1) chosen.add(at);
+  return chosen;
+}
+
+/** Riempie le voci senza posizione usando i vuoti fra quelle che restano; `null` se non bastano. */
+function fillGaps(stay: readonly (number | null)[]): number[] | null {
+  const result: number[] = [];
+  let index = 0;
+  let lastKept = -1;
+  while (index < stay.length) {
+    const value = stay[index];
+    if (value !== null && value !== undefined) {
+      result.push(value);
+      lastKept = value;
+      index += 1;
+      continue;
+    }
+    let end = index;
+    while (end < stay.length && stay[end] === null) end += 1;
+    const next = end < stay.length ? (stay[end] ?? Infinity) : Infinity;
+    const needed = end - index;
+    if (next - lastKept - 1 < needed) return null;
+    for (let step = 1; step <= needed; step += 1) result.push(lastKept + step);
+    lastKept += needed;
+    index = end;
+  }
+  return result;
+}
+
+/** Posizioni per un gruppo di fratelli: quelle già salvate restano, si scrive solo il necessario. */
+function positionsFor<T extends FlatMenuItem>(
+  siblings: readonly MenuNode<T>[],
+  parentId: string | null,
+  previous: ReadonlyMap<string, T>,
+): number[] {
+  const stay = siblings.map((node) => {
+    const was = previous.get(node.item.id);
+    return was && was.parentId === parentId ? was.position : null;
+  });
+  const renumbered = siblings.map((_, index) => index);
+  const kept = stay.filter((value): value is number => value !== null);
+  // Posizioni doppie (dati vecchi o importati): l'ordine non si ricostruisce, si rinumera.
+  if (new Set(kept).size !== kept.length) return renumbered;
+
+  const changes = (candidate: readonly number[]): number =>
+    candidate.filter((value, index) => value !== stay[index]).length;
+
+  if (kept.length === siblings.length) {
+    // Stessi fratelli, ordine diverso: si riassegnano le posizioni salvate; per spostamenti lunghi si
+    // spostano le sole voci fuori dalla sequenza crescente.
+    const sorted = [...kept].sort((x, y) => x - y);
+    if (changes(sorted) <= 2) return sorted;
+    const inOrder = longestIncreasing(stay);
+    const filled = fillGaps(stay.map((value, index) => (inOrder.has(index) ? value : null)));
+    return filled && changes(filled) < changes(sorted) ? filled : sorted;
+  }
+  if (kept.some((value, index) => index > 0 && value <= (kept[index - 1] ?? -1))) return renumbered;
+  return fillGaps(stay) ?? renumbered;
+}
+
+function collectPatches<T extends FlatMenuItem>(
+  nodes: readonly MenuNode<T>[],
+  parentId: string | null,
+  previous: ReadonlyMap<string, T>,
+): MenuPatch[] {
+  const positions = positionsFor(nodes, parentId, previous);
+  return nodes.flatMap((node, index) => {
+    const position = positions[index] ?? index;
+    const was = previous.get(node.item.id);
+    const own =
+      !was || was.parentId !== parentId || was.position !== position
+        ? [{ id: node.item.id, parentId, position }]
+        : [];
+    return [...own, ...collectPatches(node.children, node.item.id, previous)];
+  });
+}
+
+/** Le sole voci la cui collocazione è cambiata: le posizioni già salvate non si rinumerano. */
 export function patchesFor<T extends FlatMenuItem>(
   before: readonly T[],
   after: readonly MenuNode<T>[],
 ): MenuPatch[] {
-  const previous = new Map(before.map((item) => [item.id, item]));
-  return flatten(after).filter((patch) => {
-    const was = previous.get(patch.id);
-    return !was || was.parentId !== patch.parentId || was.position !== patch.position;
-  });
+  return collectPatches(after, null, new Map(before.map((item) => [item.id, item])));
 }
 
 function replaceChildren<T extends FlatMenuItem>(

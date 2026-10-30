@@ -10,6 +10,8 @@ export interface MediaPickerItem {
   id: string;
   thumbnailUrl: string;
   title: string;
+  /** Testo alternativo scritto nel media: si propone, senza copiarlo nel contenuto se non cambia. */
+  altText?: string | null;
 }
 
 export interface MediaPickerProps {
@@ -18,7 +20,7 @@ export interface MediaPickerProps {
   items: MediaPickerItem[];
   searchValue: string;
   onSearchChange: (value: string) => void;
-  onSelect: (item: MediaPickerItem, alt: string) => void;
+  onSelect: (item: MediaPickerItem, alt: string, decorative: boolean) => void;
   loading?: boolean;
   errorText?: string;
   emptyText?: string;
@@ -52,13 +54,15 @@ export function MediaPicker({
 
   function selectItem(item: MediaPickerItem) {
     setSelected(item);
-    setAlt('');
+    setAlt(item.altText ?? '');
     setDecorative(false);
   }
 
   function confirm() {
     if (!selected) return;
-    onSelect(selected, requireAlt && !decorative ? alt : '');
+    // Il testo del media non cambiato resta nel media: il sito lo legge a ogni resa (DR-305).
+    const own = alt.trim() === (selected.altText ?? '').trim() ? '' : alt;
+    onSelect(selected, requireAlt && !decorative ? own : '', requireAlt && decorative);
   }
 
   const canConfirm = Boolean(selected) && (!requireAlt || decorative || alt.trim().length > 0);
@@ -121,7 +125,11 @@ export function MediaPicker({
             <>
               <TextField
                 label="Testo alternativo"
-                helpText="Obbligatorio, a meno che l'immagine non sia dichiarata decorativa."
+                helpText={
+                  selected.altText
+                    ? 'Proposto dal media: se non lo cambi, il sito userà sempre quello del media.'
+                    : "Obbligatorio, a meno che l'immagine non sia dichiarata decorativa."
+                }
                 value={alt}
                 onChange={(event) => setAlt(event.target.value)}
                 disabled={decorative}

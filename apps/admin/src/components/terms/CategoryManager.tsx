@@ -101,6 +101,7 @@ export function CategoryManager(): React.JSX.Element {
   const [warnings, setWarnings] = useState<readonly CategoryWarning[]>([]);
 
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -132,6 +133,7 @@ export function CategoryManager(): React.JSX.Element {
         body: { taxonomy: 'category', name: newName, slug: newSlug },
       });
       closeCreate();
+      setNotice('Categoria creata.');
       await load();
     } catch (caught) {
       setCreateErrors(fieldErrorsFrom(caught));
@@ -196,13 +198,22 @@ export function CategoryManager(): React.JSX.Element {
                   variant="secondary"
                   onClick={() => {
                     setWarnings([]);
+                    setNotice(null);
                     setEditing(row);
                   }}
                 >
                   Modifica
                 </Button>
                 {canPublish ? (
-                  <CategoryDeleteAction id={row.id} name={row.name} onDeleted={() => void load()} />
+                  <CategoryDeleteAction
+                    id={row.id}
+                    name={row.name}
+                    onStart={() => setNotice(null)}
+                    onDeleted={() => {
+                      setNotice('Categoria eliminata.');
+                      void load();
+                    }}
+                  />
                 ) : null}
               </div>
             ),
@@ -227,6 +238,7 @@ export function CategoryManager(): React.JSX.Element {
               setNewName('');
               setNewSlug('');
               setSlugEdited(false);
+              setNotice(null);
               setCreating(true);
             }}
           >
@@ -235,6 +247,11 @@ export function CategoryManager(): React.JSX.Element {
         }
       />
 
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
+        </Alert>
+      ) : null}
       {warnings.length > 0 ? <ManualReferences warnings={warnings} /> : null}
 
       <DataTable<Category>
@@ -257,6 +274,7 @@ export function CategoryManager(): React.JSX.Element {
           onSaved={(found) => {
             setEditing(null);
             setWarnings(found);
+            setNotice('Modifiche salvate.');
             void load();
           }}
         />

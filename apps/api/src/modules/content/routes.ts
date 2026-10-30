@@ -3,12 +3,14 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PERMISSIONS } from '../../auth/permissions.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
+import { redirectSourcesOf } from '../audit/redirectChanges.js';
 import { lastChangeOf } from '../audit/service.js';
 import { homeContentId } from '../public/service.js';
 import { sessionOf } from '../../plugins/auth.js';
 import { previewResponse } from '../public/schemas.js';
+import { contentExists } from '../seo/service.js';
 import { previewPage } from './preview.js';
-import { deletionBlockers, removeContent } from './deletion.js';
+import { deletionBlockers, isHomeContent, removeContent } from './deletion.js';
 import { applyAddressChange, parentOptions, planAddressChange } from './address.js';
 import { assertBlockReferencesValid } from './blockReferences.js';
 import {
@@ -48,9 +50,13 @@ import {
 
 const ENTITY = 'content';
 
-function serialiseSummary(row: Awaited<ReturnType<typeof list>>['items'][number]) {
+function serialiseSummary(
+  row: Awaited<ReturnType<typeof list>>['items'][number],
+  homeId: string | null,
+) {
   return {
     ...row,
+    isHome: row.id === homeId?.toLowerCase(),
     publishedAt: row.publishedAt?.toISOString() ?? null,
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -86,8 +92,9 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { items, total } = await list(app.db, request.query);
+      const homeId = await homeContentId(app.db);
       return reply.send({
-        items: items.map(serialiseSummary),
+        items: items.map((row) => serialiseSummary(row, homeId)),
         meta: { total, page: request.query.page, perPage: request.query.perPage },
       });
     },
@@ -108,7 +115,7 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       const row = await findById(app.db, request.params.id);
       if (!row) return reply.callNotFound();
       const lastChange = await lastChangeOf(app.db, row.id);
-      const isHome = (await homeContentId(app.db)) === row.id;
+      const isHome = await isHomeContent(app.db, row.id);
       // Porta il nome di una persona: non resta in cache.
       void reply.header('Cache-Control', 'no-store');
       return reply.send({
@@ -193,9 +200,10 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
           redirectsRemoved: plan.redirectsRemoved.length,
         },
       };
+      request.auditRedirectSources = redirectSourcesOf(plan);
       const row = await findById(app.db, id);
       if (!row) throw new Error('contenuto spostato ma non rileggibile');
-      const isHome = (await homeContentId(app.db)) === id;
+      const isHome = await isHomeContent(app.db, id);
       return reply.send({
         content: {
           ...serialiseDetail(row),
@@ -279,9 +287,9 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       config: { audit: { action: 'content.unpublish', entityType: ENTITY } },
       schema: {
         tags: ['contenuti'],
-        summary: 'Ritira un contenuto pubblicato',
+        summary: 'Ritira un contenuto pubblicato; la pagina iniziale è rifiutata',
         params: idParam,
-        response: { 200: contentDetail, ...errorResponses(401, 403, 404) },
+        response: { 200: contentDetail, ...errorResponses(401, 403, 404, 409) },
       },
     },
     async (request, reply) => {
@@ -411,14 +419,22 @@ export async function contentRoutes(app: FastifyInstance): Promise<void> {
       onRequest: app.requirePermission(PERMISSIONS.contentWrite),
       schema: {
         tags: ['contenuti'],
-        summary: 'La propria copia di lavoro, se esiste',
+        summary: 'La propria copia di lavoro, se esiste; 204 se il contenuto non ne ha',
         params: idParam,
-        response: { 200: draftDetail, ...errorResponses(401, 403, 404) },
+        response: {
+          200: draftDetail,
+          204: noContent.describe('Nessuna copia di lavoro'),
+          ...errorResponses(401, 403, 404),
+        },
       },
     },
     async (request, reply) => {
       const row = await findDraft(app.db, request.params.id, sessionOf(request).user.userId);
-      if (!row) return reply.callNotFound();
+      // L'assenza della copia è il caso normale, non un errore (1G-24); 404 resta per il contenuto inesistente.
+      if (!row) {
+        if (!(await contentExists(app.db, request.params.id))) return reply.callNotFound();
+        return reply.code(204).send(null);
+      }
       return reply.send({
         contentId: row.contentId,
         title: row.title,

@@ -224,6 +224,140 @@ describe('scheda del carosello', () => {
     ).toBeInTheDocument();
   });
 
+  it('un titolo importato con HTML si mostra senza tag e, se non toccato, si salva com’era (W8-26)', async () => {
+    const imported = '<div align="center">Famiglia<br>in cammino<i class="fa-heart"></i></div>';
+    current = sliderWith([slide(1, { heading: imported }), slide(2)]);
+    const user = await ready();
+    // Revisione T2, I1: il titolo formattato si mostra su più righe, un a capo per riga.
+    expect(headings()[0]).toBe('Famiglia\nin cammino');
+    expect(headings()[0]).not.toContain('<');
+    await user.type(within(group(2)).getByRole('textbox', { name: 'Testo' }), 'Un testo');
+    apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path === `/sliders/${SLIDER_ID}/slides` && options?.method === 'PUT') return current;
+      throw new Error(`chiamata non prevista: ${path}`);
+    });
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    const body = (writes()[0]?.[1] as { body: { slides: { heading: string | null }[] } }).body;
+    expect(body.slides[0]?.heading).toBe(imported);
+  });
+
+  // Revisione T2, I1 (DR-307): correggere una parola non deve togliere in silenzio a capo e
+  // centratura; ciò che la persona scrive esce protetto, e una nota dice come appare sul sito.
+  it('un titolo importato modificato conserva a capo e allineamento e protegge il testo (W8-26)', async () => {
+    const imported = '<div align="center">Famiglia<br>in cammino<i class="fa-heart"></i></div>';
+    current = sliderWith([slide(1, { heading: imported }), slide(2)]);
+    const user = await ready();
+    expect(
+      within(group(1)).getByText(
+        'Sul sito il titolo è centrato e va a capo dove va a capo qui. Sul sito il titolo termina con un cuore.',
+      ),
+    ).toBeInTheDocument();
+    expect(within(group(2)).queryByText(/Sul sito il titolo è/)).toBeNull();
+    const field = within(group(1)).getByRole('textbox', { name: 'Titolo' });
+    await user.clear(field);
+    await user.type(field, 'Famiglie{Enter}in viaggio <b>');
+    apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path === `/sliders/${SLIDER_ID}/slides` && options?.method === 'PUT') return current;
+      throw new Error(`chiamata non prevista: ${path}`);
+    });
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    const body = (writes()[0]?.[1] as { body: { slides: { heading: string | null }[] } }).body;
+    expect(body.slides[0]?.heading).toBe(
+      // T2b (DR-311): il cuore dell'originale torna in coda.
+      '<div align="center">Famiglie<br>in viaggio &lt;b&gt; <i class="fa-heart"></i></div>',
+    );
+    expect(body.slides[1]?.heading).toBe('Titolo 2');
+  });
+
+  // T2b (DR-311): il cuore della sorgente si vede sul sito, quindi modificando il titolo resta.
+  it('un titolo importato modificato conserva l’icona del cuore', async () => {
+    const imported = '<div align="center">Famiglia<br>in cammino <i class="fa-heart"></i></div>';
+    current = sliderWith([slide(1, { heading: imported }), slide(2)]);
+    const user = await ready();
+    const field = within(group(1)).getByRole('textbox', { name: 'Titolo' });
+    await user.clear(field);
+    await user.type(field, 'Famiglie{Enter}in viaggio');
+    apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path === `/sliders/${SLIDER_ID}/slides` && options?.method === 'PUT') return current;
+      throw new Error(`chiamata non prevista: ${path}`);
+    });
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    const body = (writes()[0]?.[1] as { body: { slides: { heading: string | null }[] } }).body;
+    expect(body.slides[0]?.heading).toBe(
+      '<div align="center">Famiglie<br>in viaggio <i class="fa-heart"></i></div>',
+    );
+  });
+
+  // Revisione T2b, M2 (DR-307): il cuore non si vede nel campo, quindi la nota dice che sul
+  // sito il titolo termina con un cuore; un titolo formattato senza cuore non lo dice.
+  it('la nota di un titolo con il cuore dice che sul sito termina con un cuore', async () => {
+    const withHeart = '<div align="center">Famiglia<br>in cammino <i class="fa-heart"></i></div>';
+    const withoutHeart = '<div align="center">Famiglia<br>in cammino</div>';
+    current = sliderWith([slide(1, { heading: withHeart }), slide(2, { heading: withoutHeart })]);
+    await ready();
+    expect(
+      within(group(1)).getByText(
+        'Sul sito il titolo è centrato e va a capo dove va a capo qui. Sul sito il titolo termina con un cuore.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(group(2)).getByText('Sul sito il titolo è centrato e va a capo dove va a capo qui.'),
+    ).toBeInTheDocument();
+    expect(within(group(2)).queryByText(/cuore/)).toBeNull();
+  });
+
+  // Ri-revisione T2: un titolo semplice esce protetto come quello formattato, così `<b>`
+  // scritto come testo resta visibile sul sito; riaperto, resta un titolo semplice.
+  it('un titolo semplice con caratteri speciali si salva protetto e si riapre semplice', async () => {
+    current = sliderWith([slide(1), slide(2, { heading: 'Lui &amp; lei &lt;b&gt;' })]);
+    const user = await ready();
+    expect(headings()[1]).toBe('Lui & lei <b>');
+    expect(within(group(2)).queryByText(/Sul sito il titolo/)).toBeNull();
+    const field = within(group(1)).getByRole('textbox', { name: 'Titolo' });
+    await user.clear(field);
+    await user.type(field, 'a <b> & c');
+    apiMock.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path === `/sliders/${SLIDER_ID}/slides` && options?.method === 'PUT') return current;
+      throw new Error(`chiamata non prevista: ${path}`);
+    });
+    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    const body = (writes()[0]?.[1] as { body: { slides: { heading: string | null }[] } }).body;
+    expect(body.slides[0]?.heading).toBe('a &lt;b&gt; &amp; c');
+    // Il titolo semplice non toccato torna identico.
+    expect(body.slides[1]?.heading).toBe('Lui &amp; lei &lt;b&gt;');
+  });
+
+  // Da T1 (W8-01): le miniature puntano al sito pubblico, come nel resto dell'area.
+  it('le miniature delle slide e del selettore usano l’indirizzo del sito', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://sito.example.invalid/');
+    try {
+      const user = await ready();
+      expect(within(group(1)).getByRole('img')).toHaveAttribute(
+        'src',
+        'https://sito.example.invalid/media/2025/03/immagine-1.jpg',
+      );
+      await user.click(within(group(2)).getByRole('button', { name: 'Cambia immagine' }));
+      const option = await screen.findByRole('option', { name: /Nuova/ });
+      // La miniatura del selettore è decorativa (alt vuoto): la si cerca come elemento.
+      expect(option.querySelector('img')).toHaveAttribute(
+        'src',
+        'https://sito.example.invalid/media/nuova.jpg',
+      );
+      await user.click(option);
+      await user.click(screen.getByRole('button', { name: 'Usa questo media' }));
+      expect(within(group(2)).getByRole('img')).toHaveAttribute(
+        'src',
+        'https://sito.example.invalid/media/nuova.jpg',
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('«Sposta giù» e «Sposta su» cambiano l’ordine; i bordi sono spenti', async () => {
     const user = await ready();
     expect(within(group(1)).getByRole('button', { name: 'Sposta su' })).toBeDisabled();

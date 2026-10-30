@@ -276,6 +276,18 @@ describe('lang dell’HTML e og:locale dalle impostazioni', () => {
     expect(renderToStaticMarkup(await RootLayout({ children: null }))).toContain('lang="en"');
   });
 
+  // Minore della 1G-W7 T9: come il titolo di riserva (DR-273), la lingua torna «it» se
+  // l'API non risponde, invece di far fallire la radice di ogni pagina; ogni altro
+  // errore passa.
+  it('lang="it" se l’API non risponde, un altro errore passa', async () => {
+    const { ApiUnavailable } = await import('../src/lib/api');
+    const { default: RootLayout } = await import('../src/app/layout');
+    api.getSettings.mockRejectedValue(new ApiUnavailable('servizio non raggiungibile'));
+    expect(renderToStaticMarkup(await RootLayout({ children: null }))).toContain('lang="it"');
+    api.getSettings.mockRejectedValue(new Error('interno'));
+    await expect(RootLayout({ children: null })).rejects.toThrow('interno');
+  });
+
   it('og:locale della pagina dalla lingua del sito', async () => {
     api.getSettings.mockResolvedValue({ 'site.title': 'Sito', 'site.locale': 'en_US' });
     api.getContent.mockResolvedValue({

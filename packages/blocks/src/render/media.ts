@@ -9,6 +9,8 @@ export interface RenderMedia {
   readonly width: number | null;
   readonly height: number | null;
   readonly altText: string | null;
+  readonly title?: string | null;
+  readonly caption?: string | null;
   readonly variants: readonly { publicPath: string; width: number; height: number }[];
 }
 

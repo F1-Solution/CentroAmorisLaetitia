@@ -133,6 +133,7 @@ export function MediaLibrary(): React.JSX.Element {
   const [confirming, setConfirming] = useState(false);
   const [pendingReplacement, setPendingReplacement] = useState<File | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const replaceInput = useRef<HTMLInputElement>(null);
 
   const reload = useCallback(() => setReloadToken((token) => token + 1), []);
@@ -167,6 +168,7 @@ export function MediaLibrary(): React.JSX.Element {
   }, [load, reloadToken]);
 
   function open(item: MediaItem): void {
+    setNotice(null);
     setSelected(item);
     setDraft({
       title: item.title ?? '',
@@ -180,6 +182,7 @@ export function MediaLibrary(): React.JSX.Element {
   }
 
   async function onFilesSelected(files: FileList): Promise<void> {
+    setNotice(null);
     const chosen = [...files];
     setUploads(
       chosen.map((file, index) => ({
@@ -216,11 +219,11 @@ export function MediaLibrary(): React.JSX.Element {
                   id,
                   progress: 100,
                   status: 'done',
-                  ...(derivatives > 0
-                    ? {
-                        noticeText: `${derivedSizes(derivatives)} ${derivatives === 1 ? 'generata' : 'generate'}.`,
-                      }
-                    : {}),
+                  // W8-25: PDF e video non hanno dimensioni derivate, ma la conferma serve anche a loro.
+                  noticeText:
+                    derivatives > 0
+                      ? `${derivedSizes(derivatives)} ${derivatives === 1 ? 'generata' : 'generate'}.`
+                      : 'File caricato.',
                 }
               : entry,
           ),
@@ -305,6 +308,7 @@ export function MediaLibrary(): React.JSX.Element {
       await api(`/media/${selected.id}`, { method: 'DELETE' });
       setConfirming(false);
       setSelected(null);
+      setNotice('File eliminato.');
       reload();
     } catch (caught) {
       setDeleteError(messageOf(caught));
@@ -320,6 +324,12 @@ export function MediaLibrary(): React.JSX.Element {
       breadcrumbs={[{ label: 'Redazione', href: '/redazione/pagine' }, { label: 'Media' }]}
     >
       <PageHeader title="Media" summary="Immagini, documenti e file del sito pubblico." />
+
+      {notice ? (
+        <Alert variant="success" title="Fatto">
+          {notice}
+        </Alert>
+      ) : null}
 
       {canWrite ? (
         <section className="amoris-media-library__upload" aria-label="Carica nuovi media">
@@ -443,20 +453,21 @@ export function MediaLibrary(): React.JSX.Element {
             label="Titolo"
             value={draft.title}
             disabled={!canWrite || busy}
+            helpText="Serve a ritrovare il file nell’area; nelle pagine compare solo il titolo scritto nel blocco."
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
           />
           <TextField
             label="Testo alternativo"
             value={draft.altText}
             disabled={!canWrite || busy}
-            helpText="Che cosa mostra l’immagine, per chi non la vede. Vuoto solo se è decorativa."
+            helpText="Che cosa mostra l’immagine, per chi non la vede. Le pagine lo usano quando il blocco dell’immagine non ha un testo suo. Vuoto solo se è decorativa."
             onChange={(event) => setDraft({ ...draft, altText: event.target.value })}
           />
           <TextField
             label="Didascalia"
             value={draft.caption}
             disabled={!canWrite || busy}
-            helpText="Compare sotto l’immagine, visibile a tutti."
+            helpText="Compare sotto l’immagine, visibile a tutti, nelle pagine il cui blocco dell’immagine non ha una didascalia sua. Non compare sotto le immagini che c’erano già nelle pagine e nelle notizie riprese dal sito precedente."
             onChange={(event) => setDraft({ ...draft, caption: event.target.value })}
           />
           <TextArea

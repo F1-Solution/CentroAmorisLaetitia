@@ -298,3 +298,67 @@ describe('copia di lavoro riprendibile dopo una scrittura sul contenuto', () => 
     expect(screen.queryByText(/più vecchia/)).toBeNull();
   });
 });
+
+describe('W8-03: «Pubblica» e «Ritira» non chiedono di scartare una copia che non esiste', () => {
+  beforeEach(() => {
+    apiMock.mockReset();
+    server = { content: post, draft: null, stamps: 0, publishError: null };
+    install();
+  });
+
+  it('«Pubblica» senza copia di lavoro non manda alcuna richiesta alla copia, oltre alla lettura iniziale', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await screen.findByLabelText('Titolo');
+    await user.click(screen.getByRole('button', { name: 'Pubblica' }));
+    expect(await screen.findByText('Contenuto pubblicato.')).toBeInTheDocument();
+    expect(callsTo(DRAFT_PATH, 'DELETE')).toEqual([]);
+    expect(callsTo(DRAFT_PATH, 'GET')).toEqual([]);
+    expect(apiMock.mock.calls.filter((call) => call[0] === DRAFT_PATH)).toHaveLength(1);
+  });
+
+  it('«Ritira» senza copia di lavoro fa lo stesso', async () => {
+    server.content = { ...post, status: 'published' };
+    const user = userEvent.setup();
+    renderEditor();
+    await screen.findByLabelText('Titolo');
+    await user.click(screen.getByRole('button', { name: 'Ritira' }));
+    await screen.findByText(/Contenuto ritirato/);
+    expect(callsTo(DRAFT_PATH, 'DELETE')).toEqual([]);
+    expect(apiMock.mock.calls.filter((call) => call[0] === DRAFT_PATH)).toHaveLength(1);
+  });
+
+  it('I-2: una copia di lavoro superata all’apertura si elimina comunque alla pubblicazione', async () => {
+    server.draft = {
+      title: 'Copia vecchia',
+      excerpt: null,
+      blocks: post.blocks,
+      baseUpdatedAt: '2000-01-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T10:00:00.000Z',
+    };
+    const user = userEvent.setup();
+    renderEditor();
+    await screen.findByLabelText('Titolo');
+    await user.click(screen.getByRole('button', { name: 'Pubblica' }));
+    expect(await screen.findByText('Contenuto pubblicato.')).toBeInTheDocument();
+    expect(callsTo(DRAFT_PATH, 'DELETE')).toHaveLength(1);
+  });
+
+  it('con una copia di lavoro esistente, «Pubblica» la elimina come prima', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    const title = await screen.findByLabelText('Titolo');
+    await user.type(title, ' ritoccata');
+    await waitFor(() => expect(draftPuts()).toHaveLength(1), { timeout: 4000 });
+    await user.click(screen.getByRole('button', { name: 'Pubblica' }));
+    expect(await screen.findByText('Contenuto pubblicato.')).toBeInTheDocument();
+    expect(callsTo(DRAFT_PATH, 'DELETE')).toHaveLength(1);
+  });
+
+  it('su un contenuto non pubblicato il pulsante resta «Salva»', async () => {
+    renderEditor();
+    await screen.findByLabelText('Titolo');
+    expect(screen.getByRole('button', { name: 'Salva' })).toBeInTheDocument();
+    expect(screen.queryByText('Le modifiche salvate compaiono subito sul sito.')).toBeNull();
+  });
+});

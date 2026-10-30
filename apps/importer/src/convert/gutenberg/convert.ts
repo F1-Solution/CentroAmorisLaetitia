@@ -161,6 +161,8 @@ function convertImage(block: ParsedGutenbergBlock, ctx: ConvertContext): BlockNo
     alt: img?.attrs.alt ?? '',
     title: img?.attrs.title ?? null,
     caption,
+    // La didascalia di Gutenberg sta nel contenuto: quella del media non si usa (DR-312).
+    useMediaCaption: false,
     linkUrl: anchor?.attrs.href ?? null,
     linkNewWindow: anchor?.attrs.target === '_blank',
     align,

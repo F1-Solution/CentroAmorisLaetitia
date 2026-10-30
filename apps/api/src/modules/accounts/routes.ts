@@ -84,6 +84,7 @@ async function refuseWithoutCurrentPassword(
     { ...session.user, sessionId: session.sessionId },
     currentPassword,
     hashAddress(request.ip, app.config.IP_HASH_SALT),
+    'account',
   );
   if (verdict === 'blocked') {
     return refuse(429, 'TOO_MANY_ATTEMPTS', 'Troppi tentativi. Riprovare più tardi.');

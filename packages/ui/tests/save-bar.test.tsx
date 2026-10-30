@@ -18,6 +18,29 @@ describe('SaveBar — componente 29', () => {
     expect(screen.queryByRole('button', { name: 'Pubblica' })).toBeNull();
   });
 
+  it('saveLabel cambia il testo del pulsante e saveNote lo descrive', () => {
+    render(
+      <SaveBar
+        statusText="Salvato"
+        onSave={vi.fn()}
+        saveLabel="Salva e aggiorna il sito"
+        saveNote="Le modifiche compaiono subito sul sito."
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Salva e aggiorna il sito' });
+    expect(screen.queryByRole('button', { name: 'Salva' })).toBeNull();
+    const noteId = button.getAttribute('aria-describedby');
+    expect(noteId).toBeTruthy();
+    expect(document.getElementById(noteId ?? '')?.textContent).toBe(
+      'Le modifiche compaiono subito sul sito.',
+    );
+  });
+
+  it('senza saveLabel il pulsante è «Salva» e senza avviso', () => {
+    render(<SaveBar statusText="Salvato" onSave={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Salva' })).toBeDefined();
+  });
+
   it('con onPublish il bottone compare', () => {
     render(<SaveBar statusText="Salvato" onSave={vi.fn()} onPublish={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Pubblica' })).toBeDefined();

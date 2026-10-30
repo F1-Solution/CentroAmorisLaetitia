@@ -29,20 +29,28 @@ export interface AuditEntry {
 }
 
 export async function writeAudit(db: Database, entry: AuditEntry): Promise<void> {
-  await db.insert(schema.auditLog).values({
-    action: entry.action,
-    actorUserId: entry.actorUserId ?? null,
-    actorLabel: entry.actorLabel ?? null,
-    entityType: entry.entityType ?? null,
-    entityId: entry.entityId ?? null,
-    outcome: entry.outcome ?? 'success',
-    detail: entry.detail ?? {},
-    ipHash: entry.ipHash ?? null,
-    sessionId: entry.sessionId ?? null,
-    actorRoleId: entry.actorRoleId ?? null,
-    actorRoleLabel: entry.actorRoleLabel ?? null,
-    actorArea: entry.actorArea ?? null,
-  });
+  await writeAuditMany(db, [entry]);
+}
+
+/** Più righe in un solo inserimento, per le righe nate dalla stessa richiesta. */
+export async function writeAuditMany(db: Database, entries: readonly AuditEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  await db.insert(schema.auditLog).values(
+    entries.map((entry) => ({
+      action: entry.action,
+      actorUserId: entry.actorUserId ?? null,
+      actorLabel: entry.actorLabel ?? null,
+      entityType: entry.entityType ?? null,
+      entityId: entry.entityId ?? null,
+      outcome: entry.outcome ?? 'success',
+      detail: entry.detail ?? {},
+      ipHash: entry.ipHash ?? null,
+      sessionId: entry.sessionId ?? null,
+      actorRoleId: entry.actorRoleId ?? null,
+      actorRoleLabel: entry.actorRoleLabel ?? null,
+      actorArea: entry.actorArea ?? null,
+    })),
+  );
 }
 
 /** Le cinque azioni che ADR-007 §3.1 controllo 10 impone di registrare. */

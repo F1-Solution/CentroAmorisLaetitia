@@ -243,4 +243,48 @@ describe('albero e riepiloghi', () => {
     expect(parentIdOf(syntheticDocument.blocks, FIRST_TEXT)).toBe(COLUMN);
     expect(parentIdOf(syntheticDocument.blocks, 'b_0000000000ff')).toBeUndefined();
   });
+
+  it('W8-33: «Documento» e «Media e testo» si distinguono nell’albero', () => {
+    const base = { id: 'b_0000000000f1', children: [] as never[] };
+    const doc = {
+      ...base,
+      type: 'document',
+      props: {
+        documentId: '77777777-7777-4777-8777-777777777777',
+        label: 'Statuto dell’associazione',
+        display: 'link',
+        classes: null,
+      },
+    } as never;
+    expect(labelOf(doc)).toContain('Statuto dell’associazione');
+    const senzaEtichetta = {
+      ...(doc as object),
+      props: { ...(doc as { props: object }).props, label: null },
+    } as never;
+    expect(labelOf(senzaEtichetta)).toBe('documento');
+    const titoli = new Map([['77777777-7777-4777-8777-777777777777', 'Statuto pubblicato']]);
+    expect(labelOf(senzaEtichetta, titoli)).toBe('Statuto pubblicato');
+    expect(labelOf(doc, titoli)).toBe('Statuto dell’associazione');
+    expect(toTreeNodes([senzaEtichetta as never], titoli)[0]?.label).toBe('Statuto pubblicato');
+    const media = {
+      ...base,
+      type: 'media_text',
+      props: {
+        mediaId: null,
+        mediaAlt: 'Una famiglia al parco',
+        mediaVariant: null,
+        mediaPosition: 'right',
+        mediaWidthPercent: null,
+        verticalAlignment: 'center',
+        linkUrl: null,
+        classes: null,
+      },
+    } as never;
+    expect(labelOf(media)).toBe('Una famiglia al parco');
+    const senzaAlt = {
+      ...(media as object),
+      props: { ...(media as { props: object }).props, mediaAlt: '' },
+    } as never;
+    expect(labelOf(senzaAlt)).toBe('immagine a destra');
+  });
 });

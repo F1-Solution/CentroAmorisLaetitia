@@ -175,9 +175,11 @@ export function CategoryEditDialog({
         label="Categoria genitrice"
         value={parentId}
         disabled={!canMove}
-        {...(canMove
-          ? {}
-          : { helpText: 'Per spostare una categoria serve il permesso di pubblicare.' })}
+        helpText={
+          canMove
+            ? 'Le categorie che stanno sotto questa non compaiono: una categoria non può avere come genitrice una sua discendente.'
+            : 'Per spostare una categoria serve il permesso di pubblicare.'
+        }
         options={[
           { value: '', label: 'Nessuna: primo livello' },
           ...parents.map((other) => ({ value: other.id, label: other.name })),

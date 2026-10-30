@@ -1,10 +1,19 @@
 'use client';
 
+import {
+  slideTitleAlignment,
+  slideTitleEditText,
+  slideTitleFromText,
+  slideTitleHasMarkup,
+  slideTitleIcons,
+  slideTitleText,
+} from '@amoris/blocks/model';
 import { Alert, Button, MediaPicker, PageHeader, type MediaPickerItem } from '@amoris/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
 import { useSession } from '../../lib/session';
+import { siteUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
 import { messageOf, type EditorialSlider } from './sliderModel';
 import { SliderSlideRow, type SlideDraft, type SlideFieldErrors } from './SliderSlideRow';
@@ -44,6 +53,22 @@ function commandToFocus(row: HTMLElement, command: FocusRequest['command']): HTM
   return enabled(command) ?? enabled(command === 'up' ? 'down' : 'up');
 }
 
+/** Il titolo da salvare: testo protetto; un titolo formattato modificato conserva a capo, allineamento e cuore (DR-307, DR-311). */
+function headingOf(slide: SlideDraft): string | null {
+  const markup = slide.markupHeading;
+  if (markup === undefined) {
+    const text = slide.heading.trim();
+    if (slide.plainHeading !== undefined && text === slideTitleText(slide.plainHeading)) {
+      return slide.plainHeading;
+    }
+    return slideTitleFromText(text, null) || null;
+  }
+  if (slide.heading === slideTitleEditText(markup)) return markup;
+  return (
+    slideTitleFromText(slide.heading, slideTitleAlignment(markup), slideTitleIcons(markup)) || null
+  );
+}
+
 function payloadOf(slides: readonly SlideDraft[]): {
   id?: string;
   mediaId: string;
@@ -53,7 +78,7 @@ function payloadOf(slides: readonly SlideDraft[]): {
   return slides.map((slide) => ({
     ...(slide.id ? { id: slide.id } : {}),
     mediaId: slide.mediaId ?? '',
-    heading: slide.heading.trim() === '' ? null : slide.heading.trim(),
+    heading: headingOf(slide),
     body: slide.body.trim() === '' ? null : slide.body.trim(),
   }));
 }
@@ -120,7 +145,13 @@ export function SliderEditor({ sliderId }: { readonly sliderId: string }): React
         key: nextKey(),
         id: slide.id,
         mediaId: slide.mediaId,
-        heading: slide.heading ?? '',
+        // Un titolo con HTML si mostra senza tag, un a capo per riga (DR-307); uno semplice senza entità.
+        heading: slide.heading === null ? '' : slideTitleEditText(slide.heading),
+        ...(slide.heading === null
+          ? {}
+          : slideTitleHasMarkup(slide.heading)
+            ? { markupHeading: slide.heading }
+            : { plainHeading: slide.heading }),
         body: slide.body ?? '',
         imageUrl: slide.image?.publicPath ?? null,
         fileName: slide.image?.fileName ?? null,
@@ -370,7 +401,7 @@ export function SliderEditor({ sliderId }: { readonly sliderId: string }): React
         loading={mediaLoading}
         items={media.map<MediaPickerItem>((item) => ({
           id: item.id,
-          thumbnailUrl: item.publicPath,
+          thumbnailUrl: siteUrl(item.publicPath),
           title: item.title ?? item.fileName,
         }))}
         {...(mediaError !== null ? { errorText: mediaError } : {})}

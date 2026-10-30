@@ -63,6 +63,79 @@ describe('Slider — carosello scritto nel progetto', () => {
     expect(slides[1]?.getAttribute('data-active')).toBe('true');
   });
 
+  it('rende il titolo importato con HTML senza tag visibili né alt con tag (W8-26)', () => {
+    const imported: SliderData = {
+      ...slider,
+      slides: [
+        {
+          position: 0,
+          mediaId: null,
+          heading:
+            '<div align="center">Famiglia<br>in cammino<script>alert(1)</script><img src=x onerror="alert(2)"></div>',
+          body: null,
+          linkUrl: null,
+          linkLabel: null,
+          settings: {},
+        },
+      ],
+    };
+    const { container } = render(
+      <Slider
+        block={{
+          type: 'slider',
+          id: testBlockId(),
+          props: { sliderId: uuid, classes: [] },
+          children: [],
+        }}
+        slider={imported}
+      />,
+    );
+    const h3 = container.querySelector('.blk-slider-caption h3');
+    expect(h3?.textContent).toBe('Famigliain cammino');
+    expect(h3?.querySelector('br')).not.toBeNull();
+    expect(h3?.querySelector('script, img, div')).toBeNull();
+    expect(container.querySelector('.blk-slide-align-center')).not.toBeNull();
+    expect(container.querySelector('.blk-slider-slide img')?.getAttribute('alt')).toBe(
+      'Famiglia in cammino',
+    );
+  });
+
+  // T2b (DR-311): il cuore della sorgente si vede nel titolo, mai nell'alt.
+  it('rende il cuore del titolo con l’icona del sito e lo lascia fuori dall’alt', () => {
+    const withHeart: SliderData = {
+      ...slider,
+      slides: [
+        {
+          position: 0,
+          mediaId: null,
+          heading: '<div align="center">Famiglia<br>in cammino <i class="fa-heart"></i></div>',
+          body: null,
+          linkUrl: null,
+          linkLabel: null,
+          settings: {},
+        },
+      ],
+    };
+    const { container } = render(
+      <Slider
+        block={{
+          type: 'slider',
+          id: testBlockId(),
+          props: { sliderId: uuid, classes: [] },
+          children: [],
+        }}
+        slider={withHeart}
+      />,
+    );
+    const icon = container.querySelector('.blk-slider-caption h3 i');
+    expect(icon?.getAttribute('class')).toBe('blk-slide-icon-heart');
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    expect(icon?.attributes).toHaveLength(2);
+    expect(container.querySelector('.blk-slider-slide img')?.getAttribute('alt')).toBe(
+      'Famiglia in cammino',
+    );
+  });
+
   it('non rende un collegamento con schema non ammesso (javascript:)', () => {
     const dangerous: SliderData = {
       ...slider,

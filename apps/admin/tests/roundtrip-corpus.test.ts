@@ -90,6 +90,19 @@ it('il corpus non è vuoto e copre tutti e 14 i tipi di blocco', () => {
   );
 });
 
+it('DR-312: il corpus contiene un blocco Immagine con useMediaCaption false', () => {
+  // Senza questo, l'andata e ritorno non proverebbe che il segno dei blocchi
+  // importati sopravvive all'editor e al salvataggio senza modifiche.
+  const flags: unknown[] = [];
+  for (const entry of corpus.entries) {
+    walk((entry.document as BlockDocument).blocks, (node) => {
+      if (node.type === 'image')
+        flags.push((node.props as Record<string, unknown>).useMediaCaption);
+    });
+  }
+  expect(flags).toContain(false);
+});
+
 describe.each(corpus.entries.map((entry) => [entry.name, entry] as const))(
   'andata e ritorno — %s',
   (_name, entry) => {

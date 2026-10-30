@@ -61,10 +61,10 @@ test.describe('contenuti', () => {
 
     const prima = await leggiContenuto(page, id);
 
-    // Nessuna modifica: si preme «Salva» e basta. L'editor lo dichiara, e
+    // Nessuna modifica: si preme «Salva e aggiorna il sito» e basta. L'editor lo dichiara, e
     // quello che dichiara è la cosa che il criterio pretende: il contenuto
     // **non viene riscritto**, non «viene riscritto uguale».
-    await page.getByRole('button', { name: 'Salva', exact: true }).click();
+    await page.getByRole('button', { name: 'Salva e aggiorna il sito', exact: true }).click();
     await expect(
       page.getByText('Nessuna modifica: il contenuto non è stato riscritto.'),
     ).toBeVisible();

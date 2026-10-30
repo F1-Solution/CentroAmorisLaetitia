@@ -67,12 +67,15 @@ export interface CategoryDeleteActionProps {
   readonly id: string;
   readonly name: string;
   readonly onDeleted: () => void;
+  /** Chiamata all'inizio di «Elimina», per togliere un avviso di riuscita precedente. */
+  readonly onStart?: () => void;
 }
 
 export function CategoryDeleteAction({
   id,
   name,
   onDeleted,
+  onStart,
 }: CategoryDeleteActionProps): React.JSX.Element {
   const [preview, setPreview] = useState<TermDeletion | null>(null);
   const [checking, setChecking] = useState(false);
@@ -81,6 +84,7 @@ export function CategoryDeleteAction({
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function check(): Promise<void> {
+    onStart?.();
     setChecking(true);
     setCheckError(null);
     setDeleteError(null);

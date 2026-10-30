@@ -5,6 +5,7 @@ import './accesso.css';
 import { Alert, Button, TextField } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { takeAccessNotice } from '../../lib/accessNotice';
 import { ApiError } from '../../lib/api';
 import { AREA_DEFINITIONS } from '../../lib/areas';
 import { useSession, vestmentsOf } from '../../lib/session';
@@ -26,6 +27,13 @@ export default function AccessoPage(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // L'avviso lasciato da un'altra schermata, per esempio dopo il cambio del proprio indirizzo.
+  useEffect(() => {
+    const found = takeAccessNotice();
+    if (found) setNotice(found);
+  }, []);
 
   // Chi ha già una sessione non vede la schermata di accesso.
   useEffect(() => {
@@ -67,6 +75,11 @@ export default function AccessoPage(): React.JSX.Element {
         <h1 className="amoris-access__title">Area di gestione</h1>
         <p className="amoris-access__lead">Centro per la Famiglia Amoris Laetitia</p>
 
+        {notice ? (
+          <Alert variant="success" title="Fatto">
+            {notice}
+          </Alert>
+        ) : null}
         {error ? (
           <Alert variant="error" title="Accesso non riuscito">
             {error}

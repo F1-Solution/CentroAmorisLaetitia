@@ -4,3 +4,8 @@
   gap: var(--amoris-space-2);
   margin-top: var(--amoris-space-4);
 }
+
+.amoris-content-list__home {
+  color: var(--amoris-text-secondary);
+  font-weight: 600;
+}

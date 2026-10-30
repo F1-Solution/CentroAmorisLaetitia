@@ -38,6 +38,11 @@ export function isMediaUploadRoute(method: string, url: string | undefined): boo
   return (method === 'POST' && url === '/media') || (method === 'PUT' && url === '/media/:id/file');
 }
 
+/** Le rotte dei media che scrivono o tolgono file nell'archivio, le sole che dichiarano il 503. */
+export function isMediaStoreRoute(method: string, url: string | undefined): boolean {
+  return isMediaUploadRoute(method, url) || (method === 'DELETE' && url === '/media/:id');
+}
+
 const translated = (code: MediaErrorCode, message: string): TranslatedError => ({
   status: MEDIA_ERROR_STATUS[code],
   code,

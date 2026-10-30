@@ -278,21 +278,54 @@ export async function upload(
     bucket: input.isPrivate ? store.privateBucket : store.publicBucket,
   };
   const written: string[] = [];
-  return inMediaTransaction(db, input.runtime, async (tx) => {
-    try {
-      await lockFolder(tx, folder);
-      const candidate = await uniqueFileName(tx, {
-        folder,
-        fileName: requested,
-        extraPaths: extraPathsOf(processed, folder),
-      });
-      return await writeUpload(tx, store, context, candidate, written);
-    } catch (error) {
-      // Gli oggetti scritti si tolgono prima di liberare il blocco, così nessuno ne sceglie i nomi.
-      await removeQuietly(store, context.bucket, written, input.log, { folder });
-      throw error;
+  let compensated = false;
+  try {
+    return await inMediaTransaction(db, input.runtime, async (tx) => {
+      try {
+        await lockFolder(tx, folder);
+        const candidate = await uniqueFileName(tx, {
+          folder,
+          fileName: requested,
+          extraPaths: extraPathsOf(processed, folder),
+        });
+        return await writeUpload(tx, store, context, candidate, written);
+      } catch (error) {
+        // Gli oggetti scritti si tolgono prima di liberare il blocco, così nessuno ne sceglie i nomi.
+        await removeQuietly(store, context.bucket, written, input.log, { folder });
+        compensated = true;
+        throw error;
+      }
+    });
+  } catch (error) {
+    // DR-261, N4: un errore al COMMIT arriva dopo il lavoro e lascerebbe gli oggetti senza riga.
+    if (!compensated) {
+      await removeUnclaimed(db, store, input.runtime, context.bucket, folder, written, input.log);
     }
-  });
+    throw error;
+  }
+}
+
+/** Toglie gli oggetti di un lavoro non confermato, sotto il blocco della cartella e saltando i nomi tornati in uso. */
+async function removeUnclaimed(
+  db: Database,
+  store: ObjectStore,
+  runtime: MediaRuntime | undefined,
+  bucket: string,
+  folder: string,
+  keys: readonly string[],
+  log: Logger | undefined,
+): Promise<void> {
+  if (keys.length === 0) return;
+  try {
+    await inMediaTransaction(db, runtime, async (tx) => {
+      await lockFolder(tx, folder);
+      const taken = await takenPaths(tx, keys.map(publicPathOf));
+      const free = keys.filter((key) => !taken.has(publicPathOf(key)));
+      await removeQuietly(store, bucket, free, log, { folder });
+    });
+  } catch (error) {
+    log?.error({ folder, err: loggableError(error) }, 'oggetti non rimossi dall’archivio');
+  }
 }
 
 export interface ReplaceInput {
@@ -333,6 +366,8 @@ interface ReplaceContext {
 interface ReplaceTrace {
   written: string[];
   created: string[];
+  /** Vero se le derivate nuove sono già state tolte dentro la transazione. */
+  compensated: boolean;
 }
 
 /** Base delle derivate: senza `-scaled`, salvo che le derivate esistenti usino il nome intero. */
@@ -507,6 +542,7 @@ async function replaceInTransaction(
   } catch (error) {
     const orphans = trace.created.filter((key) => trace.written.includes(key));
     await removeQuietly(store, context.bucket, orphans, log, { mediaId: context.id });
+    trace.compensated = true;
     throw error;
   }
 }
@@ -564,7 +600,7 @@ export async function replaceFile(
     bucket: current.isPrivate ? store.privateBucket : store.publicBucket,
     folder: folderOfKey(current.storageKey),
   };
-  const trace: ReplaceTrace = { written: [], created: [] };
+  const trace: ReplaceTrace = { written: [], created: [], compensated: false };
 
   let outcome;
   try {
@@ -572,6 +608,19 @@ export async function replaceFile(
       replaceInTransaction(tx, store, context, trace, input.log),
     );
   } catch (error) {
+    // DR-261, N4: dopo un errore al COMMIT le derivate nuove restano senza riga.
+    if (!trace.compensated) {
+      const orphans = trace.created.filter((key) => trace.written.includes(key));
+      await removeUnclaimed(
+        db,
+        store,
+        input.runtime,
+        context.bucket,
+        context.folder,
+        orphans,
+        input.log,
+      );
+    }
     // I rifiuti con codice non sono guasti da annotare.
     if (!(error instanceof Error && 'statusCode' in error)) {
       input.log?.error(

@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../src/lib/api';
 import type * as ApiModule from '../src/lib/api';
 import type * as SessionModule from '../src/lib/session';
-import { syntheticContent } from './fixtures';
+import { serializeBlockDocument } from '@amoris/blocks';
+import { insertBlock } from '../src/lib/editor/tree';
+import { syntheticContent, syntheticDocument } from './fixtures';
 
 /**
  * I criteri 1D-28, 1D-30 e 1D-36 **eseguiti nell'applicazione**, non affermati.
@@ -130,7 +132,7 @@ describe('editor del contenuto', () => {
     const select = screen.getByLabelText('Layout della pagina');
     expect(select).toHaveValue('right_sidebar');
     await user.selectOptions(select, 'full_width');
-    await user.click(screen.getByRole('button', { name: 'Salva il layout' }));
+    await user.click(screen.getByRole('button', { name: 'Salva il layout e aggiorna il sito' }));
 
     await waitFor(() => {
       expect(writes()).toEqual([
@@ -147,7 +149,7 @@ describe('editor del contenuto', () => {
     renderEditor();
     await waitForEditor();
 
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
 
     await screen.findByText('Nessuna modifica: il contenuto non è stato riscritto.');
     // La prova è questa: nessuna richiesta di scrittura è mai partita.
@@ -234,7 +236,7 @@ describe('editor del contenuto', () => {
     const title = screen.getByRole('textbox', { name: 'Titolo' });
     await user.clear(title);
     await user.type(title, 'Titolo salvato');
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await waitFor(() => expect(savedTitle).toBe('Titolo salvato'));
 
     await user.type(title, ' e poi ritoccato');
@@ -277,7 +279,7 @@ describe('editor del contenuto', () => {
 
     const title = screen.getByRole('textbox', { name: 'Titolo' });
     await user.type(title, ' modificato');
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await user.type(title, ' ancora');
     const before = draftWrites();
     // Più del ritardo del salvataggio automatico, con il salvataggio ancora aperto.
@@ -355,7 +357,7 @@ describe('editor del contenuto', () => {
     await screen.findByText(/^Ultima modifica di Ada Inventata il /);
     await user.click(screen.getByRole('tab', { name: 'Pagina' }));
     await user.selectOptions(screen.getByLabelText('Layout della pagina'), 'full_width');
-    await user.click(screen.getByRole('button', { name: 'Salva il layout' }));
+    await user.click(screen.getByRole('button', { name: 'Salva il layout e aggiorna il sito' }));
     expect(await screen.findByText(/^Ultima modifica di Bruno Inventato il /)).toBeInTheDocument();
     // Si rilegge solo il contenuto: la copia di lavoro non viene richiesta di nuovo.
     expect(apiMock.mock.calls.filter((c) => (c[0] as string).endsWith('/draft'))).toHaveLength(1);
@@ -366,5 +368,140 @@ describe('editor del contenuto', () => {
     await waitForEditor();
     expect(screen.queryByText(/Ultima modifica/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Importato dalla sorgente/)).not.toBeInTheDocument();
+  });
+
+  it('W8-13: su un contenuto pubblicato «Salva» si chiama «Salva e aggiorna il sito» e avvisa', async () => {
+    renderEditor();
+    await waitForEditor();
+    expect(screen.getByRole('button', { name: 'Salva e aggiorna il sito' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Salva' })).toBeNull();
+    expect(screen.getByText('Le modifiche salvate compaiono subito sul sito.')).toBeInTheDocument();
+  });
+
+  it('W8-13: su un contenuto non pubblicato «Salva» resta «Salva», senza l’avviso', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({ ...syntheticContent, status: 'draft', publishedAt: null });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    const user = userEvent.setup();
+    renderEditor();
+    await waitForEditor();
+    expect(screen.getByRole('button', { name: 'Salva' })).toBeInTheDocument();
+    expect(screen.queryByText('Le modifiche salvate compaiono subito sul sito.')).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'Pagina' }));
+    expect(screen.getByRole('button', { name: 'Salva il layout' })).toBeInTheDocument();
+  });
+
+  it('W8-13: la scheda «Pagina» di un contenuto pubblicato avvisa che il layout va subito sul sito', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    await waitForEditor();
+    await user.click(screen.getByRole('tab', { name: 'Pagina' }));
+    expect(
+      screen.getByRole('button', { name: 'Salva il layout e aggiorna il sito' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Il nuovo layout compare subito sul sito, senza passare dall’anteprima.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Salva il layout e aggiorna il sito' }),
+    ).toHaveAccessibleDescription(
+      'Il nuovo layout compare subito sul sito, senza passare dall’anteprima.',
+    );
+  });
+
+  it('W8-24: la pagina iniziale con il titolo vuoto si riconosce nell’intestazione', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({ ...syntheticContent, title: '', isHome: true, path: '/home/' });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Pagina iniziale' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\/home\/ — pubblicato — pagina iniziale/)).toBeInTheDocument();
+  });
+
+  it('DR-314: sulla pagina iniziale «Ritira» è disattivato e una frase dice perché', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({ ...syntheticContent, isHome: true });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    const ritira = await screen.findByRole('button', { name: 'Ritira' });
+    expect(ritira).toBeDisabled();
+    expect(ritira).toHaveAccessibleDescription(
+      'La pagina iniziale non si può ritirare: prima scegline un’altra nelle Impostazioni.',
+    );
+  });
+
+  it('DR-314: se l’API rifiuta il ritiro, l’editor mostra il motivo in italiano', async () => {
+    const user = userEvent.setup();
+    const motivo =
+      'Il contenuto è la pagina iniziale del sito: scegli prima un’altra pagina iniziale.';
+    apiMock.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path === `/contents/${syntheticContent.id}/unpublish`) {
+        return Promise.reject(new ApiError(409, 'CONTENT_IS_HOME', motivo));
+      }
+      if (path === `/contents/${syntheticContent.id}` && !options?.method) {
+        return Promise.resolve({ ...syntheticContent, isHome: false });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    const ritira = await screen.findByRole('button', { name: 'Ritira' });
+    expect(ritira).toBeEnabled();
+    expect(ritira).not.toHaveAccessibleDescription();
+    await user.click(ritira);
+    expect(await screen.findByText(motivo)).toBeInTheDocument();
+    expect(screen.getByText('Operazione non riuscita')).toBeInTheDocument();
+  });
+
+  it('W8-24: una pagina comune senza titolo non si spaccia per la pagina iniziale', async () => {
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({ ...syntheticContent, title: '', isHome: false });
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    await screen.findByText(/pubblicato/);
+    expect(screen.queryByText(/pagina iniziale/i)).toBeNull();
+  });
+
+  it('W8-33: nell’albero un blocco Documento senza etichetta porta il titolo del documento', async () => {
+    const DOC_ID = '77777777-7777-4777-8777-777777777777';
+    const { document } = insertBlock(syntheticDocument, 'b_0000000000a3', 'document', {
+      documentId: DOC_ID,
+    });
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({
+          ...syntheticContent,
+          blocks: document,
+          contentHtml: serializeBlockDocument(document),
+        });
+      }
+      if (path === '/documents') {
+        return Promise.resolve([{ id: DOC_ID, title: 'Statuto pubblicato' }]);
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    await waitFor(() => {
+      expect(within(tree()).getByText(/Statuto pubblicato/)).toBeInTheDocument();
+    });
+  });
+
+  it('W8-33: senza blocchi Documento l’elenco dei documenti non si chiede', async () => {
+    renderEditor();
+    await waitForEditor();
+    expect(apiMock.mock.calls.filter((call) => call[0] === '/documents')).toEqual([]);
   });
 });

@@ -16,7 +16,7 @@ import {
 } from '../../auth/sessions.js';
 import type { Config } from '../../config.js';
 import { csrfTokenForSession, hashAddress } from '../../lib/crypto.js';
-import { errorResponses } from '../../lib/openapiErrors.js';
+import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
 import {
   acknowledged,
@@ -252,16 +252,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   typed.get(
     '/auth/me',
     {
-      onRequest: app.requireSession,
+      // Nessuna sessione è il caso normale della schermata di accesso: 204, non un errore (1G-24).
       config: { allowWithPendingPasswordChange: true },
       schema: {
         tags: ['autenticazione'],
-        summary: 'Chi è la sessione in corso',
-        response: { 200: currentUser, ...errorResponses(401) },
+        summary: 'Chi è la sessione in corso; 204 se nessuna sessione è valida',
+        response: { 200: currentUser, 204: noContent.describe('Nessuna sessione valida') },
       },
     },
     async (request, reply) => {
-      const session = sessionOf(request);
+      const session = request.auth;
+      if (!session) return reply.code(204).send(null);
       return reply.send({
         ...session.user,
         permissions: [...session.permissions],

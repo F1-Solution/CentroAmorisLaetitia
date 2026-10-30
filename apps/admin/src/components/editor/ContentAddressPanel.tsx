@@ -429,6 +429,7 @@ export function ContentAddressPanel({
           ]}
           value={parentId}
           disabled={locked}
+          helpText="Le pagine che stanno sotto questa non compaiono: una pagina non può avere come genitore una sua discendente."
           {...(errors.parent ? { errorText: errors.parent } : {})}
           onChange={(event) => setParentId(event.target.value)}
         />

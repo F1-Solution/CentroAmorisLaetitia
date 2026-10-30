@@ -59,8 +59,9 @@ export function HtmlFallbackEditor({
 
   return (
     <div className="amoris-html-fallback">
-      <Alert variant="warning" title="Blocco non convertito">
-        Questo blocco non è stato convertito, modificarlo può alterare la resa.
+      <Alert variant="warning" title="Codice del vecchio sito">
+        Questo è codice del vecchio sito, non trasformato in blocchi. Se lo cambi, la pagina può
+        apparire diversa; alcune parti, come i commenti, possono non vedersi sul sito.
       </Alert>
       <div
         className={[

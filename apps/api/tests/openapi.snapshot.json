@@ -738,7 +738,7 @@
     },
     "/auth/me": {
       "get": {
-        "summary": "Chi è la sessione in corso",
+        "summary": "Chi è la sessione in corso; 204 se nessuna sessione è valida",
         "tags": [
           "autenticazione"
         ],
@@ -830,57 +830,17 @@
               }
             }
           },
-          "401": {
-            "description": "Accesso mancante o scaduto",
+          "204": {
+            "description": "Nessuna sessione valida",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "requestId": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "path": {
-                                "type": "string"
-                              },
-                              "message": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "path",
-                              "message"
-                            ],
-                            "additionalProperties": false
-                          }
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "error"
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
                   ],
-                  "additionalProperties": false,
-                  "description": "Accesso mancante o scaduto"
+                  "description": "Nessuna sessione valida"
                 }
               }
             }
@@ -1677,6 +1637,9 @@
                           },
                           "updatedAt": {
                             "type": "string"
+                          },
+                          "isHome": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -1689,7 +1652,8 @@
                           "position",
                           "parentId",
                           "publishedAt",
-                          "updatedAt"
+                          "updatedAt",
+                          "isHome"
                         ],
                         "additionalProperties": false
                       }
@@ -5228,7 +5192,7 @@
     },
     "/contents/{id}/unpublish": {
       "post": {
-        "summary": "Ritira un contenuto pubblicato",
+        "summary": "Ritira un contenuto pubblicato; la pagina iniziale è rifiutata",
         "tags": [
           "contenuti"
         ],
@@ -5537,6 +5501,61 @@
                   ],
                   "additionalProperties": false,
                   "description": "Risorsa non trovata"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflitto con lo stato attuale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Conflitto con lo stato attuale"
                 }
               }
             }
@@ -6489,7 +6508,7 @@
         }
       },
       "get": {
-        "summary": "La propria copia di lavoro, se esiste",
+        "summary": "La propria copia di lavoro, se esiste; 204 se il contenuto non ne ha",
         "tags": [
           "contenuti"
         ],
@@ -6562,6 +6581,21 @@
                     "stillCurrent"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Nessuna copia di lavoro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ],
+                  "description": "Nessuna copia di lavoro"
                 }
               }
             }
@@ -10609,7 +10643,7 @@
             }
           },
           "503": {
-            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile",
             "content": {
               "application/json": {
                 "schema": {
@@ -10658,7 +10692,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
+                  "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile"
                 }
               }
             }
@@ -11544,7 +11578,7 @@
             }
           },
           "503": {
-            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile",
             "content": {
               "application/json": {
                 "schema": {
@@ -11593,7 +11627,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
+                  "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile"
                 }
               }
             }
@@ -12220,7 +12254,7 @@
             }
           },
           "503": {
-            "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi",
+            "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile",
             "content": {
               "application/json": {
                 "schema": {
@@ -12269,7 +12303,7 @@
                     "error"
                   ],
                   "additionalProperties": false,
-                  "description": "Servizio occupato o archivio non raggiungibile: riprovare più tardi"
+                  "description": "Servizio occupato, archivio dei file che non risponde in tempo, o caricamento di PDF e video sospeso perché la pulizia dei file non è disponibile"
                 }
               }
             }
@@ -17179,7 +17213,7 @@
     },
     "/seo/contents/{id}": {
       "get": {
-        "summary": "Sovrascrittura SEO di un contenuto",
+        "summary": "Sovrascrittura SEO di un contenuto; 204 se il contenuto non ne ha",
         "tags": [
           "seo"
         ],
@@ -17258,6 +17292,21 @@
                     "updatedAt"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Nessuna sovrascrittura SEO",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ],
+                  "description": "Nessuna sovrascrittura SEO"
                 }
               }
             }
@@ -19733,6 +19782,444 @@
                   ],
                   "additionalProperties": false,
                   "description": "Risorsa non trovata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/choices/logo": {
+      "get": {
+        "summary": "Elenca le immagini pubbliche fra cui scegliere il logo del sito",
+        "tags": [
+          "impostazioni"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "fileName": {
+                            "type": "string"
+                          },
+                          "publicPath": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "fileName",
+                          "publicPath"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "current": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "fileName": {
+                          "type": "string"
+                        },
+                        "publicPath": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "fileName",
+                        "publicPath"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "current"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Richiesta non valida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Richiesta non valida"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/choices/home": {
+      "get": {
+        "summary": "Elenca le pagine pubblicate fra cui scegliere la pagina iniziale",
+        "tags": [
+          "impostazioni"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "current": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "current"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Accesso mancante o scaduto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accesso mancante o scaduto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operazione non consentita, o token anti-CSRF assente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "message"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Operazione non consentita, o token anti-CSRF assente"
                 }
               }
             }

@@ -121,6 +121,14 @@ describe('scheda «Indirizzo» dell’editor', () => {
     expect(resultingAddress()).toHaveTextContent('/pagina-di-prova/');
   });
 
+  it('W8-22: «Pagina genitore» spiega che le pagine che stanno sotto questa non compaiono', async () => {
+    const user = userEvent.setup();
+    await openAddressTab(user);
+    expect(parentField()).toHaveAccessibleDescription(
+      'Le pagine che stanno sotto questa non compaiono: una pagina non può avere come genitore una sua discendente.',
+    );
+  });
+
   it('una pagina con genitore lo mostra scelto, e l’indirizzo risultante parte dal suo percorso', async () => {
     serve({
       content: {

@@ -153,9 +153,9 @@ test.describe('blocchi', () => {
 
     await expect(page.getByRole('button', { name: /^Prendi «.+» per spostarlo$/ })).toHaveCount(2);
     const separatore = maniglia(page, 'separatore');
-    const mediaTesto = maniglia(page, 'media e testo');
+    const mediaTesto = maniglia(page, 'immagine a sinistra');
     const rigaSeparatore = rigaDi(page, 'separatore');
-    const rigaMediaTesto = rigaDi(page, 'media e testo');
+    const rigaMediaTesto = rigaDi(page, 'immagine a sinistra');
 
     // «Media e testo» dentro il separatore: il separatore non ha figli, quindi
     // la fascia centrale non esiste e il rilascio resta «accanto».

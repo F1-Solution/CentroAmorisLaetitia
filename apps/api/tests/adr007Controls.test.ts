@@ -20,6 +20,10 @@ import {
  * test che passa. Il controllo 11 è l'unico senza attuazione, ed è dichiarato
  * fuori perimetro: il suo test verifica che davvero **non** esista un canale di
  * recupero, perché «fuori perimetro» e «dimenticato» si assomigliano troppo.
+ *
+ * Dalla wave 1G-W9 (criterio 1G-24) `GET /auth/me` dice «nessuna sessione
+ * valida» con `204` senza corpo, non più con `401`: dove qui si verifica che
+ * una sessione non vale più, il segnale atteso è quindi `204`.
  */
 
 let harness: Harness;
@@ -31,6 +35,27 @@ beforeAll(async () => {
 afterAll(async () => {
   await harness?.teardown();
 });
+
+/**
+ * Verifica che una sessione non valga più per due strade: `/auth/me` non
+ * restituisce nessuna persona (`204` senza corpo) e una lettura protetta viene
+ * davvero **rifiutata** (`401`). La seconda attesa tiene il nome del
+ * controllo 4, «applicate lato server», anche ora che `/auth/me` non rifiuta
+ * più: una regressione che lasciasse la sessione valida solo per le rotte
+ * protette verrebbe vista qui (M3 della revisione T8, 1G-W9).
+ */
+async function expectSessionRejected(target: Harness, cookie: string): Promise<void> {
+  const me = await target.app.inject({ method: 'GET', url: '/auth/me', headers: { cookie } });
+  expect(me.statusCode).toBe(204);
+  expect(me.body).toBe('');
+
+  const protetta = await target.app.inject({
+    method: 'GET',
+    url: '/contents',
+    headers: { cookie },
+  });
+  expect(protetta.statusCode, protetta.body).toBe(401);
+}
 
 describe('controllo 1 — password con Argon2id e parametri dichiarati in configurazione', () => {
   it('l’hash a database è Argon2id con i parametri della configurazione', async () => {
@@ -131,12 +156,7 @@ describe('controllo 4 — scadenze di inattività e assoluta, applicate lato ser
       .set({ lastSeenAt: troppoVecchia })
       .where(eq(schema.sessions.tokenDigest, tokenDigest(token)));
 
-    const risposta = await harness.app.inject({
-      method: 'GET',
-      url: '/auth/me',
-      headers: { cookie: signed.cookie },
-    });
-    expect(risposta.statusCode).toBe(401);
+    await expectSessionRejected(harness, signed.cookie);
   });
 
   it('la scadenza assoluta vale anche se la sessione è stata usata un istante fa', async () => {
@@ -148,12 +168,7 @@ describe('controllo 4 — scadenze di inattività e assoluta, applicate lato ser
       .set({ expiresAt: new Date(Date.now() - 1000), lastSeenAt: new Date() })
       .where(eq(schema.sessions.tokenDigest, tokenDigest(token)));
 
-    const risposta = await harness.app.inject({
-      method: 'GET',
-      url: '/auth/me',
-      headers: { cookie: signed.cookie },
-    });
-    expect(risposta.statusCode).toBe(401);
+    await expectSessionRejected(harness, signed.cookie);
   });
 });
 
@@ -184,12 +199,7 @@ describe('controllo 5 — rotazione del token a ogni accesso e a ogni cambio di 
       expect(rinnovato?.value).toBeTruthy();
       expect(signed.cookie).not.toContain(rinnovato?.value ?? '');
 
-      const conIlVecchio = await proprio.app.inject({
-        method: 'GET',
-        url: '/auth/me',
-        headers: { cookie: signed.cookie },
-      });
-      expect(conIlVecchio.statusCode).toBe(401);
+      await expectSessionRejected(proprio, signed.cookie);
     } finally {
       await proprio.teardown();
     }
@@ -206,12 +216,7 @@ describe('controllo 6 — revoca immediata, di una sessione e di tutte', () => {
     });
     expect(uscita.statusCode).toBe(200);
 
-    const dopo = await harness.app.inject({
-      method: 'GET',
-      url: '/auth/me',
-      headers: { cookie: signed.cookie },
-    });
-    expect(dopo.statusCode).toBe(401);
+    await expectSessionRejected(harness, signed.cookie);
   });
 
   it('la revoca di tutte le sessioni lascia viva solo quella che l’ha chiesta', async () => {
@@ -226,12 +231,7 @@ describe('controllo 6 — revoca immediata, di una sessione e di tutte', () => {
     expect(risposta.statusCode).toBe(200);
     expect(risposta.json().revoked).toBeGreaterThanOrEqual(1);
 
-    const conLaRevocata = await harness.app.inject({
-      method: 'GET',
-      url: '/auth/me',
-      headers: { cookie: altra.cookie },
-    });
-    expect(conLaRevocata.statusCode).toBe(401);
+    await expectSessionRejected(harness, altra.cookie);
 
     const conLaCorrente = await harness.app.inject({
       method: 'GET',

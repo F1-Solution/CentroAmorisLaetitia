@@ -61,6 +61,8 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-051 | [Compito 1G-16 — account, password e impostazioni del sito](HO-051-account-e-impostazioni-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito con difficoltà (parte C) (`docs/qa/collaudo-1G-W8.md`) |
 | HO-052 | [Compito 1G-17 — accessi negati alla redazione](HO-052-accessi-negati-alla-redazione-1G-W8.md) | 1G | ✅ eseguito dall'agente il 2026-10-28 (DR-290): riuscito (`docs/qa/collaudo-1G-W8.md`) |
 | HO-053 | [Liberare memoria per la cattura integrale](HO-053-liberare-memoria-per-la-cattura-1G-W7.md) | 1G | ⏳ **aperto** — serve alla T4 della `1G-W7` |
+| HO-054 | [Incarico della verifica privacy e legale (MI-06)](HO-054-incarico-verifica-privacy-MI-06.md) | 1F | ⏳ **aperto** — DR-303: documento di ambito in `docs/legal/MI-06-ambito-verifica-privacy.md`; prima della produzione |
+| HO-055 | [Liberare memoria per la cattura integrale della `1G-W9`](HO-055-liberare-memoria-per-la-cattura-1G-W9.md) | 1G | ⏳ **aperto** — serve alla T10 della `1G-W9` (2,3 GB liberi su 6) |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

@@ -10,6 +10,7 @@ import {
 } from '@amoris/ui';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { siteUrl } from '../../lib/siteUrl';
 import type { FeaturedMedia, LastChange } from '../../lib/editor/roundtrip';
 
 /** Immagine in evidenza e categorie di una notizia, la sola immagine di una pagina (S2, DR-278), salvate da sole. */
@@ -140,6 +141,11 @@ export function ContentListingPanel({
     };
   }, [picking, mediaSearch]);
 
+  /** Nel contenuto resta il percorso relativo: l'indirizzo del sito serve solo a mostrarlo. */
+  function publicPathOf(item: MediaPickerItem): string {
+    return media.find((candidate) => candidate.id === item.id)?.publicPath ?? item.thumbnailUrl;
+  }
+
   async function changeImage(next: MediaPickerItem | null): Promise<void> {
     setImageBusy(true);
     setImageError(null);
@@ -150,7 +156,7 @@ export function ContentListingPanel({
       });
       onSaved({
         featuredMedia: next
-          ? { id: next.id, title: next.title, thumbnailUrl: next.thumbnailUrl }
+          ? { id: next.id, title: next.title, thumbnailUrl: publicPathOf(next) }
           : null,
         ...(saved?.updatedAt !== undefined ? { updatedAt: saved.updatedAt } : {}),
       });
@@ -208,7 +214,7 @@ export function ContentListingPanel({
         {featuredMedia ? (
           <img
             className="amoris-editor__listing-preview"
-            src={featuredMedia.thumbnailUrl}
+            src={siteUrl(featuredMedia.thumbnailUrl)}
             alt={featuredMedia.title ?? 'Immagine in evidenza'}
           />
         ) : (
@@ -282,7 +288,7 @@ export function ContentListingPanel({
         loading={mediaLoading}
         items={media.map<MediaPickerItem>((item) => ({
           id: item.id,
-          thumbnailUrl: item.publicPath,
+          thumbnailUrl: siteUrl(item.publicPath),
           title: item.title ?? item.fileName,
         }))}
         {...(mediaError !== null ? { errorText: mediaError } : {})}

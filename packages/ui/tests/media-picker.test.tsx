@@ -104,7 +104,7 @@ describe('MediaPicker — componente 38', () => {
     const confirmButton = screen.getByRole('button', { name: 'Usa questo media' });
     expect(confirmButton).toHaveProperty('disabled', false);
     fireEvent.click(confirmButton);
-    expect(onSelect).toHaveBeenCalledWith(items[0], '');
+    expect(onSelect).toHaveBeenCalledWith(items[0], '', true);
   });
 
   it('con requireAlt=false non chiede il testo alternativo e conferma subito', () => {
@@ -128,7 +128,51 @@ describe('MediaPicker — componente 38', () => {
     const confirmButton = screen.getByRole('button', { name: 'Usa questo media' });
     expect(confirmButton).toHaveProperty('disabled', false);
     fireEvent.click(confirmButton);
-    expect(onSelect).toHaveBeenCalledWith(items[0], '');
+    expect(onSelect).toHaveBeenCalledWith(items[0], '', false);
+  });
+
+  describe('testo alternativo proposto dal media (W8-10, DR-305)', () => {
+    const withAlt = [
+      { id: '1', thumbnailUrl: '/a.jpg', title: 'Facciata del centro', altText: 'La facciata' },
+    ];
+    function open(onSelect = vi.fn()) {
+      render(
+        <MediaPicker
+          open
+          items={withAlt}
+          searchValue=""
+          onSearchChange={vi.fn()}
+          onSelect={onSelect}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByText('Facciata del centro'));
+      return onSelect;
+    }
+
+    it('propone il testo del media e consente di confermare subito', () => {
+      open();
+      expect(screen.getByLabelText('Testo alternativo')).toHaveProperty('value', 'La facciata');
+      expect(screen.getByRole('button', { name: 'Usa questo media' })).toHaveProperty(
+        'disabled',
+        false,
+      );
+    });
+
+    it('se il testo proposto non si cambia, il blocco non lo riceve (resta vuoto)', () => {
+      const onSelect = open();
+      fireEvent.click(screen.getByRole('button', { name: 'Usa questo media' }));
+      expect(onSelect).toHaveBeenCalledWith(withAlt[0], '', false);
+    });
+
+    it('se il testo proposto si cambia, il blocco riceve il nuovo testo', () => {
+      const onSelect = open();
+      fireEvent.change(screen.getByLabelText('Testo alternativo'), {
+        target: { value: 'Un altro testo' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Usa questo media' }));
+      expect(onSelect).toHaveBeenCalledWith(withAlt[0], 'Un altro testo', false);
+    });
   });
 
   it('chiuso non rende nulla', () => {

@@ -5,7 +5,7 @@ import type { SliderBlock } from '../schema/block';
 import { blockClassName } from './class-name';
 import { imageAttributes, type MediaMap } from './media';
 import type { SliderData } from './data-maps';
-import { isAllowedUrl } from '../sanitize';
+import { isAllowedUrl, sanitizeSlideTitle, slideTitleText } from '../sanitize';
 
 export interface SliderComponentProps {
   readonly block: SliderBlock;
@@ -47,6 +47,7 @@ export function Slider({ block, media, slider }: SliderComponentProps) {
       <div className="blk-slider-viewport">
         {slides.map((slide, i) => {
           const image = slide.mediaId ? media?.[slide.mediaId] : undefined;
+          const altText = slide.heading === null ? '' : slideTitleText(slide.heading);
           return (
             <div
               key={`${slide.position}-${i}`}
@@ -55,13 +56,15 @@ export function Slider({ block, media, slider }: SliderComponentProps) {
               aria-hidden={i === current ? undefined : 'true'}
             >
               {image ? (
-                <img alt={slide.heading ?? ''} {...imageAttributes(image)} />
+                <img alt={altText} {...imageAttributes(image)} />
               ) : (
-                <img alt={slide.heading ?? ''} data-media-id={slide.mediaId ?? undefined} />
+                <img alt={altText} data-media-id={slide.mediaId ?? undefined} />
               )}
               {slide.heading !== null || slide.body !== null ? (
                 <div className="blk-slider-caption">
-                  {slide.heading !== null ? <h3>{slide.heading}</h3> : null}
+                  {slide.heading !== null ? (
+                    <h3 dangerouslySetInnerHTML={{ __html: sanitizeSlideTitle(slide.heading) }} />
+                  ) : null}
                   {slide.body !== null ? <p>{slide.body}</p> : null}
                   {slide.linkUrl !== null && isAllowedUrl(slide.linkUrl) ? (
                     <a href={slide.linkUrl}>{slide.linkLabel ?? slide.linkUrl}</a>

@@ -170,7 +170,7 @@ describe('«Estratto» nella scheda «Contenuto»', () => {
     renderEditor(post);
     const field = await screen.findByLabelText('Estratto');
     await user.clear(field);
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await waitFor(() => expect(writesTo(`/contents/${POST_ID}`, 'PATCH')).toHaveLength(1));
     const [call] = writesTo(`/contents/${POST_ID}`, 'PATCH');
     expect((call?.body as { excerpt: string }).excerpt).toBe('');
@@ -182,7 +182,7 @@ describe('«Estratto» nella scheda «Contenuto»', () => {
     const field = await screen.findByLabelText('Estratto');
     await user.type(field, 'a');
     await user.clear(field);
-    await user.click(screen.getByRole('button', { name: 'Salva' }));
+    await user.click(screen.getByRole('button', { name: 'Salva e aggiorna il sito' }));
     await screen.findByText('Nessuna modifica: il contenuto non è stato riscritto.');
     expect(writesTo(`/contents/${POST_ID}`, 'PATCH')).toHaveLength(0);
   });

@@ -207,3 +207,27 @@ describe('scelta dell’area dopo il cambio della password', () => {
     expect(replace).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Wave 1G-W9, T7 (revisione, M1): ora che «Cambia la password» è un comando del menu, chi
+ * apre la pagina di sua scelta deve poter tornare all'area senza disconnettersi. Durante il
+ * cambio obbligato l'area non è raggiungibile, quindi resta solo «Esci».
+ */
+describe('schermata /password: «Annulla»', () => {
+  it('nel cambio volontario «Annulla» riporta all’area senza disconnettere', async () => {
+    mustChangePassword = false;
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Esci' })).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Annulla' }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/'));
+    expect(signOut).not.toHaveBeenCalled();
+    expect(apiMock).not.toHaveBeenCalled();
+  });
+
+  it('nel cambio obbligato non c’è «Annulla»: resta solo «Esci»', () => {
+    mustChangePassword = true;
+    renderPage();
+    expect(screen.queryByRole('button', { name: 'Annulla' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Esci' })).toBeInTheDocument();
+  });
+});

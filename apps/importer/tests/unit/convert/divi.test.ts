@@ -285,4 +285,23 @@ describe('convertContent — famiglia Divi', () => {
     const converted = section.children[0]!.children[0]!.children[0]!;
     expect(converted.type).toBe('rich_text');
   });
+
+  it('DR-312: il modulo immagine non usa la didascalia del media (useMediaCaption false)', () => {
+    const result = convertContent({
+      legacyContentId: 312,
+      postContent:
+        '[et_pb_section][et_pb_row][et_pb_column type="4_4"]' +
+        '[et_pb_image src="https://esempio.test/wp-content/uploads/2026/09/foto.jpg" title_text="Titolo di prova"][/et_pb_image]' +
+        '[/et_pb_column][/et_pb_row][/et_pb_section]',
+      resolvers: { resolveMedia: () => null },
+    });
+    const section = result.document.blocks[0]!;
+    if (section.type !== 'section') throw new Error('atteso section');
+    const image = section.children[0]?.children[0]?.children[0];
+    if (image?.type !== 'image') throw new Error('attesa immagine');
+    expect(image.props.useMediaCaption).toBe(false);
+    expect(image.props.caption).toBeNull();
+    // Il titolo resta quello di `title_text`, come in Divi.
+    expect(image.props.title).toBe('Titolo di prova');
+  });
 });

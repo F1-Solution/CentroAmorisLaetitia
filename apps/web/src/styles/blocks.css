@@ -312,6 +312,11 @@
   line-height: 0;
 }
 
+/* La didascalia fuori da una riga Divi ha altezza e interlinea normali. */
+.blk-image figcaption {
+  line-height: normal;
+}
+
 .blk-image img {
   max-width: 100%;
   height: auto;
@@ -326,6 +331,47 @@
 .blk-row[data-layout='flex'] .blk-image {
   margin: 0 0 1em;
   line-height: normal;
+}
+
+/* Titolo di una slide: i blocchi `div`/`p` importati diventano `span` a riga intera con l'allineamento ammesso. */
+.blk-slide-block {
+  display: block;
+}
+
+.blk-slide-align-left {
+  text-align: left;
+}
+
+.blk-slide-align-center {
+  text-align: center;
+}
+
+.blk-slide-align-right {
+  text-align: right;
+}
+
+/* Cuore di Font Awesome 4.7 nei titoli delle slide, sottoinsieme locale (DR-311, licenza da verificare: `public/fonts/fontawesome/LEGGIMI.txt`). */
+@font-face {
+  font-family: FontAwesomeHeart;
+  font-display: block;
+  src: url(/fonts/fontawesome/fontawesome-heart-subset.woff2) format('woff2');
+}
+
+/* Come `rs-module i[class^="fa-"]` di RevSlider: dimensione e colore del titolo, interlinea 1. */
+.blk-slide-icon-heart {
+  display: inline-block;
+  font-family: FontAwesomeHeart;
+  font-style: normal;
+  font-weight: 400;
+  font-size: inherit;
+  line-height: 1;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.blk-slide-icon-heart::before {
+  content: '\f004';
 }
 
 /* Tablet: fino a 980px. */

@@ -20,8 +20,12 @@ export const imagePropsSchema = z
       .nullable()
       .default(null),
     alt: z.string().default(''),
+    /** Immagine puramente decorativa: `alt` resta vuoto, senza il testo del media (DR-305). */
+    decorative: z.boolean().optional(),
     title: z.string().nullable().default(null),
     caption: z.string().nullable().default(null),
+    /** `false` sui blocchi importati: la didascalia del media non si usa, come in Divi (DR-312). */
+    useMediaCaption: z.boolean().optional(),
     linkUrl: z.string().nullable().default(null),
     linkNewWindow: z.boolean().default(false),
     align: z.enum(['left', 'center', 'right']).nullable().default(null),
