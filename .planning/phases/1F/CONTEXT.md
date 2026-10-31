@@ -32,28 +32,40 @@ Questo è il secondo punto del gate di `CLAUDE.md`.
 | DR-296 | Staging sullo stesso server, come progetto Compose separato |
 | DR-297 | MinIO sullo stesso server |
 | DR-298 | Backup cifrati prima dell'invio, presso un altro fornitore UE; chiave custodita dall'utente |
+| DR-334 (D223) | Server: Aruba Cloud VPS O4A8, 4 vCPU, 8 GB, 80 GB, Italia; prezzo e disponibilità da ricontrollare all'ordine |
+| DR-335 (D224) | Backup: Hetzner Storage Box BX11, restic via SFTP |
 
-## 3. Confronto preliminare dei fornitori (DR-295)
+## 3. Confronto verificato dei fornitori (DR-295)
 
-Rilevato il 2026-10-28 dalle pagine pubbliche, **da riverificare sul configuratore nella wave 1F-W1**: le fonti di terze parti non concordano fra loro. Prezzi mensili IVA esclusa, per una macchina da almeno 4 GB di RAM. La stima d'uso è di 3-4 GB per i sette servizi più lo staging (DR-296) e il contenitore di `ffmpeg` da 1 GB (DR-263), quindi la taglia realistica è **8 GB**.
+Rilevato il 2026-10-30 sulle pagine e sui listini ufficiali, senza account né ordini. Dettaglio, fonti e punti ancora aperti sono in [`confronto-fornitori-2026-10-30.md`](confronto-fornitori-2026-10-30.md). Questo confronto supera quello preliminare del 2026-10-28, che per Hetzner riportava il prezzo di un piano da 1 GB.
 
-| | Hetzner (DE/FI) | OVHcloud (FR/DE/PL/UK) | Aruba (IT) |
+Prezzi mensili IVA esclusa per una macchina da 8 GB. La stima d'uso è di 3-4 GB per i sette servizi, più lo staging (DR-296) e il contenitore di `ffmpeg` da 1 GB (DR-263). In sviluppo file e database occupano meno di 1 GB: 75-80 GB di disco bastano anche con lo staging.
+
+| | Hetzner | OVHcloud | Aruba Cloud |
 |---|---|---|---|
-| VPS da 4 GB | «Regular Performance» da 6,49 €; i piani economici risultano «Currently not available»; listino aumentato nel 2026 (aprile e giugno, da fonti terze) | VPS-1: 2 vCore, 4 GB, 40 GB, 3,81 € | CS O2A4: 2 vCPU, 4 GB, 40 GB, 17,52 € (listino «Virtual Data Center»); un VPS OpenStack O2A4 a 6,29 € compare solo su un aggregatore |
-| VPS da 8 GB | da verificare sul configuratore | VPS-2: 4 vCore, 8 GB, 75 GB, 7,21 € | da verificare |
-| Collocazione in UE | Germania (Norimberga, Falkenstein), Finlandia | **Sì, confermato**: «13 località in Europa» sulle pagine ufficiali delle VPS. Da una fonte terza: Gravelines, Roubaix, Strasbourg, Francoforte, Varsavia, Londra. **Milano non è confermata per le VPS** (compare solo per i server dedicati) | Italia (Arezzo e altre sedi) |
-| Note | | Il prezzo indicato sembra legato al pagamento anticipato di 12 mesi; nelle «Local Zone» alcune funzioni non ci sono | Supporto in italiano |
-| Fonti | [hetzner.com/cloud](https://www.hetzner.com/cloud/), [findstack](https://findstack.com/resources/hetzner-price-increase-2026) | [ovhcloud.com/it/vps](https://www.ovhcloud.com/it/vps/), [vps-france](https://www.ovhcloud.com/en/vps/vps-france/), [learnwithhasan](https://learnwithhasan.com/vps-providers/ovh-vps/) | [arubacloud.com/pricing](https://www.arubacloud.com/pricing/public-cloud/virtual-data-center), [whtop](https://www.whtop.com/it/plans/arubacloud.com/139875) |
+| Piano da 8 GB | CPX32, 4 vCPU, 160 GB: **35,99 €** senza impegno. Il CX33 da 8,99 € è «not available» | VPS-2, 4 vCore, 75 GB: **8,49 €** senza impegno, 7,21 € con 12 mesi pagati in anticipo | VPS O4A8, 4 vCPU, 80 GB: **11,79 €**, con credito prepagato |
+| Disponibilità il 2026-10-30 | ordine non verificabile senza login | **esaurito in tutte le sedi UE** | non verificabile senza aprire il carrello |
+| Sedi UE | Norimberga, Helsinki (Falkenstein solo nel listino) | Francia, Germania, Polonia, Milano | Italia |
+| Backup del fornitore | a pagamento, in proporzione al server | giornaliero incluso, nello stesso datacenter | nessuno (art. 7.4); snapshot cancellati dopo 48 ore |
+| DPA art. 28 | da accettare nell'account | parte integrante del contratto | art. 21 delle condizioni, accettato con l'ordine |
+| Società | Hetzner Online GmbH (DE) | OVH S.r.l. (IT), gruppo francese con affiliate fuori UE | Aruba S.p.A. (IT) |
+| Recesso | fatturazione oraria, nessun minimo | rinnovo automatico; lo sconto vale solo con impegno | in ogni momento, senza penali |
+| Assistenza in italiano | no | sì | sì |
 
-Da verificare per tutti e tre nella 1F-W1:
+Per i backup cifrati presso un fornitore diverso dal server (DR-298) ci sono quattro candidati:
 
-- DPA conforme all'art. 28 GDPR, sede legale e eventuale soggetto a leggi extra-UE;
-- snapshot e backup del fornitore;
-- IPv4 incluso;
-- fatturazione mensile o annuale;
-- recesso e portabilità.
+- Hetzner Storage Box BX11: 1 TB a 3,20 €, restic e Borg via SFTP, traffico illimitato;
+- Object Storage S3 di OVH: circa 0,71 € per 100 GiB, uscita gratuita, anche a Milano;
+- Object Storage S3 di Aruba: circa 2 € per 100 GB, uscita a 0,50 € ogni 10 GB;
+- Object Storage S3 di Scaleway: circa 0,80 € per 100 GB, anche a Milano.
 
-Il Regno Unito è fuori dall'UE: va escluso o motivato.
+Il Regno Unito e Zurigo sono fuori dall'UE e non sono considerati. Restano da verificare, al momento dell'ordine:
+
+- se il piano si può ordinare e in quale sede;
+- il prezzo dei backup del fornitore;
+- il recesso con impegno.
+
+L'adeguatezza dei DPA va valutata nella MI-06 (DR-073, DR-303): il confronto non dichiara conformità al GDPR.
 
 ## 4. Stato del repository
 
@@ -69,8 +81,10 @@ Il Regno Unito è fuori dall'UE: va escluso o motivato.
 - DR-303 (D196): MI-06 avviata subito, con un documento di ambito senza dati reali.
 - DR-310 (D201): schermata «Compilazioni» in sola lettura con permesso del solo amministratore e registro delle consultazioni, nella 1F prima della produzione e dopo il parere MI-06. Oggi l'API non ha né la rotta di lettura né il permesso, e non invia email.
 
-Resta da decidere il fornitore del server (DR-295), dopo il confronto verificato.
+Il 2026-10-31 il confronto verificato ha chiuso DR-295 con DR-334 (Aruba) e DR-298 con DR-335 (Hetzner Storage Box). Piano della fase: [`PLAN.md`](PLAN.md).
 
 ## 6. Rinviati dalla 1G
 
 - DR-330 (D221): W9-N7, salvataggi della copia di lavoro che si superano su rete lenta (`docs/qa/collaudo-1G-W9.md` §5).
+- DR-336 (D232): W9-N8, «Ctrl+Home» premuto subito dopo il clic nel testo che a volte non sposta il cursore (`docs/qa/collaudo-1G-W9.md` §9).
+- DR-338 (D233): N2, misura di un caricamento da 100 MB e taratura dei tempi dell'archivio, sul server (`.planning/phases/1G/W9-PLAN.md` §7).

@@ -123,3 +123,22 @@ Audit dei criteri W9-1…W9-6; i difetti non risolti vanno all'utente per l'appr
 | Una correzione al sito cambia viste approvate | confronto delle viste toccate in T2, integrale in T10 |
 | 1G-24 dipende anche da errori di terzi o del browser | la prova distingue gli errori dell'applicazione; ogni eccezione è elencata e motivata |
 | Il nuovo collaudo trova difetti nuovi | si classificano come nella `1G-W8`; i medi si correggono nella wave, i bassi si propongono all'utente |
+
+## 7. Audit della chiusura (T12, 2026-10-31)
+
+Eseguito sul commit `ec640c2`, locale. Ogni criterio con la sua evidenza.
+
+| # | Esito | Evidenza |
+|---|---|---|
+| W9-1 | **soddisfatto** | `collaudo-1G-W8.md` §2: delle 38 voci, 36 risolte con la prova indicata e confermate in T10-T11, W8-02 e W8-08 chiuse; nessuna in attesa. Eccezione motivata: W8-07 non ha una prova automatica, perché la correzione sta nell'handoff (HO-038 §5) e lo strumento era già giusto; provata a mano con PowerShell 7 e 5.1 (T9, M1). Difetti nuovi della wave (`collaudo-1G-W9.md` §5): W9-N1…W9-N6 corretti con prova; W9-N7 e W9-N8, bassi, rinviati alla 1F dall'utente (DR-330, DR-336) |
+| W9-2 | **soddisfatto** | e2e `console-pulita.spec.ts` 2/2 (T10); nella T11 nessun errore dell'applicazione (`collaudo-1G-W9.md` §4); nella 1G-2 del 2026-10-31 nessun errore e nessuna risposta ≥ 400 (§9) |
+| W9-3 | **soddisfatto in locale**; CI remota dopo il push | Verifica come la CI sullo stato di `ec640c2` (2026-10-30): frozen, lint, Prettier, tipi, build, 3039 prove, `db:verify`, copertura 93,67 %, e2e 67/67. `aaedbf5` ed `ec640c2` non sono ancora pubblicati: la corsa della CI si controlla con `gh run list` dopo il push |
+| W9-4 | **soddisfatto** | Confronto integrale della T10: 591/591 catture, 585 accettate invariate, 0 peggiorate (`visual-parity-report.md` §15). Dalla fotografia di quella misura a `ec640c2`, fuori da `apps/admin` è cambiata solo la prova e2e `tests/e2e/cms/digitazione.spec.ts`: sito, API e pacchetti sono identici |
+| W9-5 | **soddisfatto** | T10 passo 5: menu 41/41, metadati 0 difformi, redirect 181/181, stati 292/292. Stesso confronto di W9-4 fra la fotografia della misura e `ec640c2` |
+| W9-6 | **soddisfatto** | `collaudo-1G-W9.md` §9: 1G-1, 1G-5, 1G-13, 1G-16 e le verifiche W8 riuscite il 2026-10-30; 1G-2 ripetuto il 2026-10-31 su `ec640c2` senza difficoltà, come chiede DR-324 |
+
+Note che non sono difetti della wave:
+
+- **N2 e taratura dei tempi dell'archivio** (residui di DR-261, T9 §3d). Il rifiuto `503 MEDIA_STORE_TIMEOUT` in italiano è già attuato (DR-333). La misura di un caricamento da 100 MB e la taratura dei tempi vanno alla `1F-W5` (DR-338).
+- **Prove degli strumenti visivi fuori dalla CI** (T9, M2). Le 92 prove di `tests/visual/prove/` passano in locale, ma la CI non le esegue: condizione preesistente, proposta non attuata.
+- **Residui nel collaudo** da togliere nella `1G-W10` (1G-27): il media `prova-1g-2.png` e gli account di prova disattivati (`collaudo-1G-W9.md` §7 e §9).

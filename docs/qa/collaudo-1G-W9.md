@@ -83,18 +83,20 @@ La numerazione segue W9-N1, il difetto trovato nella T10. Fra parentesi, il nome
 
 | Id | Severità | Dove | Difetto | Stato |
 |---|---|---|---|---|
-| **W9-N2** (N1) | **media** | editor › blocco «Testo» | Mentre si scrive, una parte dei tasti premuti va persa: fino a 6 «Canc» su 22 senza pausa, 1 su 22 con 50 ms fra un tasto e l'altro, in una prova 10 «Backspace» su 10. Così è stato pubblicato un testo sbagliato, senza nessun avviso | corretto nella T11b (DR-326, DR-327); da confermare ripetendo 1G-2 (DR-324) |
+| W9-N1 (T10) | media | editor › «Media e testo» ed «Elenco di contenuti» | L'ispettore mostrava il nome interno del tipo e nessun pannello: non si sceglievano l'immagine, le categorie né il numero di articoli | corretto nella T10b (DR-320…DR-323; prova `block-inspector-d211.test.tsx`) |
+| **W9-N2** (N1) | **media** | editor › blocco «Testo» | Mentre si scrive, una parte dei tasti premuti va persa: fino a 6 «Canc» su 22 senza pausa, 1 su 22 con 50 ms fra un tasto e l'altro, in una prova 10 «Backspace» su 10. Così è stato pubblicato un testo sbagliato, senza nessun avviso | corretto nella T11b (DR-326, DR-327); confermato dalla 1G-2 ripetuta il 2026-10-31 (§9) |
 | W9-N3 (N2) | bassa | Menu › «Aggiungi una voce» › «Contenuto»; Impostazioni › «Pagina iniziale» | La pagina iniziale, che non ha titolo, compare come opzione vuota o come «(/home/)». Anche una notizia in bozza senza titolo compare vuota | corretto nella T11b (DR-328); esteso all'eliminazione dei contenuti, dove un contenuto senza titolo si eliminava senza scrivere nulla (DR-331) |
 | W9-N4 (N3) | bassa | Pagine › «Nuova pagina» › aiuto di «Indirizzo» | Refuso: «Si puo' correggere.» invece di «Si può correggere.» | corretto nella T11b (DR-327) |
 | W9-N5 (N4) | bassa | editor › «Immagine in evidenza» | Scelta e rimozione non danno messaggi e cambiano subito il sito, senza che il pannello lo dica | corretto nella T11b (DR-329) |
 | W9-N6 (N5) | bassa | editor › albero dei blocchi | Un blocco Immagine che usa il testo alternativo di Media si chiama solo «Immagine — immagine»: due immagini così non si distinguono | corretto nella T11b (DR-327) |
 | W9-N7 (revisione della T11b) | bassa | editor › copia di lavoro | Su una rete lenta due salvataggi della copia di lavoro possono arrivare in ordine inverso: resta la copia più vecchia mentre lo schermo dice «salvata». Un salvataggio ancora in viaggio dopo «Scarta la copia di lavoro», «Salva» o «Pubblica» può far ricomparire la copia alla riapertura. Esisteva già prima della T11b | noto, rinviato alla 1F (DR-330) |
+| W9-N8 (1G-2 del 2026-10-31) | bassa | editor › blocco «Testo» | «Ctrl+Home» premuto pochi millisecondi dopo il clic nel testo a volte non sposta il cursore: i «Canc» seguenti cadono in fondo al paragrafo e non tolgono nulla. 2 prove su 45, 1 su 24 già prima della T11b | noto, rinviato alla `1F-W1` (DR-336) |
 
 **W9-N2, causa (T11b, DR-326).** Il rapporto completo indicava `RichTextEditor.tsx:105-115`, ma la causa vera era un'altra.
 
 - **Nessuna perdita fuori dal collaudo.** Fuori dal collaudo, 40 prove strumentate nell'ambiente e2e non hanno perso alcun tasto, nemmeno con la CPU rallentata fino a 16 volte.
 - **Riprodotta nel collaudo.** Il 2026-10-30 il collaudo è stato riacceso sullo stesso commit e la prova strumentata è stata ripetuta su una pagina sintetica, poi eliminata dall'area. Risultato:
-  - scenario e09 dell'agente, 24 prove: 54 «Canc» persi su 528;
+  - scenario e09 dell'agente, 24 prove: 54 «Canc» persi su 528. Di questi, 32 in 15 prove con perdite parziali, il segno di W9-N2; 22 in una prova in cui nessun «Canc» ha avuto effetto, un fenomeno diverso (W9-N8, §9);
   - scenario e10, 23 prove: 2 «Backspace» persi.
 - **Che cosa succedeva.** A ogni tasto perso:
   - il fuoco era nell'editor, l'editor era uno solo e non c'era alcun ricaricamento del testo;
@@ -143,3 +145,32 @@ Il criterio chiede che i compiti dei difetti medi riescano senza difficoltà. È
 1. nuovo commit locale;
 2. collaudo ricreato con `crea.ps1`;
 3. 1G-2 ripetuto dall'agente senza difficoltà.
+
+**1G-2 ripetuto il 2026-10-31 (passo 3).**
+
+- **Ambiente.**
+  - Commit `ec640c2`, collaudo ricreato il 2026-10-30 con `crea.ps1`: 20 tabelle senza differenze, 108 contenuti, 178 media, 2057 oggetti come lo sviluppo.
+  - Alla prima accensione l'API non raggiungeva il database: dopo il riavvio di Docker Desktop del 30 ottobre, le porte 5432 e 9000 dall'host interrompevano le connessioni. Riavviati i due contenitori, `avvia.ps1` ha dato 200 su API, sito e area.
+  - Account dell'agente ricreati (DR-291), con le password solo nel file di stato.
+
+| Passo | Esito |
+|---|---|
+| 1G-2, frase e immagine (`02-1g2`) | **riuscito senza difficoltà**, 16 s. Frase, testo alternativo e didascalia sul sito; didascalia sotto l'immagine a 1440 e a 390 px |
+| Ripristino della pagina (`02d`) | riuscito, 15 s. I 22 «Canc» con 200 ms di pausa hanno tolto esattamente la frase |
+| Prova dei tasti persi, su una pagina sintetica creata ed eliminata dall'area | e09: 45 prove e 990 «Canc», **nessuna prova con perdite parziali** (su `aaedbf5` erano 15 su 24). e10: 44 prove, 1804 lettere e 440 «Backspace», nessuno perso |
+
+- **Errori.** Nessun errore dell'applicazione in console e nessuna risposta HTTP ≥ 400; restano gli avvisi di O4.
+- **Differenze dalla partenza.** Il resto della pagina cambia come il 30 ottobre: gli spazi unificatori (`&nbsp;`) del primo blocco «Testo» diventano spazi normali, come l'editor annuncia, e l'immagine torna intera (O5).
+- **Residuo.** Il media `prova-1g-2.png`, da togliere con la pulizia della `1G-W10`.
+
+**W9-N8 (nuovo, bassa; rinviato alla `1F-W1` con DR-336).**
+
+- **Che cosa succede.** In 2 prove su 45, e in 1 su 24 già su `aaedbf5`, nessuno dei 22 «Canc» ha avuto effetto.
+- **Che cosa mostrano gli eventi registrati.**
+  - Il fuoco era nell'editor.
+  - «Ctrl+Home», premuto pochi millisecondi dopo il clic nel testo, non ha spostato il cursore.
+  - Browser ed editor concordano che il cursore è in fondo al paragrafo, dove «Canc» non toglie nulla.
+- **Che cosa vedrebbe una persona.** Il cursore rimasto in fondo e il testo invariato. Non si pubblica un testo sbagliato senza accorgersene, come con W9-N2.
+- **Che cosa non è stato misurato.** Se capita anche con i tempi di una persona, che preme i tasti centinaia di millisecondi dopo il clic.
+
+**Esito.** 1G-2 è riuscito senza difficoltà e il segno di W9-N2 è scomparso: W9-6 è soddisfatto. W9-N8 è basso e non cambia questo esito; l'utente lo ha rinviato alla `1F-W1` (DR-336).

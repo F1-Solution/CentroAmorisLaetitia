@@ -192,6 +192,10 @@ dentro la verifica di parità.
 | 1F-11 | **Verifica privacy e legale completata** (MI-06) — richiede un professionista, non si sostituisce con una dichiarazione tecnica |
 | 1F-12 | Ogni azione irreversibile ha una conferma puntuale registrata |
 
+**DR-337 (2026-10-31):** l'utente ha approvato il piano della Fase 1F
+(`.planning/phases/1F/PLAN.md`), che è la condizione 14. La condizione 15 resta da
+soddisfare con l'esecuzione della fase.
+
 ## 8. Criteri sospesi — risolti
 
 I tre criteri sospesi dalla 1B sono stati risolti dalle decisioni del 2026-09-14.

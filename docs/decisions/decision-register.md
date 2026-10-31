@@ -1867,3 +1867,30 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 |---|---|---|---|---|---|---|---|---|---|
 | DR-330 | 2026-10-30 | Salvataggi della copia di lavoro che si superano (D221, revisione F4/F5) | **Opzione B** — registrati come difetto noto W9-N7 e rinviati alla 1F | A — correggere ora: copie di lavoro una alla volta, con un limite di tempo per richiesta; «Scarta la copia di lavoro», «Salva» e «Pubblica» aspettano la copia in viaggio | «D221 = B» | Proprietario | editor, copia di lavoro, `1G-W9` T11b (correzione: Fase 1F) | sì | W9-N7, DR-327 |
 | DR-331 | 2026-10-30 | Altri punti con titolo vuoto (D222, revisione F7) | **Opzione A** — nell'eliminazione di un contenuto «Senza titolo» per le pagine figlie, e per un contenuto senza titolo la conferma chiede di scrivere «Senza titolo»; un titolo fatto di soli spazi vale come vuoto | B — solo la conferma di eliminazione · C — rinvio alla 1F | «D222 = A» | Proprietario | area, `1G-W9` T11b | sì | DR-328, W9-N3 |
+
+## 108. Round 99 — risposta del 2026-10-30, punti aperti per il rilascio
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-332 | 2026-10-30 | Licenza del sottoinsieme di Font Awesome con il solo cuore (DR-311) | **Verificata** dall'utente | — | «La licenza sul font del cuore è verificata» | Proprietario | sito, caroselli, `apps/web/public/fonts/fontawesome/` | sì | DR-311, W8-26 |
+| DR-333 | 2026-10-30 | Testo del 503 quando l'archivio dei file non risponde in tempo (`MEDIA_STORE_TIMEOUT`, W6-6) | **Approvato**: «Il servizio che conserva i file non ha risposto in tempo: l'operazione non è stata completata. Riprova fra qualche minuto; se succede ancora, avvisa chi gestisce il sito.» | — | «anche il testo del 503 è approvato» | Proprietario | area, media, `1G-W9` T9 | sì | D157, W6-6 |
+
+## 109. Round 100 — risposta del 2026-10-31, fornitore e backup della Fase 1F
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-334 | 2026-10-31 | Fornitore e piano del server (D223, conclude DR-295) | **Opzione A** — Aruba Cloud VPS O4A8: 4 vCPU, 8 GB, 80 GB, server in Italia, 11,79 € al mese IVA esclusa al 2026-10-30; prezzo e disponibilità da ricontrollare nel carrello al momento dell'ordine | B — OVHcloud VPS-2 (esaurito in UE il 2026-10-30) · C — Hetzner CPX32 (35,99 €) | «D223 = A» | Proprietario | Fase 1F, ADR-009 | sì | DR-295, DR-296, DR-297, DR-300, DR-301, DR-302, `.planning/phases/1F/confronto-fornitori-2026-10-30.md` |
+| DR-335 | 2026-10-31 | Destinazione dei backup cifrati (D224, attua DR-298) | **Opzione A** — Hetzner Storage Box BX11: 1 TB a 3,20 € al mese, Germania o Finlandia, restic via SFTP; da verificare all'ordine che le copie interne non si possano cancellare dal server | B — Object Storage S3 di Scaleway · C — Object Storage S3 di OVH | «D224 = A» | Proprietario | Fase 1F, ADR-009 §4.5 | sì | DR-298, DR-334, MI-06 |
+
+## 110. Round 101 — risposta del 2026-10-31, W9-N8 e piano della Fase 1F
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-336 | 2026-10-31 | «Ctrl+Home» premuto subito dopo il clic nel testo che a volte non sposta il cursore (D232, W9-N8, bassa) | **Opzione A** — registrato come difetto noto e rinviato alla `1F-W1`, insieme a W9-N7 | B — indagare e correggere ora nella `1G-W9` · C — accettarlo senza correzione | «D232 = A» | Proprietario | editor, `1G-W9` T12 (correzione: Fase 1F) | sì | W9-N8, DR-330, `docs/qa/collaudo-1G-W9.md` §9 |
+| DR-337 | 2026-10-31 | Piano della Fase 1F (`.planning/phases/1F/PLAN.md`, wave `1F-W0`…`1F-W9`) | **Approvato** dall'utente; condizione 14 del gate. L'esecuzione resta dopo l'approvazione della 1G e HO-017 (DR-272); D225…D231 restano aperte con il loro termine | — | «Sul PLAN.md della 1F: approvato» | Proprietario | Fase 1F | sì | DR-272, DR-334, DR-335, `acceptance-criteria.md` §7 e §9 |
+
+## 111. Round 102 — risposta del 2026-10-31, residuo N2 della 1G-W9
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-338 | 2026-10-31 | Archivio dei file lento con video grandi (N2, residuo di DR-261) e taratura dei suoi tempi (D233) | **Opzione A** — rinvio alla 1F: nella `1F-W5`, sul server, misurare un caricamento sintetico da 100 MB verso l'archivio sullo stesso server (DR-297), fissare i tempi e, se serve, il caricamento a parti | B — chiuderlo ora senza misura | «D233 = A» | Proprietario | media, Fase 1F | sì | DR-261, DR-297, DR-333, DR-334, `W9-PLAN.md` §7 |
