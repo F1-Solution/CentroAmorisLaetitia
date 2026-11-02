@@ -29,7 +29,7 @@ gate non è superato per intero. Le 15 condizioni sono elencate in
 | # | Milestone | Fasi | Stato |
 |---|---|---|---|
 | M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
-| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A…1E e 1G approvate; prossima 1F, dopo HO-017 |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A…1E e 1G approvate; HO-017 fatto (DR-349); prossima 1F |
 | M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
 
 ---
@@ -184,7 +184,7 @@ D110…D122 chiuse da DR-213…DR-226; piano approvato (DR-222).
 ### Fase 1F — Staging e produzione
 
 Piano approvato il 2026-10-31 (DR-337, `.planning/phases/1F/PLAN.md`, wave `1F-W0`…`1F-W9`);
-esecuzione dopo HO-017 (DR-212, DR-272).
+HO-017 fatto il 2026-11-02 (DR-349): l'esecuzione può partire (DR-272).
 
 Staging isolato, security review, prova di backup e restore, smoke test,
 performance, piano di rollback, proposta provider e costi, deploy solo dopo

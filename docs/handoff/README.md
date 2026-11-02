@@ -24,7 +24,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-014 | [Liberare memoria per la ricattura](HO-014-liberare-memoria-per-la-ricattura-1E-W6.md) | 1E | ✅ **chiuso** 2026-10-13 — 9,3 GB liberi (round 35), ricattura integrale fatta |
 | HO-015 | [Approvazione di maschere e difformità](HO-015-approvazione-maschere-e-difformita-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: 5 voci approvate (DR-124…128) |
 | HO-016 | [UAT di parità visiva](HO-016-uat-di-parita-1E-W8.md) | 1E | ✅ fatto il 2026-10-18: UAT approvata (DR-210); compilazione di prova cancellata il 2026-10-19 |
-| HO-017 | [Distruzione dell'istanza di riferimento](HO-017-distruzione-istanza-di-riferimento.md) | 1E | 🕓 **rinviato** a dopo la Fase 1G (DR-212) |
+| HO-017 | [Distruzione dell'istanza di riferimento](HO-017-distruzione-istanza-di-riferimento.md) | 1E → 1F | ✅ **fatto** il 2026-11-02 — contenitori, volumi e immagine tolti (DR-349) |
 | HO-018 | [Conferma della riesecuzione dell'import (famiglie A–D)](HO-018-conferma-riesecuzione-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-13: import `success`, esito in §7 |
 | HO-019 | [Migrazione e import in locale (famiglie G, D58, D59)](HO-019-migrazione-e-import-1E-W6.md) | 1E | ✅ fatto il 2026-10-14: migrazione 0003, import `success` |
 | HO-020 | [Migrazione e import in locale (ricerca E3)](HO-020-migrazione-e-import-ricerca-1E-W6.md) | 1E | ✅ fatto il 2026-10-14: migrazione 0004, import `success`, esito in `docs/qa/confronto/ricerca-E3.md` |

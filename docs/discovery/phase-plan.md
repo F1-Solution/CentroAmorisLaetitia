@@ -29,7 +29,7 @@ creazione è oggetto della domanda **D4**.
 | | Fase |
 |---|---|
 | Precedente | Fase 1G — Collaudo redazionale del CMS: **approvata il 2026-11-02** (DR-347, DR-348) |
-| **Corrente** | **Fase 1F — Staging e produzione: piano approvato il 2026-10-31 (DR-337), esecuzione dopo HO-017 (DR-212)** |
+| **Corrente** | **Fase 1F — Staging e produzione: piano approvato il 2026-10-31 (DR-337), HO-017 fatto il 2026-11-02 (DR-349)** |
 | Successiva | fasi gestionali, bloccate dal gate |
 
 Aggiornato il 2026-11-02. Fasi 0, 1A, 1B, 1C, 1D, 1E e 1G approvate; stato per wave in
