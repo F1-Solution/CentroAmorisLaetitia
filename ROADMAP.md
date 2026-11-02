@@ -29,7 +29,7 @@ gate non è superato per intero. Le 15 condizioni sono elencate in
 | # | Milestone | Fasi | Stato |
 |---|---|---|---|
 | M0 | Discovery e consolidamento requisiti | 0 | **approvata** 2026-09-13 |
-| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A…1E approvate; prossima 1G |
+| M1 | Migrazione WordPress → piattaforma nuova, pixel-perfect, in produzione | 1A–1G | in corso — 1A…1E e 1G approvate; prossima 1F, dopo HO-017 |
 | M2 | Fase gestionale del consultorio | da definire | **bloccata dal gate** |
 
 ---
@@ -154,7 +154,12 @@ e `PLAN.md`; D33…D39 chiuse da DR-104…DR-110.
 | `1E-W7` | Verifiche non visive e manuali |
 | `1E-W8` | Rapporto, audit, richiesta di UAT |
 
-### Fase 1G — Collaudo redazionale del CMS
+### Fase 1G — Collaudo redazionale del CMS — **APPROVATA 2026-11-02**
+
+Dieci wave dopo la pianificazione, audit eseguito (`.planning/phases/1G/AUDIT.md`): 38 criteri,
+38 superati; collaudo redazionale approvato dall'utente il 2026-11-02 (DR-347,
+`docs/qa/cms-editability-report.md` §12); CI `41395242290` verde su `7cbf965`. Chiusura
+decisa dall'utente con DR-348. W9-N7 e W9-N8 rinviati alla 1F (DR-330, DR-336).
 
 Verifica che contenuti, articoli, media, menu, SEO, redirect e impostazioni siano
 **realmente** modificabili dall'interfaccia. Richiesta dalla condizione 7 del gate.
@@ -177,6 +182,9 @@ D110…D122 chiuse da DR-213…DR-226; piano approvato (DR-222).
 | `1G-W10` | Rapporto, audit, richiesta di approvazione |
 
 ### Fase 1F — Staging e produzione
+
+Piano approvato il 2026-10-31 (DR-337, `.planning/phases/1F/PLAN.md`, wave `1F-W0`…`1F-W9`);
+esecuzione dopo HO-017 (DR-212, DR-272).
 
 Staging isolato, security review, prova di backup e restore, smoke test,
 performance, piano di rollback, proposta provider e costi, deploy solo dopo

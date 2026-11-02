@@ -30,8 +30,8 @@ Sito, API e pacchetti resi sul sito sono quindi identici (`git diff --stat 95996
 | | |
 |---|---|
 | Criteri della Fase 1G | **38**: 1G-1…1G-28 e 1D-28…1D-37 |
-| Superati | **37** |
-| Completati da un passo dichiarato della wave | **1**: 1G-23 (CI remota) nella T7 |
+| Superati | **38** |
+| Completati da un passo dichiarato della wave | **0**: 1G-23 completato nella T7 (CI 41395242290) |
 | Falliti | **0** |
 
 ## 2. I criteri di uscita, uno per uno
@@ -81,7 +81,7 @@ attestano che la funzione riesce, non che la redazione ci riesce da sola (DR-290
 |---|---|---|---|
 | 1G-21 | Confronto visivo integrale senza viste peggiorate | Citato: T10 della `1G-W9` (2026-10-29), 591/591 catture, 585 accettate invariate, 0 peggiorate (`visual-parity-report.md` §15). Codice del sito invariato da allora (vedi Metodo) | ✅ |
 | 1G-22 | 1E-19 4/4; menu 41/41; metadati 0 difformi; redirect 181/181; stati 292/292 | 1E-19 **5/5** sul collaudo il 2026-11-01: il campione dello script è di 5 contenuti dalla `1G-W7` (home, pagine senza titolo, modulo, uno per tipo). Strumenti rieseguiti il 2026-11-02 su sito 3200 e API 3002 ricompilati dal codice della wave, istanza di riferimento accesa solo per metadati e redirect: `verifica-sito.ts` menu **41/41**, un `h1` per pagina, lingua `it`, 0 service worker; `stati-matrice.py` **292/292**; `verifica-metadati.ts` 117 URL, **0 difformi**; `verifica-redirect.ts` **181/181**, 0 inversioni. Scorrimento orizzontale 4 casi sulle tre pagine Gutenberg note e stili in linea di `verifica-sito-w4.json` variabili fra una corsa e l'altra, come nella `1G-W9` (misura a `domcontentloaded`). La verifica dei redirect aggiorna il contatore degli usi (DR-308) dei 180 redirect usati nel database di sviluppo | ✅ |
-| 1G-23 | `lint`, Prettier, `typecheck`, `build`, `test`, `db:verify`, copertura, e2e verdi in locale e in CI | In locale il 2026-11-02: installazione bloccata, `lint`, `typecheck`, `build`, `db:verify` verdi; e2e **67/67**; Prettier verde sui file di Git (il primo giro si era fermato su «riga di comando troppo lunga», rieseguito a blocchi); `pnpm test` verde al secondo giro (8 pacchetti, 268 file) e copertura **93,67 %** con 3047 prove. Al primo giro 5 prove di `apps/web` sono scadute a 5 s e 2 di `apps/api/tests/documents.test.ts` hanno dato un `updated_at` fuori ordine, tutte in file non toccati; da sole verdi, e verdi nel giro completo successivo. CI remota: **dopo il push della T7** | ⏳ T7 |
+| 1G-23 | `lint`, Prettier, `typecheck`, `build`, `test`, `db:verify`, copertura, e2e verdi in locale e in CI | In locale il 2026-11-02: installazione bloccata, `lint`, `typecheck`, `build`, `db:verify` verdi; e2e **67/67**; Prettier verde sui file di Git (il primo giro si era fermato su «riga di comando troppo lunga», rieseguito a blocchi); `pnpm test` verde al secondo giro (8 pacchetti, 268 file) e copertura **93,67 %** con 3047 prove. Al primo giro 5 prove di `apps/web` sono scadute a 5 s e 2 di `apps/api/tests/documents.test.ts` hanno dato un `updated_at` fuori ordine, tutte in file non toccati; da sole verdi, e verdi nel giro completo successivo. CI remota: run **41395242290** su `7cbf965`, «Lint, tipi, build, test» **success** (2026-11-02, 05:38-06:06 UTC) | ✅ |
 | 1G-24 | Zero errori in console durante i cicli di modifica | `1G-W9` e T2 della `1G-W10`: nessun errore dell'applicazione; restano i rifiuti voluti e gli avvisi di precaricamento dei CSS (O4) | ✅ |
 
 ### Esiti del collaudo — skill `cms-editability-qa`
@@ -99,6 +99,5 @@ Nessuno. I tre difetti bassi della T2 (W10-N1…W10-N3) sono stati corretti nell
 
 ## 4. Che cosa resta
 
-1. **T7:** commit e push su conferma; CI verde (1G-23).
-2. **Approvazione dell'utente** del collaudo redazionale, in `cms-editability-report.md` §12.
+1. **Approvazione dell'utente** del collaudo redazionale, in `cms-editability-report.md` §12.
    Poi HO-017 (DR-212) e la Fase 1F (DR-337).

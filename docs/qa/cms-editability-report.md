@@ -8,14 +8,14 @@ dell'agente e la matrice [`editability-matrix.csv`](editability-matrix.csv).
 
 ## 1. Verdetto
 
-**VERIFICATA, IN ATTESA DI APPROVAZIONE.**
+**VERIFICATA E APPROVATA** dall'utente il 2026-11-02 (DR-347, §12).
 
 - Tutti i 18 tipi di contenuto della matrice sono collaudati. Le 109 righe «modificabile» hanno
   tutte un esito.
 - Nessun difetto bloccante o maggiore è aperto. Due minori sono approvati e rinviati alla Fase
   1F (W9-N7, W9-N8); tutti gli altri sono risolti.
-- I residui del collaudo sono rimossi (T6, §10). Prima dell'approvazione manca la CI remota
-  dopo il push (T7).
+- I residui del collaudo sono rimossi (T6, §10). La CI remota sul commit `7cbf965` è verde
+  (run 41395242290, T7).
 
 Il verdetto si legge con il limite di §2.2: per i compiti eseguiti dall'agente il collaudo
 attesta che la funzione riesce, non che la redazione ci riesce da sola.
@@ -311,7 +311,7 @@ dell'agente e le loro credenziali. Il collaudo si ricrea con `crea.ps1` se servi
 
 ## 12. Approvazione
 
-*Da compilare dall'utente dopo la T7.*
+Approvato dall'utente il 2026-11-02 (DR-347).
 
 Formula proposta:
 
@@ -321,4 +321,4 @@ Formula proposta:
 
 | Data | Approvato da | Formula o riserve |
 |---|---|---|
-| | | |
+| 2026-11-02 | Proprietario | Approvo il collaudo redazionale della Fase 1G (condizione 7 del gate): editabilità verificata secondo questo rapporto, con l'indebolimento di DR-290 e i difetti W9-N7 e W9-N8 rinviati alla 1F. Nessuna riserva oltre a quelle della formula. |

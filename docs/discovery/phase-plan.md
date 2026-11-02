@@ -28,11 +28,11 @@ creazione è oggetto della domanda **D4**.
 
 | | Fase |
 |---|---|
-| Precedente | Fase 1E — Ricostruzione React e parità visiva: **approvata il 2026-10-19** (DR-211) |
-| **Corrente** | **Fase 1G — Collaudo redazionale del CMS: pianificazione avviata il 2026-10-19** |
-| Successiva | Fase 1F — Staging e produzione |
+| Precedente | Fase 1G — Collaudo redazionale del CMS: **approvata il 2026-11-02** (DR-347, DR-348) |
+| **Corrente** | **Fase 1F — Staging e produzione: piano approvato il 2026-10-31 (DR-337), esecuzione dopo HO-017 (DR-212)** |
+| Successiva | fasi gestionali, bloccate dal gate |
 
-Aggiornato il 2026-10-19. Fasi 0, 1A, 1B, 1C, 1D e 1E approvate; stato per wave in
+Aggiornato il 2026-11-02. Fasi 0, 1A, 1B, 1C, 1D, 1E e 1G approvate; stato per wave in
 `PROGRESS.md`.
 
 ---
@@ -50,14 +50,14 @@ soddisfatte, 3 aperte (7, 14, 15).
 | 4 | Importer idempotente con dry-run, report, mapping ID, errori isolati | soddisfatta — Fase 1D |
 | 5 | Import in PostgreSQL di contenuti, menu, SEO, media, URL, redirect | soddisfatta in locale — Fase 1D, `import-completeness-report.md` |
 | 6 | Frontend React fedele a layout, componenti, font, colori, spacing, responsive | soddisfatta — Fase 1E, DR-210 |
-| 7 | CMS che consenta davvero di modificare contenuti, media, menu, SEO, redirect, impostazioni | **aperta** — CMS costruito in 1D, collaudo redazionale in Fase 1G |
+| 7 | CMS che consenta davvero di modificare contenuti, media, menu, SEO, redirect, impostazioni | soddisfatta — Fase 1G, collaudo redazionale approvato il 2026-11-02 (DR-347) |
 | 8 | Matrice URL completa | soddisfatta — Fasi 1A e 1E |
 | 9 | Screenshot desktop/tablet/mobile con visual regression e report | soddisfatta — Fase 1E, `visual-parity-report.md` |
 | 10 | Difformità residue documentate e approvate | soddisfatta — DR-162, DR-203 e decisioni nominative |
 | 11 | Verifica di redirect, sitemap, robots, canonical, Open Graph, 404, form | soddisfatta in locale — Fase 1E (1E-8, 1E-9, form 24/24); si ripete in 1F |
 | 12 | Build, test, lint, typecheck verdi | soddisfatta — CI `39201139144` su `ca9e39b` |
 | 13 | UAT di parità firmata dall'utente | soddisfatta — DR-210, 2026-10-18 |
-| 14 | Piano di produzione approvato | **aperta** — Fase 1F |
+| 14 | Piano di produzione approvato | soddisfatta — piano della 1F approvato il 2026-10-31 (DR-337) |
 | 15 | Deploy su staging e produzione verificati, rollback testato | **aperta** — Fase 1F |
 
 Nessuna fase gestionale può essere **pianificata**, avviata o rilasciata prima che

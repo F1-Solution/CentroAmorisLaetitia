@@ -77,7 +77,7 @@ Su conferma: accensione con `avvia.ps1`, account dell'agente (DR-291).
 
 ### T7 — Chiusura (W10-6)
 
-- [ ] Commit e push su conferma; CI verde.
+- [x] Commit e push su conferma; CI verde.
 - [ ] **Stop**: richiesta all'utente dell'approvazione del collaudo redazionale, con la formula del rapporto. Dopo l'approvazione: HO-017 (DR-212), poi la Fase 1F (DR-337).
 
 Ordine: T1 e T3 subito, senza ambiente; T2 dopo D235 e la conferma di accensione; T4 e T5
