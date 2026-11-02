@@ -247,6 +247,8 @@ export interface ContentAddressPanelProps {
   /** Slug e genitore salvati. */
   readonly slug: string;
   readonly parentId: string | null;
+  /** Percorso salvato: diverso da slug e genitore per le bozze importate a percorso provvisorio (W10-N2). */
+  readonly path: string;
   /** Pagina iniziale: il sito la serve a `/` (S3). */
   readonly isHome: boolean;
   readonly disabled: boolean;
@@ -261,6 +263,7 @@ export function ContentAddressPanel({
   type,
   slug: savedSlug,
   parentId: savedParentId,
+  path: savedPath,
   isHome,
   disabled,
   paused,
@@ -311,7 +314,8 @@ export function ContentAddressPanel({
   const parentPath =
     target.parentId === null ? '/' : options?.find((option) => option.id === parentId)?.path;
   const ownPath = parentPath !== undefined && target.slug ? `${parentPath}${target.slug}/` : '—';
-  const resulting = isHome ? '/' : ownPath;
+  // Senza modifiche vale il percorso salvato, anche se non deriva da slug e genitore (W10-N2).
+  const resulting = isHome ? '/' : changed ? ownPath : savedPath;
   const locked = disabled || busy || paused;
 
   async function apply(next: AddressTarget): Promise<void> {

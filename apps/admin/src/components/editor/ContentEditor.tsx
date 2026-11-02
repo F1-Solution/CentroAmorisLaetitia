@@ -39,6 +39,7 @@ import {
   type ContentDetail,
   type EditorState,
 } from '../../lib/editor/roundtrip';
+import { contentName } from '../../lib/contentName';
 import { useSession } from '../../lib/session';
 import { previewUrl } from '../../lib/siteUrl';
 import { AreaShell } from '../AreaShell';
@@ -56,6 +57,7 @@ import { DocumentInsertDialog } from '../documents/DocumentInsertDialog';
 import { usePublicDocuments } from '../documents/usePublicDocuments';
 import { EditorPreview } from './EditorPreview';
 import { useMediaNames } from './useMediaNames';
+import { useCategoryNames } from './useCategoryNames';
 import './ContentEditor.css';
 
 /**
@@ -439,10 +441,15 @@ export function ContentEditor({
     [state],
   );
   const mediaNames = useMediaNames(imagesWithoutAlt);
+  const hasPostList = useMemo(
+    () => (state ? containsBlockType(state.document.blocks, 'post_list') : false),
+    [state],
+  );
+  const categoryNames = useCategoryNames(hasPostList);
   const isHome = content?.isHome ?? false;
   const homeNoteId = useId();
-  // Il titolo importato non si cambia: se è vuoto, la pagina iniziale si riconosce comunque.
-  const headerTitle = content?.title || (isHome ? 'Pagina iniziale' : 'Contenuto');
+  // Il titolo importato non si cambia: se è vuoto, la pagina iniziale si riconosce comunque (W10-N3).
+  const headerTitle = content ? contentName(content.title, isHome) : 'Contenuto';
   const publishedNow = content?.status === 'published';
 
   const statusText = (() => {
@@ -726,6 +733,7 @@ export function ContentEditor({
               type={content.type}
               slug={content.slug}
               parentId={content.parentId}
+              path={content.path}
               isHome={content.isHome ?? false}
               disabled={readOnly}
               // Mentre l'editor salva o rilegge, una lettura vecchia riporterebbe l'indirizzo di prima.
@@ -779,11 +787,16 @@ export function ContentEditor({
               onDrop={onDrop}
               describe={(id) => {
                 const block = findBlock(state.document.blocks, id);
-                return block ? labelOf(block, documentTitles, mediaNames) : id;
+                return block ? labelOf(block, documentTitles, mediaNames, categoryNames) : id;
               }}
             >
               <BlockTreeEditor
-                blocks={toTreeNodes(state.document.blocks, documentTitles, mediaNames)}
+                blocks={toTreeNodes(
+                  state.document.blocks,
+                  documentTitles,
+                  mediaNames,
+                  categoryNames,
+                )}
                 {...(selectedId ? { selectedId } : {})}
                 onSelect={setSelectedId}
                 onMoveUp={(id) =>

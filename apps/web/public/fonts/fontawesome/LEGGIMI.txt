@@ -22,4 +22,4 @@ Il sottoinsieme conserva il nome interno «FontAwesome» (pyftsubset non lo
 cambia) e la sorgente non dichiara nomi riservati («Reserved Font Name»): se la
 verifica da parte di una persona ne trova uno, il sottoinsieme va rinominato.
 
-La licenza va verificata da una persona prima del rilascio in produzione.
+La licenza è stata verificata da una persona il 2026-10-30 (DR-332).

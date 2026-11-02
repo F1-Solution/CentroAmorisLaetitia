@@ -4,22 +4,24 @@ Caccia del 2026-10-26 su `apps/web/src/**` e sui componenti di `packages/blocks`
 
 Aggiornato il 2026-10-27 con l'esito delle decisioni DR-269…DR-277 e DR-284, attuate nelle attività T2b e T2c della `1G-W7`: righe ricontrollate sul codice, colonna «Modificabile» e motivi riscritti, «Da decidere» sostituito da «Decisioni». Non è una nuova caccia: i testi aggiunti dopo il 2026-10-26 non sono elencati (vedi «Fuori elenco»).
 
+Aggiornato il 2026-11-01 (`1G-W10` T3) sui file del sito cambiati dopo `0dd1efb` (2026-10-27), cioè nelle correzioni della `1G-W9`: esito per file in «Esame dei file cambiati dopo `0dd1efb`»; una voce nuova (il cuore dei titoli delle slide) e righe di `layout.tsx` e `Slider.tsx` riallineate al codice di `5c761ca`.
+
 ## Riepilogo
 
-Voci elencate: **78** in **16** file (mesi, lingua e fuso sono passati da `lib/format.ts` a `lib/wpDate.ts`).
+Voci elencate: **79** in **17** file (mesi, lingua e fuso sono passati da `lib/format.ts` a `lib/wpDate.ts`).
 
 | Origine | Voci |
 |---|---|
-| tema della sorgente (WordPress, Divi, plugin) | 33 |
+| tema della sorgente (WordPress, Divi, plugin) | 34 |
 | formattazione | 10 |
 | accessibilità | 20 |
 | dato dalle impostazioni o dai contenuti | 5 |
 | scelta del progetto (testo nuovo, non della sorgente) | 10 |
-| **Totale** | **78** |
+| **Totale** | **79** |
 
-Modificabili dalla redazione: **11** (erano 3): il testo viene da un dato o da un'impostazione. Non modificabili: **67** (erano 75), tutti con il motivo dichiarato; quelli che la sorgente lasciava cambiare sono decisi in DR-274…DR-277.
+Modificabili dalla redazione: **11** (erano 3): il testo viene da un dato o da un'impostazione. Non modificabili: **68** (erano 75, poi 67, più il cuore della `1G-W9`), tutti con il motivo dichiarato; quelli che la sorgente lasciava cambiare sono decisi in DR-274…DR-277, il cuore in DR-307 e DR-311.
 
-Fuori elenco, perché non sono testo di pagina: nomi di classi e identificativi, intestazioni HTTP, direttive di `robots`, regole di `proxy.ts`, struttura XML del feed RSS e messaggi di errore di configurazione di `lib/site.ts`, letti da chi avvia il sito. Il piè di pagina, i recapiti e il logo non sono scritti nel codice: vengono dalle impostazioni («Testo del piè di pagina», «Indirizzo del Centro», «Telefono del Centro», «Logo del sito»). Le etichette, i segnaposto e i testi dei moduli e delle slide sono dati, non codice. Fuori elenco anche il blocco «Documento» (DR-287, T2k): sul sito è un collegamento a `/download/<slug>/` il cui testo è l'etichetta del blocco o il titolo del documento, cioè un dato, e un documento non pubblico non rende nulla.
+Fuori elenco, perché non sono testo di pagina: nomi di classi e identificativi, intestazioni HTTP, direttive di `robots`, regole di `proxy.ts`, struttura XML del feed RSS e messaggi di errore di configurazione di `lib/site.ts`, letti da chi avvia il sito. Il piè di pagina, i recapiti e il logo non sono scritti nel codice: vengono dalle impostazioni («Testo del piè di pagina», «Indirizzo del Centro», «Telefono del Centro», «Logo del sito»). Le etichette, i segnaposto e i testi dei moduli e delle slide sono dati, non codice. Fuori elenco anche il blocco «Documento» (DR-287, T2k): sul sito è un collegamento a `/download/<slug>/` il cui testo è l'etichetta del blocco o il titolo del documento, cioè un dato, e un documento non pubblico non rende nulla. Fuori elenco infine `public/fonts/fontawesome/LEGGIMI.txt` e `OFL.txt`: file della licenza del font del cuore, raggiungibili per indirizzo ma non collegati da nessuna pagina.
 
 Legenda: «sì» = la redazione lo cambia dall'area; «no» = per cambiarlo serve il codice.
 
@@ -29,8 +31,8 @@ Legenda: «sì» = la redazione lo cambia dall'area; «no» = per cambiarlo serv
 
 | Riga | Testo | Origine | Modificabile | Motivo |
 |---|---|---|---|---|
-| 23 | `Centro Amoris Laetitia` | impostazioni | sì | Titolo di riserva della scheda: è «Titolo del sito»; il valore scritto in `lib/settingsOnce.ts:7` resta solo se l'impostazione manca o l'API non risponde (DR-273, DR-284). |
-| 34 | `lang={lang}` | accessibilità | sì | Lingua dichiarata alle tecnologie assistive: la sola lingua di «Lingua del sito», per esempio `it` (DR-270). |
+| 21 | `Centro Amoris Laetitia` | impostazioni | sì | Titolo di riserva della scheda: è «Titolo del sito»; il valore scritto in `lib/settingsOnce.ts:8` resta solo se l'impostazione manca o l'API non risponde (DR-273, DR-284). |
+| 32 | `lang={lang}` | accessibilità | sì | Lingua dichiarata alle tecnologie assistive: la sola lingua di «Lingua del sito», per esempio `it` (DR-270); `it` (`lib/wpDate.ts:104`) resta solo se l'impostazione manca o, dalla `1G-W9` T9, se l'API non risponde (`lib/settingsOnce.ts:21-28`, come il titolo di riserva). |
 
 ### `apps/web/src/app/not-found.tsx`
 
@@ -165,18 +167,43 @@ Legenda: «sì» = la redazione lo cambia dall'area; «no» = per cambiarlo serv
 
 | Riga | Testo | Origine | Modificabile | Motivo |
 |---|---|---|---|---|
-| 58, 60 | `alt={slide.heading}` | impostazioni | sì | Testo alternativo dell'immagine della slide: il «Titolo» della slide. |
-| 81 | `Slide precedente` | accessibilità | no | Nome accessibile della freccia. |
-| 83 | `‹` | formattazione | no | Glifo della freccia indietro. |
-| 89 | `Slide successiva` | accessibilità | no | Nome accessibile della freccia. |
-| 91 | `›` | formattazione | no | Glifo della freccia avanti. |
-| 100 | `Vai alla slide ${n}` | accessibilità | no | Nome accessibile dei puntini. |
+| 59, 61 | `alt={altText}` | impostazioni | sì | Testo alternativo dell'immagine della slide: il «Titolo» della slide senza tag, su una riga (`slideTitleText`, DR-307). |
+| 84 | `Slide precedente` | accessibilità | no | Nome accessibile della freccia. |
+| 86 | `‹` | formattazione | no | Glifo della freccia indietro. |
+| 92 | `Slide successiva` | accessibilità | no | Nome accessibile della freccia. |
+| 94 | `›` | formattazione | no | Glifo della freccia avanti. |
+| 103 | `Vai alla slide ${n}` | accessibilità | no | Nome accessibile dei puntini. |
+
+### `apps/web/src/styles/blocks.css`
+
+| Riga | Testo | Origine | Modificabile | Motivo |
+|---|---|---|---|---|
+| 374 | `content: '\f004'` (cuore) | tema | no | Cuore di Font Awesome 4.7 di Slider Revolution nei titoli delle slide importati (DR-307, DR-311, licenza verificata con DR-332). Il glifo è nel codice, la sua presenza viene dal titolo importato: l'editor dei caroselli lo conserva e lo dichiara («Sul sito il titolo termina con un cuore.»), non lo aggiunge né lo toglie; nascosto ai lettori di schermo (`aria-hidden`). |
 
 ### `packages/blocks/src/render/PostList.tsx`
 
 | Riga | Testo | Origine | Modificabile | Motivo |
 |---|---|---|---|---|
 | 16 | `it-IT` | formattazione | sì | Sul sito la data dell'elenco articoli arriva già scritta in «Formato data» (`Views.tsx:38`, DR-270); `it-IT` resta solo come riserva nell'anteprima dell'area. |
+
+## Esame dei file cambiati dopo `0dd1efb` (`1G-W10` T3)
+
+Esame del 2026-11-01 su `5c761ca`: `git diff 0dd1efb 5c761ca` ristretto ad `apps/web` e `packages/blocks`, senza prove. Nove file di codice e tre file del font; il piano della wave ne nominava otto, in più c'è `layout.tsx`.
+
+| File | Che cosa è cambiato | Testo visibile nuovo | Esito |
+|---|---|---|---|
+| `apps/web/src/app/layout.tsx` | `lang` letto con il ripiego (`1G-W9` T9, minore della `1G-W7`) | nessuno | righe riallineate (21, 32) |
+| `apps/web/src/lib/settingsOnce.ts` | `htmlLangOrDefault`: `it` se l'API non risponde | nessuno: `it` era già la riserva di `wpDate.ts:104` | voce di `layout.tsx:32` aggiornata |
+| `apps/web/src/styles/blocks.css` | stili della didascalia e dei titoli delle slide; carattere e glifo del cuore | il cuore, `:374` | voce nuova, coperta da DR-307 e DR-311 |
+| `packages/blocks/src/render/Image.tsx` | testo alternativo e didascalia di Media se il blocco li lascia vuoti; `title` dal blocco; «decorativa» | nessuno: `alt`, `title` e didascalia sono dati del blocco o del media (DR-305, DR-312, DR-313), `alt` vuoto se l'immagine è decorativa | nessuna voce |
+| `packages/blocks/src/render/Slider.tsx` | titolo con il sottoinsieme di HTML ammesso; testo alternativo senza tag | nessuno | righe riallineate (59, 61, 84, 86, 92, 94, 103) |
+| `packages/blocks/src/render/media.ts` | campi `title` e `caption` del media | nessuno (tipi) | nessuna voce |
+| `packages/blocks/src/sanitize/slide-title.ts` | filtro del titolo delle slide (nuovo) | nessuno: produce solo `span`, `br` e l'icona con `aria-hidden` | nessuna voce |
+| `packages/blocks/src/sanitize/index.ts` | esporta il filtro | nessuno | nessuna voce |
+| `packages/blocks/src/schema/image.ts` | campi `decorative` e `useMediaCaption` | nessuno (schema) | nessuna voce |
+| `apps/web/public/fonts/fontawesome/` | sottoinsieme del font, `LEGGIMI.txt`, `OFL.txt` | nessun testo di pagina | fuori elenco |
+
+Nessun difetto di editabilità nuovo. Fuori perimetro: `LEGGIMI.txt` e il commento di `blocks.css:353` dicevano ancora che la licenza «va verificata»; corretti il 2026-11-01 secondo DR-343, dopo la verifica di DR-332.
 
 ## Decisioni
 

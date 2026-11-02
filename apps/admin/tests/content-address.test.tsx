@@ -161,6 +161,22 @@ describe('scheda «Indirizzo» dell’editor', () => {
     expect(callsTo(`/contents/${ID}/address/options`)).toEqual([]);
   });
 
+  it.each([
+    ['con lo slug di un’altra pagina', 'notizia-di-prova', '/notizia-di-prova-332/'],
+    ['senza slug', '', '/senza-slug-1781/'],
+  ])(
+    'W10-N2: una bozza importata a percorso provvisorio %s mostra il percorso che ha',
+    async (_, slug, path) => {
+      serve({ content: { ...syntheticContent, type: 'post', status: 'draft', slug, path } });
+      const user = userEvent.setup();
+      await openAddressTab(user, false);
+      expect(resultingAddress()).toHaveTextContent(path);
+      // Appena si cambia lo slug l'indicazione torna a quella calcolata.
+      await typeSlug(user, 'nuovo-indirizzo');
+      expect(resultingAddress()).toHaveTextContent('/nuovo-indirizzo/');
+    },
+  );
+
   it('l’indirizzo risultante si aggiorna mentre si scrive lo slug e si sceglie il genitore', async () => {
     const user = userEvent.setup();
     await openAddressTab(user);
@@ -302,6 +318,8 @@ describe('scheda «Indirizzo» dell’editor', () => {
     // Lo slug salvato è quello nuovo: un altro clic non avrebbe nulla da scrivere.
     expect(slugField()).toHaveValue('nuovo-indirizzo');
     expect(saveButton()).toBeDisabled();
+    // W10-N2: dopo il salvataggio l'indicazione è il percorso salvato dall'API.
+    expect(resultingAddress()).toHaveTextContent('/nuovo-indirizzo/');
     // Nessuna rilettura: il contenuto si è letto una volta sola, all'apertura.
     expect(callsTo(`/contents/${ID}`).filter((call) => call[0] === `/contents/${ID}`)).toHaveLength(
       1,

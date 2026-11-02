@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
+import { contentName } from '../lib/contentName';
 import { useSession } from '../lib/session';
 import { AreaShell } from './AreaShell';
 import './ContentList.css';
@@ -253,7 +254,7 @@ export function ContentList({
             header: 'Titolo',
             render: (row) => (
               <>
-                <Link href={`${basePath}/${row.id}`}>{row.title || 'Senza titolo'}</Link>
+                <Link href={`${basePath}/${row.id}`}>{contentName(row.title)}</Link>
                 {row.isHome ? (
                   <span className="amoris-content-list__home"> — Pagina iniziale</span>
                 ) : null}

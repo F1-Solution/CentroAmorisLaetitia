@@ -93,6 +93,32 @@ describe('elenco delle pagine e pagina iniziale (W8-24)', () => {
     expect(within(comune).queryByText(/Pagina iniziale/)).toBeNull();
   });
 
+  it('DR-331, DR-345: un titolo di soli spazi si legge «Senza titolo» come uno vuoto', async () => {
+    apiMock.mockResolvedValue({
+      items: [{ ...base, id: 'a3', title: '   ', path: '/spazi/', isHome: false }],
+      meta: { total: 1, page: 1, perPage: 25 },
+    });
+    render(
+      <DensityProvider>
+        <ContentList
+          type="page"
+          sectionId="pagine"
+          title="Pagine"
+          summary="Le pagine del sito."
+          searchLabel="Cerca una pagina"
+          emptyText="Nessuna pagina."
+          caption="Elenco delle pagine"
+          basePath="/redazione/pagine"
+          createLabel="Nuova pagina"
+        />
+      </DensityProvider>,
+    );
+    expect(await screen.findByRole('link', { name: 'Senza titolo' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/a3'),
+    );
+  });
+
   it('W9-N4: l’aiuto di «Indirizzo» nella nuova pagina è scritto con l’accento', async () => {
     const user = userEvent.setup();
     render(

@@ -6,7 +6,7 @@ import { ApiError } from '../src/lib/api';
 import type * as ApiModule from '../src/lib/api';
 import type * as SessionModule from '../src/lib/session';
 import { serializeBlockDocument } from '@amoris/blocks';
-import { insertBlock } from '../src/lib/editor/tree';
+import { findBlock, insertBlock, replaceBlock } from '../src/lib/editor/tree';
 import { syntheticContent, syntheticDocument } from './fixtures';
 
 /**
@@ -504,4 +504,57 @@ describe('editor del contenuto', () => {
     await waitForEditor();
     expect(apiMock.mock.calls.filter((call) => call[0] === '/documents')).toEqual([]);
   });
+
+  it('W10-N1: nell’albero un «Elenco di contenuti» porta categorie e numero di notizie', async () => {
+    const CATEGORIA = '55555555-5555-4555-8555-555555555555';
+    const inserted = insertBlock(syntheticDocument, 'b_0000000000a3', 'post_list');
+    const block = findBlock(inserted.document.blocks, inserted.insertedId);
+    if (block?.type !== 'post_list') throw new Error('blocco non inserito');
+    const document = replaceBlock(inserted.document, {
+      ...block,
+      props: { ...block.props, termIds: [CATEGORIA], limit: 3 },
+    });
+    apiMock.mockImplementation((path: string) => {
+      if (path === `/contents/${syntheticContent.id}`) {
+        return Promise.resolve({
+          ...syntheticContent,
+          blocks: document,
+          contentHtml: serializeBlockDocument(document),
+        });
+      }
+      if (path === '/terms?taxonomy=category') {
+        return Promise.resolve([{ id: CATEGORIA, name: 'Categoria inventata' }]);
+      }
+      return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+    });
+    renderEditor();
+    await waitFor(() => {
+      expect(within(tree()).getByText(/Categoria inventata · 3 notizie/)).toBeInTheDocument();
+    });
+  });
+
+  it('W10-N1: senza «Elenco di contenuti» le categorie non si chiedono', async () => {
+    renderEditor();
+    await waitForEditor();
+    expect(apiMock.mock.calls.filter((call) => String(call[0]).startsWith('/terms'))).toEqual([]);
+  });
+
+  it.each([
+    ['vuoto', ''],
+    ['di soli spazi', '   '],
+  ])(
+    'W10-N3: un contenuto con il titolo %s si chiama «Senza titolo» nell’intestazione',
+    async (_, title) => {
+      apiMock.mockImplementation((path: string) => {
+        if (path === `/contents/${syntheticContent.id}`) {
+          return Promise.resolve({ ...syntheticContent, title, status: 'draft' });
+        }
+        return Promise.reject(new ApiError(404, 'NOT_FOUND', 'Non trovato.'));
+      });
+      renderEditor();
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Senza titolo' }),
+      ).toBeInTheDocument();
+    },
+  );
 });

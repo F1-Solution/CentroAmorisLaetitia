@@ -1894,3 +1894,31 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-338 | 2026-10-31 | Archivio dei file lento con video grandi (N2, residuo di DR-261) e taratura dei suoi tempi (D233) | **Opzione A** — rinvio alla 1F: nella `1F-W5`, sul server, misurare un caricamento sintetico da 100 MB verso l'archivio sullo stesso server (DR-297), fissare i tempi e, se serve, il caricamento a parti | B — chiuderlo ora senza misura | «D233 = A» | Proprietario | media, Fase 1F | sì | DR-261, DR-297, DR-333, DR-334, `W9-PLAN.md` §7 |
+
+## 112. Round 103 — risposta del 2026-11-01, piano della 1G-W10
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-339 | 2026-11-01 | Piano della `1G-W10` (`.planning/phases/1G/W10-PLAN.md`) | **Approvato**; si eseguono T1 e T3. Confermate a parte l'accensione del collaudo con `avvia.ps1` e le prove della T2 (tre campi con ripristino dall'area, 1E-19, anteprima) | — | «Approvo il W10-PLAN» · «Confermo l'accensione del collaudo con avvia.ps1 e le prove della T2» | Proprietario | `1G-W10` | sì | DR-290, DR-291, DR-207 |
+| DR-340 | 2026-11-01 | Come si tolgono i residui del collaudo (D234, 1G-27) | **Opzione A** — smontare l'ambiente con `crea.ps1 -Rimuovi` (database, bucket, copia di lavoro) e la cartella di stato con le credenziali dell'agente; la cancellazione chiede una conferma a parte | B — togliere dall'area il media di prova e disattivare gli account dell'agente; l'ambiente resta · C — B adesso, A dopo l'approvazione della 1G | «D234 = A» | Proprietario | collaudo, `1G-W10` T6 | sì (si ricrea con `crea.ps1`) | DR-291, `W10-PLAN.md` §3 |
+| DR-341 | 2026-11-01 | Chi riesegue 1E-19 e la prova dell'anteprima su `ec640c2` (D235) | **Opzione A** — l'agente, con l'account di Redazione dell'agente sul collaudo | B — l'utente, con HO-035 aggiornato · C — non rieseguirle e citare la `1G-W7` | «D235 = A» | Proprietario | collaudo, `1G-W10` T2 | sì | DR-265, DR-290, DR-291 |
+
+## 113. Round 104 — risposta del 2026-11-01, perimetro della T2 e file della licenza del cuore
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-342 | 2026-11-01 | Campi nuovi della matrice senza esito sul collaudo (D236) | **Opzione A** — nella T2 si collaudano dall'interfaccia «Testo alternativo» di «Media e testo», «Categorie» e «Numero di notizie» di «Elenco di contenuti» su una pagina sintetica in bozza creata ed eliminata dall'area, verificati nell'anteprima senza pubblicare; le due bozze importate si aprono soltanto. Vale come conferma per creare ed eliminare la pagina sintetica | B — prove automatiche della T10b e vista nell'elenco · C — solo i pannelli | «D236 = A» | Proprietario | collaudo, `1G-W10` T2 | sì | DR-320…DR-323, DR-063, DR-064, DR-326 |
+| DR-343 | 2026-11-01 | `LEGGIMI.txt` del font del cuore e commento di `blocks.css` che dicono la licenza «da verificare» (D237) | **Opzione B** — si correggono ora: dopo DR-332 la licenza è verificata | A — nella `1F-W1` · C — lasciati | «D237 = B» | Proprietario | sito, `apps/web/public/fonts/fontawesome/`, `1G-W10` | sì | DR-311, DR-332 |
+
+## 114. Round 105 — risposta del 2026-11-01, difetti bassi della T2
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-344 | 2026-11-01 | Difetti bassi W10-N1, W10-N2, W10-N3 della T2 (D238) | **Opzione B** — corretti ora in una T2b: prove che falliscono prima, revisione, verifica come la CI, commit su conferma | A — rinvio alla `1F-W1` · C — accettati | «D238 = B» | Proprietario | area, editor, `1G-W10` T2b | sì | W10-PLAN.md §3 |
+
+## 115. Round 106 — risposta del 2026-11-01, elenco delle modifiche della T2b
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-345 | 2026-11-01 | Elenco delle modifiche della T2b (D239) | **Approvato tutto**: W10-N1 nomi delle categorie nell'albero con una sola richiesta e solo se la pagina contiene un elenco; W10-N2 «Indirizzo risultante» col percorso salvato se slug e genitore non cambiano; W10-N3 intestazione dell'editor con «Senza titolo» (e «Pagina iniziale»); titolo di soli spazi come «Senza titolo» anche nell'elenco dei contenuti (DR-331); prove che falliscono prima | tutto tranne l'elenco dei contenuti · solo W10-N1 e W10-N3 | «Approva tutto» | Proprietario | area, `1G-W10` T2b | sì | DR-344, DR-331 |
+| DR-346 | 2026-11-01 | Testo dell'albero accanto a «Elenco di contenuti» (D240, W10-N1) | **Opzione A** — categorie e numero di notizie: «Senza categoria · 3 notizie», «News, Senza categoria · 1 notizia»; senza categorie «tutte le categorie»; numero vuoto non scritto | B — solo le categorie · C — numero di categorie | «Categorie · numero» | Proprietario | editor, albero dei blocchi | sì | DR-345, W8-33 |

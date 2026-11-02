@@ -316,4 +316,45 @@ describe('albero e riepiloghi', () => {
     } as never;
     expect(labelOf(senzaAlt)).toBe('immagine a destra');
   });
+
+  it('W10-N1: «Elenco di contenuti» si chiama con le categorie e il numero di notizie (DR-346)', () => {
+    const NEWS = '55555555-5555-4555-8555-555555555555';
+    const ALTRA = '66666666-6666-4666-8666-666666666666';
+    const elenco = (props: Record<string, unknown>) =>
+      ({
+        id: 'b_0000000000f3',
+        type: 'post_list',
+        children: [],
+        props: { termIds: [], limit: null, offset: 0, order: 'date_desc', ...props },
+      }) as never;
+    const nomi = new Map([
+      [NEWS, 'News'],
+      [ALTRA, 'Senza categoria'],
+    ]);
+    expect(labelOf(elenco({ termIds: [ALTRA], limit: 3 }), undefined, undefined, nomi)).toBe(
+      'Senza categoria · 3 notizie',
+    );
+    expect(labelOf(elenco({ termIds: [NEWS, ALTRA], limit: 1 }), undefined, undefined, nomi)).toBe(
+      'News, Senza categoria · 1 notizia',
+    );
+    // Nessuna categoria scelta: l'elenco le mostra tutte; il numero vuoto non si scrive.
+    expect(labelOf(elenco({}), undefined, undefined, nomi)).toBe('tutte le categorie');
+    expect(labelOf(elenco({ limit: 5 }), undefined, undefined, nomi)).toBe(
+      'tutte le categorie · 5 notizie',
+    );
+    // Una categoria che non esiste più si dice come nel pannello.
+    expect(
+      labelOf(
+        elenco({ termIds: ['77777777-7777-4777-8777-777777777778'] }),
+        undefined,
+        undefined,
+        nomi,
+      ),
+    ).toBe('categoria non trovata');
+    // Prima che i nomi arrivino resta il nome del tipo, col numero se c'è.
+    expect(labelOf(elenco({ termIds: [ALTRA], limit: 3 }))).toBe('elenco di contenuti · 3 notizie');
+    expect(
+      toTreeNodes([elenco({ termIds: [ALTRA], limit: 3 })], undefined, undefined, nomi)[0]?.label,
+    ).toBe('Senza categoria · 3 notizie');
+  });
 });

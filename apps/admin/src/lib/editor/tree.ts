@@ -328,11 +328,28 @@ function shorten(value: string, max = 60): string {
   return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max - 1)}…`;
 }
 
+/** Categorie e numero di notizie di un «Elenco di contenuti» (W10-N1, DR-346). */
+function postListSummary(
+  termIds: readonly string[],
+  limit: number | null,
+  categoryNames?: ReadonlyMap<string, string>,
+): string {
+  const categories =
+    termIds.length === 0
+      ? 'tutte le categorie'
+      : categoryNames
+        ? termIds.map((id) => categoryNames.get(id) ?? 'categoria non trovata').join(', ')
+        : TYPE_SUMMARY.post_list;
+  if (limit === null) return shorten(categories);
+  return `${shorten(categories)} · ${limit} ${limit === 1 ? 'notizia' : 'notizie'}`;
+}
+
 /** Il riepilogo che compare nell'albero. Mai il contenuto intero. */
 export function labelOf(
   block: ModelBlock,
   documentTitles?: ReadonlyMap<string, string>,
   mediaNames?: ReadonlyMap<string, string>,
+  categoryNames?: ReadonlyMap<string, string>,
 ): string {
   switch (block.type) {
     case 'rich_text':
@@ -359,6 +376,8 @@ export function labelOf(
         shorten(block.props.mediaAlt) ||
         `immagine a ${block.props.mediaPosition === 'right' ? 'destra' : 'sinistra'}`
       );
+    case 'post_list':
+      return postListSummary(block.props.termIds, block.props.limit, categoryNames);
     case 'video':
       return shorten(block.props.src);
     case 'map':
@@ -390,15 +409,16 @@ export function toTreeNodes(
   blocks: readonly ModelBlock[],
   documentTitles?: ReadonlyMap<string, string>,
   mediaNames?: ReadonlyMap<string, string>,
+  categoryNames?: ReadonlyMap<string, string>,
 ): TreeNode[] {
   return blocks.map((block) => {
-    const label = labelOf(block, documentTitles, mediaNames);
+    const label = labelOf(block, documentTitles, mediaNames, categoryNames);
     return ALLOWED_CHILDREN[block.type].length > 0
       ? {
           id: block.id,
           type: block.type,
           label,
-          children: toTreeNodes(block.children, documentTitles, mediaNames),
+          children: toTreeNodes(block.children, documentTitles, mediaNames, categoryNames),
         }
       : { id: block.id, type: block.type, label };
   });

@@ -350,7 +350,7 @@
   text-align: right;
 }
 
-/* Cuore di Font Awesome 4.7 nei titoli delle slide, sottoinsieme locale (DR-311, licenza da verificare: `public/fonts/fontawesome/LEGGIMI.txt`). */
+/* Cuore di Font Awesome 4.7 nei titoli delle slide, sottoinsieme locale (DR-311, licenza verificata con DR-332: `public/fonts/fontawesome/LEGGIMI.txt`). */
 @font-face {
   font-family: FontAwesomeHeart;
   font-display: block;
