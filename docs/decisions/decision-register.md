@@ -1935,3 +1935,13 @@ Nella stessa risposta l'utente ha confermato la migrazione `0010` sul database d
 | id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
 |---|---|---|---|---|---|---|---|---|---|
 | DR-349 | 2026-11-02 | Distruzione dell'istanza WordPress di riferimento (HO-017, D242) | **Opzione B** — contenitori, volumi e immagine costruita `wpref-wp:latest` tolti con `down -v --rmi local`; eseguita lo stesso giorno | A — solo contenitori e volumi · C — rinvio | «HO-017: D242 = B, confermo la distruzione dell'istanza di riferimento.» | Proprietario | istanza di riferimento locale | sì (si ricostruisce con HO-001 da `source-private/`) | DR-025, DR-212, DR-348, HO-017 |
+
+## 118. Round 109 — risposta del 2026-11-03, 1F-W1 e acquisto del server (HO-056)
+
+| id | data | decisione | opzione scelta | opzioni scartate | motivo dichiarato dall'utente | approvata da | ambito | reversibile | riferimenti |
+|---|---|---|---|---|---|---|---|---|---|
+| DR-350 | 2026-11-03 | Dove si corregge W9-N7 (D243) | **Opzione A** — solo nell'area: un salvataggio della copia di lavoro alla volta; «Scarta», «Salva» e «Pubblica» attendono quello in viaggio; nessuna modifica di API e database | B — anche 409 dal servizio su `baseUpdatedAt` superato · C — anche numero d'ordine con migrazione `0010` | «D243=A» | Proprietario | Fase 1F, `1F-W1` | sì | DR-330, `.planning/phases/1F/W1-PLAN.md` |
+| DR-351 | 2026-11-03 | W9-N8 non riprodotto nell'ambiente e2e (D244) | **Opzione B** — correzione preventiva: «Ctrl+Home» e «Ctrl+Fine» gestiti dall'editor, con una prova che simula il ritardo | A — collaudo ricreato per la prova · C — chiuso come non riprodotto | «D244= B» | Proprietario | Fase 1F, `1F-W1` | sì | DR-336, `W1-PLAN.md` T3-T4 |
+| DR-352 | 2026-11-03 | Quando si compra il server (D245) | **Opzione B** — alla `1F-W5`, come dice il PLAN; HO-056 resta preparato e non si esegue prima | A — adesso, server vuoto · C — adesso solo l'account | «D245= B» | Proprietario | Fase 1F, `1F-W5` | sì | DR-334, HO-056, PLAN §3 |
+| DR-353 | 2026-11-03 | Sistema operativo del server (D246) | **Opzione A** — Ubuntu Server 24.04 LTS; se il carrello non lo offre, l'utente si ferma e segnala (HO-056 §10) | B — Debian 12 o 13 · C — il primo con supporto lungo nel carrello | «D246=A» | Proprietario | Fase 1F, server | sì, prima dei dati (reinstallazione) | DR-334, HO-056 |
+| DR-354 | 2026-11-03 | Account Aruba per l'acquisto (D247) | **Opzione A** — l'account Aruba del Centro che ha già il dominio | B — account nuovo intestato al Centro | «D247=A» | Proprietario | Fase 1F, fornitori | sì | DR-300, DR-302, HO-056 |
