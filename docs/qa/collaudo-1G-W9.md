@@ -89,8 +89,8 @@ La numerazione segue W9-N1, il difetto trovato nella T10. Fra parentesi, il nome
 | W9-N4 (N3) | bassa | Pagine › «Nuova pagina» › aiuto di «Indirizzo» | Refuso: «Si puo' correggere.» invece di «Si può correggere.» | corretto nella T11b (DR-327) |
 | W9-N5 (N4) | bassa | editor › «Immagine in evidenza» | Scelta e rimozione non danno messaggi e cambiano subito il sito, senza che il pannello lo dica | corretto nella T11b (DR-329) |
 | W9-N6 (N5) | bassa | editor › albero dei blocchi | Un blocco Immagine che usa il testo alternativo di Media si chiama solo «Immagine — immagine»: due immagini così non si distinguono | corretto nella T11b (DR-327) |
-| W9-N7 (revisione della T11b) | bassa | editor › copia di lavoro | Su una rete lenta due salvataggi della copia di lavoro possono arrivare in ordine inverso: resta la copia più vecchia mentre lo schermo dice «salvata». Un salvataggio ancora in viaggio dopo «Scarta la copia di lavoro», «Salva» o «Pubblica» può far ricomparire la copia alla riapertura. Esisteva già prima della T11b | noto, rinviato alla 1F (DR-330) |
-| W9-N8 (1G-2 del 2026-10-31) | bassa | editor › blocco «Testo» | «Ctrl+Home» premuto pochi millisecondi dopo il clic nel testo a volte non sposta il cursore: i «Canc» seguenti cadono in fondo al paragrafo e non tolgono nulla. 2 prove su 45, 1 su 24 già prima della T11b | noto, rinviato alla `1F-W1` (DR-336) |
+| W9-N7 (revisione della T11b) | bassa | editor › copia di lavoro | Su una rete lenta due salvataggi della copia di lavoro possono arrivare in ordine inverso: resta la copia più vecchia mentre lo schermo dice «salvata». Un salvataggio ancora in viaggio dopo «Scarta la copia di lavoro», «Salva» o «Pubblica» può far ricomparire la copia alla riapertura. Esisteva già prima della T11b | corretto nella `1F-W1` (DR-350, DR-355; §10) |
+| W9-N8 (1G-2 del 2026-10-31) | bassa | editor › blocco «Testo» | «Ctrl+Home» premuto pochi millisecondi dopo il clic nel testo a volte non sposta il cursore: i «Canc» seguenti cadono in fondo al paragrafo e non tolgono nulla. 2 prove su 45, 1 su 24 già prima della T11b | non riprodotto nella `1F-W1`, corretto in via preventiva (DR-351; §10) |
 
 **W9-N2, causa (T11b, DR-326).** Il rapporto completo indicava `RichTextEditor.tsx:105-115`, ma la causa vera era un'altra.
 
@@ -174,3 +174,24 @@ Il criterio chiede che i compiti dei difetti medi riescano senza difficoltà. È
 - **Che cosa non è stato misurato.** Se capita anche con i tempi di una persona, che preme i tasti centinaia di millisecondi dopo il clic.
 
 **Esito.** 1G-2 è riuscito senza difficoltà e il segno di W9-N2 è scomparso: W9-6 è soddisfatto. W9-N8 è basso e non cambia questo esito; l'utente lo ha rinviato alla `1F-W1` (DR-336).
+
+## 10. Correzioni della `1F-W1` (2026-11-04)
+
+I due difetti bassi rinviati dalla 1G sono stati corretti nella `1F-W1`, senza toccare API e database. Piano: `.planning/phases/1F/W1-PLAN.md`.
+
+**W9-N7 (DR-350, DR-355).**
+
+- **Correzione.** L'editor manda un solo salvataggio della copia di lavoro alla volta. Una modifica fatta mentre un salvataggio è in viaggio si salva subito dopo, con lo stato più recente. «Scarta la copia di lavoro», «Salva» e «Pubblica» attendono il salvataggio in viaggio prima di eliminare la copia. Durante l'attesa di «Scarta» i pulsanti sono disattivati (DR-355).
+- **Prove, rosse prima della correzione.**
+  - `apps/admin/tests/working-copy-order-1f.test.tsx`: risposte in ordine inverso, ora mostrata, «Scarta», «Salva», «Pubblica» e pulsanti disattivati durante lo scarto.
+  - `apps/admin/tests/draft-save-queue-1f.test.ts`: la coda dei salvataggi.
+  - `tests/e2e/cms/digitazione.spec.ts`: salvataggio trattenuto 3 s, «Scarta», riapertura senza copia.
+- **Residuo annotato, non corretto (DR-355).** Il salvataggio della copia non ha un tempo massimo: su una connessione che resta bloccata, «Salva», «Pubblica» e «Scarta» attendono finché il browser non chiude la richiesta. È un'ipotesi della revisione, non un caso osservato. Un tempo massimo nel browser non basterebbe, perché il servizio potrebbe ricevere la richiesta interrotta più tardi.
+
+**W9-N8 (DR-351).**
+
+- **Riproduzione.** Prova strumentata fuori da Git (`.superpowers/sdd/strumenti-1F/`), con pagina sintetica creata ed eliminata: clic in fondo al paragrafo, «Ctrl+Home» dopo 0-10 ms, 22 «Canc». Sul codice prima della correzione nessuna prova senza effetto su 50 con CPU rallentata 4 volte e su 50 con CPU rallentata 16 volte. Il difetto non si è riprodotto, quindi la causa resta non osservata.
+- **Correzione preventiva.** «Ctrl/Cmd+Home» e «Ctrl/Cmd+Fine» spostano il cursore dall'editor e non dal browser; con «Maiusc» estendono la selezione.
+- **Prove, rosse prima della correzione.** `apps/admin/tests/richtext-document-edges-1f.test.tsx` e l'e2e W9-N8 di `digitazione.spec.ts`, in cui il browser non sposta il cursore. Ripetizione della prova strumentata sul codice corretto: 50 su 50 senza perdite sia a CPU ×4 sia a CPU ×16.
+
+**Verifica.** Revisione del codice con 0 esiti critici e 0 alti. Verifica come la CI sul codice prima di DR-355: frozen, lint, Prettier, typecheck, build, db:verify, test (3060 prove), copertura 93,7 % ed e2e 69/69 verdi. Dopo DR-355: prove dell'area 750/750 al secondo giro (al primo, un timeout sotto carico di `content-preview.test.tsx`, verde da solo 3 volte su 3) ed e2e di digitazione 5/5.

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   analysePastedHtml,
   normaliseEditorHtml,
+  moveToDocumentEdge,
   richTextExtensions,
   syncSelectionFromDom,
 } from '../../lib/editor/richtext';
@@ -87,7 +88,7 @@ export function RichTextEditor({
       },
       handleKeyDown(view, event) {
         syncSelectionFromDom(view, event);
-        return false;
+        return moveToDocumentEdge(view, event);
       },
     },
     onUpdate({ editor: instance, transaction }) {

@@ -39,6 +39,7 @@ import {
   type ContentDetail,
   type EditorState,
 } from '../../lib/editor/roundtrip';
+import { createDraftSaveQueue } from '../../lib/editor/draftSaveQueue';
 import { contentName } from '../../lib/contentName';
 import { useSession } from '../../lib/session';
 import { previewUrl } from '../../lib/siteUrl';
@@ -290,6 +291,8 @@ export function ContentEditor({
       return false;
     }
   };
+  // Un salvataggio della copia alla volta: «Scarta», «Salva» e «Pubblica» attendono quello in viaggio (DR-350).
+  const [draftQueue] = useState(() => createDraftSaveQueue(() => saveDraft.current()));
 
   /** S17: salva la copia di lavoro in sospeso e apre la pagina come sarà sul sito, in una scheda nuova. */
   async function openSitePreview(): Promise<void> {
@@ -300,7 +303,7 @@ export function ContentEditor({
     }
     // La scheda si apre subito, nel gesto dell'utente: il salvataggio può durare quanto basta a far scattare il blocco dei popup.
     const tab = window.open('', '_blank');
-    const saved = await saveDraft.current();
+    const saved = await draftQueue.request();
     if (!saved) {
       tab?.close();
       return;
@@ -316,9 +319,9 @@ export function ContentEditor({
   useEffect(() => {
     // Durante un salvataggio la copia di lavoro aspetta: ripartirà sul contenuto riletto.
     if (!pending || readOnly || busy) return undefined;
-    const timer = setTimeout(() => void saveDraft.current(), AUTOSAVE_DELAY_MS);
+    const timer = setTimeout(() => void draftQueue.request(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [pending, state, readOnly, busy]);
+  }, [pending, state, readOnly, busy, draftQueue]);
 
   async function writeToContent(publish: boolean | null): Promise<void> {
     if (!state || !content) return;
@@ -332,6 +335,7 @@ export function ContentEditor({
     setActionError(null);
     let patched = false;
     try {
+      await draftQueue.hold();
       const unchanged = isUnchanged(content, state);
       if (unchanged && publish === null) {
         setNotice('Nessuna modifica: il contenuto non è stato riscritto.');
@@ -401,16 +405,25 @@ export function ContentEditor({
       // Il PATCH è passato, la pubblicazione o il ritiro no: la copia di lavoro si riscrive sulla data nuova.
       if (patched && draftSavedAt !== null) setPending(true);
     } finally {
+      draftQueue.release();
       setBusy(false);
     }
   }
 
   async function discardDraft(): Promise<void> {
-    await api(`/contents/${contentId}/draft`, { method: 'DELETE' }).catch(() => undefined);
-    rememberDraft(null);
-    setPending(false);
-    setNotice('Copia di lavoro scartata: è tornato il contenuto salvato.');
-    await load(false);
+    // Pulsanti ed editor fermi mentre si attende il salvataggio in viaggio (DR-355).
+    setBusy(true);
+    try {
+      await draftQueue.hold();
+      await api(`/contents/${contentId}/draft`, { method: 'DELETE' }).catch(() => undefined);
+      rememberDraft(null);
+      setPending(false);
+      setNotice('Copia di lavoro scartata: è tornato il contenuto salvato.');
+      await load(false);
+    } finally {
+      draftQueue.release();
+      setBusy(false);
+    }
   }
 
   /** Rilegge solo «ultima modifica»: lo stato dell'editor non si tocca. */

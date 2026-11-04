@@ -28,7 +28,7 @@ import { Image } from '@tiptap/extension-image';
 import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
-import { TextSelection } from '@tiptap/pm/state';
+import { Selection, TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import { StarterKit } from '@tiptap/starter-kit';
 import type { Extensions } from '@tiptap/react';
@@ -134,6 +134,22 @@ export function syncSelectionFromDom(view: EditorView, event: KeyboardEvent): vo
   const $head = doc.resolve(head);
   if (!$anchor.parent.inlineContent || !$head.parent.inlineContent) return;
   view.dispatch(view.state.tr.setSelection(TextSelection.between($anchor, $head)));
+}
+
+/**
+ * «Ctrl+Home» e «Ctrl+Fine» spostano il cursore dall'editor, non dal browser (W9-N8, DR-351):
+ * così valgono anche se arrivano prima che il clic precedente sia finito. Con «Maiusc» estendono.
+ */
+export function moveToDocumentEdge(view: EditorView, event: KeyboardEvent): boolean {
+  if (event.key !== 'Home' && event.key !== 'End') return false;
+  if (!(event.ctrlKey || event.metaKey) || event.altKey || event.isComposing) return false;
+  const { doc, selection } = view.state;
+  const edge = event.key === 'Home' ? Selection.atStart(doc) : Selection.atEnd(doc);
+  const target = event.shiftKey
+    ? TextSelection.between(doc.resolve(selection.anchor), edge.$head)
+    : edge;
+  view.dispatch(view.state.tr.setSelection(target).scrollIntoView());
+  return true;
 }
 
 export interface PasteOutcome {

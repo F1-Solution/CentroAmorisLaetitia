@@ -85,6 +85,6 @@ Il 2026-10-31 il confronto verificato ha chiuso DR-295 con DR-334 (Aruba) e DR-2
 
 ## 6. Rinviati dalla 1G
 
-- DR-330 (D221): W9-N7, salvataggi della copia di lavoro che si superano su rete lenta (`docs/qa/collaudo-1G-W9.md` §5).
-- DR-336 (D232): W9-N8, «Ctrl+Home» premuto subito dopo il clic nel testo che a volte non sposta il cursore (`docs/qa/collaudo-1G-W9.md` §9).
+- DR-330 (D221): W9-N7, salvataggi della copia di lavoro che si superano su rete lenta (`docs/qa/collaudo-1G-W9.md` §5). Corretto nella `1F-W1` (DR-350, DR-355; `collaudo-1G-W9.md` §10).
+- DR-336 (D232): W9-N8, «Ctrl+Home» premuto subito dopo il clic nel testo che a volte non sposta il cursore (`docs/qa/collaudo-1G-W9.md` §9). Non riprodotto e corretto in via preventiva nella `1F-W1` (DR-351; `collaudo-1G-W9.md` §10).
 - DR-338 (D233): N2, misura di un caricamento da 100 MB e taratura dei tempi dell'archivio, sul server (`.planning/phases/1G/W9-PLAN.md` §7).

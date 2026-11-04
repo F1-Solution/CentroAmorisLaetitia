@@ -186,3 +186,73 @@ test('W9-N2: nessun tasto si perde scrivendo a raffiche attraverso il salvataggi
     })
     .toBe(atteso);
 });
+
+/**
+ * W9-N7 (DR-330, DR-350): su una rete lenta un salvataggio della copia di lavoro ancora in
+ * viaggio arrivava al servizio dopo «Scarta la copia di lavoro» e la copia rinasceva: alla
+ * riapertura l'editor la riprendeva. Qui dal secondo salvataggio in poi ogni PUT resta in
+ * viaggio 3 s.
+ */
+test('W9-N7: dopo «Scarta la copia di lavoro» un salvataggio in viaggio non fa rinascere la copia', async ({
+  page,
+}) => {
+  let salvataggi = 0;
+  await page.route(`${API_URL}/contents/*/draft`, async (route) => {
+    if (route.request().method() === 'PUT') {
+      salvataggi += 1;
+      if (salvataggi > 1) await new Promise((fine) => setTimeout(fine, 3000));
+    }
+    await route.continue();
+  });
+  const id = await paginaConTesto(page, `Pagina copia scartata ${Date.now()}`);
+
+  await page.keyboard.type(PARTENZA);
+  await expect(page.getByText(/^Copia di lavoro salvata alle/)).toBeVisible({ timeout: 15_000 });
+
+  const inViaggio = page.waitForRequest(
+    (richiesta) => richiesta.url().endsWith('/draft') && richiesta.method() === 'PUT',
+  );
+  await page.keyboard.type(' Frase che resta in viaggio.');
+  await inViaggio;
+  await page.getByRole('button', { name: 'Scarta la copia di lavoro' }).click();
+  await expect(
+    page.getByText('Copia di lavoro scartata: è tornato il contenuto salvato.'),
+  ).toBeVisible();
+
+  // Il PUT trattenuto ha il tempo di arrivare, poi si riapre il contenuto.
+  await page.waitForTimeout(4000);
+  const riletta = page.waitForResponse(
+    (risposta) =>
+      risposta.url().endsWith(`/contents/${id}/draft`) && risposta.request().method() === 'GET',
+  );
+  await page.reload();
+  // 204: alla riapertura il contenuto non ha più una copia di lavoro da riprendere.
+  expect((await riletta).status()).toBe(204);
+  await expect(page.getByLabel('Titolo')).toBeVisible();
+  await expect(page.getByText(/^Ripresa la copia di lavoro/)).toHaveCount(0);
+});
+
+/**
+ * W9-N8 (DR-336, DR-351): nel collaudo «Ctrl+Home» premuto subito dopo il clic a volte non
+ * spostava il cursore, e i «Canc» cadevano in fondo al paragrafo senza togliere nulla. Qui il
+ * browser non sposta il cursore a quel tasto, come quando lo spostamento arriva in ritardo:
+ * l'editor lo deve fare da sé.
+ */
+test('W9-N8: «Ctrl+Home» sposta il cursore anche se il browser non lo fa', async ({ page }) => {
+  await paginaConTesto(page, `Pagina inizio del testo ${Date.now()}`);
+  await page.keyboard.type(PARTENZA);
+  await expect.poll(async () => (await superficie(page).innerText()).trim()).toBe(PARTENZA);
+
+  await page.evaluate(() => {
+    window.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Home' && (evento.ctrlKey || evento.metaKey)) evento.preventDefault();
+    });
+  });
+  await superficie(page).click();
+  await page.keyboard.press('ControlOrMeta+Home');
+  for (let tasto = 0; tasto < 22; tasto++) await page.keyboard.press('Delete');
+
+  await expect
+    .poll(async () => (await superficie(page).innerText()).trim())
+    .toBe(PARTENZA.slice(22));
+});
