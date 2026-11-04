@@ -12,7 +12,9 @@
  *    la rimanda nell'intestazione. Il solo `SameSite` non basta, e l'ADR lo dice.
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
+import { apiBase } from './apiBase';
+
+const BASE = apiBase();
 
 const CSRF_COOKIE = 'amoris_csrf';
 

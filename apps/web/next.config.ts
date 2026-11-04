@@ -1,4 +1,6 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
+import { apiUrl } from './src/lib/apiUrl';
 
 /**
  * Sito pubblico.
@@ -14,13 +16,13 @@ import type { NextConfig } from 'next';
  *    amministrativa, che DR-018 vuole visivamente distinta. La regola è verificata
  *    dal lint, in `eslint.config.js`.
  */
-const API_URL = (
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3002'
-).replace(/\/$/, '');
+// Le riscritture si fissano nella build: in produzione `/media/*` e `/forms/*` li instrada Caddy (ADR-003).
+const API_URL = apiUrl();
 
 const config: NextConfig = {
+  // Immagine di produzione autosufficiente (1F-W2); la radice del monorepo porta con sé i pacchetti di lavoro.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   reactStrictMode: true,
   // Gli indirizzi della sorgente finiscono con la barra (`/chi-siamo/`): restano così.
   trailingSlash: true,

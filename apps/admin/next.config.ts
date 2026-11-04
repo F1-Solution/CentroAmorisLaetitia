@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 /**
@@ -16,6 +17,9 @@ import type { NextConfig } from 'next';
  */
 const config: NextConfig = {
   basePath: '/admin',
+  // Immagine di produzione autosufficiente (1F-W2); la radice del monorepo porta con sé i pacchetti di lavoro.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {

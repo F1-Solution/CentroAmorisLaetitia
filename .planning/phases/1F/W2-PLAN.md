@@ -62,32 +62,55 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T0 — Linea di base
 
-- [ ] `PROGRESS.md` letto; nessuna riga `1F-W2 STATUS:complete`.
-- [ ] Decisioni D225, D228, D249, D250, D251 registrate (DR-356…DR-360).
-- [ ] Database e oggetti di sviluppo in salute; nessun server di sviluppo acceso.
-- [ ] Prezzi e limiti di GHCR per i repository privati riletti sulla pagina ufficiale, con data.
+- [x] `PROGRESS.md` letto; nessuna riga `1F-W2 STATUS:complete`.
+- [x] Decisioni D225, D228, D249, D250, D251 registrate (DR-356…DR-360).
+- [x] Database e oggetti di sviluppo in salute; nessun server di sviluppo acceso.
+- [x] Prezzi e limiti di GHCR per i repository privati riletti sulla pagina ufficiale, con data:
+  il 2026-11-04 `docs.github.com/en/billing/concepts/product-billing/github-packages` dice
+  «Container image storage and bandwidth for the Container registry is currently free», con
+  un mese di preavviso per i cambi.
 
 ### T1 — Rotte di stato di sito e area (prova prima)
 
-- [ ] Prove in `apps/web/tests/` e `apps/admin/tests/`: la rotta di stato risponde 200 con
+- [x] Prove in `apps/web/tests/` e `apps/admin/tests/`: la rotta di stato risponde 200 con
   `{ status: 'ok' }`, senza interrogare l'API; **rosse** prima (rotta assente).
-- [ ] Rotta in `apps/web/src/app/health/live/route.ts` e
+- [x] Rotta in `apps/web/src/app/health/live/route.ts` e
   `apps/admin/src/app/health/live/route.ts` (`/admin/health/live` per il `basePath`).
-- [ ] Verificare che nessun contenuto importato usi il percorso `/health/`: conteggio sul
-  database di sviluppo in sola lettura.
-- [ ] `/health/ready` dell'API controlla anche l'archivio a oggetti? **No** in questa wave:
+- [x] Verificare che nessun contenuto importato usi il percorso `/health/`: conteggio sul
+  database di sviluppo in sola lettura (0 contenuti su 108, 0 termini, 0 redirect).
+- [x] Il `proxy` del sito esclude `health/` dal suo filtro, così la rotta non chiede
+  redirect all'API. Il sito ha `trailingSlash`: il health check del Compose usa
+  `/health/live/` (senza barra risponde 308).
+- [x] `/health/ready` dell'API controlla anche l'archivio a oggetti? **No** in questa wave:
   cambierebbe il contratto; si annota per la W4.
 
 ### T2 — Next in modalità `standalone`
 
-- [ ] `output: 'standalone'` e `outputFileTracingRoot` alla radice del monorepo in
+- [x] `output: 'standalone'` e `outputFileTracingRoot` alla radice del monorepo in
   `apps/web/next.config.ts` e `apps/admin/next.config.ts`.
-- [ ] `pnpm build`, e2e di sviluppo verdi (`next start` resta com'è per Playwright).
-- [ ] DR-360: in produzione `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL` vuoti danno
+- [x] `pnpm build`, e2e di sviluppo verdi (`next start` resta com'è per Playwright): 69/69.
+- [x] DR-360: in produzione `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL` vuoti danno
   indirizzi relativi (`/api`, `/media`, sito sulla stessa origine); prova rossa prima per
   `api.ts`, `upload.ts`, `siteUrl.ts` dell'area e `api.ts`, `proxy.ts` del sito; in
   sviluppo il valore assoluto di `.env` resta valido. Il sito, lato server, usa `API_URL`
   interno al Compose.
+  - Area: `apps/admin/src/lib/apiBase.ts` (assente → `http://localhost:3002`, vuoto → `/api`,
+    assoluto senza barra finale), usata da `api.ts` e `upload.ts`; prova
+    `api-base-1f.test.ts` 4/5 rossa prima. `siteUrl.ts` era già relativo con il valore
+    vuoto (`content-preview.test.tsx`): nessuna modifica.
+  - Sito: `apps/web/src/lib/apiUrl.ts` (`API_URL`, poi `NEXT_PUBLIC_API_URL`, i vuoti valgono
+    assenti), usata da `api.ts`, `proxy.ts` e `next.config.ts`; prova `api-url-1f.test.ts`
+    6/8 rossa prima (il vuoto diventava un indirizzo relativo che il server non sa chiamare).
+  - `turbo.json`: la cache della build dipende anche da `NEXT_PUBLIC_SITE_URL` e `API_URL`.
+  - Build con le due variabili vuote: 0 `localhost` nei file statici di sito e area.
+    `apiBase()` legge la variabile in linea perché la build tolga il ramo del predefinito.
+    `server.js` di `standalone` contro una finta API: `API_URL` letto all'avvio da proxy e
+    pagine; `/health/live/` e `/admin/health/live` 200.
+  - **Per la T7:** le riscritture di `next.config.ts` (`/media/*`, `/forms/*`) si fissano nella
+    build; in produzione Caddy deve instradare all'API anche `/forms/*`, non solo `/media/*`, e
+    togliere il prefisso `/api` (`handle_path`), perché l'API risponde dalla radice.
+  - **Per la T9:** il controllo di W2-8 cerca `localhost` nei file statici; nei file del server
+    il predefinito di sviluppo resta come testo e non è un errore.
 
 ### T3 — Impacchettamento dell'API (DR-358)
 

@@ -1,4 +1,5 @@
 import type { BlockDocument, FormsMap, MediaMap, PostListsMap, SlidersMap } from '@amoris/blocks';
+import { apiUrl } from './apiUrl';
 
 /**
  * Lettura dei dati del sito pubblico, solo dal modulo `public` dell'API (DR-104):
@@ -6,11 +7,7 @@ import type { BlockDocument, FormsMap, MediaMap, PostListsMap, SlidersMap } from
  * sul server a ogni richiesta, senza cache intermedia (DR-105).
  */
 
-const API_URL = (
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3002'
-).replace(/\/$/, '');
+const API_URL = apiUrl();
 
 export class ApiUnavailable extends Error {}
 

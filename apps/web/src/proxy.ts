@@ -3,6 +3,7 @@ import { FEED_ITEMS, renderFeed } from './lib/feed';
 import { languageOf } from './lib/wpDate';
 import { asNextParams, isPreviewPath } from './lib/previewPath';
 import { siteUrl } from './lib/site';
+import { apiUrl } from './lib/apiUrl';
 
 /**
  * Ciò che si risponde prima di rendere una pagina.
@@ -16,11 +17,7 @@ import { siteUrl } from './lib/site';
  *   non visivi, che non meritano una pagina propria.
  */
 
-const API_URL = (
-  process.env.API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3002'
-).replace(/\/$/, '');
+const API_URL = apiUrl();
 
 interface Rule {
   readonly targetPath: string;
@@ -102,6 +99,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Non i file del sito né quelli dei media: solo i percorsi che potrebbero essere pagine.
-  matcher: ['/((?!_next/|media/|fonts/|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)'],
+  // Non i file del sito, quelli dei media e la rotta di stato: solo i percorsi che potrebbero essere pagine.
+  matcher: ['/((?!_next/|media/|fonts/|health/|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)'],
 };

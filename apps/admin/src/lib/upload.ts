@@ -13,8 +13,9 @@
 
 import { DEFAULT_MEDIA_LIMITS, mediaMessages } from '@amoris/contracts/mediaRules';
 import { ApiError } from './api';
+import { apiBase } from './apiBase';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
+const BASE = apiBase();
 
 const CSRF_COOKIE = 'amoris_csrf';
 
