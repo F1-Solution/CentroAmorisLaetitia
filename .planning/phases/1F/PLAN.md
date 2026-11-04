@@ -41,7 +41,7 @@ Regola della 1D: **Sonnet** per il codice, **Haiku** per la documentazione; la s
 review a un revisore separato (`security-reviewer`). Ordini, pagamenti e accessi agli
 account dei fornitori li fa l'utente per il Centro, con un handoff per ciascuno:
 l'agente **non riceve mai** credenziali di fornitori, DNS o server (`deployment-gate`).
-Chi esegue i comandi sul server lo decide D228.
+Chi esegue i comandi sul server lo stabilisce DR-357 (D228).
 
 | Wave | Agente | File toccati |
 |---|---|---|
@@ -77,7 +77,7 @@ Chi esegue i comandi sul server lo decide D228.
 | Percorso | Novità |
 |---|---|
 | `infra/` | Dockerfile delle tre applicazioni e del contenitore di pulizia; Compose di produzione e di staging; `Caddyfile` di produzione; servizio `backup` (percorsi fissati nel `W2-PLAN.md`) |
-| `.github/workflows/` | costruzione delle immagini con l'hash del commit; rilascio secondo D228 |
+| `.github/workflows/` | costruzione delle immagini con l'hash del commit; rilascio secondo DR-357 |
 | `docs/deploy/` | `infrastructure-plan.md`, `backup-verification.md`, `rollback-plan.md`, `gate-checklist.md`, rapporto della security review, `release-report-<data>.md` |
 | `.planning/phases/1F/AUDIT.md` | nuovo |
 
@@ -140,14 +140,14 @@ Già decise per la 1F:
 | ~~**D221**~~ | W9-N7 | **DR-330**: corretto nella 1F |
 | ~~**D232**~~ | W9-N8 | **DR-336**: corretto nella `1F-W1` |
 | ~~**D233**~~ | N2, tempi dell'archivio | **DR-338**: misura e taratura nella `1F-W5` |
+| ~~**D225**~~ | Dove si conservano le immagini | **DR-356**: registro di GitHub (GHCR), privato |
+| ~~**D228**~~ | Chi esegue i comandi sul server | **DR-357**: impianto da handoff, rilasci da GitHub Actions avviata a mano |
 
 Ancora aperte, da chiedere con `grill-me` prima della wave indicata. Nessuna wave parte
 con una decisione bloccante aperta.
 
 | id | Decisione | Opzioni | Raccomandazione | Termine |
 |---|---|---|---|---|
-| **D225** | Dove si conservano le immagini | A registro di GitHub, privato · B costruzione sul server, senza registro · C registro di un altro fornitore | A: stesso posto della CI, etichette per commit, nessun costo per un repository di queste dimensioni (da verificare) | prima della `1F-W2` |
-| **D228** | Chi esegue i comandi sul server | A l'utente, da handoff · B GitHub Actions avviata a mano, con approvazione dell'ambiente e chiave SSH nei segreti del repository · C misto: impianto da handoff, rilasci da B | C: l'impianto si fa una volta, i rilasci ripetuti restano tracciati e l'agente non vede mai la chiave | prima della `1F-W2` |
 | **D226** | Come si raggiunge lo staging | A sottodominio con record DNS e accesso protetto da password · B solo tramite tunnel SSH, senza DNS · C indirizzo IP con password, senza TLS valido | A: si prova anche il certificato, come in produzione | prima della `1F-W5` |
 | **D229** | PDF importati con metadati (DR-259: 29 su 48 con l'autore) | A ripulirli tutti con la pulizia del CMS · B lasciarli byte per byte · C ripulire solo quelli con l'autore | da formulare con i numeri di ADR-012 §6 | prima della `1F-W7` |
 | **D227** | Sonda esterna e destinatari degli avvisi | A servizio gratuito esterno · B sonda dalla Storage Box o da un'altra macchina del Centro · C nessuna sonda in Fase 1 | da formulare con i servizi verificati | prima della `1F-W8` |
