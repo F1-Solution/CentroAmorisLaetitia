@@ -1,0 +1,11 @@
+# Lo staging non si indicizza (PLAN W5): nessuna pagina, nessun file, robots.txt che rifiuta.
+header {
+	defer
+	X-Robots-Tag "noindex, nofollow"
+}
+
+handle /robots.txt {
+	respond "User-agent: *
+Disallow: /
+" 200
+}

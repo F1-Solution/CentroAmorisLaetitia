@@ -308,7 +308,9 @@ describe('pulizia su rete interna (DR-359, DR-362, criterio W2-5)', () => {
       '-e',
       `SCRUB_SERVICE_TOKEN=${TOKEN}`,
       '-e',
-      `SCRUB_MAX_BODY_BYTES=${LIMIT}`,
+      `MEDIA_MAX_PDF_BYTES=${LIMIT}`,
+      '-e',
+      `MEDIA_MAX_VIDEO_BYTES=${LIMIT}`,
       image('scrub'),
     ]);
     if (run.status !== 0) throw new Error(run.stderr);
@@ -369,6 +371,25 @@ describe('pulizia su rete interna (DR-359, DR-362, criterio W2-5)', () => {
     expect(host.Tmpfs['/tmp']).toContain('size=256m');
     const user = docker(['exec', service, 'id', '-u']);
     expect(user.stdout.trim()).not.toBe('0');
+  });
+
+  it('con una cartella temporanea troppo piccola per il video più grande non parte (T6)', () => {
+    // Limiti predefiniti: video da 100 MiB, quindi servono 200 MiB per originale e ripulito.
+    const result = docker([
+      'run',
+      '--rm',
+      '--read-only',
+      '--tmpfs',
+      '/tmp:size=64m,mode=1777',
+      '--network',
+      'none',
+      '-e',
+      `SCRUB_SERVICE_TOKEN=${TOKEN}`,
+      image('scrub'),
+    ]);
+    expect(result.status).toBe(78);
+    expect(result.stderr).toContain('TMPDIR');
+    expect(result.stderr).not.toContain(TOKEN);
   });
 
   it('porta qpdf 12.4.2, ffmpeg e ffprobe 9.0.2 e nessun node_modules', () => {

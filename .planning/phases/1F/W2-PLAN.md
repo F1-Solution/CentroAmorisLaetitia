@@ -178,31 +178,63 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
     `Content-Type` e limite del file ripulito in `X-Max-Bytes`; esiti 200, 401, 413, 415,
     422 (illeggibile), 503 (programmi assenti o servizio occupato). Una pulizia alla volta.
     Chiavi dell'API: `SCRUB_SERVICE_URL` e `SCRUB_SERVICE_TOKEN` (vuote = assenti); del
-    servizio: `SCRUB_SERVICE_TOKEN`, `SCRUB_HOST`, `SCRUB_PORT`, `SCRUB_MAX_BODY_BYTES`, i
-    percorsi dei programmi e i tempi massimi.
-  - **«Limite di memoria»:** la prova rifiuta con 413 il file oltre `SCRUB_MAX_BODY_BYTES`
+    servizio: `SCRUB_SERVICE_TOKEN`, `SCRUB_HOST`, `SCRUB_PORT`, i percorsi dei programmi e
+    i tempi massimi (dalla T6 il limite dei file viene da `MEDIA_MAX_PDF_BYTES` e
+    `MEDIA_MAX_VIDEO_BYTES`, vedi sotto).
+  - **«Limite di memoria»:** la prova rifiuta con 413 il file oltre il limite del servizio
     e verifica con `docker inspect` memoria 1 GB, file system in sola lettura e `/tmp` da
     256 MB. La taratura con un MP4 reale da 100 MB resta alla W5 (DR-338).
-  - **Per la T6:** `SCRUB_MAX_BODY_BYTES` del servizio non deve essere minore di
-    `MEDIA_MAX_PDF_BYTES` e `MEDIA_MAX_VIDEO_BYTES` dell'API, altrimenti un file accettato
-    dall'API torna «troppo grande»; il Compose li fissa insieme. Il `tmpfs` di `/tmp` conta
-    nel limite di memoria: dimensionarlo con il file più grande (originale + ripulito).
+  - **Per la T6 (fatto nella T6):** il limite del servizio non doveva essere minore di quelli
+    dell'API; il Compose li fissa insieme. Il `tmpfs` di `/tmp` conta nel limite di memoria:
+    dimensionarlo con il file più grande (originale + ripulito).
   - **Limite noto:** se l'API smette di attendere, il servizio finisce comunque la pulizia
     in corso entro il tempo massimo del programma; con una pulizia alla volta il carico
     resta limitato. Nessun tempo massimo sulla scrittura della risposta (rete interna).
 
 ### T6 — Compose di produzione e di staging
 
-- [ ] `infra/deploy/compose.yml`: `caddy`, `web`, `admin`, `api`, scrub, `db`, `objects`,
+- [x] `infra/deploy/compose.yml`: `caddy`, `web`, `admin`, `api`, scrub, `db`, `objects`,
   `objects-init`; `migrate` nel profilo `release`, mai all'avvio (ADR-009 §4.4); il
   servizio `backup` arriva nella W3.
-- [ ] Etichetta delle immagini da variabile (`IMAGE_TAG`) **senza valore predefinito**: senza,
+- [x] Etichetta delle immagini da variabile (`IMAGE_TAG`) **senza valore predefinito**: senza,
   il Compose non parte.
-- [ ] Solo Caddy pubblica porte; `db` e `objects` su una rete interna; limiti di memoria per
+- [x] Solo Caddy pubblica porte; `db` e `objects` su una rete interna; limiti di memoria per
   servizio, con la somma di produzione e staging sotto gli 8 GB di DR-334.
-- [ ] Staging: stesso file, progetto `amoris-staging`, `.env` proprio, porte proprie, volumi
+- [x] Staging: stesso file, progetto `amoris-staging`, `.env` proprio, porte proprie, volumi
   propri; in staging `X-Robots-Tag: noindex` su tutto e `robots.txt` che rifiuta (PLAN W5).
-- [ ] `caddy` fissato per versione e digest.
+- [x] `caddy` fissato per versione e digest.
+  - **Come è fatto:** progetto `amoris-${AMORIS_ENV}` (`production` o `staging`; deve esistere
+    `infra/deploy/ambiente/<valore>.env`, altrimenti il Compose non parte). Obbligatorie
+    senza predefinito: `AMORIS_ENV`, `IMAGE_PREFIX`, `IMAGE_TAG`, `CADDY_SITE_ADDRESS`,
+    `CADDY_HTTP_PORT`, `CADDY_HTTPS_PORT`, `SITE_URL`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`,
+    `S3_SECRET_KEY`, `IP_HASH_SALT`, `CSRF_SECRET`, `SCRUB_SERVICE_TOKEN`. Immagini del
+    progetto `${IMAGE_PREFIX}-<app>:${IMAGE_TAG}`; `migrate` usa l'immagine dell'API con
+    `node bin/migrate.js`. Terzi per digest: `caddy:2.10.2-alpine`, `postgres:17.11-alpine`,
+    MinIO e client Chainguard (DR-101, senza etichetta `latest`).
+  - **Reti:** `edge` (unica con uscita, solo Caddy), `app` (Caddy, sito, area, API), `data`
+    (API, database, archivio, `objects-init`, `migrate`), `scrub` (solo API e pulizia), tutte
+    `internal` salvo `edge`. Sito, area e API non hanno uscita verso Internet: se un e2e
+    della T10 lo smentisce, si decide lì.
+  - **Memoria (MiB):** Caddy 128, sito 384, area 256, API 640, pulizia 1024, database 512,
+    archivio 384 = 3328 per ambiente, 6656 con lo staging (≤ 7 GiB, 1 GiB al sistema);
+    `objects-init` 64 e `migrate` 256 escono a lavoro finito. Taratura sul server nella W5.
+  - **Limiti allineati:** API e pulizia ricevono `MEDIA_MAX_PDF_BYTES` e
+    `MEDIA_MAX_VIDEO_BYTES` dallo stesso blocco del Compose; il servizio prende il maggiore
+    come limite dei file (tolta `SCRUB_MAX_BODY_BYTES`) e all'avvio esce con 78 se `/tmp` non
+    contiene originale e ripulito del caso più grande (`/tmp` da 256 MiB per 100 MiB di video).
+  - **Sicurezza:** sito, area, API, pulizia e `migrate` in sola lettura con `/tmp` in
+    memoria, `cap_drop: ALL`, `no-new-privileges`; Caddy con la sola `NET_BIND_SERVICE`.
+  - **Caddy:** `infra/deploy/caddy/Caddyfile` con l'instradamento di sviluppo, indirizzo da
+    `CADDY_SITE_ADDRESS`, controllo di salute su `127.0.0.1:2020` e `import` di
+    `production.caddy` o `staging.caddy`; lo staging sostituisce ogni `X-Robots-Tag` con
+    `noindex, nofollow` e risponde da sé a `robots.txt`. HTTPS, HSTS, intestazioni nuove,
+    CSP e cache dei media restano alla T7.
+  - **Per la W5:** uno staging su porte diverse da 80 e 443 non ottiene un certificato
+    pubblico da solo (le sfide ACME usano 80 o 443): sul server serve un instradamento per
+    nome davanti ai due Caddy, o un certificato DNS. `objects-init` usa lo script di
+    `infra/compose/`: sul server serve la cartella `infra/` intera.
+  - **Per la T8:** `POSTGRES_PASSWORD` entra in `DATABASE_URL`: generarla senza caratteri
+    riservati degli URL (esadecimale).
 
 ### T7 — `Caddyfile` di produzione
 

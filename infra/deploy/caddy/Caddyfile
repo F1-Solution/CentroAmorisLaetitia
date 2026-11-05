@@ -1,0 +1,58 @@
+# Caddy di produzione e di staging (1F-W2 T6): instradamento di ADR-003 §3, uguale allo sviluppo.
+# HTTPS, HSTS, Permissions-Policy, CSP e cache dei media arrivano con la T7 (D252, D253).
+#
+# Regola che non si viola: **qui dentro non entra nessun redirect di contenuto**.
+# I redirect delle pagine allegato e dei percorsi storici sono dati in tabella e li serve
+# l'applicazione (ADR-003 §3.5, requisito RC-07).
+
+{
+	admin off
+}
+
+# Controllo di salute del Compose: solo dentro il contenitore, mai pubblicato.
+http://127.0.0.1:2020 {
+	bind 127.0.0.1
+	respond /health/live 200
+}
+
+{$CADDY_SITE_ADDRESS} {
+	encode zstd gzip
+
+	# `defer`: si applicano dopo la risposta dell'applicazione, così «?» vale davvero «solo se assente».
+	header {
+		defer
+		X-Content-Type-Options "nosniff"
+		# Solo se assente: l'anteprima e l'area impostano no-referrer e non vanno sovrascritte.
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	# L'area amministrativa non va indicizzata (ADR-008 §3.3 regola 2).
+	# `defer`: vale anche se l'applicazione manda un suo X-Robots-Tag.
+	@admin path /admin /admin/*
+	header @admin {
+		defer
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	# Regole dell'ambiente: production.caddy o staging.caddy.
+	import {$AMORIS_ENV}.caddy
+
+	handle /api/* {
+		reverse_proxy api:3002
+	}
+
+	# I media li serve l'API, non lo storage (ADR-004 §3.6).
+	handle /media/* {
+		reverse_proxy api:3002
+	}
+
+	handle /admin* {
+		reverse_proxy admin:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
