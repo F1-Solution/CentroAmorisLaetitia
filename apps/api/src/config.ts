@@ -23,6 +23,9 @@ const secret = (nome: string) =>
     .string({ error: `${nome} manca, ed è obbligatoria: è un segreto e non ha valore predefinito` })
     .min(32, `${nome} è troppo corta: servono almeno 32 caratteri`);
 
+/** Una variabile vuota vale come assente (`.env` e Compose le lasciano spesso così). */
+const emptyAsAbsent = (value: unknown): unknown => (value === '' ? undefined : value);
+
 const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
@@ -112,6 +115,25 @@ const configSchema = z.object({
   FFPROBE_PATH: z.string().min(1).default('ffprobe'),
   SCRUB_PDF_TIMEOUT_MS: z.coerce.number().int().min(1).default(30000),
   SCRUB_VIDEO_TIMEOUT_MS: z.coerce.number().int().min(1).default(120000),
+  /** Servizio di pulizia su rete interna (DR-359): se c'è, PDF e MP4 passano solo da lui (DR-363). */
+  SCRUB_SERVICE_URL: z.preprocess(
+    emptyAsAbsent,
+    z.url({ protocol: /^https?$/, error: 'deve essere un indirizzo http o https' }).optional(),
+  ),
+  /** Gettone condiviso con il servizio di pulizia (DR-362): obbligatorio con l'indirizzo. */
+  SCRUB_SERVICE_TOKEN: z.preprocess(emptyAsAbsent, secret('SCRUB_SERVICE_TOKEN').optional()),
+});
+
+/** Con l'indirizzo del servizio di pulizia il gettone è obbligatorio. */
+const checkedSchema = configSchema.superRefine((config, context) => {
+  if (config.SCRUB_SERVICE_URL !== undefined && config.SCRUB_SERVICE_TOKEN === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['SCRUB_SERVICE_TOKEN'],
+      message:
+        'manca, ed è obbligatoria con SCRUB_SERVICE_URL: è un segreto e non ha valore predefinito',
+    });
+  }
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -125,7 +147,7 @@ export class ConfigError extends Error {
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const result = configSchema.safeParse(env);
+  const result = checkedSchema.safeParse(env);
   if (result.success) return result.data;
 
   const problems = result.error.issues.map((issue) => {
@@ -143,6 +165,9 @@ export function scrubToolsOf(config: Config): ScrubTools {
     ffprobePath: config.FFPROBE_PATH,
     pdfTimeoutMs: config.SCRUB_PDF_TIMEOUT_MS,
     videoTimeoutMs: config.SCRUB_VIDEO_TIMEOUT_MS,
+    ...(config.SCRUB_SERVICE_URL !== undefined && config.SCRUB_SERVICE_TOKEN !== undefined
+      ? { service: { url: config.SCRUB_SERVICE_URL, token: config.SCRUB_SERVICE_TOKEN } }
+      : {}),
   };
 }
 

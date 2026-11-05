@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 const dockerDir = path.join(repoRoot, 'infra', 'docker');
-const APPS = ['web', 'admin', 'api'] as const;
+const APPS = ['web', 'admin', 'api', 'scrub'] as const;
 
 interface Stage {
   from: string;
@@ -88,6 +88,34 @@ describe.each(APPS)('%s.Dockerfile', (app) => {
   it("nell'ultimo stadio dichiara un health check", () => {
     const last = stages(read(app)).at(-1);
     expect(last?.lines.some((line) => /^HEALTHCHECK\s/i.test(line))).toBe(true);
+  });
+});
+
+describe('scrub.Dockerfile: programmi della pulizia come la CI (DR-268, DR-359)', () => {
+  const ci = readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+  const ciValue = (name: string): string => {
+    const match = new RegExp(`^\\s*${name}:\\s*'?([^'\\s]+)'?\\s*$`, 'm').exec(ci);
+    if (!match?.[1]) throw new Error(`${name} non trovato in ci.yml`);
+    return match[1];
+  };
+
+  it('scarica ogni file da Internet con impronta dichiarata', () => {
+    const adds = instructions(read('scrub')).filter((line) => /^ADD\s.*https?:\/\//i.test(line));
+    expect(adds.length).toBe(2);
+    for (const line of adds) expect(line).toMatch(/--checksum=sha256:[0-9a-f]{64}\s/);
+  });
+
+  it('usa le stesse versioni e le stesse impronte di ci.yml', () => {
+    const text = read('scrub');
+    for (const name of [
+      'QPDF_VERSION',
+      'QPDF_SHA256',
+      'FFMPEG_RELEASE',
+      'FFMPEG_ARCHIVE',
+      'FFMPEG_SHA256',
+    ]) {
+      expect(text, name).toContain(ciValue(name));
+    }
   });
 });
 

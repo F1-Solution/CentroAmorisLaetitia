@@ -36,6 +36,7 @@ const result = await build({
     server: 'src/server.ts',
     'bin/migrate': path.join(dbDir, 'scripts', 'migrate.ts'),
     'bin/account-create': 'tools/createLocalAccount.ts',
+    'bin/scrub-server': 'src/scrubServer.ts',
   },
   outdir: distDir,
   bundle: true,

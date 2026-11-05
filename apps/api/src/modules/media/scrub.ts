@@ -7,7 +7,15 @@ import type { Logger } from './derivatives.js';
 
 /** Pulizia dei metadati di PDF e MP4 con `qpdf`, `ffmpeg` e `ffprobe` in processi separati (DR-254, DR-264, ADR-012). */
 
+/** Servizio di pulizia su rete interna (DR-359) e gettone condiviso (DR-362). */
+export interface ScrubServiceTarget {
+  readonly url: string;
+  readonly token: string;
+}
+
 export interface ScrubTools {
+  /** Se c'è, PDF e MP4 si ripuliscono solo attraverso il servizio, mai con i programmi locali (DR-363). */
+  readonly service?: ScrubServiceTarget;
   readonly qpdfPath: string;
   readonly ffmpegPath: string;
   readonly ffprobePath: string;

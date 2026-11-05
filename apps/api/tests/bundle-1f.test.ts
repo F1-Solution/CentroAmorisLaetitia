@@ -96,7 +96,12 @@ beforeAll(() => {
 describe('bundle di produzione dell API (DR-358)', () => {
   it('lo script di impacchettamento termina senza errori', () => {
     expect(bundleResult.status, String(bundleResult.stderr)).toBe(0);
-    for (const file of ['server.js', 'bin/migrate.js', 'bin/account-create.js']) {
+    for (const file of [
+      'server.js',
+      'bin/migrate.js',
+      'bin/account-create.js',
+      'bin/scrub-server.js',
+    ]) {
       expect(existsSync(path.join(distDir, file)), file).toBe(true);
     }
   });
@@ -154,6 +159,73 @@ describe('bundle di produzione dell API (DR-358)', () => {
     } finally {
       child.kill('SIGTERM');
     }
+  });
+
+  it('il servizio di pulizia non carica moduli esterni: la sua immagine non ha node_modules (DR-361)', () => {
+    const metafile = JSON.parse(
+      readFileSync(path.join(distDir, 'bundle-meta.json'), 'utf8'),
+    ) as Metafile;
+    const builtins = new Set(builtinModules);
+    const seen = new Set<string>();
+    const externals = new Set<string>();
+    const visit = (output: string) => {
+      if (seen.has(output)) return;
+      seen.add(output);
+      for (const entry of metafile.outputs[output]?.imports ?? []) {
+        if (!entry.external) {
+          visit(entry.path);
+          continue;
+        }
+        const name = entry.path.replace(/^node:/, '');
+        if (!builtins.has(name.split('/')[0] ?? name)) externals.add(packageName(entry.path));
+      }
+    };
+    visit('dist/bin/scrub-server.js');
+    expect(seen.size).toBeGreaterThan(0);
+    expect(metafile.outputs['dist/bin/scrub-server.js']).toBeDefined();
+    expect([...externals]).toEqual([]);
+  });
+
+  it('il servizio di pulizia parte con node, risponde a /health/live e rifiuta chi non ha il gettone', async () => {
+    const port = await freePort();
+    const child = spawn(process.execPath, [path.join(distDir, 'bin', 'scrub-server.js')], {
+      cwd: apiDir,
+      env: childEnv({
+        SCRUB_HOST: '127.0.0.1',
+        SCRUB_PORT: String(port),
+        SCRUB_SERVICE_TOKEN: 'gettone-sintetico-del-servizio-di-pulizia-1f',
+      }),
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
+    try {
+      let response: Response | undefined;
+      const deadline = Date.now() + 20_000;
+      while (Date.now() < deadline && child.exitCode === null) {
+        try {
+          response = await fetch(`http://127.0.0.1:${port}/health/live`);
+          break;
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      }
+      expect(response?.status, stderr).toBe(200);
+      const denied = await fetch(`http://127.0.0.1:${port}/scrub`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/pdf' },
+        body: '%PDF-1.7',
+      });
+      expect(denied.status).toBe(401);
+    } finally {
+      child.kill('SIGTERM');
+    }
+  });
+
+  it('il servizio di pulizia senza gettone non parte e dice quale variabile manca', () => {
+    const result = runNode('bin/scrub-server.js', { SCRUB_PORT: '0' });
+    expect(result.status).toBe(78);
+    expect(String(result.stderr)).toContain('SCRUB_SERVICE_TOKEN');
   });
 
   describe('con un database temporaneo', () => {

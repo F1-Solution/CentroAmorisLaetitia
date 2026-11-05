@@ -158,21 +158,38 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
     `@node-rs/argon2`. Il deploy dell'API gira quindi in rete (stesse versioni del lockfile,
     verificato) e la build fallisce se i due moduli non si caricano.
 
-### T5 — Contenitore della pulizia (DR-359)
+### T5 — Contenitore della pulizia (DR-359, DR-361…DR-363)
 
-- [ ] Prova rossa prima: con il contenitore spento, un PDF caricato si rifiuta con il
+- [x] Prova rossa prima: con il contenitore spento, un PDF caricato si rifiuta con il
   messaggio di oggi (programmi assenti), le immagini si caricano.
-- [ ] `infra/docker/scrub.Dockerfile` con `qpdf` 12.4.2, `ffmpeg` e `ffprobe` 9.0.2 dagli
+- [x] `infra/docker/scrub.Dockerfile` con `qpdf` 12.4.2, `ffmpeg` e `ffprobe` 9.0.2 dagli
   stessi binari e dalle stesse impronte della CI (`ci.yml`, DR-268).
-- [ ] DR-359: piccolo servizio HTTP di pulizia (Node, nessun framework nuovo) su una rete
+- [x] DR-359: piccolo servizio HTTP di pulizia (Node, nessun framework nuovo) su una rete
   Docker `internal: true`, raggiungibile solo dall'API; l'API gli invia il file e riceve
   quello ripulito, con gli stessi esiti di oggi (programmi assenti, file illeggibile,
   codec rifiutato). Nuova chiave d'ambiente per l'indirizzo del servizio; senza, l'API
   usa i programmi locali come in sviluppo e in CI. Cartella temporanea `tmpfs` con quota.
   Un segreto condiviso fra API e servizio, perché la rete interna non basta da sola.
-- [ ] Prove: un PDF e un MP4 sintetici si ripuliscono attraverso il contenitore; un file
-  che supera il limite di memoria si rifiuta; dal contenitore nessuna connessione verso
+- [x] Prove: un PDF e un MP4 sintetici si ripuliscono attraverso il contenitore; un file
+  che supera il limite si rifiuta; dal contenitore nessuna connessione verso
   Internet (`curl` o `getent` falliscono).
+  - **Come è fatto:** ingresso `bin/scrub-server.js` del bundle dell'API (DR-361), che riusa
+    la pulizia di oggi; `POST /scrub` con `Authorization: Bearer` (DR-362), tipo del file in
+    `Content-Type` e limite del file ripulito in `X-Max-Bytes`; esiti 200, 401, 413, 415,
+    422 (illeggibile), 503 (programmi assenti o servizio occupato). Una pulizia alla volta.
+    Chiavi dell'API: `SCRUB_SERVICE_URL` e `SCRUB_SERVICE_TOKEN` (vuote = assenti); del
+    servizio: `SCRUB_SERVICE_TOKEN`, `SCRUB_HOST`, `SCRUB_PORT`, `SCRUB_MAX_BODY_BYTES`, i
+    percorsi dei programmi e i tempi massimi.
+  - **«Limite di memoria»:** la prova rifiuta con 413 il file oltre `SCRUB_MAX_BODY_BYTES`
+    e verifica con `docker inspect` memoria 1 GB, file system in sola lettura e `/tmp` da
+    256 MB. La taratura con un MP4 reale da 100 MB resta alla W5 (DR-338).
+  - **Per la T6:** `SCRUB_MAX_BODY_BYTES` del servizio non deve essere minore di
+    `MEDIA_MAX_PDF_BYTES` e `MEDIA_MAX_VIDEO_BYTES` dell'API, altrimenti un file accettato
+    dall'API torna «troppo grande»; il Compose li fissa insieme. Il `tmpfs` di `/tmp` conta
+    nel limite di memoria: dimensionarlo con il file più grande (originale + ripulito).
+  - **Limite noto:** se l'API smette di attendere, il servizio finisce comunque la pulizia
+    in corso entro il tempo massimo del programma; con una pulizia alla volta il carico
+    resta limitato. Nessun tempo massimo sulla scrittura della risposta (rete interna).
 
 ### T6 — Compose di produzione e di staging
 

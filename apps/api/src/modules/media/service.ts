@@ -30,6 +30,7 @@ import {
   scrubFile,
   type ScrubTools,
 } from './scrub.js';
+import { scrubViaService, type ScrubMime } from './scrubClient.js';
 import type { listQuery, updateBody } from './schemas.js';
 import { sourceBaseName, splitFileName } from './sizes.js';
 import { loggableError } from './storeErrorLog.js';
@@ -143,7 +144,11 @@ async function scrubBody(
   context: ScrubContext,
 ): Promise<Buffer> {
   try {
-    return await scrubFile(mime, body, context.tools, rule.maxBytes, context.log);
+    const { service } = context.tools;
+    // Con il servizio configurato non si ripiega mai sui programmi locali (DR-363).
+    return service
+      ? await scrubViaService(mime as ScrubMime, body, service, context.tools, rule.maxBytes)
+      : await scrubFile(mime, body, context.tools, rule.maxBytes, context.log);
   } catch (error) {
     if (error instanceof ScrubTooLargeError) {
       throw mediaError('MEDIA_TOO_LARGE', mediaMessages.tooLarge(fileName, rule));

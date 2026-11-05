@@ -1,5 +1,6 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { buildPdf, MARKERS } from '../../../apps/api/tests/_support/syntheticFiles.js';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -12,7 +13,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * - avvia ogni immagine con file system in sola lettura e `/tmp` in memoria, con valori
  *   sintetici e nessun database raggiungibile, e attende lo stato «healthy» del suo
  *   health check e il 200 della rotta di stato;
- * - controlla utente, file scrivibili e moduli nativi dentro l'immagine.
+ * - controlla utente, file scrivibili e moduli nativi dentro l'immagine;
+ * - per la pulizia (DR-359): PDF e MP4 sintetici ripuliti attraverso il contenitore su una
+ *   rete interna, nessuna uscita verso Internet, file oltre il limite rifiutati.
  *
  * **Nessun dato reale.** I segreti sono sintetici e i contenitori non vedono nessun
  * database. Il controllo completo dei file delle immagini arriva con la CI (T9).
@@ -39,7 +42,7 @@ const SYNTHETIC_API_ENV = {
   CSRF_SECRET: 'segreto-sintetico-per-le-immagini-abbastanza-lungo',
 };
 
-const APPS: Record<'web' | 'admin' | 'api', AppSpec> = {
+const APPS: Record<'web' | 'admin' | 'api' | 'scrub', AppSpec> = {
   web: {
     port: 3000,
     health: '/health/live/',
@@ -53,6 +56,12 @@ const APPS: Record<'web' | 'admin' | 'api', AppSpec> = {
     writable: ['/app/apps/admin/.next/cache'],
   },
   api: { port: 3002, health: '/health/live', env: SYNTHETIC_API_ENV, writable: [] },
+  scrub: {
+    port: 3003,
+    health: '/health/live',
+    env: { SCRUB_SERVICE_TOKEN: 'gettone-sintetico-del-servizio-di-pulizia-1f' },
+    writable: [],
+  },
 };
 
 type AppName = keyof typeof APPS;
@@ -65,6 +74,25 @@ function docker(args: string[], input?: string) {
     input,
     maxBuffer: 64 * 1024 * 1024,
     timeout: 1_200_000,
+  });
+}
+
+interface BuildResult {
+  readonly status: number | null;
+  readonly stderr: string;
+}
+
+/** Costruzione asincrona: un `spawnSync` di minuti blocca il processo delle prove e Vitest scade. */
+function dockerBuild(args: string[]): Promise<BuildResult> {
+  return new Promise((resolve) => {
+    const child = spawn('docker', args, { cwd: repoRoot, stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer) => {
+      // Basta la coda del registro di costruzione per capire un errore.
+      stderr = (stderr + chunk.toString()).slice(-16_000);
+    });
+    child.on('error', (error) => resolve({ status: null, stderr: String(error) }));
+    child.on('close', (status) => resolve({ status, stderr }));
   });
 }
 
@@ -85,16 +113,18 @@ function baseImage(): string {
   return match[1];
 }
 
-const builds = new Map<AppName, ReturnType<typeof docker>>();
+const builds = new Map<AppName, BuildResult>();
+/** Rete Docker senza uscita verso Internet, come quella della pulizia in produzione (DR-359). */
+const NETWORK = `amoris-pulizia-${TAG}`;
 const containers: string[] = [];
 
-beforeAll(() => {
+beforeAll(async () => {
   const version = docker(['version', '--format', '{{.Server.Version}}']);
   if (version.status !== 0) throw new Error(`Docker non raggiungibile: ${version.stderr}`);
   for (const app of NAMES) {
     builds.set(
       app,
-      docker(['build', '-f', `infra/docker/${app}.Dockerfile`, '-t', image(app), '.']),
+      await dockerBuild(['build', '-f', `infra/docker/${app}.Dockerfile`, '-t', image(app), '.']),
     );
   }
 });
@@ -102,6 +132,7 @@ beforeAll(() => {
 afterAll(() => {
   if (containers.length > 0) docker(['rm', '-f', ...containers]);
   docker(['image', 'rm', '-f', ...NAMES.map(image), `amoris-contesto:${TAG}`]);
+  docker(['network', 'rm', NETWORK]);
 });
 
 describe('contesto di costruzione (.dockerignore)', () => {
@@ -250,5 +281,169 @@ describe('contenuto specifico', () => {
       'ls /app/server.js /app/bin/migrate.js /app/bin/account-create.js /app/drizzle/meta/_journal.json',
     ]);
     expect(files.status, files.stderr).toBe(0);
+  });
+});
+
+describe('pulizia su rete interna (DR-359, DR-362, criterio W2-5)', () => {
+  const TOKEN = APPS.scrub.env.SCRUB_SERVICE_TOKEN ?? '';
+  const LIMIT = 1_000_000;
+  let service = '';
+
+  beforeAll(() => {
+    docker(['network', 'rm', NETWORK]);
+    const network = docker(['network', 'create', '--internal', NETWORK]);
+    if (network.status !== 0) throw new Error(network.stderr);
+    const run = docker([
+      'run',
+      '-d',
+      '--read-only',
+      '--tmpfs',
+      '/tmp:size=256m,mode=1777',
+      '--memory',
+      '1g',
+      '--network',
+      NETWORK,
+      '--network-alias',
+      'scrub',
+      '-e',
+      `SCRUB_SERVICE_TOKEN=${TOKEN}`,
+      '-e',
+      `SCRUB_MAX_BODY_BYTES=${LIMIT}`,
+      image('scrub'),
+    ]);
+    if (run.status !== 0) throw new Error(run.stderr);
+    service = run.stdout.trim();
+    containers.push(service);
+  });
+
+  /** Esegue uno script come cliente sulla stessa rete interna, con l'immagine della pulizia. */
+  function client(script: string, input?: Buffer) {
+    return spawnSync(
+      'docker',
+      [
+        'run',
+        '--rm',
+        '-i',
+        '--network',
+        NETWORK,
+        '--tmpfs',
+        '/tmp:mode=1777',
+        '-e',
+        `TOKEN=${TOKEN}`,
+        '--entrypoint',
+        'node',
+        image('scrub'),
+        '--input-type=module',
+        '-e',
+        script,
+      ],
+      { cwd: repoRoot, input, encoding: 'utf8', timeout: 180_000, maxBuffer: 16 * 1024 * 1024 },
+    );
+  }
+
+  /** Ultima riga JSON stampata dal cliente. */
+  const lastJson = (stdout: string): unknown =>
+    JSON.parse(stdout.trim().split('\n').at(-1) ?? '{}');
+
+  /** Attende che il servizio risponda dalla rete interna. */
+  const WAIT = [
+    'for (let i = 0; i < 60; i++) {',
+    "  try { if ((await fetch('http://scrub:3003/health/live')).ok) break; } catch {}",
+    '  await new Promise((r) => setTimeout(r, 500));',
+    '}',
+  ].join('\n');
+
+  const POST = (type: string, auth = true) =>
+    `{ method: 'POST', body, headers: { ${auth ? "authorization: 'Bearer ' + process.env.TOKEN, " : ''}'content-type': '${type}' } }`;
+
+  it('i limiti dichiarati sono applicati al contenitore', () => {
+    const inspect = docker(['inspect', service, '--format', '{{json .HostConfig}}']);
+    expect(inspect.status, inspect.stderr).toBe(0);
+    const host = JSON.parse(inspect.stdout) as {
+      Memory: number;
+      ReadonlyRootfs: boolean;
+      Tmpfs: Record<string, string>;
+    };
+    expect(host.Memory).toBe(1024 * 1024 * 1024);
+    expect(host.ReadonlyRootfs).toBe(true);
+    expect(host.Tmpfs['/tmp']).toContain('size=256m');
+    const user = docker(['exec', service, 'id', '-u']);
+    expect(user.stdout.trim()).not.toBe('0');
+  });
+
+  it('porta qpdf 12.4.2, ffmpeg e ffprobe 9.0.2 e nessun node_modules', () => {
+    const result = inImage('scrub', 'sh', [
+      '-c',
+      '$QPDF_PATH --version | head -n 1; $FFMPEG_PATH -version | head -n 1; $FFPROBE_PATH -version | head -n 1; ls /app',
+    ]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain('qpdf version 12.4.2');
+    expect(result.stdout).toMatch(/ffmpeg version n9\.0\.2/);
+    expect(result.stdout).toMatch(/ffprobe version n9\.0\.2/);
+    expect(result.stdout).not.toContain('node_modules');
+  });
+
+  it('ripulisce un PDF sintetico attraverso il contenitore', () => {
+    const script = [
+      "import { readFileSync } from 'node:fs';",
+      WAIT,
+      'const body = readFileSync(0);',
+      `const r = await fetch('http://scrub:3003/scrub', ${POST('application/pdf')});`,
+      'const out = Buffer.from(await r.arrayBuffer());',
+      `console.log(JSON.stringify({ status: r.status, pdf: out.subarray(0, 5).toString('latin1'), marker: out.includes('${MARKERS.author}') }));`,
+    ].join('\n');
+    const result = client(script, buildPdf({ withMetadata: true }));
+    expect(result.status, result.stderr).toBe(0);
+    expect(lastJson(result.stdout)).toEqual({ status: 200, pdf: '%PDF-', marker: false });
+  });
+
+  it('ripulisce un MP4 sintetico attraverso il contenitore', () => {
+    const script = [
+      "import { execFileSync } from 'node:child_process';",
+      "import { readFileSync } from 'node:fs';",
+      WAIT,
+      // MP4 sintetico creato dal ffmpeg dell'immagine, con un metadato da togliere.
+      "execFileSync(process.env.FFMPEG_PATH, ['-v', 'error', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=64x64:rate=10',",
+      "  '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-metadata', 'artist=ARTISTA-SINTETICO', '-f', 'mp4', '/tmp/in.mp4']);",
+      "const body = readFileSync('/tmp/in.mp4');",
+      `const r = await fetch('http://scrub:3003/scrub', ${POST('video/mp4')});`,
+      'const out = Buffer.from(await r.arrayBuffer());',
+      "console.log(JSON.stringify({ before: body.includes('ARTISTA-SINTETICO'), status: r.status, size: out.length > 0, marker: out.includes('ARTISTA-SINTETICO') }));",
+    ].join('\n');
+    const result = client(script);
+    expect(result.status, result.stderr).toBe(0);
+    expect(lastJson(result.stdout)).toEqual({
+      before: true,
+      status: 200,
+      size: true,
+      marker: false,
+    });
+  });
+
+  it('rifiuta con 413 un file oltre il limite e con 401 chi non ha il gettone', () => {
+    const script = [
+      WAIT,
+      `let body = Buffer.alloc(${LIMIT + 1}, 0x20);`,
+      `const over = await fetch('http://scrub:3003/scrub', ${POST('application/pdf')});`,
+      "body = '%PDF-1.7';",
+      `const anon = await fetch('http://scrub:3003/scrub', ${POST('application/pdf', false)});`,
+      'console.log(JSON.stringify({ over: over.status, anon: anon.status }));',
+    ].join('\n');
+    const result = client(script);
+    expect(result.status, result.stderr).toBe(0);
+    expect(lastJson(result.stdout)).toEqual({ over: 413, anon: 401 });
+  });
+
+  it('dal contenitore nessuna connessione verso Internet', () => {
+    const dns = docker(['exec', service, 'getent', 'hosts', 'example.com']);
+    expect(dns.status).not.toBe(0);
+    const ip = docker([
+      'exec',
+      service,
+      'node',
+      '-e',
+      "fetch('http://1.1.1.1', { signal: AbortSignal.timeout(5000) }).then(() => process.exit(0), () => process.exit(7))",
+    ]);
+    expect(ip.status).toBe(7);
   });
 });
