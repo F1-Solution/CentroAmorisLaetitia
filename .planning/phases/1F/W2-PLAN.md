@@ -238,12 +238,26 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T7 — `Caddyfile` di produzione
 
-- [ ] `infra/deploy/Caddyfile`: indirizzo del sito da variabile; HTTP → HTTPS; HSTS
-  (`max-age` breve all'inizio, senza `preload`, finché il passaggio non è verificato);
-  intestazioni di oggi più `Permissions-Policy`; `encode zstd gzip`.
-- [ ] Cache dei media: Caddy non sovrascrive il `Cache-Control` dell'API (DR-253, `no-cache`).
-  La politica definitiva e la CSP sono D252 e D253 (§4), da chiedere prima di questa attività.
-- [ ] Prova locale con `tls internal` e un nome `*.localhost`: redirect, intestazioni, HTTP/2.
+- [x] `infra/deploy/caddy/Caddyfile` (percorso della T6): indirizzo del sito da variabile; HTTP →
+  HTTPS (308, automatico con un nome di dominio); HSTS `max-age=3600` senza `preload` né
+  sottodomini finché il passaggio non è verificato (W5); intestazioni di oggi più
+  `Permissions-Policy` (camera, microfono, posizione, pagamenti, USB, argomenti: negati;
+  schermo intero libero per gli embed); `encode zstd gzip`.
+- [x] Cache dei media (DR-365, D253=A): Caddy non tocca `Cache-Control` né `ETag` dell'API
+  (`no-cache`); le immagini non si ricomprimono.
+- [x] CSP (DR-364, D252=B): `Content-Security-Policy-Report-Only` su sito e area, senza
+  indirizzo di raccolta: `default-src 'self'`, script e stili `'self' 'unsafe-inline'`,
+  `frame-src` `'self'`, YouTube (anche `youtube-nocookie`), Vimeo, Google Maps;
+  `object-src 'none'`, `base-uri`, `frame-ancestors` e `form-action` su `'self'`. Con `?`:
+  un'intestazione dell'applicazione prevale.
+- [x] Instradamento (nota della T2): `handle_path /api/*` toglie il prefisso, perché l'API
+  risponde dalla radice; `/forms/*` va all'API come `/media/*`. Nessun contenuto, termine o
+  redirect del database di sviluppo sotto `/api` o `/forms`.
+- [x] Prova locale `infra/deploy/tests/caddy-1f.test.ts` con il certificato interno che Caddy
+  emette da sé per `amoris.localhost`: redirect 308, HTTP/2 con certificato valido per il nome,
+  HSTS, intestazioni, instradamento. Rossa prima 6/9, poi 9/9.
+  - **Fuori dalla T7:** `infra/compose/Caddyfile` (profilo `proxy` di sviluppo) passa ancora
+    `/api` con il prefisso; lo sviluppo chiama l'API diretta e non ne risente.
 
 ### T8 — Esempio d'ambiente di produzione
 

@@ -1,5 +1,6 @@
-# Caddy di produzione e di staging (1F-W2 T6): instradamento di ADR-003 §3, uguale allo sviluppo.
-# HTTPS, HSTS, Permissions-Policy, CSP e cache dei media arrivano con la T7 (D252, D253).
+# Caddy di produzione e di staging (1F-W2 T6, T7): instradamento di ADR-003 §3 e intestazioni.
+# Con un nome di dominio Caddy ottiene il certificato e manda HTTP su HTTPS con un 308.
+# La cache dei media la decide l'API (`no-cache`, DR-365): qui nessun Cache-Control.
 #
 # Regola che non si viola: **qui dentro non entra nessun redirect di contenuto**.
 # I redirect delle pagine allegato e dei percorsi storici sono dati in tabella e li serve
@@ -25,6 +26,11 @@ http://127.0.0.1:2020 {
 		# Solo se assente: l'anteprima e l'area impostano no-referrer e non vanno sovrascritte.
 		?Referrer-Policy "strict-origin-when-cross-origin"
 		X-Frame-Options "SAMEORIGIN"
+		# Durata breve e senza preload finché il passaggio a HTTPS non è verificato (W5).
+		Strict-Transport-Security "max-age=3600"
+		?Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+		# Solo segnalazione, senza raccolta (DR-364): l'applicata si decide nella W4/W5.
+		?Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; media-src 'self' blob:; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.google.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'"
 		-Server
 	}
 
@@ -39,12 +45,14 @@ http://127.0.0.1:2020 {
 	# Regole dell'ambiente: production.caddy o staging.caddy.
 	import {$AMORIS_ENV}.caddy
 
-	handle /api/* {
+	# L'API risponde dalla radice: il prefisso /api si toglie qui.
+	handle_path /api/* {
 		reverse_proxy api:3002
 	}
 
-	# I media li serve l'API, non lo storage (ADR-004 §3.6).
-	handle /media/* {
+	# I media li serve l'API, non lo storage (ADR-004 §3.6); i form inviati dal sito pure.
+	@api path /media/* /forms/*
+	handle @api {
 		reverse_proxy api:3002
 	}
 
