@@ -26,6 +26,9 @@ const schema = z.object({
   SCRUB_VIDEO_TIMEOUT_MS: z.coerce.number().int().min(1).default(120000),
 });
 
+/** Chiavi lette dal servizio di pulizia: l'esempio d'ambiente di produzione le elenca (1F-W2 T8). */
+export const SCRUB_SERVER_CONFIG_KEYS = Object.keys(schema.shape) as readonly string[];
+
 export interface ScrubServerConfig {
   readonly host: string;
   readonly port: number;

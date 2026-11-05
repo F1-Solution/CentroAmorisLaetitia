@@ -261,11 +261,25 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T8 — Esempio d'ambiente di produzione
 
-- [ ] `infra/deploy/.env.production.example`: tutte le chiavi di `apps/api/src/config.ts`,
-  di sito, area, Caddy e Compose, con segnaposto evidenti (`CAMBIA-…`) e il comando per
-  generare ciascun segreto; nessun valore riusabile.
-- [ ] Prova: un controllo confronta le chiavi dell'esempio con quelle lette dalla
-  configurazione dell'API; manca una chiave → rosso.
+- [x] `infra/deploy/.env.production.example`: tutte le chiavi di `apps/api/src/config.ts`,
+  di sito, area, Caddy e Compose, con il comando per generare ciascun segreto; nessun valore
+  riusabile.
+  - **Come è fatto:** le chiavi obbligatorie del Compose sono righe attive **vuote** invece
+    di `CAMBIA-…`: copiato così com'è il Compose non parte (un segnaposto sarebbe stato
+    accettato come password). Segreti con `openssl rand -hex N` (esadecimale, ≥ 32
+    caratteri). Le altre chiavi sono commentate per gruppo: facoltative del Compose,
+    fissate da Compose o immagini, regolazioni dell'API in `ambiente/<valore>.env` (il
+    Compose passa all'API solo le chiavi che nomina; `MEDIA_MAX_PDF/VIDEO_BYTES` restano
+    nell'`--env-file` perché il Compose le imposta e prevarrebbe). Eccezione in `.gitignore`
+    per il file (escluso da `.env.*`).
+- [x] Prova `apps/api/tests/env-example-1f.test.ts` (nel `pnpm test` della CI): chiavi di
+  `CONFIG_KEYS` e `SCRUB_SERVER_CONFIG_KEYS` (esportate da `config.ts` e
+  `scrubServerConfig.ts`), variabili interpolate del Compose, obbligatorie attive e vuote,
+  nessuna riga attiva che il Compose non legga, segreti col comando, file tracciato da Git.
+  Rossa prima 13/13, poi 13/13; tolta una riga → rossa con il nome della chiave.
+  `docker compose config` con l'esempio: rifiuta per `AMORIS_ENV` mancante.
+  - **Fuori dalla T8:** i tempi massimi della pulizia (`SCRUB_*_TIMEOUT_MS`) non sono
+    regolabili nel contenitore della pulizia, che non legge `ambiente/<valore>.env`.
 
 ### T9 — CI delle immagini (DR-356, DR-357)
 

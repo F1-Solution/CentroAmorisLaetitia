@@ -138,6 +138,9 @@ const checkedSchema = configSchema.superRefine((config, context) => {
 
 export type Config = z.infer<typeof configSchema>;
 
+/** Chiavi lette dall'API: l'esempio d'ambiente di produzione le elenca tutte (1F-W2 T8). */
+export const CONFIG_KEYS = Object.keys(configSchema.shape) as readonly (keyof Config)[];
+
 /** Errore di configurazione. Porta con sé l'elenco delle variabili che non vanno. */
 export class ConfigError extends Error {
   constructor(public readonly problems: readonly string[]) {
