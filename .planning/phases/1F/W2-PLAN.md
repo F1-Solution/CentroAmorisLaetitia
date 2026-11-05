@@ -114,15 +114,33 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T3 — Impacchettamento dell'API (DR-358)
 
-- [ ] Prova di fumo rossa prima: lo script di avvio di produzione (`node dist/…`) parte e
-  risponde a `/health/live` con le sole dipendenze di produzione.
-- [ ] DR-358: bundle `esbuild` (dipendenza di sviluppo nuova, versione fissa) eseguito da
-  `node`; `sharp`, `@node-rs/argon2` e gli altri moduli nativi restano esterni e si
-  installano con `pnpm deploy --prod`; `apps/api/package.json` con lo script di build di
-  produzione.
-- [ ] Lo stesso per le migrazioni (`packages/db/scripts/migrate.ts`) e per
-  `account:create`, che nella W8 crea il primo amministratore.
-- [ ] Nuove dipendenze dichiarate qui, con il motivo (PLAN §5).
+- [x] Prova di fumo rossa prima: `apps/api/tests/bundle-1f.test.ts` 6/6 rossa (script di
+  impacchettamento assente), poi 6/6 verde: build, soli esterni nativi (dal metafile),
+  migrazioni in `dist/drizzle`, `node dist/server.js` con `NODE_ENV=production` e database
+  spento risponde 200 a `/health/live`, migrazioni e `account:create` dal bundle su un
+  database temporaneo (hash `$argon2id$`, password mai stampata).
+- [x] DR-358: `apps/api/scripts/bundle.mjs` (ESM, `node22`, chunk condivisi, sourcemap,
+  `require`/`__dirname` dal banner); esterni solo `sharp` e `@node-rs/argon2`.
+  `build` di `apps/api` ora è il bundle; tolto `tsconfig.build.json` (il suo `dist` non era
+  eseguibile da Node, e nessuno lo usava). Uscite: `dist/server.js`, `dist/bin/migrate.js`,
+  `dist/bin/account-create.js`, `dist/drizzle/`.
+- [x] Lo stesso per le migrazioni (`packages/db/scripts/migrate.ts`, invariato: cerca
+  `../drizzle` accanto a `bin/`) e per `account:create`.
+- [x] `pnpm --filter @amoris/api deploy --prod --legacy` in una cartella temporanea, poi tolti
+  tutti i pacchetti di primo livello tranne `sharp` e `@node-rs`: servizio 200 su
+  `/health/live` (503 su `/health/ready` col database spento), `bin/migrate.js` e
+  `bin/account-create.js` partono e rispondono con i loro messaggi.
+  - **Per la T4:** `deploy` scrive `production: true` nello stato del workspace locale e i
+    comandi `pnpm` successivi chiedono un `install --production`; si ripara con
+    `pnpm install --frozen-lockfile --offline`. Nel Dockerfile non tocca nulla.
+  - **Per la T4:** senza `TEMP`/`TMPDIR` il servizio registra «cartella temporanea non
+    letta»; nell'immagine `/tmp` deve esistere ed essere scrivibile.
+  - **Per la W8:** `account:create` rifiuta un database che non sia su `localhost`
+    (salvaguardia di 1G); nel Compose di produzione il database è `db`, quindi la creazione
+    del primo amministratore va decisa prima della W8.
+- [x] Nuove dipendenze (PLAN §5): `esbuild` 0.28.2 esatta, solo di sviluppo in `apps/api`,
+  per il bundle di DR-358. Era già nel lockfile tramite `tsx` e `vite`: nessun pacchetto
+  nuovo scaricato.
 
 ### T4 — Dockerfile delle applicazioni
 
