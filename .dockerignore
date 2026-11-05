@@ -1,0 +1,40 @@
+# Contesto di costruzione delle immagini di produzione (1F-W2 T4, criterio W2-8).
+# Nessun segreto, nessuna sorgente privata, nessun documento di lavoro nelle immagini.
+
+# --- Segreti ---
+.env*
+!.env.example
+**/.env*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.pfx
+
+# --- Sorgenti in sola lettura e dati reali ---
+source-private
+source-readonly
+.reference
+
+# --- Documenti e strumenti di lavoro ---
+.git
+.github
+.claude
+.superpowers
+.planning
+.playwright-mcp
+docs
+tools
+tests
+*.md
+debug.log
+
+# --- Dipendenze, cache e artefatti generati ---
+**/node_modules
+**/.turbo
+**/.next
+**/dist
+**/*.tsbuildinfo
+**/next-env.d.ts
+coverage
+test-results
+playwright-report

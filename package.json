@@ -25,7 +25,8 @@
     "db:seed": "pnpm --filter @amoris/api seed",
     "compose:up": "docker compose -f infra/compose/docker-compose.yml --env-file .env up -d",
     "compose:down": "docker compose -f infra/compose/docker-compose.yml --env-file .env down",
-    "compose:reset": "docker compose -f infra/compose/docker-compose.yml --env-file .env down -v"
+    "compose:reset": "docker compose -f infra/compose/docker-compose.yml --env-file .env down -v",
+    "test:images": "vitest run --config infra/docker/vitest.config.ts"
   },
   "devDependencies": {
     "@amoris/blocks": "workspace:*",

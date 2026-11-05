@@ -64,6 +64,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-054 | [Incarico della verifica privacy e legale (MI-06)](HO-054-incarico-verifica-privacy-MI-06.md) | 1F | ⏳ **aperto** — DR-303: documento di ambito in `docs/legal/MI-06-ambito-verifica-privacy.md`; prima della produzione |
 | HO-055 | [Liberare memoria per la cattura integrale della `1G-W9`](HO-055-liberare-memoria-per-la-cattura-1G-W9.md) | 1G | ⏳ **aperto** — serve alla T10 della `1G-W9` (2,3 GB liberi su 6) |
 | HO-056 | [Acquisto del server Aruba Cloud VPS O4A8](HO-056-acquisto-server-aruba-1F.md) | 1F | ⏳ **preparato** — decisioni DR-352…DR-354; si esegue nella `1F-W5` (DR-352) |
+| HO-057 | [Liberare disco e riavviare Docker per le immagini](HO-057-liberare-disco-per-le-immagini-1F-W2.md) | 1F | ✅ **chiuso** 2026-11-05 — 122 GB liberi; snapshot di `node` troncato riparato |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

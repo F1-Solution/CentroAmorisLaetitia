@@ -144,13 +144,19 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T4 — Dockerfile delle applicazioni
 
-- [ ] `infra/docker/web.Dockerfile`, `admin.Dockerfile`, `api.Dockerfile`, con costruzione
+- [x] `infra/docker/web.Dockerfile`, `admin.Dockerfile`, `api.Dockerfile`, con costruzione
   a più stadi da `pnpm install --frozen-lockfile` e `pnpm deploy` o il `standalone` di Next.
-- [ ] Base: `node:25.0.0-…-slim` (glibc, per i binari di `sharp`) fissata per digest.
-- [ ] Utente non `root`; nessuna cartella scrivibile oltre quelle dichiarate; `NODE_ENV=production`.
-- [ ] `.dockerignore` alla radice: esclude `.env*` (non `.env.example`), `source-private/`,
+- [x] Base: `node:25.0.0-…-slim` (glibc, per i binari di `sharp`) fissata per digest.
+- [x] Utente non `root`; nessuna cartella scrivibile oltre quelle dichiarate; `NODE_ENV=production`.
+- [x] `.dockerignore` alla radice: esclude `.env*` (non `.env.example`), `source-private/`,
   `source-readonly/`, `.reference/`, `.superpowers/`, `.planning/`, `coverage/`,
   `test-results/`, `node_modules/`, `.git/`.
+- [x] Prove: `pnpm test:images` (`infra/docker/tests`, richiede Docker, fuori da `pnpm test`)
+  39/39.
+  - **Nota:** `pnpm deploy --legacy` ripete la risoluzione; con `--offline` non ha i metadati
+    dei pacchetti facoltativi di piattaforma e scarta in silenzio i binari Linux di `sharp` e
+    `@node-rs/argon2`. Il deploy dell'API gira quindi in rete (stesse versioni del lockfile,
+    verificato) e la build fallisce se i due moduli non si caricano.
 
 ### T5 — Contenitore della pulizia (DR-359)
 
