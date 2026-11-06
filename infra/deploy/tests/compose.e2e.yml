@@ -1,0 +1,26 @@
+# Aggiunte al Compose di produzione **solo per la prova locale** dello stack (1F-W2 T10):
+# mai sul server. Toglie le attese dell'accesso come l'e2e di sviluppo e apre il database
+# e l'archivio su 127.0.0.1 per scrivere il seme sintetico e per le prove che leggono il database.
+#
+#   docker compose -f infra/deploy/compose.yml -f infra/deploy/tests/compose.e2e.yml ...
+services:
+  api:
+    environment:
+      LOGIN_UNIFORM_MS: '0'
+      LOGIN_DELAY_STEP_MS: '0'
+      LOGIN_MAX_PER_IP: '1000'
+      LOGIN_MAX_PER_ACCOUNT: '1000'
+
+  db:
+    ports:
+      - '127.0.0.1:${E2E_DB_PORT:?manca E2E_DB_PORT}:5432'
+    # La rete `data` è interna e non pubblica porte: serve una rete in più.
+    networks: [data, e2e]
+
+  objects:
+    ports:
+      - '127.0.0.1:${E2E_OBJECTS_PORT:?manca E2E_OBJECTS_PORT}:9000'
+    networks: [data, e2e]
+
+networks:
+  e2e: {}

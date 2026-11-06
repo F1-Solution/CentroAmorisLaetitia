@@ -120,6 +120,8 @@ services:
     <<: *hardened
     image: ${IMAGE_PREFIX}-scrub:${IMAGE_TAG}
     mem_limit: 1g
+    # Una pulizia video dura fino a 120 s: allo spegnimento la si lascia finire.
+    stop_grace_period: 130s
     environment:
       <<: *media-limits
       SCRUB_SERVICE_TOKEN: ${SCRUB_SERVICE_TOKEN}

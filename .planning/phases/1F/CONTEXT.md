@@ -69,9 +69,17 @@ L'adeguatezza dei DPA va valutata nella MI-06 (DR-073, DR-303): il confronto non
 
 ## 4. Stato del repository
 
-- Esistono soltanto `infra/compose/docker-compose.yml` e `Caddyfile`, per lo sviluppo: non ci sono immagini di produzione.
-- Non esistono `docs/deploy/` né i Dockerfile delle applicazioni.
-- La CI esistente (DR-008) va estesa con la costruzione e la pubblicazione delle immagini.
+Aggiornato alla chiusura della `1F-W2` (2026-11-06):
+
+- `infra/compose/` resta lo sviluppo. `infra/docker/` contiene i Dockerfile di `web`,
+  `admin`, `api` e `scrub` e lo script di controllo dei file delle immagini;
+  `infra/deploy/` il Compose di produzione e di staging, il `Caddyfile`, l'esempio
+  d'ambiente e il `README.md` con avvio, arresto e verifica.
+- La CI (DR-008) costruisce, controlla e pubblica le quattro immagini in GHCR dopo la
+  verifica di un push su `main` (DR-356). Nessun rilascio sul server: arriva nella W5 (DR-357).
+- Lo stack di produzione e quello di staging sono stati provati insieme in locale, dalle
+  immagini, con dati sintetici; e2e completi verdi attraverso Caddy.
+- Non esiste ancora `docs/deploy/`: nasce con le wave successive.
 
 ## 5. Decisioni del secondo round (2026-10-28)
 

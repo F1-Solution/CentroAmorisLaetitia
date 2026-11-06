@@ -1,0 +1,92 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Lavoro della CI che costruisce e pubblica le immagini (1F-W2 T9, criterio W2-9, DR-356).
+ *
+ * Letto dal testo di `ci.yml`: parte solo dopo la verifica di un push su `main`, con i permessi
+ * minimi; ogni immagine porta l'hash del commit come etichetta e passa il controllo dei file
+ * (W2-8) prima della pubblicazione. Nessuna chiave del server nella CI (DR-357: arriva nella W5).
+ */
+
+const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
+const ciText = readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8').replace(
+  /\r\n/g,
+  '\n',
+);
+
+/** Blocco del lavoro `immagini`: dalle sue righe fino al lavoro successivo o alla fine. */
+function imagesJob(): string {
+  const start = ciText.indexOf('\n  immagini:\n');
+  expect(start, 'lavoro «immagini» assente in ci.yml').toBeGreaterThan(-1);
+  const rest = ciText.slice(start + 1);
+  const next = rest.slice(1).search(/\n {2}[a-z][\w-]*:\n/);
+  return next === -1 ? rest : rest.slice(0, next + 1);
+}
+
+/** Righe di comando del lavoro, senza i commenti. */
+function commands(job: string): string {
+  return job
+    .split('\n')
+    .filter((line) => !/^\s*#/.test(line))
+    .join('\n');
+}
+
+describe('ci.yml: lavoro delle immagini', () => {
+  it('lascia i permessi del flusso in sola lettura', () => {
+    const head = ciText.slice(0, ciText.indexOf('\njobs:'));
+    expect(head).toMatch(/\npermissions:\n {2}contents: read\n/);
+    expect(head).not.toContain('packages: write');
+  });
+
+  it('parte dopo la verifica, solo per un push su main', () => {
+    const job = imagesJob();
+    expect(job).toMatch(/\n {4}needs: verifica\n/);
+    expect(job).toMatch(/\n {4}if: .*github\.event_name == 'push'/);
+    expect(job).toMatch(/\n {4}if: .*github\.ref == 'refs\/heads\/main'/);
+  });
+
+  it('chiede solo contents: read e packages: write', () => {
+    const job = imagesJob();
+    const block = /\n {4}permissions:\n((?: {6}.+\n)+)/.exec(job);
+    expect(block?.[1]?.trim().split(/\n\s*/).sort()).toEqual(['contents: read', 'packages: write']);
+  });
+
+  it('costruisce le quattro immagini dai Dockerfile del repository', () => {
+    const job = commands(imagesJob());
+    expect(job).toMatch(/app: \[web, admin, api, scrub\]/);
+    expect(job).toContain('-f "infra/docker/${APP}.Dockerfile"');
+  });
+
+  it('etichetta ogni immagine con l’hash completo del commit, mai latest', () => {
+    const job = commands(imagesJob());
+    expect(job).toContain('ghcr.io/');
+    expect(job).toContain(':${GITHUB_SHA}');
+    expect(job).not.toMatch(/latest/);
+  });
+
+  it('collega l’immagine al repository privato e al commit', () => {
+    const job = commands(imagesJob());
+    expect(job).toContain('org.opencontainers.image.source=');
+    expect(job).toContain('org.opencontainers.image.revision=${GITHUB_SHA}');
+  });
+
+  it('controlla i file dell’immagine prima di accedere al registro e pubblicare', () => {
+    const job = commands(imagesJob());
+    const check = job.indexOf('node infra/docker/check-image.mjs');
+    const login = job.indexOf('docker login ghcr.io');
+    const push = job.indexOf('docker push');
+    expect(check).toBeGreaterThan(-1);
+    expect(login).toBeGreaterThan(check);
+    expect(push).toBeGreaterThan(login);
+  });
+
+  it('accede al registro con il gettone del flusso, da stdin, e nessun altro segreto', () => {
+    const job = commands(imagesJob());
+    expect(job).toContain('--password-stdin');
+    const secrets = [...job.matchAll(/secrets\.([A-Z_]+)/g)].map((match) => match[1]);
+    expect(new Set(secrets)).toEqual(new Set(['GITHUB_TOKEN']));
+    expect(job).not.toMatch(/ssh|SSH_/);
+  });
+});

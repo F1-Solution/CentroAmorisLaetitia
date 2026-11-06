@@ -6,6 +6,7 @@
 !.env.example
 **/.env*
 !**/.env.example
+**/*.env
 **/*.pem
 **/*.key
 **/*.pfx

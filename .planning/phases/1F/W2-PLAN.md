@@ -283,35 +283,70 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
 
 ### T9 — CI delle immagini (DR-356, DR-357)
 
-- [ ] Nuovo lavoro in `.github/workflows/`, dopo «Verifica», solo su `main`: costruzione
-  delle cinque immagini, etichetta = hash completo del commit, pubblicate in GHCR privato.
-- [ ] Permessi minimi del lavoro: `contents: read`, `packages: write`.
-- [ ] Script di controllo dei file delle immagini (W2-8), che fallisce se trova `.env`,
-  `source-private`, chiavi private o `*.pem`.
-- [ ] Nessun rilascio sul server in questa wave: il lavoro di rilascio di DR-357 (avvio a
+- [x] Nuovo lavoro `immagini` in `.github/workflows/ci.yml`, dopo «Verifica», solo per un
+  push su `main`: costruzione di `web`, `admin`, `api`, `scrub` (quattro: `migrate` usa
+  l'immagine dell'API, T6), etichetta = `GITHUB_SHA`, etichette OCI `source` e `revision`,
+  pubblicate in GHCR come `ghcr.io/<proprietario>/amoris-<app>`.
+- [x] Permessi minimi del lavoro: `contents: read`, `packages: write`; il flusso resta
+  `contents: read`; accesso al registro con `GITHUB_TOKEN` da stdin.
+- [x] `infra/docker/check-image.mjs` (solo moduli di Node): legge `docker export` in
+  streaming (PAX, nomi lunghi GNU) e fallisce con file d'ambiente (`.env`, `.env.*`,
+  `<nome>.env`), chiavi e certificati fuori dalle cartelle di sistema, `source-private`,
+  `source-readonly`, `.reference`, `.git`, indirizzi locali con schema o porta nel codice
+  del browser. Gira prima di login e pubblicazione.
+  - **Prove:** `infra/docker/tests/ci-immagini-1f.test.ts` (testo di `ci.yml`) e
+    `controllo-immagini-1f.test.ts` (immagini `FROM scratch` sintetiche), rosse prima 15/16,
+    poi verdi. Sulle immagini locali la prima versione segnalava la parola `localhost` in
+    due librerie (URL e link): regola ristretta agli indirizzi, caso aggiunto alla prova.
+- [x] Nessun rilascio sul server in questa wave: il lavoro di rilascio di DR-357 (avvio a
   mano, ambiente con approvazione, chiave SSH nei segreti) si scrive nella W5, quando il
   server esiste.
 
 ### T10 — Prova dello stack locale
 
-- [ ] Stack di produzione e di staging insieme in locale, da immagini costruite in locale
-  con la stessa ricetta della CI; `migrate`, bucket, seme sintetico (`pnpm db:seed` o il suo
-  equivalente nell'immagine).
-- [ ] e2e contro lo stack: Playwright con una variabile che salta `webServer` e punta a Caddy
-  (`tests/e2e/support/ambiente.ts`); suite intera verde.
-- [ ] `docker inspect` di ogni servizio: utente, rete, limiti, file system (W2-5).
-- [ ] Stack fermati e volumi locali di prova rimossi **su conferma** (PLAN §7 riga 7).
+- [x] Stack di produzione (`https://localhost:8443`) e di staging (`https://localhost:9443`)
+  insieme in locale, da immagini `amoris-<app>:prova-1f` costruite con i Dockerfile della CI;
+  `migrate` dall'immagine su database nuovi, bucket da `objects-init`, tutti i servizi
+  `healthy`; staging con `X-Robots-Tag: noindex, nofollow` e `robots.txt` che rifiuta.
+- [x] e2e contro lo stack: `E2E_STACK_URL` in `tests/e2e/support/ambiente.ts` (stessa
+  origine per sito e area, API sotto `/api`), niente `webServer` e certificato interno
+  accettato in `playwright.config.ts`; `prepara.ts` ricrea `amoris_e2e` e scrive il seme
+  senza compilare. `infra/deploy/tests/compose.e2e.yml`, solo per la prova locale: attese
+  dell'accesso tolte come nell'e2e di sviluppo, database e archivio su `127.0.0.1` per il
+  seme (il primo tentativo ha scritto sull'archivio di sviluppo e si è fermato: il seme
+  carica anche i PDF). Suite intera 69/69 attraverso Caddy.
+- [x] `docker inspect` di produzione: utenti `amoris` (sito, area, API) e `scrub`, file
+  system in sola lettura, `cap_drop: ALL` (Caddy con la sola `NET_BIND_SERVICE`),
+  `no-new-privileges` su tutti, limiti di memoria come al T6, porte solo su Caddy (e su
+  `db` e `objects` per la sola aggiunta di prova), reti `app`, `data`, `scrub` interne.
+- [x] Stack fermati (`down`, volumi lasciati).
+- [ ] Volumi locali di prova (`amoris-production_*`, `amoris-staging_*`) rimossi **su
+  conferma** (PLAN §7 riga 7).
 
 ### T11 — Revisione e verifica
 
-- [ ] Revisione (`code-reviewer`) di Dockerfile, Compose, `Caddyfile`, CI; esiti critici e
-  alti corretti. La security review completa resta alla W4.
-- [ ] Verifica come la CI (memorie del progetto: Prettier solo sui file di Git, `QPDF_PATH`
-  per le prove, rieseguire da soli i file con timeout sotto carico).
+- [x] Revisione (`code-reviewer`) di Dockerfile, Compose, `Caddyfile`, CI, script e modalità
+  stack degli e2e: 0 critici, 0 alti, 2 medi, 5 bassi. Corretti: annullamento delle corse su
+  `main` (lasciava un commit senza tutte le immagini: `cancel-in-progress` solo fuori da
+  `main`), file `<nome>.env` non visti dal controllo e non esclusi da `.dockerignore`, voci
+  tar `K` e dimensioni non valide, `stop_grace_period: 130s` per la pulizia. Rinviati in
+  `infra/deploy/README.md` §8: credenziali principali di MinIO all'API (W4), copia propria
+  di `ffmpeg` (release automatica di BtbN), permessi dei file di Caddy e HSTS (W5),
+  frontend `dockerfile:1.7` per etichetta.
+- [x] Verifica come la CI: frozen, lint, typecheck, build, test (API 1038, area 757,
+  importer 411, tutti i pacchetti verdi), db:verify, copertura 3130/3130 (93,64 %), e2e
+  69/69, `pnpm test:images` 118/118; Prettier sui file di Git verde a blocchi di 60 (in un
+  blocco solo: riga di comando troppo lunga). Sito e area ricompilati per lo sviluppo.
 
 ### T12 — Documenti e chiusura
 
-- [ ] `infra/deploy/README.md`; `CONTEXT.md` §4; dipendenze nuove confrontate con PLAN §5.
+- [x] `infra/deploy/README.md` (contenuto, file d'ambiente, avvio, verifica, arresto, prova
+  locale, memoria, rinvii); `CONTEXT.md` §4.
+- [x] Dipendenze confrontate con PLAN §5: immagini di base per versione e digest (Node
+  25.0.0, Caddy 2.10.2, PostgreSQL 17.11, MinIO e client Chainguard) e `esbuild` (già nel
+  lockfile) sono previste; `qpdf` 12.4.2 e `ffmpeg` 9.0.2 nell'immagine della pulizia
+  vengono da ADR-012 e DR-268 (già in CI); fuori elenco solo il frontend
+  `docker/dockerfile:1.7` di `scrub.Dockerfile`. Nessun pacchetto npm nuovo.
 - [ ] Commit e push **su conferma**; CI verde, immagini pubblicate in GHCR; riga
   `PHASE:1F WAVE:1F-W2 STATUS:complete`.
 

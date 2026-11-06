@@ -16,10 +16,11 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Una esecuzione per riferimento: le corse vecchie si annullano da sole.
+# Una esecuzione per riferimento: le corse vecchie si annullano da sole, salvo su main,
+# dove un annullamento lascerebbe un commit senza tutte le sue immagini (1F-W2 T11).
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -158,3 +159,51 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Immagini di produzione (1F-W2 T9, DR-356): dopo una verifica verde di un push su main,
+  # etichettate con l'hash del commit e pubblicate nel registro privato di GitHub.
+  # Nessun rilascio sul server qui: arriva nella W5 (DR-357).
+  immagini:
+    name: Immagine ${{ matrix.app }}
+    needs: verifica
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, admin, api, scrub]
+    env:
+      APP: ${{ matrix.app }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      # Il nome del registro va in minuscolo; `migrate` usa l'immagine dell'API.
+      - name: Costruzione
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/amoris-${APP}:${GITHUB_SHA}"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+          docker build -f "infra/docker/${APP}.Dockerfile" \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            -t "$image" .
+
+      # Criterio W2-8: nessun file d'ambiente, chiave o sorgente privata nell'immagine.
+      - name: Controllo dei file dell'immagine
+        run: node infra/docker/check-image.mjs "$IMAGE"
+
+      - name: Pubblicazione
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE"
+          docker logout ghcr.io

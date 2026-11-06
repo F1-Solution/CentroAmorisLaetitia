@@ -28,6 +28,7 @@ import {
   ACCESSO,
   DATABASE_E2E,
   RADICE,
+  STACK_URL,
   ambienteDeiServer,
   urlPerDatabase,
 } from './support/ambiente';
@@ -75,6 +76,10 @@ function prepara(): void {
     ['--filter', '@amoris/api', 'exec', 'tsx', 'tools/seedSintetico.ts'],
     { ...env, DATABASE_URL: databaseUrl, SEED_PASSWORD: ACCESSO.password },
   );
+
+  // Stack di immagini (1F-W2 T10): database e archivio dello stack sulle porte di prova,
+  // applicazioni già costruite nelle immagini.
+  if (STACK_URL !== undefined) return;
 
   /**
    * Le due applicazioni si compilano **una per volta e senza passare da

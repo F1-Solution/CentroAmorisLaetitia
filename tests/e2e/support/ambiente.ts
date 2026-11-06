@@ -49,9 +49,16 @@ export const PORTE = {
   api: 3102,
 } as const;
 
-export const WEB_URL = `http://127.0.0.1:${PORTE.web}`;
-export const ADMIN_URL = `http://127.0.0.1:${PORTE.admin}`;
-export const API_URL = `http://127.0.0.1:${PORTE.api}`;
+/**
+ * Stack di immagini dietro Caddy (1F-W2 T10): con `E2E_STACK_URL` (per esempio
+ * `https://localhost:8443`) le prove non avviano server propri e passano tutte dall'unica
+ * origine di Caddy, con l'API sotto `/api` come in produzione.
+ */
+export const STACK_URL = process.env.E2E_STACK_URL?.trim().replace(/\/+$/, '') || undefined;
+
+export const WEB_URL = STACK_URL ?? `http://127.0.0.1:${PORTE.web}`;
+export const ADMIN_URL = STACK_URL ?? `http://127.0.0.1:${PORTE.admin}`;
+export const API_URL = STACK_URL ? `${STACK_URL}/api` : `http://127.0.0.1:${PORTE.api}`;
 
 /** Database usa e getta dell'end-to-end. Ricreato da zero a ogni esecuzione. */
 export const DATABASE_E2E = 'amoris_e2e';

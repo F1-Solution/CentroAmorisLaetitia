@@ -3,6 +3,7 @@ import {
   ADMIN_URL,
   API_URL,
   PORTE,
+  STACK_URL,
   WEB_URL,
   ambienteDeiServer,
 } from './tests/e2e/support/ambiente';
@@ -42,36 +43,42 @@ export default defineConfig({
     baseURL: WEB_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // Lo stack locale usa il certificato interno di Caddy (1F-W2 T10).
+    ignoreHTTPSErrors: STACK_URL !== undefined,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: [
-    {
-      command: 'pnpm --filter @amoris/api exec tsx src/server.ts',
-      url: `${API_URL}/health/ready`,
-      // Mai riusato: un servizio già acceso su questa porta punterebbe a un
-      // altro database, e le prove direbbero cose vere su ciò che non stanno
-      // provando.
-      reuseExistingServer: false,
-      env,
-      timeout: 120_000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-    {
-      command: `pnpm --filter @amoris/web exec next start -p ${PORTE.web}`,
-      // Il seme sintetico non ha una pagina iniziale: `/` risponde 404, che per
-      // Playwright non è «pronto». `robots.txt` risponde sempre.
-      url: `${WEB_URL}/robots.txt`,
-      reuseExistingServer: false,
-      env,
-      timeout: 120_000,
-    },
-    {
-      command: `pnpm --filter @amoris/admin exec next start -p ${PORTE.admin}`,
-      url: `${ADMIN_URL}/admin`,
-      reuseExistingServer: false,
-      env,
-      timeout: 120_000,
-    },
-  ],
+  // Contro lo stack di immagini i server sono già accesi: nessun `webServer`.
+  webServer:
+    STACK_URL !== undefined
+      ? undefined
+      : [
+          {
+            command: 'pnpm --filter @amoris/api exec tsx src/server.ts',
+            url: `${API_URL}/health/ready`,
+            // Mai riusato: un servizio già acceso su questa porta punterebbe a un
+            // altro database, e le prove direbbero cose vere su ciò che non stanno
+            // provando.
+            reuseExistingServer: false,
+            env,
+            timeout: 120_000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+          },
+          {
+            command: `pnpm --filter @amoris/web exec next start -p ${PORTE.web}`,
+            // Il seme sintetico non ha una pagina iniziale: `/` risponde 404, che per
+            // Playwright non è «pronto». `robots.txt` risponde sempre.
+            url: `${WEB_URL}/robots.txt`,
+            reuseExistingServer: false,
+            env,
+            timeout: 120_000,
+          },
+          {
+            command: `pnpm --filter @amoris/admin exec next start -p ${PORTE.admin}`,
+            url: `${ADMIN_URL}/admin`,
+            reuseExistingServer: false,
+            env,
+            timeout: 120_000,
+          },
+        ],
 });
