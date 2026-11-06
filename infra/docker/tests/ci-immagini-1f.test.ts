@@ -53,9 +53,9 @@ describe('ci.yml: lavoro delle immagini', () => {
     expect(block?.[1]?.trim().split(/\n\s*/).sort()).toEqual(['contents: read', 'packages: write']);
   });
 
-  it('costruisce le quattro immagini dai Dockerfile del repository', () => {
+  it('costruisce le cinque immagini dai Dockerfile del repository', () => {
     const job = commands(imagesJob());
-    expect(job).toMatch(/app: \[web, admin, api, scrub\]/);
+    expect(job).toMatch(/app: \[web, admin, api, scrub, backup\]/);
     expect(job).toContain('-f "infra/docker/${APP}.Dockerfile"');
   });
 

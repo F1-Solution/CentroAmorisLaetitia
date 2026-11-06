@@ -1,0 +1,103 @@
+#!/bin/sh
+# Punto di ingresso unico del servizio di backup (1F-W3 T2): amoris-backup <init|backup|check>.
+# Ogni comando stampa una sola riga JSON di esito (DR-371) e esce con codice diverso da 0 a ogni errore.
+set -eu
+
+. /usr/local/lib/amoris-backup/lib.sh
+
+# Crea il repository solo se non esiste; mai implicito nel backup.
+cmd_init() {
+  begin init
+  setup_restic
+  rc=0
+  probe_repository || rc=$?
+  case $rc in
+    0) REPO_STATE=present ;;
+    10)
+      rc=0
+      restic_run init >/dev/null 2>&1 || rc=$?
+      [ "$rc" -eq 0 ] || fail init "$rc"
+      REPO_STATE=created
+      ;;
+    *) fail init "$rc" ;;
+  esac
+  succeed
+}
+
+# Dump, copia degli oggetti, istantanea cifrata e conservazione 7/4/6 (DR-368, DR-369, DR-373).
+cmd_backup() {
+  begin backup
+  load_secret PGPASSWORD
+  load_secret S3_ACCESS_KEY
+  load_secret S3_SECRET_KEY
+  need S3_ENDPOINT S3_BUCKET_PUBLIC S3_BUCKET_PRIVATE
+  PGHOST=${PGHOST:-db}
+  PGUSER=${PGUSER:-amoris}
+  PGDATABASE=${PGDATABASE:-amoris}
+  export PGHOST PGUSER PGDATABASE
+  [ -d "$DATA_DIR" ] && [ -w "$DATA_DIR" ] || config_error
+  setup_restic
+
+  rc=0
+  probe_repository || rc=$?
+  [ "$rc" -eq 0 ] || fail repository "$rc"
+
+  # Prima il database, poi gli oggetti: un oggetto in più è innocuo, uno in meno no.
+  mkdir -p "$DATA_DIR/db" || fail db_dump 1
+  rm -f "$DATA_DIR/db/.database.dump.tmp"
+  rc=0
+  pg_dump --no-password -Fc --compress=0 -f "$DATA_DIR/db/.database.dump.tmp" >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail db_dump "$rc"
+  mv -f "$DATA_DIR/db/.database.dump.tmp" "$DATA_DIR/db/database.dump" || fail db_dump 1
+  DUMP_BYTES=$(stat -c %s "$DATA_DIR/db/database.dump")
+
+  MC_CONFIG_DIR=$WORK_DIR/mc
+  export MC_CONFIG_DIR
+  rc=0
+  mc alias set src "$S3_ENDPOINT" "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail objects_mirror "$rc"
+  for bucket in "$S3_BUCKET_PUBLIC" "$S3_BUCKET_PRIVATE"; do
+    mkdir -p "$DATA_DIR/objects/$bucket" || fail objects_mirror 1
+    rc=0
+    mc --quiet mirror --overwrite --remove "src/$bucket" "$DATA_DIR/objects/$bucket" >/dev/null 2>&1 || rc=$?
+    [ "$rc" -eq 0 ] || fail objects_mirror "$rc"
+  done
+  read -r OBJECTS_BYTES OBJECTS_COUNT <<STATS
+$(find "$DATA_DIR/objects" -type f -exec stat -c %s {} + | awk '{ s += $1; n++ } END { print s + 0, n + 0 }')
+STATS
+
+  rc=0
+  restic_run backup --quiet --json --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" "$DATA_DIR" \
+    >"$WORK_DIR/backup.json" 2>/dev/null || rc=$?
+  SNAPSHOT_ID=$(sed -n 's/.*"message_type":"summary".*"snapshot_id":"\([0-9a-f]*\)".*/\1/p' "$WORK_DIR/backup.json" | tail -n 1)
+  [ "$rc" -eq 0 ] || fail restic_backup "$rc"
+
+  rc=0
+  restic_run forget --prune --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" \
+    --keep-daily 7 --keep-weekly 4 --keep-monthly 6 >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail restic_forget "$rc"
+  succeed
+}
+
+# Rilegge a campione il 10 % dei dati del repository (DR-373).
+cmd_check() {
+  begin check
+  setup_restic
+  rc=0
+  probe_repository || rc=$?
+  [ "$rc" -eq 0 ] || fail repository "$rc"
+  rc=0
+  restic_run check --read-data-subset=10% >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail restic_check "$rc"
+  succeed
+}
+
+case "${1:-}" in
+  init) cmd_init ;;
+  backup) cmd_backup ;;
+  check) cmd_check ;;
+  *)
+    echo "uso: amoris-backup init|backup|check" >&2
+    exit 64
+    ;;
+esac

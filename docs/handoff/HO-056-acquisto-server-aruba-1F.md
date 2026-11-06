@@ -1,8 +1,8 @@
 # HO-056 — Acquisto del server Aruba Cloud VPS O4A8 (Fase 1F)
 
-**Stato:** ⏳ preparato il 2026-11-03; decisioni prese (DR-352…DR-354). **Non eseguire
-adesso.** Per DR-352 l'acquisto si fa nella `1F-W5`, dopo la security review della `1F-W4`.
-All'inizio della `1F-W5` l'agente ricontrolla le fonti e ti dice in chat quando eseguire.
+**Stato:** ⏳ **eseguibile** dal 2026-11-06. DR-374 (D265 = B) supera DR-352: il server si
+compra subito e resta **senza dati del Centro** fino alla chiusura della `1F-W4`. Fonti
+ricontrollate il 2026-11-06 (§1 bis).
 
 **Scopo:** comprare il server della produzione e dello staging (DR-334, DR-296) e
 verificare il primo accesso. Questo handoff **non** mette dati sul server, **non** cambia il
@@ -28,11 +28,21 @@ significato e scrivi la differenza nella segnalazione (§11).
 | D245 | Quando si compra il server | **DR-352**: nella `1F-W5`, come dice il PLAN |
 | D246 | Sistema operativo | **DR-353**: Ubuntu Server 24.04 LTS |
 | D247 | Account Aruba per l'acquisto | **DR-354**: l'account del Centro che ha già il dominio |
+| D265 | Accelerazione della 1F | **DR-374**: acquisto subito, supera DR-352; nessun dato prima della `1F-W4` |
+
+## 1 bis. Ricontrollo del 2026-11-06
+
+- Prezzo di VPS O4A8 su `www.cloud.it/vps/`: **11,79 € + IVA al mese**, invariato.
+- Sistemi della scheda ufficiale dei template (`kb.arubacloud.com/en/utilities/template/template-datasheets.aspx`):
+  per i Cloud VPS compare «Ubuntu 24». La versione esatta (24.04 LTS) si controlla al primo
+  accesso (§8, passo 5).
+- Data center dei Cloud VPS: si vedono solo nel carrello. Aruba ha sedi in Italia ad Arezzo,
+  Bergamo e Roma; quale serve i Cloud VPS non è pubblicato.
 
 ## 2. Prerequisiti
 
-- [ ] La `1F-W4` è chiusa e l'agente ha detto in chat di eseguire questo handoff.
-- [ ] L'agente ha ricontrollato prezzo e nomi dell'interfaccia all'inizio della `1F-W5`.
+- [ ] L'agente ha ricontrollato prezzo e sistemi (§1 bis, 2026-11-06). Se esegui dopo il
+  2026-11-20, chiedi un nuovo ricontrollo.
 - [ ] Un computer Windows 11 con PowerShell. Il client OpenSSH è già incluso in Windows 11.
 - [ ] Un gestore di password (per esempio quello che usa già il Centro).
 - [ ] Le credenziali dell'account Aruba del Centro che ha già il dominio (DR-354).
@@ -45,8 +55,8 @@ significato e scrivi la differenza nella segnalazione (§11).
 > della carta. L'agente non deve ricevere credenziali di fornitori o del server
 > (`deployment-gate`).
 
-> **AVVERTENZA:** Non copiare dati del Centro sul server. Il server resta vuoto fino alla
-> `1F-W5`, dopo la security review.
+> **AVVERTENZA:** Non copiare dati del Centro sul server. Il server resta senza dati del
+> Centro fino alla chiusura della `1F-W4` (security review, DR-374).
 
 > **ATTENZIONE:** Non cambiare il DNS del dominio. Non creare o cambiare caselle di posta.
 > Queste operazioni hanno handoff separati (§12).
@@ -107,8 +117,9 @@ tuo computer.
 > italiano è disponibile per O4A8, fermati e segnala (§11).
 
 2. In **LOCATION**, scegli un data center in Italia. Scrivi il nome del data center sul foglio.
-3. In **OPERATING SYSTEM**, scegli Ubuntu Server 24.04 LTS (DR-353). Se il sistema non è
-   nell'elenco, fermati e segnala l'elenco completo (§11).
+3. In **OPERATING SYSTEM**, scegli Ubuntu Server 24.04 LTS (DR-353). Il carrello può
+   chiamarlo «Ubuntu 24». Se non c'è nessun Ubuntu 24, fermati e segnala l'elenco completo
+   (§11).
 4. In **SERVER MANAGEMENT ACCOUNT**, genera una password nuova con il gestore di password:
    almeno 24 caratteri.
 5. Salva la password nel gestore, con il nome «Server Amoris — password root».
@@ -121,7 +132,7 @@ tuo computer.
 11. Non aggiungere altri servizi a pagamento (firewall, switch, storage). Il PLAN non li
     prevede.
 12. Fai clic su **CONTINUE and go to the summary**.
-13. In **SUMMARY**, controlla: VPS O4A8, data center in Italia, Ubuntu Server 24.04 LTS,
+13. In **SUMMARY**, controlla: VPS O4A8, data center in Italia, Ubuntu 24,
     prezzo 11,79 € + IVA al mese.
 14. Fai clic su **CONTINUE with the purchase**.
 15. In **LOGIN**, entra con l'account Aruba del Centro (DR-354).
@@ -176,7 +187,7 @@ Questa procedura legge soltanto. Non cambia niente sul server.
 7. Scrivi `exit` e premi Invio.
 
 > **AVVERTENZA:** Non installare programmi e non cambiare impostazioni. L'indurimento del
-> server ha un handoff proprio, dopo la decisione D228.
+> server ha un handoff proprio (DR-357, DR-374).
 
 ## 9. Procedura F — Prepara il credito per il rinnovo
 
@@ -199,7 +210,7 @@ basta, Aruba sospende il server «per credito insufficiente».
 |---|---|
 | Il prezzo di O4A8 non è 11,79 € + IVA | Fermati. Segnala il prezzo nuovo. L'agente prepara una decisione |
 | Nessun data center in Italia per O4A8 | Fermati. Segnala le sedi offerte. Non scegliere una sede fuori dall'Italia |
-| Ubuntu Server 24.04 LTS non c'è | Fermati. Segnala l'elenco dei sistemi offerti |
+| Nessun Ubuntu 24 nell'elenco, oppure `/etc/os-release` non dice 24.04 | Fermati. Segnala l'elenco dei sistemi offerti |
 | Il carrello rifiuta la chiave `.pub` | Fermati. Segnala il messaggio esatto. L'agente prepara una chiave RSA come alternativa |
 | L'intestatario non è il Centro | Fermati prima del pagamento. Segnala il caso |
 | `ssh` risponde `Permission denied` | Controlla di usare il file `amoris_vps` e l'utente `root`. Se l'errore resta, segnala il messaggio senza la passphrase |
@@ -234,15 +245,14 @@ conferma.
 
 | Operazione | Quando | Dipende da |
 |---|---|---|
-| Indurimento del server: utente non `root`, solo chiave SSH, firewall con le porte 22, 80 e 443, aggiornamenti automatici, Docker | `1F-W5` | D228, security review della `1F-W4` |
-| Record DNS dello staging | `1F-W5` | D226 |
+| Indurimento del server: utente non `root`, solo chiave SSH, firewall con le porte 22, 80 e 443, aggiornamenti automatici, Docker | `1F-W5`, in parallelo alla `1F-W4` (DR-374) | DR-357; nessun dato prima della `1F-W4` |
+| Record DNS dello staging | `1F-W5` | DR-375 (sottodominio con password) |
 | Casella di posta del Centro per l'invio dei moduli (SMTP di Aruba, DR-301) | `1F-W6` | parere MI-06 (HO-054) |
 | Riduzione del TTL, poi cambio dei record A e AAAA | `1F-W8` | D230, `gate-checklist.md` senza voci rosse |
 | Rimozione di `phpinfo()` dal vecchio hosting (R-17) | `1F-W8` | rilascio |
 | Destino del vecchio hosting WordPress | dopo la `1F-W9` | D231 |
 
-La Storage Box dei backup è di Hetzner, non di Aruba (DR-335): avrà un handoff proprio nella
-`1F-W5`.
+La Storage Box dei backup è di Hetzner, non di Aruba (DR-335): handoff HO-058.
 
 ## 13. Esito
 

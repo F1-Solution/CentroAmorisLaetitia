@@ -30,6 +30,8 @@ const CLEAN: Record<string, string> = {
     'fetch("/api/health/live");if("localhost"===s.host)s.host="";\n',
   'etc/ssl/certs/ca-certificates.crt': 'certificati sintetici\n',
   'etc/ssl/certs/autorita-sintetica.pem': 'certificato sintetico\n',
+  // Alpine: collegamento di compatibilità al pacchetto dei certificati di sistema (backup, 1F-W3).
+  'etc/ssl1.1/cert.pem': 'certificati sintetici\n',
   [`${LONG_DIR}index.js`]: 'module.exports = 1;\n',
 };
 

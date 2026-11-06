@@ -22,6 +22,8 @@ const BLOCK = 512;
 /** Cartelle dei certificati delle autorità, che le immagini di base portano di serie. */
 const SYSTEM_CERT_DIRS = [
   'etc/ssl/',
+  // Alpine: collegamenti di compatibilità al pacchetto dei certificati di sistema.
+  'etc/ssl1.1/',
   'etc/ca-certificates/',
   'usr/share/ca-certificates/',
   'usr/lib/ssl/',

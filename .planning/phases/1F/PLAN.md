@@ -64,7 +64,7 @@ Chi esegue i comandi sul server lo stabilisce DR-357 (D228).
 | `1F-W2` | `1F-W1`, D225, D228 | Le immagini contengono il codice corretto; registro e modo di rilascio cambiano la CI |
 | `1F-W3` | `1F-W2` | Il servizio `backup` fa parte del Compose di produzione |
 | `1F-W4` | `1F-W2`, `1F-W3` | La revisione guarda immagini, `Caddyfile` e backup come andranno in produzione |
-| `1F-W5` | `1F-W4`, D226 | Nessun dato del Centro su un server prima della revisione |
+| `1F-W5` | ordine e indurimento: nessuna; dati del Centro: `1F-W4` | DR-374 (D265): server, Docker e staging vuoto avanzano in parallelo; nessun dato del Centro sul server prima della revisione |
 | `1F-W6` | `1F-W5`, parere MI-06 | DR-310 e ADR-010: email e compilazioni solo dopo il parere |
 | `1F-W7` | `1F-W5`, `1F-W6`, D229 | Lo staging deve avere funzioni e contenuti come andranno in produzione |
 | `1F-W8` | `1F-W7`, D227, D230, gate-checklist verde | Rilascio solo della build validata sullo staging |
@@ -142,13 +142,14 @@ Già decise per la 1F:
 | ~~**D233**~~ | N2, tempi dell'archivio | **DR-338**: misura e taratura nella `1F-W5` |
 | ~~**D225**~~ | Dove si conservano le immagini | **DR-356**: registro di GitHub (GHCR), privato |
 | ~~**D228**~~ | Chi esegue i comandi sul server | **DR-357**: impianto da handoff, rilasci da GitHub Actions avviata a mano |
+| ~~**D226**~~ | Accesso allo staging | **DR-375**: sottodominio con DNS e password |
+| ~~**D265**~~ | Accelerazione della 1F | **DR-374**: ordini subito; W5 sul server senza dati in parallelo alla W4 |
 
 Ancora aperte, da chiedere con `grill-me` prima della wave indicata. Nessuna wave parte
 con una decisione bloccante aperta.
 
 | id | Decisione | Opzioni | Raccomandazione | Termine |
 |---|---|---|---|---|
-| **D226** | Come si raggiunge lo staging | A sottodominio con record DNS e accesso protetto da password · B solo tramite tunnel SSH, senza DNS · C indirizzo IP con password, senza TLS valido | A: si prova anche il certificato, come in produzione | prima della `1F-W5` |
 | **D229** | PDF importati con metadati (DR-259: 29 su 48 con l'autore) | A ripulirli tutti con la pulizia del CMS · B lasciarli byte per byte · C ripulire solo quelli con l'autore | da formulare con i numeri di ADR-012 §6 | prima della `1F-W7` |
 | **D227** | Sonda esterna e destinatari degli avvisi | A servizio gratuito esterno · B sonda dalla Storage Box o da un'altra macchina del Centro · C nessuna sonda in Fase 1 | da formulare con i servizi verificati | prima della `1F-W8` |
 | **D230** | Finestra del passaggio e indisponibilità accettata | A sera di un giorno feriale · B fine settimana · C data concordata con il Centro | da formulare con il calendario del Centro | prima della `1F-W8` |

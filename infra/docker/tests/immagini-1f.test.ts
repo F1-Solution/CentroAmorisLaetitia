@@ -23,6 +23,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 const TAG = 'prova-t4';
+/** Immagine del backup (1F-W3 T1): resta dopo le prove, serve alle attività successive. */
+const BACKUP_IMAGE = 'amoris-backup:prova-1f';
 
 interface AppSpec {
   port: number;
@@ -114,6 +116,7 @@ function baseImage(): string {
 }
 
 const builds = new Map<AppName, BuildResult>();
+let backupBuild: BuildResult | undefined;
 /** Rete Docker senza uscita verso Internet, come quella della pulizia in produzione (DR-359). */
 const NETWORK = `amoris-pulizia-${TAG}`;
 const containers: string[] = [];
@@ -127,6 +130,14 @@ beforeAll(async () => {
       await dockerBuild(['build', '-f', `infra/docker/${app}.Dockerfile`, '-t', image(app), '.']),
     );
   }
+  backupBuild = await dockerBuild([
+    'build',
+    '-f',
+    'infra/docker/backup.Dockerfile',
+    '-t',
+    BACKUP_IMAGE,
+    '.',
+  ]);
 });
 
 afterAll(() => {
@@ -466,5 +477,61 @@ describe('pulizia su rete interna (DR-359, DR-362, criterio W2-5)', () => {
       "fetch('http://1.1.1.1', { signal: AbortSignal.timeout(5000) }).then(() => process.exit(0), () => process.exit(7))",
     ]);
     expect(ip.status).toBe(7);
+  });
+});
+
+describe('immagine backup (1F-W3 T1, DR-366)', () => {
+  const run = (...command: string[]) =>
+    docker(['run', '--rm', '--entrypoint', command[0] ?? '', BACKUP_IMAGE, ...command.slice(1)]);
+
+  it('si costruisce dal Dockerfile del repository', () => {
+    expect(backupBuild?.status, backupBuild?.stderr.slice(-4000)).toBe(0);
+  });
+
+  it('dichiara un utente non root e nessun health check', () => {
+    const inspect = docker(['image', 'inspect', BACKUP_IMAGE, '--format', '{{json .Config}}']);
+    expect(inspect.status, inspect.stderr).toBe(0);
+    const config = JSON.parse(inspect.stdout) as { User: string; Healthcheck?: unknown };
+    expect(config.User).toBe('backup');
+    expect(config.Healthcheck).toBeUndefined();
+  });
+
+  it('gira con uid e gid 10003', () => {
+    const result = run('sh', '-c', 'echo "$(id -u):$(id -g)"');
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe('10003:10003');
+  });
+
+  it('porta restic 0.19.1', () => {
+    const result = run('restic', 'version');
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain('restic 0.19.1');
+  });
+
+  it('porta pg_dump e pg_restore 17.x', () => {
+    for (const tool of ['pg_dump', 'pg_restore']) {
+      const result = run(tool, '--version');
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout, tool).toMatch(/\) 17\./);
+    }
+  });
+
+  it('porta mc e il client ssh', () => {
+    const mc = run('mc', '--version');
+    expect(mc.status, mc.stderr).toBe(0);
+    expect(mc.stdout).toMatch(/mc version/i);
+    const ssh = run('ssh', '-V');
+    expect(ssh.status, ssh.stderr).toBe(0);
+    expect(`${ssh.stdout}${ssh.stderr}`).toMatch(/OpenSSH/);
+  });
+
+  it("non contiene file d'ambiente, chiavi né sorgenti private", () => {
+    const result = run(
+      'sh',
+      '-c',
+      'find / -xdev \\( -name ".env*" -o -name "source-private" -o -name "id_*" -o -name "*.pem" \\) -not -path "/etc/ssl/*" -not -path "/etc/ssl1.1/*" -not -path "/usr/share/*" -print 2>/dev/null; true',
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe('');
   });
 });

@@ -175,7 +175,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [web, admin, api, scrub]
+        app: [web, admin, api, scrub, backup]
     env:
       APP: ${{ matrix.app }}
 

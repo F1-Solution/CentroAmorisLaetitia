@@ -91,6 +91,75 @@ describe.each(APPS)('%s.Dockerfile', (app) => {
   });
 });
 
+describe('backup.Dockerfile: servizio di backup (1F-W3 T1, DR-366)', () => {
+  const text = (): string => read('backup');
+  const all = (): Stage[] => stages(text());
+  const compose = (): string =>
+    readFileSync(path.join(repoRoot, 'infra', 'deploy', 'compose.yml'), 'utf8');
+
+  it('esiste', () => {
+    expect(existsSync(path.join(dockerDir, 'backup.Dockerfile'))).toBe(true);
+  });
+
+  it('fissa ogni immagine di base per versione e digest, senza latest', () => {
+    const aliases = new Set<string>();
+    expect(all().length).toBeGreaterThan(0);
+    for (const stage of all()) {
+      if (!aliases.has(stage.from.toLowerCase())) {
+        expect(stage.from, stage.from).toMatch(/^[\w./-]+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+        expect(stage.from).not.toMatch(/:latest@/);
+      }
+      if (stage.alias) aliases.add(stage.alias);
+    }
+  });
+
+  it('parte dalla stessa immagine del database del Compose, così il client ha la stessa versione', () => {
+    const db = /^\s*image:\s*(postgres:\S+@sha256:[0-9a-f]{64})\s*$/m.exec(compose())?.[1];
+    expect(db).toBeDefined();
+    expect(all().at(-1)?.from).toBe(db);
+  });
+
+  it("nell'ultimo stadio gira con un utente non root e senza health check", () => {
+    const last = all().at(-1);
+    const user = (last?.lines ?? [])
+      .filter((line) => /^USER\s/i.test(line))
+      .at(-1)
+      ?.replace(/^USER\s+/i, '')
+      .split(':')[0];
+    expect(user).toBeDefined();
+    expect(['root', '0']).not.toContain(user);
+    expect(last?.lines.some((line) => /^HEALTHCHECK\s+(?!NONE)/i.test(line))).toBe(false);
+  });
+
+  it('scarica ogni file da Internet con impronta dichiarata', () => {
+    const adds = instructions(text()).filter((line) => /^ADD\s.*https?:\/\//i.test(line));
+    expect(adds.length).toBeGreaterThan(0);
+    for (const line of adds) expect(line).toMatch(/--checksum=sha256:[0-9a-f]{64}\s/);
+  });
+
+  it('porta restic 0.19.1 e mc copiato dall’immagine del Compose, fissata per digest', () => {
+    expect(text()).toContain('/v0.19.1/restic_0.19.1_linux_amd64.bz2');
+    const mc = /image:\s*(cgr\.dev\/chainguard\/minio-client@sha256:[0-9a-f]{64})/.exec(
+      compose(),
+    )?.[1];
+    expect(mc).toBeDefined();
+    expect(text()).toContain(`COPY --from=${mc} /usr/bin/mc`);
+  });
+
+  it('installa il client ssh con la versione del pacchetto fissata', () => {
+    expect(text()).toMatch(/apk add[^\n]*openssh-client-default=\S+/);
+  });
+
+  it('copia dal repository solo gli script di infra/deploy/backup, senza segreti nelle variabili d’ambiente', () => {
+    const lines = instructions(text());
+    const copies = lines.filter((line) => /^COPY\s+(?!--from)/i.test(line));
+    expect(copies.length).toBe(2);
+    for (const line of copies)
+      expect(line).toMatch(/^COPY\s+(?:--chmod=\d+\s+)?infra\/deploy\/backup\/[\w.-]+\s/);
+    expect(lines.some((line) => /^ENV\s.*(PASSWORD|SECRET|KEY|TOKEN)/i.test(line))).toBe(false);
+  });
+});
+
 describe('scrub.Dockerfile: programmi della pulizia come la CI (DR-268, DR-359)', () => {
   const ci = readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
   const ciValue = (name: string): string => {
