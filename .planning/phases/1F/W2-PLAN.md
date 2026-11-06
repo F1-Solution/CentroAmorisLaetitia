@@ -320,8 +320,8 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
   `no-new-privileges` su tutti, limiti di memoria come al T6, porte solo su Caddy (e su
   `db` e `objects` per la sola aggiunta di prova), reti `app`, `data`, `scrub` interne.
 - [x] Stack fermati (`down`, volumi lasciati).
-- [ ] Volumi locali di prova (`amoris-production_*`, `amoris-staging_*`) rimossi **su
-  conferma** (PLAN §7 riga 7).
+- [x] Volumi locali di prova (`amoris-production_*`, `amoris-staging_*`) rimossi **su
+  conferma** (PLAN §7 riga 7): otto volumi, `docker volume rm`.
 
 ### T11 — Revisione e verifica
 
@@ -347,8 +347,10 @@ Percorsi nuovi (fissati qui come chiede PLAN §4): `infra/docker/` per i Dockerf
   lockfile) sono previste; `qpdf` 12.4.2 e `ffmpeg` 9.0.2 nell'immagine della pulizia
   vengono da ADR-012 e DR-268 (già in CI); fuori elenco solo il frontend
   `docker/dockerfile:1.7` di `scrub.Dockerfile`. Nessun pacchetto npm nuovo.
-- [ ] Commit e push **su conferma**; CI verde, immagini pubblicate in GHCR; riga
-  `PHASE:1F WAVE:1F-W2 STATUS:complete`.
+- [x] Commit e push **su conferma**; CI verde, immagini pubblicate in GHCR; riga
+  `PHASE:1F WAVE:1F-W2 STATUS:complete`. `fd57342` con i lavori delle immagini rossi a
+  `setup-node` (cache di pnpm attivata da sola), corretto in `7249651`: CI 42168690214
+  verde, quattro immagini pubblicate; il registro rifiuta l'accesso anonimo (privato).
 
 ## 4. Decisioni
 
