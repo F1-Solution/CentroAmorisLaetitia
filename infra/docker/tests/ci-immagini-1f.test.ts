@@ -66,6 +66,16 @@ describe('ci.yml: lavoro delle immagini', () => {
     expect(job).not.toMatch(/latest/);
   });
 
+  it('non chiede a setup-node la cache di pnpm, che in questo lavoro non è installato', () => {
+    // setup-node@v5 la attiva da solo leggendo `packageManager` e fallisce senza pnpm (CI 42137609028).
+    const lines = commands(imagesJob()).split('\n');
+    const start = lines.findIndex((line) => line.includes('uses: actions/setup-node@'));
+    expect(start).toBeGreaterThan(-1);
+    const next = lines.findIndex((line, index) => index > start && /^\s+- /.test(line));
+    const step = lines.slice(start, next === -1 ? undefined : next).map((line) => line.trim());
+    expect(step).toContain('package-manager-cache: false');
+  });
+
   it('collega l’immagine al repository privato e al commit', () => {
     const job = commands(imagesJob());
     expect(job).toContain('org.opencontainers.image.source=');
