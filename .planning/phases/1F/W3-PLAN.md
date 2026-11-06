@@ -161,10 +161,27 @@ Percorsi nuovi: `infra/docker/backup.Dockerfile`, `infra/deploy/backup/` per gli
 
 ### T5 — Conservazione e cifratura
 
-- [ ] Prova della conservazione: istantanee datate con `restic backup --time` su 8 mesi, poi
-  `forget` con la politica; restano 7 + 4 + 6 secondo le regole di restic (W3-5).
-- [ ] Prova della cifratura: nessuna stringa nota dei dati sintetici nei file del repository;
-  password sbagliata → errore (W3-4).
+- [x] Prova della conservazione (W3-5): `conservazione-1f.test.ts`, 36 istantanee di amoris con
+  `restic backup --time` su 240 giorni (due il giorno 1 e due il giorno 95; giorni 1-10 consecutivi;
+  mesi senza istantanee; ore 6, 8, 12, 18, 20, 23) più 5 di un altro host o di un'altra etichetta;
+  poi lo script vero. Insieme atteso, calcolato nella prova con le regole di restic (lette il
+  2026-11-06 su restic.readthedocs.io, «Removing backup snapshots»): 13 di amoris (con oggi al
+  2026-11-06: 6, 5, 4, 3, 2 e 1 novembre, 31 e 25 ottobre, 16 ottobre, 25 settembre, 28 agosto,
+  29 giugno, 30 maggio) più le 5 estranee, tutte intatte (lo script filtra con
+  `--host amoris --tag amoris-backup`). Il modello verifica che ogni politica tenga qualcosa che le
+  altre non tengono. Mutazioni rosse (1 prova su 10 ciascuna): `--keep-daily 4`, `--keep-weekly 3`,
+  `--keep-monthly 5`; `--keep-daily 6` resta verde per coincidenza di calendario (il giorno escluso
+  è tenuto dal mese). Verde 10/10, 87 s.
+- [x] Prova della cifratura (W3-4): controllo positivo (le stringhe stanno in chiaro nel dump e negli
+  oggetti sottoposti a backup), poi nessuna delle tre stringhe uniche (riga, contenuto, nome
+  oggetto) in nessun file del repository copiato dal server SFTP, con `config`, `keys/` e `data/`
+  presenti; `check` e `backup` con password sbagliata escono con codice diverso da 0 (passo
+  `repository`, 12), lo stato `last-<cmd>.json` coincide con l'uscita e nessuna password compare.
+  Mutazione rossa: un file in chiaro nel repository, 1 prova su 10.
+- Nessun difetto dello script trovato; script e Dockerfile invariati.
+- **Per la T6/T8:** due esecuzioni di Vitest insieme su Docker danno falsi rossi e «10 skipped»:
+  una alla volta. Nel README: `forget --prune` agisce solo sulle istantanee di host `amoris` con
+  etichetta `amoris-backup`; altre istantanee nello stesso repository non vengono mai potate.
 
 ### T6 — Prova di ripristino completo (W3-7, W3-8)
 
