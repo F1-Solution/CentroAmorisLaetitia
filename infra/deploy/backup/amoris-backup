@@ -1,5 +1,5 @@
 #!/bin/sh
-# Punto di ingresso unico del servizio di backup (1F-W3 T2): amoris-backup <init|backup|check>.
+# Punto di ingresso unico del servizio di backup (1F-W3 T2, T3): amoris-backup <init|backup|check|restore>.
 # Ogni comando stampa una sola riga JSON di esito (DR-371) e esce con codice diverso da 0 a ogni errore.
 set -eu
 
@@ -92,12 +92,123 @@ cmd_check() {
   succeed
 }
 
+usage() {
+  echo "uso: amoris-backup init|backup|check|restore <id-istantanea|latest>" >&2
+  exit 64
+}
+
+# Il database di destinazione non ha schemi né relazioni utente (lo schema di Drizzle conta).
+check_target_database() {
+  rc=0
+  found=$(psql --no-password -XAtq -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM pg_namespace WHERE nspname !~ '^pg_' AND nspname NOT IN ('information_schema', 'public')) + (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema' AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f'))" 2>/dev/null) || rc=$?
+  [ "$rc" -eq 0 ] || fail target_db "$rc"
+  [ "$found" = 0 ] || fail target_db_not_empty 65
+}
+
+# I due bucket esistono e sono vuoti: il ripristino non crea né sovrascrive nulla.
+check_target_buckets() {
+  rc=0
+  mc ls dst >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail target_objects "$rc"
+  for bucket in "$S3_BUCKET_PUBLIC" "$S3_BUCKET_PRIVATE"; do
+    rc=0
+    mc ls --recursive "dst/$bucket" >"$WORK_DIR/listing" 2>/dev/null || rc=$?
+    [ "$rc" -eq 0 ] || fail target_bucket_missing 65
+    [ ! -s "$WORK_DIR/listing" ] || fail target_bucket_not_empty 65
+  done
+}
+
+# Risolve «latest» o un prefisso d'identificativo nell'identificativo completo di un'istantanea.
+resolve_snapshot() {
+  rc=0
+  if [ "$1" = latest ]; then
+    restic_run snapshots --json --latest 1 --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" \
+      >"$WORK_DIR/snapshots.json" 2>/dev/null || rc=$?
+  else
+    restic_run snapshots --json "$1" >"$WORK_DIR/snapshots.json" 2>/dev/null || rc=$?
+  fi
+  [ "$rc" -eq 0 ] || fail snapshot_lookup "$rc"
+  SNAPSHOT_ID=$(sed -n 's/.*"id":"\([0-9a-f]\{64\}\)".*/\1/p' "$WORK_DIR/snapshots.json" | tail -n 1)
+  [ -n "$SNAPSHOT_ID" ] || fail snapshot_lookup 1
+}
+
+# Ripristino completo (DR-378): solo su database e bucket vuoti, database in una transazione, poi gli oggetti.
+cmd_restore() {
+  begin restore
+  want=$1
+  case $want in
+    latest) ;;
+    '' | *[!0-9a-f]*) fail snapshot_arg 64 ;;
+  esac
+  [ "${#want}" -le 64 ] || fail snapshot_arg 64
+  load_secret PGPASSWORD
+  load_secret S3_ACCESS_KEY
+  load_secret S3_SECRET_KEY
+  need S3_ENDPOINT S3_BUCKET_PUBLIC S3_BUCKET_PRIVATE
+  PGHOST=${PGHOST:-db}
+  PGUSER=${PGUSER:-amoris}
+  PGDATABASE=${PGDATABASE:-amoris}
+  export PGHOST PGUSER PGDATABASE
+  [ -d "$DATA_DIR" ] && [ -w "$DATA_DIR" ] || config_error
+  setup_restic
+
+  # Prima di toccare qualunque cosa: la destinazione dev'essere nuova e vuota.
+  check_target_database
+  MC_CONFIG_DIR=$WORK_DIR/mc
+  export MC_CONFIG_DIR
+  rc=0
+  mc alias set dst "$S3_ENDPOINT" "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail target_objects "$rc"
+  check_target_buckets
+
+  rc=0
+  probe_repository || rc=$?
+  [ "$rc" -eq 0 ] || fail repository "$rc"
+  resolve_snapshot "$want"
+
+  # Cartella di lavoro nel volume dei dati (in produzione /tmp è in memoria), separata dal mirror.
+  RESTORE_DIR=$DATA_DIR/.restore
+  rm -rf "$RESTORE_DIR"
+  rc=0
+  restic_run restore "$SNAPSHOT_ID" --target "$RESTORE_DIR" >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail restic_restore "$rc"
+  root=$RESTORE_DIR$DATA_DIR
+  [ -f "$root/db/database.dump" ] || fail restic_restore 1
+  for bucket in "$S3_BUCKET_PUBLIC" "$S3_BUCKET_PRIVATE"; do
+    [ -d "$root/objects/$bucket" ] || fail restic_restore 1
+  done
+  DUMP_BYTES=$(stat -c %s "$root/db/database.dump")
+  read -r OBJECTS_BYTES OBJECTS_COUNT <<STATS
+$(find "$root/objects" -type f -exec stat -c %s {} + | awk '{ s += $1; n++ } END { print s + 0, n + 0 }')
+STATS
+
+  # Senza proprietari né privilegi d'origine: il ruolo di destinazione può avere un altro nome.
+  rc=0
+  pg_restore --no-password --exit-on-error --single-transaction --no-owner --no-privileges \
+    -d "$PGDATABASE" "$root/db/database.dump" >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail db_restore "$rc"
+
+  restored=0
+  for bucket in "$S3_BUCKET_PUBLIC" "$S3_BUCKET_PRIVATE"; do
+    rc=0
+    mc --quiet mirror "$root/objects/$bucket" "dst/$bucket" >/dev/null 2>&1 || rc=$?
+    [ "$rc" -eq 0 ] || fail objects_restore "$rc"
+    rc=0
+    mc ls --recursive "dst/$bucket" >"$WORK_DIR/listing" 2>/dev/null || rc=$?
+    [ "$rc" -eq 0 ] || fail objects_restore "$rc"
+    restored=$((restored + $(wc -l <"$WORK_DIR/listing")))
+  done
+  [ "$restored" -eq "$OBJECTS_COUNT" ] || fail objects_restore 1
+  succeed
+}
+
 case "${1:-}" in
   init) cmd_init ;;
   backup) cmd_backup ;;
   check) cmd_check ;;
-  *)
-    echo "uso: amoris-backup init|backup|check" >&2
-    exit 64
+  restore)
+    [ -n "${2:-}" ] || usage
+    cmd_restore "$2"
     ;;
+  *) usage ;;
 esac

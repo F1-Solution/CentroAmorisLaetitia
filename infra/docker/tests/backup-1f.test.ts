@@ -311,7 +311,7 @@ async function whileStopped(
 }
 
 function removeAll(): void {
-  docker(['rm', '-f', ...Object.values(C)]);
+  docker(['rm', '-f', '-v', ...Object.values(C)]);
   docker(['network', 'rm', NET]);
   docker(['volume', 'rm', '-f', ...Object.values(V)]);
 }

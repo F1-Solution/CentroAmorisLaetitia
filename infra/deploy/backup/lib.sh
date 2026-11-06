@@ -6,6 +6,7 @@ BACKUP_TAG=amoris-backup
 DATA_DIR=${BACKUP_DATA_DIR:-/backup/data}
 STATE_DIR=${BACKUP_STATE_DIR:-/backup/state}
 WORK_DIR=
+RESTORE_DIR=
 
 CMD=
 STARTED_EPOCH=0
@@ -26,9 +27,13 @@ begin() {
   trap 'exit 143' INT TERM
 }
 
-# Toglie chiave, configurazione di mc e dump parziale: nessun segreto resta nemmeno in /tmp.
+# Toglie chiave, configurazione di mc, dump parziale e cartella del ripristino, anche dopo un errore.
 cleanup() {
   [ -z "$WORK_DIR" ] || rm -rf "$WORK_DIR"
+  if [ -n "$RESTORE_DIR" ]; then
+    chmod -R u+rwX "$RESTORE_DIR" 2>/dev/null || true
+    rm -rf "$RESTORE_DIR"
+  fi
   rm -f "$DATA_DIR/db/.database.dump.tmp"
 }
 

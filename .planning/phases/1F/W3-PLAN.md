@@ -109,11 +109,19 @@ Percorsi nuovi: `infra/docker/backup.Dockerfile`, `infra/deploy/backup/` per gli
 
 ### T3 — Script di ripristino (prova prima)
 
-- [ ] Prove: ripristino su database **vuoto** e bucket vuoti; rifiuta di partire se il database
-  contiene già tabelle o i bucket contengono oggetti (nessuna sovrascrittura per errore);
-  istantanea scelta per identificativo o `latest`. **Rosse** prima.
-- [ ] `infra/deploy/backup/restore.sh`: `restic restore` in `/tmp` del contenitore,
-  `pg_restore` (o `psql`), `mc mirror` verso i bucket; esito registrato come per il backup.
+- [x] Prove in `infra/docker/tests/ripristino-1f.test.ts` (16): ripristino per identificativo e
+  `latest` su destinazioni nuove con conteggi di righe e SHA-256 uguali; rifiuto (65) con tabella,
+  schema `drizzle`, oggetto o bucket mancante, destinazione invariata; istantanea inesistente,
+  SFTP spento, segreto mancante, `pg_restore` fallito a metà (database resta vuoto); nessun dato
+  nelle uscite. **Rosse** prima: 13 su 16; poi 16/16.
+- [x] Comando `amoris-backup restore <id|latest>` (non uno script separato): controlli della
+  destinazione prima di tutto, `restic restore` in `/backup/data/.restore` (**non** in `/tmp`, che
+  in produzione è in memoria; rimossa a ogni uscita), `pg_restore --single-transaction
+  --exit-on-error --no-owner --no-privileges`, `mc mirror` e conteggio degli oggetti; esito in
+  `last-restore.json`. Codici: 64 argomento, 65 destinazione non vuota.
+- **Per la T6:** lo schema vero crea `pgcrypto`, `citext`, `unaccent`: il ripristino delle
+  estensioni si prova solo lì. **Per la T8 (README):** un guasto dopo `pg_restore` lascia il
+  database pieno e il ritentativo viene rifiutato: ripulire la destinazione prima di ripetere.
 
 ### T4 — Servizio nel Compose
 
