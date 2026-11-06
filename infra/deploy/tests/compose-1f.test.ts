@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -53,13 +53,24 @@ const STAGING_ENV: Readonly<Record<string, string>> = {
 
 const REQUIRED = Object.keys(BASE_ENV);
 
+/** Variabili del backup (solo produzione): facoltative, senza di esse il servizio si rifiuta di partire. */
+const BACKUP_ENV: Readonly<Record<string, string>> = {
+  ...BASE_ENV,
+  RESTIC_PASSWORD: 'password-sintetica-del-repository-di-prova',
+  BACKUP_SFTP_HOST: 'storage.esempio.invalid',
+  BACKUP_SFTP_USER: 'utente-di-prova',
+  BACKUP_SFTP_PATH: 'amoris-prova',
+  BACKUP_SSH_KEY_PATH: path.join(import.meta.dirname, 'chiave-ssh-sintetica'),
+  BACKUP_KNOWN_HOSTS_PATH: path.join(import.meta.dirname, 'known-hosts-sintetico'),
+};
+
 /**
  * L'ambiente della macchina senza le chiavi che il Compose interpola: per Compose l'ambiente
  * del processo prevale sul file, e un valore della macchina falserebbe la prova.
  */
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|S3_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -99,7 +110,10 @@ interface Service {
   security_opt?: string[];
   healthcheck?: { test?: string[] };
   restart?: string;
-  command?: string[];
+  command?: string[] | null;
+  entrypoint?: string[];
+  secrets?: { source: string; target: string }[];
+  volumes?: { source?: string; target: string }[];
   depends_on?: Record<string, { condition: string }>;
 }
 
@@ -108,6 +122,7 @@ interface Config {
   services: Record<string, Service>;
   networks: Record<string, { internal?: boolean; name?: string }>;
   volumes: Record<string, { name?: string }>;
+  secrets?: Record<string, { file?: string; environment?: string }>;
 }
 
 function config(env: Readonly<Record<string, string>>, profiles: string[] = []): Config {
@@ -137,6 +152,7 @@ const OUR_IMAGES = ['web', 'admin', 'api', 'scrub'] as const;
 let production: Config;
 let staging: Config;
 let release: Config;
+let backup: Config;
 
 beforeAll(() => {
   const version = spawnSync('docker', ['compose', 'version'], { encoding: 'utf8' });
@@ -144,6 +160,7 @@ beforeAll(() => {
   production = config(BASE_ENV);
   staging = config(STAGING_ENV);
   release = config(BASE_ENV, ['release']);
+  backup = config(BACKUP_ENV, ['backup']);
 });
 
 afterAll(() => {
@@ -219,11 +236,12 @@ describe('porte e reti (W2-5, DR-359)', () => {
     expect(published).toEqual(['caddy']);
   });
 
-  it('tutte le reti sono interne, salvo quella di Caddy verso l’esterno', () => {
-    const external = Object.entries(production.networks)
+  it('tutte le reti sono interne, salvo quella di Caddy e quella d’uscita del backup', () => {
+    const external = Object.entries(backup.networks)
       .filter(([, network]) => network.internal !== true)
-      .map(([name]) => name);
-    expect(external).toEqual(['edge']);
+      .map(([name]) => name)
+      .sort();
+    expect(external).toEqual(['backup-out', 'edge']);
     expect(Object.keys(production.services.caddy?.networks ?? {})).toContain('edge');
     for (const [name, service] of Object.entries(production.services)) {
       if (name === 'caddy') continue;
@@ -262,9 +280,12 @@ describe('limiti (W2-5, DR-263, DR-334)', () => {
   });
 
   it('produzione e staging insieme restano sotto 7 GB, lasciando 1 GB al sistema', () => {
-    const sum = (stack: Config) =>
-      LONG_RUNNING.reduce((total, name) => total + bytes(stack.services[name]?.mem_limit), 0);
-    expect(sum(production) + sum(staging)).toBeLessThanOrEqual(7 * GIB);
+    const sum = (stack: Config, names: string[]) =>
+      names.reduce((total, name) => total + bytes(stack.services[name]?.mem_limit), 0);
+    // Il backup gira solo in produzione (DR-372): 3712 MiB contro i 3328 MiB dello staging.
+    const total = sum(backup, [...LONG_RUNNING, 'backup']) + sum(staging, LONG_RUNNING);
+    expect(total).toBe(7040 * MIB);
+    expect(total).toBeLessThanOrEqual(7 * GIB);
   });
 
   it('API e pulizia ricevono gli stessi limiti dei media, anche quando cambiano', () => {
@@ -300,6 +321,220 @@ describe('limiti (W2-5, DR-263, DR-334)', () => {
       expect(service?.cap_drop, name).toEqual(['ALL']);
       expect(service?.security_opt, name).toContain('no-new-privileges:true');
     }
+  });
+});
+
+describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
+  const service = () => backup.services.backup;
+  const outNetwork = 'backup-out';
+
+  it('esiste solo nel profilo backup: senza profilo non c’è', () => {
+    expect(production.services.backup).toBeUndefined();
+    expect(service()?.profiles).toEqual(['backup']);
+    expect(service()?.image).toBe(`${BASE_ENV.IMAGE_PREFIX}-backup:${BASE_ENV.IMAGE_TAG}`);
+  });
+
+  it('è a termine: nessuna porta, nessun riavvio, comando scelto da chi lo lancia', () => {
+    expect(service()?.ports ?? []).toEqual([]);
+    expect(service()?.restart).toBe('no');
+    expect(service()?.entrypoint).toEqual(['amoris-backup']);
+    expect(service()?.command ?? null).toBeNull();
+  });
+
+  it('gira in sola lettura, senza capacità e senza nuovi privilegi, con memoria limitata', () => {
+    expect(service()?.read_only).toBe(true);
+    expect(service()?.cap_drop).toEqual(['ALL']);
+    expect(service()?.security_opt).toContain('no-new-privileges:true');
+    expect(bytes(service()?.mem_limit)).toBe(384 * MIB);
+    expect(service()?.environment?.GOMEMLIMIT).toBe('256MiB');
+    expect(service()?.tmpfs?.some((entry) => entry.startsWith('/tmp'))).toBe(true);
+  });
+
+  it('tre volumi con nome per dati, stato e cache; nessun volume anonimo dell’immagine di base', () => {
+    const named = (service()?.volumes ?? []).map((volume) => [volume.source, volume.target]);
+    expect(named).toEqual([
+      ['backup-data', '/backup/data'],
+      ['backup-state', '/backup/state'],
+      ['backup-cache', '/backup/cache'],
+    ]);
+    expect(service()?.tmpfs?.some((entry) => entry.startsWith('/var/lib/postgresql/data'))).toBe(
+      true,
+    );
+  });
+
+  it('sta sulla rete dei dati e su una rete d’uscita che nessun altro servizio usa', () => {
+    expect(Object.keys(service()?.networks ?? {}).sort()).toEqual([outNetwork, 'data']);
+    expect(backup.networks[outNetwork]?.internal).not.toBe(true);
+    expect(backup.networks.data?.internal).toBe(true);
+    expect(backup.networks.app?.internal).toBe(true);
+    expect(backup.networks.scrub?.internal).toBe(true);
+    const members = Object.entries(backup.services)
+      .filter(([, other]) => Object.keys(other.networks ?? {}).includes(outNetwork))
+      .map(([name]) => name);
+    expect(members).toEqual(['backup']);
+  });
+
+  it('solo le tre variabili dell’API e la password di restic portano un segreto nell’ambiente', () => {
+    const env = service()?.environment ?? {};
+    expect(env).toMatchObject({
+      PGPASSWORD: BASE_ENV.POSTGRES_PASSWORD,
+      S3_ACCESS_KEY: BASE_ENV.S3_ACCESS_KEY,
+      S3_SECRET_KEY: BASE_ENV.S3_SECRET_KEY,
+      RESTIC_PASSWORD: BACKUP_ENV.RESTIC_PASSWORD,
+    });
+    const allowed = ['PGPASSWORD', 'S3_ACCESS_KEY', 'S3_SECRET_KEY', 'RESTIC_PASSWORD'];
+    const secretValues = [
+      BASE_ENV.IP_HASH_SALT,
+      BASE_ENV.CSRF_SECRET,
+      BASE_ENV.SCRUB_SERVICE_TOKEN,
+      BACKUP_ENV.BACKUP_SSH_KEY_PATH,
+      BACKUP_ENV.BACKUP_KNOWN_HOSTS_PATH,
+    ];
+    for (const [key, value] of Object.entries(env)) {
+      if (allowed.includes(key)) continue;
+      expect(secretValues, key).not.toContain(value);
+      expect(value, key).not.toMatch(/sintetic[oa]/);
+    }
+    expect(env.PGPASSWORD_FILE).toBeUndefined();
+  });
+
+  it('chiave SSH e known_hosts arrivano come file in /run/secrets, con percorso predefinito', () => {
+    expect(
+      service()
+        ?.secrets?.map((secret) => secret.target)
+        .sort(),
+    ).toEqual(['/run/secrets/backup_known_hosts', '/run/secrets/backup_ssh_key']);
+    const files = Object.fromEntries(
+      Object.entries(backup.secrets ?? {}).map(([name, secret]) => [name, secret.file]),
+    );
+    expect(files).toEqual({
+      backup_ssh_key: BACKUP_ENV.BACKUP_SSH_KEY_PATH,
+      backup_known_hosts: BACKUP_ENV.BACKUP_KNOWN_HOSTS_PATH,
+    });
+    const fallback = config(BASE_ENV, ['backup']).secrets ?? {};
+    expect(fallback.backup_ssh_key?.file).toMatch(/backup-chiavi[\\/]ssh_key$/);
+    expect(fallback.backup_known_hosts?.file).toMatch(/backup-chiavi[\\/]known_hosts$/);
+  });
+
+  it('destinazione e database arrivano dalle variabili; la porta SFTP vale 23 se non indicata', () => {
+    expect(service()?.environment).toMatchObject({
+      PGHOST: 'db',
+      PGUSER: 'amoris',
+      PGDATABASE: 'amoris',
+      S3_ENDPOINT: 'http://objects:9000',
+      S3_BUCKET_PUBLIC: 'media-public',
+      S3_BUCKET_PRIVATE: 'media-private',
+      BACKUP_SFTP_HOST: BACKUP_ENV.BACKUP_SFTP_HOST,
+      BACKUP_SFTP_PORT: '23',
+      BACKUP_SFTP_USER: BACKUP_ENV.BACKUP_SFTP_USER,
+      BACKUP_SFTP_PATH: BACKUP_ENV.BACKUP_SFTP_PATH,
+    });
+  });
+
+  it('senza le variabili del backup il Compose parte e le lascia vuote (lo script risponde 78)', () => {
+    const bare = config(BASE_ENV, ['backup']).services.backup?.environment ?? {};
+    for (const key of [
+      'RESTIC_PASSWORD',
+      'BACKUP_SFTP_HOST',
+      'BACKUP_SFTP_USER',
+      'BACKUP_SFTP_PATH',
+    ]) {
+      expect(bare[key], key).toBe('');
+    }
+    for (const key of [
+      'RESTIC_PASSWORD',
+      'BACKUP_SFTP_HOST',
+      'BACKUP_SFTP_USER',
+      'BACKUP_SFTP_PATH',
+    ]) {
+      expect(readFileSync(composeFile, 'utf8'), key).toContain(`\${${key}:-}`);
+    }
+  });
+
+  it('senza profilo, con l’esempio completo, gli altri servizi restano gli stessi', () => {
+    expect(Object.keys(production.services).sort()).toEqual(
+      ['admin', 'api', 'caddy', 'db', 'objects', 'objects-init', 'scrub', 'web'].sort(),
+    );
+    for (const [name, other] of Object.entries(production.services)) {
+      expect(Object.keys(other.networks ?? {}), name).not.toContain(outNetwork);
+    }
+  });
+
+  it('la cartella predefinita delle chiavi del backup è esclusa da Git', () => {
+    // La chiave SSH privata non deve poter finire in un commit per errore.
+    for (const file of ['ssh_key', 'known_hosts']) {
+      const target = path.join(repoRoot, 'infra', 'deploy', 'backup-chiavi', file);
+      const ignored = spawnSync('git', ['check-ignore', '-q', target], { cwd: repoRoot });
+      expect(ignored.status, file).toBe(0);
+    }
+  });
+});
+
+/**
+ * Prova di fumo con l'immagine di backup costruita in locale (`amoris-backup:prova-1f`): saltata
+ * se manca. Senza argomenti il servizio esce con 64, senza le variabili del backup con 78, e i
+ * segreti sono leggibili dall'utente 10003.
+ */
+describe('servizio di backup avviato', () => {
+  const image = 'amoris-backup:prova-1f';
+  const present =
+    spawnSync('docker', ['image', 'inspect', image], { encoding: 'utf8' }).status === 0;
+  const project = `amoris-prova-t4-${process.pid}`;
+  const smoke = { IMAGE_PREFIX: 'amoris', IMAGE_TAG: 'prova-1f' };
+  const smokeEnv = { ...BACKUP_ENV, ...smoke };
+
+  /** File sintetici di chiave e known_hosts nella cartella di lavoro. */
+  function keyFiles(): Record<string, string> {
+    const keys = path.join(workDir, 'chiavi');
+    mkdirSync(keys, { recursive: true });
+    const paths = {
+      BACKUP_SSH_KEY_PATH: path.join(keys, 'ssh_key'),
+      BACKUP_KNOWN_HOSTS_PATH: path.join(keys, 'known_hosts'),
+    };
+    for (const file of Object.values(paths)) writeFileSync(file, 'contenuto-sintetico\n');
+    return paths;
+  }
+
+  function run(args: string[], env: Readonly<Record<string, string>> = smokeEnv) {
+    return compose({ ...env, ...keyFiles() }, [
+      '-p',
+      project,
+      '--profile',
+      'backup',
+      'run',
+      '--rm',
+      '--no-deps',
+      '-T',
+      ...args,
+    ]);
+  }
+
+  afterAll(() => {
+    if (!present) return;
+    compose(smokeEnv, ['-p', project, '--profile', 'backup', 'down', '-v', '--remove-orphans']);
+  });
+
+  it.skipIf(!present)('senza argomenti esce con 64', () => {
+    const result = run(['backup']);
+    expect(result.status, result.stderr).toBe(64);
+  });
+
+  it.skipIf(!present)('senza le variabili del backup esce con 78', () => {
+    const result = run(['backup', 'backup'], { ...BASE_ENV, ...smoke });
+    expect(result.status, result.stderr).toBe(78);
+    expect(result.stdout).not.toContain(BASE_ENV.POSTGRES_PASSWORD);
+  });
+
+  it.skipIf(!present)('i file in /run/secrets sono leggibili dall’utente 10003', () => {
+    const result = run([
+      '--entrypoint',
+      'sh',
+      'backup',
+      '-c',
+      'id -u; for f in /run/secrets/*; do head -c 1 "$f" >/dev/null || exit 1; done; ls /run/secrets | wc -l',
+    ]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim().split(/\s+/)).toEqual(['10003', '2']);
   });
 });
 

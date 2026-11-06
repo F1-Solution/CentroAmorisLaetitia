@@ -12,6 +12,7 @@
 #   il Compose non parte e dice quale manca.
 # - Solo Caddy pubblica porte. Applicazioni, database, archivio e pulizia stanno su reti
 #   interne, senza uscita verso Internet.
+# - Il backup è a termine, nel profilo `backup`, e ha una rete con uscita propria (`backup-out`).
 # - Le migrazioni non partono mai all'avvio: profilo `release`, comando esplicito (ADR-009 §4.4).
 # - Limiti di memoria: produzione + staging restano sotto 7 GB sugli 8 del server (DR-334).
 # =====================================================================
@@ -207,15 +208,74 @@ services:
     depends_on:
       db: { condition: service_healthy }
 
+  # Backup (1F-W3, DR-366/367): nessun processo acceso, parte solo con `--profile backup run --rm backup <comando>`
+  # da un timer dell'host (W5); gira solo in produzione (DR-372): il vincolo sta nel timer, non qui.
+  backup:
+    <<: *hardened
+    image: ${IMAGE_PREFIX}-backup:${IMAGE_TAG}
+    profiles: ['backup']
+    restart: 'no'
+    mem_limit: 384m
+    entrypoint: ['amoris-backup']
+    environment:
+      HOME: /nonexistent
+      # restic tiene la memoria sotto il limite del contenitore.
+      GOMEMLIMIT: 256MiB
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-amoris}
+      PGDATABASE: ${POSTGRES_DB:-amoris}
+      # Come per l'API: valori dal file d'ambiente (visibili con `docker inspect`, rischio accettato).
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      S3_ENDPOINT: http://objects:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
+      S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-media-private}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+      BACKUP_SFTP_HOST: ${BACKUP_SFTP_HOST:-}
+      BACKUP_SFTP_PORT: ${BACKUP_SFTP_PORT:-23}
+      BACKUP_SFTP_USER: ${BACKUP_SFTP_USER:-}
+      BACKUP_SFTP_PATH: ${BACKUP_SFTP_PATH:-}
+    secrets:
+      - backup_ssh_key
+      - backup_known_hosts
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      # L'immagine di base dichiara questo volume: così `run --rm` non lascia volumi anonimi.
+      - /var/lib/postgresql/data:size=1m
+    volumes:
+      - backup-data:/backup/data
+      - backup-state:/backup/state
+      - backup-cache:/backup/cache
+    networks: [data, backup-out]
+    depends_on:
+      db: { condition: service_healthy }
+      objects: { condition: service_healthy }
+
+# Chiave SSH e known_hosts del backup: file dell'host in /run/secrets, con percorso predefinito non
+# segreto. Le altre variabili del backup sono vuote o predefinite apposta: lo staging non le imposta e
+# senza di esse il backup si rifiuta di partire (codice 78), perché il Compose interpola tutto il file
+# anche fuori dal profilo.
+secrets:
+  backup_ssh_key:
+    file: ${BACKUP_SSH_KEY_PATH:-./backup-chiavi/ssh_key}
+  backup_known_hosts:
+    file: ${BACKUP_KNOWN_HOSTS_PATH:-./backup-chiavi/known_hosts}
+
 networks:
   # Unica rete con uscita: Caddy riceve dall'esterno e chiede i certificati.
   edge: {}
   app: { internal: true }
   data: { internal: true }
   scrub: { internal: true }
+  # Solo per il backup, verso la Storage Box; la destinazione la limita il firewall dell'host (W4).
+  backup-out: {}
 
 volumes:
   db-data:
   objects-data:
   caddy-data:
   caddy-config:
+  backup-data:
+  backup-state:
+  backup-cache:

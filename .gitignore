@@ -21,6 +21,8 @@
 *.pem
 *.key
 *.pfx
+# Chiave SSH e known_hosts del backup (percorso predefinito del Compose).
+/infra/deploy/backup-chiavi/
 
 # --- Dipendenze e cache degli strumenti ---
 node_modules/

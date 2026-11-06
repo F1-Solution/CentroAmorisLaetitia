@@ -125,15 +125,39 @@ Percorsi nuovi: `infra/docker/backup.Dockerfile`, `infra/deploy/backup/` per gli
 
 ### T4 — Servizio nel Compose
 
-- [ ] Prove in `infra/deploy/tests/compose-1f.test.ts`: servizio `backup` nel profilo e con la
-  pianificazione di D258; reti `data` e una rete d'uscita **solo** verso la destinazione;
-  sola lettura, `cap_drop ALL`, `no-new-privileges`, limite di memoria; segreti senza
-  predefinito; nessuna porta. **Rosse** prima.
-- [ ] Servizio `backup` in `infra/deploy/compose.yml`; chiavi nuove in
-  `.env.production.example` (prova `env-example-1f` rossa prima).
-- [ ] Rete d'uscita: il contenitore raggiunge la destinazione e nient'altro di necessario;
-  annotare in `README.md` §8 per la W4 ciò che Docker da solo non sa limitare.
-- [ ] Memoria: limite del servizio e tabella di `README.md` §7 aggiornati (W3-10).
+- [x] Prove in `infra/deploy/tests/compose-1f.test.ts`: servizio solo nel profilo
+  `backup`, nessuna porta, `restart: no`, sola lettura, `cap_drop ALL`, `no-new-privileges`,
+  `mem_limit` 384m e `GOMEMLIMIT`, tre volumi con nome, reti esattamente `data` e `backup-out`
+  (unico servizio sulla rete d'uscita, non interna; le altre restano interne), segreti come file
+  (solo chiave SSH e known_hosts, in `/run/secrets`; nell'ambiente solo le quattro password), ogni variabile nuova mancante ferma il
+  Compose con il suo nome, memoria 7040 MiB; prova di fumo con `amoris-backup:prova-1f`: senza
+  argomenti esce con 64, i 2 file in `/run/secrets` leggibili dall'utente 10003. **Rosse** prima:
+  14 su 48; poi 46/46 con lo schema finale, compresa `backup-chiavi/` esclusa da Git (`.gitignore`;
+  prova rossa prima, aggiunta in verifica). `env-example-1f`: rossa senza le chiavi nuove nell'esempio (prima 2 su 14 con un segreto da variabile, poi riprogettato); poi 13/13.
+- [x] Servizio `backup` in `compose.yml` (profilo `backup`, `entrypoint: amoris-backup`, ancora
+  `*hardened` con `restart: 'no'`, `HOME=/nonexistent`, tmpfs su `/tmp` e su
+  `/var/lib/postgresql/data`: nessun volume anonimo). Volumi `backup-data`, `backup-state`,
+  `backup-cache`. Chiavi nuove nell'esempio: `RESTIC_PASSWORD`, `BACKUP_SFTP_HOST/USER/PATH`, `BACKUP_SSH_KEY_PATH`,
+  `BACKUP_KNOWN_HOSTS_PATH` e `BACKUP_SFTP_PORT` (23), facoltative fuori dalla produzione.
+- **Segreti, schema finale (correzione del coordinatore):** un segreto `environment:` (e un `configs`
+  con `content`) non si monta in un servizio `read_only` (`file is the sole supported option`, provato),
+  e sei file avrebbero duplicato i valori del file d'ambiente. Quindi `PGPASSWORD`, `S3_ACCESS_KEY`,
+  `S3_SECRET_KEY` come l'API (`${POSTGRES_PASSWORD}` ecc.); `RESTIC_PASSWORD` e `BACKUP_SFTP_HOST/USER/PATH`
+  con `${VAR:-}`, vuote se mancano (`need` e `setup_restic` di `lib.sh` rispondono già 78 con valore
+  vuoto, provato dalla prova di fumo: nessuna modifica a `lib.sh`); solo chiave SSH e `known_hosts` sono
+  `secrets:` con `file:` e percorso predefinito `./backup-chiavi/{ssh_key,known_hosts}`. Verificato con
+  `up --dry-run --pull never` senza profilo e senza quei file: gli altri servizi partono; nessun `${VAR:?}`
+  rimasto per il backup, quindi `up` e lo staging non richiedono nulla. `RESTIC_PASSWORD` e le altre
+  password in chiaro nell'ambiente (`docker inspect`): rischio accettato, annotato in README §8 per la W4.
+- [x] Rete d'uscita `backup-out` (non interna), solo per il backup; `README.md` §8 ha la voce W4
+  (catena `DOCKER-USER`, uscita solo verso la Storage Box sulla porta 23 e il DNS).
+- [x] Memoria: `README.md` §7 riscritta (produzione 3712, staging 3328, totale 7040 < 7168);
+  §1 con una riga sul servizio.
+- **Per la T6:** `run` avvia `db` e `objects` (dipendenze); i file dei segreti vanno creati dai
+  valori sintetici dello stack. **Per la W5:** chiave SSH e known_hosts in `infra/deploy/backup-chiavi/`
+  (o nei percorsi indicati), leggibili dall'utente 10003 (i montaggi mantengono i permessi dell'host);
+  lo staging non imposta nulla. **Per la T8:** il README di backup e ripristino
+  non è ancora scritto.
 
 ### T5 — Conservazione e cifratura
 
