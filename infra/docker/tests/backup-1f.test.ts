@@ -731,7 +731,7 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
     expect(counts.trim().split('\n')).toEqual(['3', '0', '1']);
   }, 180_000);
 
-  it('dopo il backup esegue forget --prune con 7 giornalieri, 4 settimanali e 6 mensili (T5 ne prova gli esiti)', () => {
+  it('dopo il backup esegue forget --prune con 7 giornalieri e 4 settimanali, senza mensili (T5 ne prova gli esiti)', () => {
     // Un restic di comodo registra gli argomenti e poi passa il comando a quello vero.
     const script = [
       'printf \'#!/bin/sh\\necho "$*" >> /tmp/chiamate.txt\\nexec /usr/local/bin/restic "$@"\\n\' > /shim/restic',
@@ -750,7 +750,7 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
     const calls = run.stdout.split('\n').filter((l) => /^(backup|forget) /.test(l));
     expect(calls.map((l) => l.split(' ')[0])).toEqual(['backup', 'forget']);
     expect(calls[1]).toBe(
-      'forget --prune --host amoris --tag amoris-backup --keep-daily 7 --keep-weekly 4 --keep-monthly 6',
+      'forget --prune --host amoris --tag amoris-backup --keep-daily 7 --keep-weekly 4',
     );
   }, 180_000);
 

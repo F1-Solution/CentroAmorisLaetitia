@@ -69,17 +69,25 @@ L'adeguatezza dei DPA va valutata nella MI-06 (DR-073, DR-303): il confronto non
 
 ## 4. Stato del repository
 
-Aggiornato alla chiusura della `1F-W2` (2026-11-06):
+Aggiornato alla T8 della `1F-W3` (2026-11-07):
 
 - `infra/compose/` resta lo sviluppo. `infra/docker/` contiene i Dockerfile di `web`,
-  `admin`, `api` e `scrub` e lo script di controllo dei file delle immagini;
+  `admin`, `api`, `scrub` e `backup` e lo script di controllo dei file delle immagini;
   `infra/deploy/` il Compose di produzione e di staging, il `Caddyfile`, l'esempio
-  d'ambiente e il `README.md` con avvio, arresto e verifica.
-- La CI (DR-008) costruisce, controlla e pubblica le quattro immagini in GHCR dopo la
+  d'ambiente, lo script `backup/amoris-backup` e il `README.md` con avvio, arresto,
+  verifica, backup e ripristino.
+- La CI (DR-008) costruisce, controlla e pubblica le cinque immagini in GHCR dopo la
   verifica di un push su `main` (DR-356). Nessun rilascio sul server: arriva nella W5 (DR-357).
 - Lo stack di produzione e quello di staging sono stati provati insieme in locale, dalle
   immagini, con dati sintetici; e2e completi verdi attraverso Caddy.
-- Non esiste ancora `docs/deploy/`: nasce con le wave successive.
+- Il servizio `backup` (profilo `backup`, solo produzione, DR-372) fa dump, copia degli
+  oggetti e istantanea restic cifrata via SFTP; conservazione 7 giornalieri + 4 settimanali
+  (DR-379, supera il 7/4/6 di DR-373). Ripristino completo provato in locale su una Storage
+  Box simulata, con zero differenze: `docs/deploy/backup-verification.md`.
+- Custodia delle chiavi dei backup in doppia copia, manutentore e Centro (DR-380):
+  handoff HO-059, da eseguire nella W5. Registro delle cancellazioni da riapplicare dopo un
+  ripristino nella `1F-W6` (DR-381). Il parere scritto MI-06 è in
+  `docs/legal/MI-06-parere-privacy.md` (DR-382).
 
 ## 5. Decisioni del secondo round (2026-10-28)
 

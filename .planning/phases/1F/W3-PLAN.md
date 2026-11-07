@@ -271,12 +271,27 @@ chiavi e riferimenti nello scratchpad (fuori da Git). Dati e tempi sono di una p
 
 ### T8 — Documenti e chiusura
 
-- [ ] `docs/deploy/backup-verification.md`: metodo, versioni, esiti, tempi, limiti della prova
-  locale (cosa resta da provare sul server nella W5, 1F-2).
-- [ ] `infra/deploy/README.md`: backup, ripristino, inizializzazione del repository.
-- [ ] Handoff della chiave (numero assegnato alla scrittura; HO-058 è l'acquisto della Storage Box): creazione della password del repository e della chiave
-  SSH, custodia di una copia fuori dal server (DR-298); **eseguito nella W5**, non ora.
-- [ ] `CONTEXT.md` §4 e questo piano aggiornati; dipendenze confrontate con PLAN §5.
+- [x] Decisioni dopo il parere MI-06 (2026-11-07): D267 = B (DR-379, conservazione 7 giornalieri +
+  4 settimanali, circa 35 giorni, supera il 7/4/6 di DR-373), D268 = A (DR-380, chiavi in doppia
+  copia manutentore e Centro, integra DR-298), D269 = A (DR-381, registro delle cancellazioni nella
+  `1F-W6`); parere in Git (DR-382).
+- [x] Conservazione 7/4 nello script; `backup-1f` e `conservazione-1f` riscritte prima (2 rosse su
+  48), poi 48/48; mutazioni `--keep-monthly 6` e `--keep-weekly 3` rosse; `--keep-daily 6` rossa
+  solo sull'argomento esatto di `forget` (coincidenza di calendario, spiegata nel documento di
+  verifica). `test:images` 213/213; volumi 41 prima e dopo.
+- [x] `docs/deploy/backup-verification.md`: metodo, versioni, esiti, tempi, limiti della prova
+  locale e dieci punti da provare sul server nella W5.
+- [x] `infra/deploy/README.md`: nuova §8 «Backup e ripristino» (inizializzazione, backup, check,
+  ripristino, codici d'uscita, ripartenza dopo `objects_restore`, `--no-deps`, `known_hosts`,
+  uid 10003); i rinvii passano alla §9 (le citazioni «README §8» di questo piano e della W2 sono
+  storiche).
+- [x] Handoff **HO-059** (chiavi dei backup, doppia copia, prova con la copia del Centro),
+  **eseguito nella W5**. Da verificare alla W5: lettura dello stato e prova con la copia del
+  Centro non eseguiti; rotazione della password restic rinviata a un handoff proprio.
+- [x] `CONTEXT.md` §4 aggiornato. Dipendenze contro PLAN §5: `restic` e `mc` previsti;
+  `openssh-client-default` (fissato a revisione) **non elencato**, necessario al trasporto SFTP
+  deciso con DR-335: scostamento dichiarato qui. `openssh-server` solo nell'immagine di prova
+  (DR-378), fuori dal Compose e dalla CI di pubblicazione.
 - [ ] Commit e push **su conferma**; CI verde, cinque immagini pubblicate; riga
   `PHASE:1F WAVE:1F-W3 STATUS:complete`.
 

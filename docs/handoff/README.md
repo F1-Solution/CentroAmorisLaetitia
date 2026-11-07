@@ -66,6 +66,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-056 | [Acquisto del server Aruba Cloud VPS O4A8](HO-056-acquisto-server-aruba-1F.md) | 1F | ⏳ **eseguibile** dal 2026-11-06 — DR-374 supera DR-352; fonti ricontrollate il 2026-11-06 |
 | HO-057 | [Liberare disco e riavviare Docker per le immagini](HO-057-liberare-disco-per-le-immagini-1F-W2.md) | 1F | ✅ **chiuso** 2026-11-05 — 122 GB liberi; snapshot di `node` troncato riparato |
 | HO-058 | [Acquisto della Storage Box Hetzner BX11](HO-058-acquisto-storage-box-hetzner-1F.md) | 1F | ⏳ **eseguibile** dal 2026-11-06 — sede Germania (DR-376) |
+| HO-059 | [Chiavi dei backup: password del repository e chiave SSH](HO-059-chiavi-dei-backup-1F-W5.md) | 1F | ⏳ **da eseguire nella `1F-W5`** — richiede server (HO-056) e Storage Box (HO-058); due copie cifrate (DR-380) |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * Prove della conservazione e della cifratura del backup (1F-W3 T5, criteri W3-4 e W3-5; DR-366…DR-373).
+ * Prove della conservazione e della cifratura del backup (1F-W3 T5, criteri W3-4 e W3-5; DR-366…DR-373, conservazione ridotta da DR-379).
  *
  * Con Docker: database, MinIO e destinazione SFTP di prova con dati **sintetici** e riconoscibili.
  * Le istantanee su 8 mesi si creano con `restic backup --time` dentro l'immagine; poi lo script vero
@@ -15,8 +15,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
  *
  * Regole di conservazione di restic, lette il 2026-11-06 su
  * https://restic.readthedocs.io/en/stable/060_forget.html («Removing backup snapshots»):
- * ogni `--keep-daily/weekly/monthly N` copre gli ultimi N periodi (giorni, settimane da lunedì a
- * domenica, mesi di calendario) che contengono istantanee e tiene la più recente di ciascuno;
+ * ogni `--keep-daily/weekly N` copre gli ultimi N periodi (giorni, settimane da lunedì a
+ * domenica) che contengono istantanee e tiene la più recente di ciascuno;
  * una politica non consuma slot per i periodi vuoti; le politiche si sommano (OR); di default le
  * istantanee sono raggruppate per host e percorsi, e `--host`/`--tag` limitano quelle considerate.
  */
@@ -408,7 +408,7 @@ afterAll(() => {
 });
 
 // ---------------------------------------------------------------------------------------------
-// Modello della conservazione di restic (giorni, settimane e mesi, come lo script).
+// Modello della conservazione di restic (giorni e settimane, come lo script).
 // ---------------------------------------------------------------------------------------------
 
 interface Snap {
@@ -421,7 +421,6 @@ interface Snap {
 const pad = (n: number): string => String(n).padStart(2, '0');
 const dayKey = (d: Date): string =>
   `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-const monthKey = (d: Date): string => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
 
 /** Settimana ISO (lunedì-domenica), come `time.ISOWeek()` di Go. */
 function weekKey(d: Date): string {
@@ -436,7 +435,6 @@ function weekKey(d: Date): string {
 interface Policy {
   readonly daily: number;
   readonly weekly: number;
-  readonly monthly: number;
 }
 
 /** Per ogni politica: dalla più recente, tiene la prima istantanea di ogni periodo, fino a N periodi. */
@@ -455,11 +453,21 @@ function expectedKept(group: readonly Snap[], policy: Policy): Map<string, Set<s
   };
   apply('daily', policy.daily, dayKey);
   apply('weekly', policy.weekly, weekKey);
-  apply('monthly', policy.monthly, monthKey);
   return reasons;
 }
 
-const POLICY: Policy = { daily: 7, weekly: 4, monthly: 6 };
+/** Età in giorni della più vecchia istantanea tenuta, rispetto all'istante di «ora». */
+function oldestKept(group: readonly Snap[], reasons: Map<string, Set<string>>, now: Date): number {
+  const ages = group
+    .filter((s) => reasons.has(s.id))
+    .map((s) => (now.getTime() - s.time.getTime()) / 86_400_000);
+  return Math.max(...ages);
+}
+
+const POLICY: Policy = { daily: 7, weekly: 4 };
+
+/** DR-379: nessuna istantanea di amoris deve superare circa 35 giorni (le settimane tenute arrivano al più a 27 giorni). */
+const MAX_AGE_DAYS = 35;
 
 function listSnapshots(): Snap[] {
   const run = resticShell('restic_run snapshots --json');
@@ -545,7 +553,7 @@ const SEED_SPEC = [
 let before: Snap[] = [];
 let after: Snap[] = [];
 
-describe('conservazione 7 giornalieri, 4 settimanali, 6 mensili su istantanee sintetiche', () => {
+describe('conservazione 7 giornalieri, 4 settimanali, senza mensili, su istantanee sintetiche', () => {
   it('le immagini si costruiscono e lo script esiste', () => {
     expect(buildResult?.status, buildResult?.stderr.slice(-4000)).toBe(0);
     expect(sftpBuildResult?.status, sftpBuildResult?.stderr.slice(-4000)).toBe(0);
@@ -586,17 +594,23 @@ describe('conservazione 7 giornalieri, 4 settimanali, 6 mensili su istantanee si
     const untouched = before.filter((s) => !group.some((g) => g.id === s.id)).map((s) => s.id);
     const expected = [...reasons.keys(), ...untouched].sort();
 
-    // Il modello deve esercitare davvero le tre politiche, non solo quella giornaliera.
+    // Il modello deve esercitare davvero entrambe le politiche, non solo quella giornaliera.
     const only = (name: string): number =>
       [...reasons.values()].filter((r) => r.size === 1 && r.has(name)).length;
     expect(reasons.size).toBeLessThan(group.length);
     expect(only('weekly')).toBeGreaterThanOrEqual(1);
-    expect(only('monthly')).toBeGreaterThanOrEqual(1);
 
     expect(after.map((s) => s.id).sort()).toEqual(expected);
+
+    // DR-379: nessuna mensile, quindi nessuna istantanea di amoris oltre circa 35 giorni.
+    const oldest = after
+      .filter((s) => s.host === 'amoris' && s.tags.length === 1 && s.tags[0] === 'amoris-backup')
+      .map((s) => (nowSnap.time.getTime() - s.time.getTime()) / 86_400_000);
+    expect(Math.max(...oldest)).toBeLessThanOrEqual(MAX_AGE_DAYS);
+    expect(Math.max(...oldest)).toBeGreaterThan(7);
   }, 240_000);
 
-  it('qualunque sia il giorno e l’ora in cui gira, ogni politica tiene qualcosa di esclusivo (modello su due anni)', () => {
+  it('qualunque sia il giorno e l’ora in cui gira, la settimanale tiene qualcosa di esclusivo e nulla supera 35 giorni (modello su due anni)', () => {
     const day = 86_400_000;
     const failing: string[] = [];
     for (let i = 0; i < 731; i += 1) {
@@ -613,7 +627,11 @@ describe('conservazione 7 giornalieri, 4 settimanali, 6 mensili su istantanee si
         const reasons = expectedKept(group, POLICY);
         const only = (name: string): number =>
           [...reasons.values()].filter((r) => r.size === 1 && r.has(name)).length;
-        if (reasons.size >= group.length || only('weekly') < 1 || only('monthly') < 1) {
+        if (
+          reasons.size >= group.length ||
+          only('weekly') < 1 ||
+          oldestKept(group, reasons, now) > MAX_AGE_DAYS
+        ) {
           failing.push(now.toISOString());
         }
       }

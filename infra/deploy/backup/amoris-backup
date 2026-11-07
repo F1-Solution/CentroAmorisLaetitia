@@ -24,7 +24,7 @@ cmd_init() {
   succeed
 }
 
-# Dump, copia degli oggetti, istantanea cifrata e conservazione 7/4/6 (DR-368, DR-369, DR-373).
+# Dump, copia degli oggetti, istantanea cifrata e conservazione 7/4 (DR-368, DR-369, DR-379).
 cmd_backup() {
   begin backup
   acquire_lock
@@ -77,7 +77,7 @@ STATS
 
   rc=0
   restic_run forget --prune --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" \
-    --keep-daily 7 --keep-weekly 4 --keep-monthly 6 >/dev/null 2>&1 || rc=$?
+    --keep-daily 7 --keep-weekly 4 >/dev/null 2>&1 || rc=$?
   [ "$rc" -eq 0 ] || fail restic_forget "$rc"
   succeed
 }
