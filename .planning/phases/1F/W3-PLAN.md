@@ -292,7 +292,8 @@ chiavi e riferimenti nello scratchpad (fuori da Git). Dati e tempi sono di una p
   `openssh-client-default` (fissato a revisione) **non elencato**, necessario al trasporto SFTP
   deciso con DR-335: scostamento dichiarato qui. `openssh-server` solo nell'immagine di prova
   (DR-378), fuori dal Compose e dalla CI di pubblicazione.
-- [ ] Commit e push **su conferma**; CI verde, cinque immagini pubblicate; riga
+- [x] Commit e push su conferma: `56d0924` (messaggio corretto con amend e force push su
+  conferma, era `19c73c7`); CI 42421194099 verde, cinque immagini pubblicate; riga
   `PHASE:1F WAVE:1F-W3 STATUS:complete`.
 
 ## 4. Decisioni
