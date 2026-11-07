@@ -215,6 +215,8 @@ services:
     image: ${IMAGE_PREFIX}-backup:${IMAGE_TAG}
     profiles: ['backup']
     restart: 'no'
+    # Con un processo init lo script non è PID 1 e riceve SIGTERM.
+    init: true
     mem_limit: 384m
     entrypoint: ['amoris-backup']
     environment:

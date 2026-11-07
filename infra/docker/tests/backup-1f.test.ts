@@ -22,7 +22,12 @@ const TAG = 'prova-t2';
 const IMAGE = `amoris-backup:${TAG}`;
 const SFTP_IMAGE = `amoris-sftp-prova:${TAG}`;
 const NET = 'amoris-t2-rete';
-const C = { sftp: 'amoris-t2-sftp', db: 'amoris-t2-db', objects: 'amoris-t2-objects' };
+const C = {
+  sftp: 'amoris-t2-sftp',
+  db: 'amoris-t2-db',
+  objects: 'amoris-t2-objects',
+  holder: 'amoris-t2-holder',
+};
 const V = {
   keys: 'amoris-t2-chiavi',
   data: 'amoris-t2-dati',
@@ -455,6 +460,46 @@ afterEach(async () => {
   await sleep(100);
 });
 
+/** Un secondo contenitore tiene il lock esclusivo sul volume di stato mentre gira `body`. */
+async function withLockHeld(body: () => void): Promise<void> {
+  docker(['rm', '-f', '-v', C.holder]);
+  const started = docker([
+    'run',
+    '-d',
+    '--name',
+    C.holder,
+    '--tmpfs',
+    '/tmp:mode=1777',
+    '-v',
+    `${V.state}:/backup/state`,
+    '--entrypoint',
+    'sh',
+    IMAGE,
+    '-c',
+    'exec 9>/backup/state/.lock && flock -n 9 && touch /tmp/held && sleep 300',
+  ]);
+  expect(started.status, started.stderr).toBe(0);
+  try {
+    await waitFor(
+      'lock tenuto',
+      () => docker(['exec', C.holder, 'test', '-f', '/tmp/held']).status === 0,
+      30,
+    );
+    body();
+  } finally {
+    docker(['rm', '-f', '-v', C.holder]);
+  }
+}
+
+/** Esegue uno script `sh` nell'immagine, con stato su tmpfs `/st` (modo indicato) e `BACKUP_STATE_DIR=/st`. */
+function inStateSandbox(script: string, stateMode = '1777'): Run {
+  const args = runArgs({ BACKUP_STATE_DIR: '/st', INNER: script }, ['-c', 'sh -c "$INNER"'], 'sh');
+  args.splice(1, 0, '--tmpfs', `/st:mode=${stateMode}`);
+  const run = docker(args);
+  outputs.push(`${run.stdout}\n${run.stderr}`);
+  return run;
+}
+
 afterAll(() => {
   removeAll();
   docker(['image', 'rm', '-f', IMAGE, SFTP_IMAGE]);
@@ -796,6 +841,234 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
   it('un comando sconosciuto esce con codice diverso da 0 senza fare nulla', () => {
     const { run } = amorisBackup('inesistente');
     expect(run.status).not.toBe(0);
+  });
+
+  describe('revisione T7: stato, uscite silenziose, concorrenza, valori', () => {
+    const dumpStamp = (): string =>
+      docker([
+        'run',
+        '--rm',
+        '-v',
+        `${V.data}:/d:ro`,
+        '--entrypoint',
+        'sh',
+        IMAGE,
+        '-c',
+        'stat -c %y /d/db/database.dump; ls -A /d/db',
+      ]).stdout;
+
+    it('A1: con il volume di stato in sola lettura il backup esce subito con 74 e state_write, senza toccare il dump', () => {
+      const before = dumpStamp();
+      const args = runArgs({ ...BASE_ENV }, ['amoris-backup', 'backup']);
+      const at = args.indexOf(`${V.state}:/backup/state`);
+      args[at] = `${V.state}:/backup/state:ro`;
+      const run = docker(args);
+      outputs.push(`${run.stdout}\n${run.stderr}`);
+      const line = JSON.parse(run.stdout.trim().split('\n').at(-1) ?? '{}') as Record<
+        string,
+        unknown
+      >;
+      expect(run.status).toBe(74);
+      expect(line).toMatchObject({
+        outcome: 'error',
+        failed_step: 'state_write',
+        exit_code: 74,
+        state_written: false,
+      });
+      expect(dumpStamp()).toBe(before);
+    });
+
+    it('A1: con una cartella di stato non scrivibile dall’utente 10003 anche init esce con 74 e state_write', () => {
+      const run = inStateSandbox('amoris-backup init; echo rc=$?', '0755');
+      expect(run.stdout).toContain('rc=74');
+      expect(run.stdout).toContain('"failed_step":"state_write"');
+      expect(run.stdout).toContain('"state_written":false');
+    });
+
+    it('A1: un errore con stato non scrivibile porta state_written:false (emit provato direttamente)', () => {
+      const run = inStateSandbox(
+        '. /usr/local/lib/amoris-backup/lib.sh; CMD=backup; BACKUP_STATE_DIR=/non-esiste; STATE_DIR=/non-esiste; emit error db_dump 1; echo rc=$?',
+      );
+      expect(run.status, run.stderr).toBe(0);
+      const [json = '{}', rc] = run.stdout.trim().split('\n');
+      expect(rc).toBe('rc=0');
+      expect(JSON.parse(json)).toMatchObject({
+        outcome: 'error',
+        failed_step: 'db_dump',
+        state_written: false,
+      });
+    });
+
+    it('M1: un comando non protetto che fallisce produce una riga unexpected e lo stato', () => {
+      const run = inStateSandbox(
+        'sh -c ". /usr/local/lib/amoris-backup/lib.sh; set -eu; begin backup; false"; echo rc=$?; cat /st/last-backup.json',
+      );
+      expect(run.status, run.stderr).toBe(0);
+      const lines = run.stdout.trim().split('\n');
+      expect(lines).toHaveLength(3);
+      expect(JSON.parse(lines[0] ?? '{}')).toMatchObject({
+        command: 'backup',
+        outcome: 'error',
+        failed_step: 'unexpected',
+        exit_code: 1,
+      });
+      expect(lines[1]).toBe('rc=1');
+      expect(lines[2]).toBe(lines[0]);
+    });
+
+    it('M1: SIGTERM durante un passo lungo produce una riga unexpected con 143', () => {
+      const run = inStateSandbox(
+        'sh -c ". /usr/local/lib/amoris-backup/lib.sh; set -eu; begin backup; P=\\$\\$; (sleep 1; kill -TERM \\$P) & sleep 30 & wait"; echo rc=$?',
+      );
+      expect(run.status, run.stderr).toBe(0);
+      const lines = run.stdout.trim().split('\n');
+      expect(lines).toHaveLength(2);
+      expect(JSON.parse(lines[0] ?? '{}')).toMatchObject({
+        outcome: 'error',
+        failed_step: 'unexpected',
+        exit_code: 143,
+      });
+      expect(lines[1]).toBe('rc=143');
+    });
+
+    it('M3: con il lock tenuto da un altro contenitore backup esce con 75 e busy, il dump parziale altrui resta', async () => {
+      const plant = docker([
+        'run',
+        '--rm',
+        '-v',
+        `${V.data}:/d`,
+        '--entrypoint',
+        'sh',
+        IMAGE,
+        '-c',
+        'mkdir -p /d/db && echo x > /d/db/.database.dump.tmp',
+      ]);
+      expect(plant.status, plant.stderr).toBe(0);
+      try {
+        await withLockHeld(() => {
+          const { run, line } = amorisBackup('backup');
+          expect(run.status).toBe(75);
+          expect(line).toMatchObject({ outcome: 'error', failed_step: 'busy', exit_code: 75 });
+          const left = docker([
+            'run',
+            '--rm',
+            '-v',
+            `${V.data}:/d:ro`,
+            '--entrypoint',
+            'ls',
+            IMAGE,
+            '-A',
+            '/d/db',
+          ]);
+          expect(left.stdout).toContain('.database.dump.tmp');
+        });
+      } finally {
+        docker([
+          'run',
+          '--rm',
+          '-v',
+          `${V.data}:/d`,
+          '--entrypoint',
+          'rm',
+          IMAGE,
+          '-f',
+          '/d/db/.database.dump.tmp',
+        ]);
+      }
+    }, 180_000);
+
+    it('M3: con il lock tenuto restore esce con 75 e busy, la cartella .restore altrui resta', async () => {
+      const mkRestore = (cmd: string): Run =>
+        docker(['run', '--rm', '-v', `${V.data}:/d`, '--entrypoint', 'sh', IMAGE, '-c', cmd]);
+      expect(mkRestore('mkdir -p /d/.restore && echo x > /d/.restore/segno').status).toBe(0);
+      try {
+        await withLockHeld(() => {
+          const args = runArgs({ ...BASE_ENV }, ['amoris-backup', 'restore', 'latest']);
+          const second = docker(args);
+          outputs.push(`${second.stdout}\n${second.stderr}`);
+          const parsed = JSON.parse(second.stdout.trim().split('\n').at(-1) ?? '{}') as Outcome;
+          expect(second.status).toBe(75);
+          expect(parsed).toMatchObject({ failed_step: 'busy', exit_code: 75 });
+          expect(mkRestore('cat /d/.restore/segno').stdout.trim()).toBe('x');
+        });
+      } finally {
+        mkRestore('rm -rf /d/.restore');
+      }
+    }, 180_000);
+
+    it('M3: init e check non prendono il lock', async () => {
+      await withLockHeld(() => {
+        const { run, line } = amorisBackup('check');
+        expect(run.status, run.stdout + run.stderr).toBe(0);
+        expect(line).toMatchObject({ command: 'check', outcome: 'ok' });
+      });
+    }, 180_000);
+
+    it('M4: se restic esce 0 senza identificativo di istantanea il passo è restic_backup con codice 1', () => {
+      const script = [
+        'printf \'#!/bin/sh\\ncase "$3" in backup) exit 0;; esac\\nexec /usr/local/bin/restic "$@"\\n\' > /shim/restic',
+        'chmod +x /shim/restic',
+        'PATH=/shim:$PATH amoris-backup backup; echo "rc=$?"',
+      ].join('\n');
+      const args = runArgs({ ...BASE_ENV }, ['-c', script], 'sh');
+      args.splice(1, 0, '--tmpfs', '/shim:exec,mode=1777');
+      const run = docker(args);
+      outputs.push(`${run.stdout}\n${run.stderr}`);
+      expect(run.stdout).toContain('rc=1');
+      expect(run.stdout).toContain('"failed_step":"restic_backup"');
+      expect(run.stdout).toContain('"exit_code":1');
+    }, 180_000);
+
+    it('bassi: un host che comincia con un trattino è rifiutato con 78', () => {
+      for (const host of ['-oProxyCommand=x', '-xhost']) {
+        const { run, line } = amorisBackup('check', { BACKUP_SFTP_HOST: host });
+        expect(run.status, host).toBe(78);
+        expect(line).toMatchObject({ failed_step: 'config', exit_code: 78 });
+      }
+    });
+
+    it('bassi: un timeout di connessione non numerico è rifiutato con 78', () => {
+      for (const value of ['abc', '5 -oProxyCommand=x']) {
+        const { run, line } = amorisBackup('check', { BACKUP_SSH_CONNECT_TIMEOUT: value });
+        expect(run.status, value).toBe(78);
+        expect(line).toMatchObject({ failed_step: 'config', exit_code: 78 });
+      }
+    });
+
+    it('bassi: una cartella .restore nel volume dei dati non finisce nell’istantanea', () => {
+      const plant = docker([
+        'run',
+        '--rm',
+        '-v',
+        `${V.data}:/d`,
+        '--entrypoint',
+        'sh',
+        IMAGE,
+        '-c',
+        'mkdir -p /d/.restore/backup && echo x > /d/.restore/backup/RESIDUO-SINTETICO',
+      ]);
+      expect(plant.status, plant.stderr).toBe(0);
+      try {
+        const { run, line } = amorisBackup('backup');
+        expect(run.status, run.stdout + run.stderr).toBe(0);
+        const listing = inspect(
+          `R ls ${line.snapshot_id} | grep -c "RESIDUO-SINTETICO" || true\nR ls ${line.snapshot_id} | grep -c "database.dump"`,
+        );
+        expect(listing.stdout.trim().split('\n')).toEqual(['0', '1']);
+      } finally {
+        docker([
+          'run',
+          '--rm',
+          '-v',
+          `${V.data}:/d`,
+          '--entrypoint',
+          'rm',
+          IMAGE,
+          '-rf',
+          '/d/.restore',
+        ]);
+      }
+    }, 180_000);
   });
 
   it('nessuna uscita dei contenitori contiene dati, nomi di oggetti, password o chiavi (W3-6, W3-9)', () => {

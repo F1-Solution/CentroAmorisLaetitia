@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
  * Prove del ripristino (1F-W3 T3, criteri W3-6, W3-7, W3-9; DR-366…DR-373, DR-378).
@@ -496,10 +496,6 @@ beforeAll(async () => {
   if (limited.status !== 0) throw new Error(limited.stderr);
 });
 
-afterEach(async () => {
-  await sleep(100);
-});
-
 afterAll(() => {
   removeAll();
   docker(['image', 'rm', '-f', IMAGE, SFTP_IMAGE]);
@@ -566,10 +562,7 @@ describe('ripristino su database e bucket nuovi, con dati sintetici', () => {
 
   it('per identificativo ripristina lo stato di quell’istantanea: stesse righe e stessi SHA-256', () => {
     resetDestination();
-    const started = Date.now();
     const { run, line } = restore([firstId]);
-    const elapsed = (Date.now() - started) / 1000;
-    console.log(`tempo di un ripristino sintetico (docker run compreso): ${elapsed.toFixed(1)} s`);
     expect(run.status, run.stdout + run.stderr).toBe(0);
     expect(run.stderr).toBe('');
     expect(run.stdout.trim().split('\n')).toHaveLength(1);

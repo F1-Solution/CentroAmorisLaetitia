@@ -27,6 +27,7 @@ cmd_init() {
 # Dump, copia degli oggetti, istantanea cifrata e conservazione 7/4/6 (DR-368, DR-369, DR-373).
 cmd_backup() {
   begin backup
+  acquire_lock
   load_secret PGPASSWORD
   load_secret S3_ACCESS_KEY
   load_secret S3_SECRET_KEY
@@ -67,10 +68,12 @@ $(find "$DATA_DIR/objects" -type f -exec stat -c %s {} + | awk '{ s += $1; n++ }
 STATS
 
   rc=0
-  restic_run backup --quiet --json --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" "$DATA_DIR" \
+  restic_run backup --quiet --json --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" \
+    --exclude "$DATA_DIR/.restore" "$DATA_DIR" \
     >"$WORK_DIR/backup.json" 2>/dev/null || rc=$?
   SNAPSHOT_ID=$(sed -n 's/.*"message_type":"summary".*"snapshot_id":"\([0-9a-f]*\)".*/\1/p' "$WORK_DIR/backup.json" | tail -n 1)
   [ "$rc" -eq 0 ] || fail restic_backup "$rc"
+  [ -n "$SNAPSHOT_ID" ] || fail restic_backup 1
 
   rc=0
   restic_run forget --prune --host "$BACKUP_HOST_NAME" --tag "$BACKUP_TAG" \
@@ -135,6 +138,7 @@ resolve_snapshot() {
 # Ripristino completo (DR-378): solo su database e bucket vuoti, database in una transazione, poi gli oggetti.
 cmd_restore() {
   begin restore
+  acquire_lock
   want=$1
   case $want in
     latest) ;;

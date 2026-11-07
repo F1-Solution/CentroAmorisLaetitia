@@ -16,6 +16,9 @@ OBJECTS_BYTES=null
 OBJECTS_COUNT=null
 SNAPSHOT_ID=
 REPO_STATE=
+EMITTED=
+STATE_UNWRITTEN=
+HAVE_LOCK=
 
 # Comincia un comando: orario, cartella di lavoro in /tmp e pulizia all'uscita.
 begin() {
@@ -25,16 +28,36 @@ begin() {
   WORK_DIR=$(mktemp -d /tmp/amoris-backup.XXXXXX) || WORK_DIR=
   trap cleanup EXIT
   trap 'exit 143' INT TERM
+  # Stato non scrivibile: si ferma prima di qualunque dump o contatto con la rete.
+  # Prova di scrittura vera: `test -w` di BusyBox non vede un volume in sola lettura.
+  [ -d "$STATE_DIR" ] && touch "$STATE_DIR/.write-probe" 2>/dev/null || fail state_write 74
+  rm -f "$STATE_DIR/.write-probe"
 }
 
-# Toglie chiave, configurazione di mc, dump parziale e cartella del ripristino, anche dopo un errore.
+# Lock esclusivo non bloccante sul volume di stato: una sola esecuzione di backup o ripristino alla volta.
+acquire_lock() {
+  exec 9>"$STATE_DIR/.lock" || fail state_write 74
+  flock -n 9 || fail busy 75
+  HAVE_LOCK=1
+}
+
+# Uscita senza riga di esito: la emette come unexpected; i residui nei dati si tolgono solo con il lock.
 cleanup() {
-  [ -z "$WORK_DIR" ] || rm -rf "$WORK_DIR"
-  if [ -n "$RESTORE_DIR" ]; then
-    chmod -R u+rwX "$RESTORE_DIR" 2>/dev/null || true
-    rm -rf "$RESTORE_DIR"
+  rc=$?
+  trap - EXIT
+  if [ -n "$CMD" ] && [ -z "$EMITTED" ]; then
+    [ "$rc" -ne 0 ] || rc=1
+    emit error unexpected "$rc"
   fi
-  rm -f "$DATA_DIR/db/.database.dump.tmp"
+  if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
+  if [ -n "$HAVE_LOCK" ]; then
+    if [ -n "$RESTORE_DIR" ]; then
+      chmod -R u+rwX "$RESTORE_DIR" 2>/dev/null || true
+      rm -rf "$RESTORE_DIR"
+    fi
+    rm -f "$DATA_DIR/db/.database.dump.tmp"
+  fi
+  exit "$rc"
 }
 
 json_string_or_null() {
@@ -45,6 +68,7 @@ json_string_or_null() {
 compose() {
   extra=
   [ -z "$REPO_STATE" ] || extra=",\"repository\":\"$REPO_STATE\""
+  [ -z "$STATE_UNWRITTEN" ] || extra="$extra,\"state_written\":false"
   printf '{"command":"%s","outcome":"%s","started_at":"%s","duration_seconds":%s,"dump_bytes":%s,"objects_bytes":%s,"objects_count":%s,"snapshot_id":%s,"failed_step":%s,"exit_code":%s%s}' \
     "$CMD" "$1" "$STARTED_ISO" "$(($(date +%s) - STARTED_EPOCH))" "$DUMP_BYTES" "$OBJECTS_BYTES" \
     "$OBJECTS_COUNT" "$(json_string_or_null "$SNAPSHOT_ID")" "$(json_string_or_null "$2")" "$3" "$extra"
@@ -54,7 +78,7 @@ compose() {
 write_state() {
   [ -d "$STATE_DIR" ] && [ -w "$STATE_DIR" ] || return 1
   state_tmp="$STATE_DIR/.last-$CMD.json.tmp"
-  if printf '%s\n' "$1" >"$state_tmp" 2>/dev/null && mv -f "$state_tmp" "$STATE_DIR/last-$CMD.json" 2>/dev/null; then
+  if { printf '%s\n' "$1" >"$state_tmp"; } 2>/dev/null && mv -f "$state_tmp" "$STATE_DIR/last-$CMD.json" 2>/dev/null; then
     return 0
   fi
   rm -f "$state_tmp"
@@ -63,13 +87,16 @@ write_state() {
 
 # Stampa la riga di esito e la registra; $1 esito, $2 passo, $3 codice.
 emit() {
+  EMITTED=1
   line=$(compose "$1" "$2" "$3")
   if ! write_state "$line"; then
+    STATE_UNWRITTEN=1
     if [ "$1" = ok ]; then
       line=$(compose error state_write 74)
       printf '%s\n' "$line"
       exit 74
     fi
+    line=$(compose "$1" "$2" "$3")
   fi
   printf '%s\n' "$line"
 }
@@ -115,7 +142,7 @@ load_secret() {
 # Rifiuta valori con caratteri che l'interprete di ssh potrebbe leggere come altro.
 safe_word() {
   case $1 in
-    '' | *[!A-Za-z0-9._/-]*) config_error ;;
+    '' | -* | *[!A-Za-z0-9._/-]*) config_error ;;
   esac
 }
 
@@ -129,6 +156,8 @@ setup_restic() {
   safe_word "$BACKUP_SFTP_USER"
   safe_word "$BACKUP_SFTP_PATH"
   case $BACKUP_SFTP_PORT in '' | *[!0-9]*) config_error ;; esac
+  BACKUP_SSH_CONNECT_TIMEOUT=${BACKUP_SSH_CONNECT_TIMEOUT:-15}
+  case $BACKUP_SSH_CONNECT_TIMEOUT in '' | *[!0-9]*) config_error ;; esac
   [ -r "$BACKUP_SSH_KEY_FILE" ] && [ -r "$BACKUP_KNOWN_HOSTS_FILE" ] || config_error
   if [ -z "${RESTIC_PASSWORD:-}" ]; then
     [ -r "${RESTIC_PASSWORD_FILE:-}" ] || config_error
@@ -136,7 +165,7 @@ setup_restic() {
   [ -n "$WORK_DIR" ] || config_error
   (umask 077 && cat "$BACKUP_SSH_KEY_FILE" >"$WORK_DIR/ssh_key") || config_error
 
-  SFTP_COMMAND="ssh -F /dev/null -p $BACKUP_SFTP_PORT -i $WORK_DIR/ssh_key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$BACKUP_KNOWN_HOSTS_FILE -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=${BACKUP_SSH_CONNECT_TIMEOUT:-15} -o ServerAliveInterval=15 -o ServerAliveCountMax=4 $BACKUP_SFTP_USER@$BACKUP_SFTP_HOST -s sftp"
+  SFTP_COMMAND="ssh -F /dev/null -p $BACKUP_SFTP_PORT -i $WORK_DIR/ssh_key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$BACKUP_KNOWN_HOSTS_FILE -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=$BACKUP_SSH_CONNECT_TIMEOUT -o ServerAliveInterval=15 -o ServerAliveCountMax=4 $BACKUP_SFTP_USER@$BACKUP_SFTP_HOST -s sftp"
   RESTIC_REPOSITORY="sftp:$BACKUP_SFTP_USER@$BACKUP_SFTP_HOST:$BACKUP_SFTP_PATH"
   export RESTIC_REPOSITORY
   # La cache sta nel volume dedicato se c'è, altrimenti in /tmp: il resto del file system è in sola lettura.

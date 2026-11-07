@@ -179,13 +179,13 @@ function script(
   return { run, line: parseLine(run) };
 }
 
-/** Esegue restic con le stesse variabili e lo stesso `sftp.command` dello script, tramite `lib.sh`. */
+/** Esegue restic con le stesse variabili e lo stesso `sftp.command` dello script, tramite `lib.sh`; senza riga di esito (`EMITTED=1`). */
 function resticShell(body: string, env: Record<string, string> = {}): Run {
   const run = docker(
     runArgs({ ...BASE_ENV, ...env }, [
       'sh',
       '-c',
-      `. /usr/local/lib/amoris-backup/lib.sh; begin prova; setup_restic; ${body}`,
+      `. /usr/local/lib/amoris-backup/lib.sh; begin prova; EMITTED=1; setup_restic; ${body}`,
     ]),
   );
   outputs.push(`${run.stdout}\n${run.stderr}`);
@@ -595,6 +595,31 @@ describe('conservazione 7 giornalieri, 4 settimanali, 6 mensili su istantanee si
 
     expect(after.map((s) => s.id).sort()).toEqual(expected);
   }, 240_000);
+
+  it('qualunque sia il giorno e l’ora in cui gira, ogni politica tiene qualcosa di esclusivo (modello su due anni)', () => {
+    const day = 86_400_000;
+    const failing: string[] = [];
+    for (let i = 0; i < 731; i += 1) {
+      for (const hour of [0, 12, 23]) {
+        const now = new Date(Date.UTC(2026, 0, 1) + i * day + hour * 3_600_000);
+        const base = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const group: Snap[] = AMORIS_OFFSETS.map(([d, h], k) => ({
+          id: `s${k}`,
+          time: new Date(base - d * day + h * 3_600_000),
+          host: 'amoris',
+          tags: ['amoris-backup'],
+        }));
+        group.push({ id: 'ora', time: now, host: 'amoris', tags: ['amoris-backup'] });
+        const reasons = expectedKept(group, POLICY);
+        const only = (name: string): number =>
+          [...reasons.values()].filter((r) => r.size === 1 && r.has(name)).length;
+        if (reasons.size >= group.length || only('weekly') < 1 || only('monthly') < 1) {
+          failing.push(now.toISOString());
+        }
+      }
+    }
+    expect(failing).toEqual([]);
+  });
 
   it('di due istantanee dello stesso giorno resta la più recente', () => {
     const day = dayKey(dateAt(1, 0));

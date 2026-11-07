@@ -110,6 +110,7 @@ interface Service {
   security_opt?: string[];
   healthcheck?: { test?: string[] };
   restart?: string;
+  init?: boolean;
   command?: string[] | null;
   entrypoint?: string[];
   secrets?: { source: string; target: string }[];
@@ -339,6 +340,10 @@ describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
     expect(service()?.restart).toBe('no');
     expect(service()?.entrypoint).toEqual(['amoris-backup']);
     expect(service()?.command ?? null).toBeNull();
+  });
+
+  it('ha un processo init: lo script non è PID 1 e i segnali gli arrivano', () => {
+    expect(service()?.init).toBe(true);
   });
 
   it('gira in sola lettura, senza capacità e senza nuovi privilegi, con memoria limitata', () => {

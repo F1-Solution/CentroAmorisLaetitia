@@ -236,8 +236,38 @@ chiavi e riferimenti nello scratchpad (fuori da Git). Dati e tempi sono di una p
 
 ### T7 — Revisione e verifica
 
-- [ ] Revisione `code-reviewer` su Dockerfile, script, Compose; correzioni di critici e alti.
-- [ ] Verifica come la CI (W3-11).
+- [x] Revisione `code-reviewer` su Dockerfile, script, Compose; correzioni di critici e alti (2026-11-07).
+  Rilievi e esito:
+  - **A1 stato non scrivibile**: corretto. Ogni comando verifica all'avvio, con una scrittura vera (`test -w` di
+    BusyBox non vede un volume in sola lettura), che lo stato sia scrivibile: altrimenti passo `state_write`, codice 74,
+    prima di dump e rete; un errore con stato non scritto porta `state_written:false`. Prove `backup-1f`:
+    **rosse** 3 su 3 (volume in sola lettura, cartella non scrivibile dall'utente 10003, `emit` provato con `lib.sh`
+    letto dentro il contenitore), poi verdi.
+  - **M1 uscite silenziose**: corretto. La trappola di uscita emette `unexpected` con il codice (1 se era 0) se non c'è
+    stata nessuna riga; SIGTERM dà `unexpected` con 143. Prove: **rosse** 2 su 2 (`false` sotto `set -eu`, SIGTERM
+    durante un passo lungo), poi verdi.
+  - **M2 segnali**: corretto, `init: true` per `backup`. Prova in `compose-1f`: **rossa** 1 su 47, poi 47/47.
+  - **M3 esecuzioni concorrenti**: corretto. `backup` e `restore` prendono `flock -n` su `.lock` nel volume di stato
+    (`flock` c'è: BusyBox); occupato: passo `busy`, codice 75; la pulizia di `.database.dump.tmp` e `.restore` solo con il
+    lock; `init` e `check` non lo prendono. Prove con un secondo contenitore che tiene il lock: **rosse** 2 su 3 (backup e
+    restore; la terza, `check` con il lock tenuto, nasce verde per costruzione), poi 3/3.
+  - **M4 istantanea vuota**: corretto, con prova (`restic` finto davanti nel `PATH`, immagine intatta): **rossa**, poi verde.
+  - **Bassi**: corretti, ognuno con prova rossa prima: host con primo carattere `-` (`-oProxyCommand=x` era già 78 per il
+    `=`: la prova ha anche `-xhost`), `BACKUP_SSH_CONNECT_TIMEOUT` numerico (78), `.restore` escluso dall'istantanea
+    (`restic ls`: 1 → 0).
+  - **Prove fragili**: `conservazione-1f`, analizzati nel modello 731 giorni (2026-01-01…2027-12-31) per tre ore del
+    giorno: **0 giorni** in cui `only('weekly')`, `only('monthly')` o `reasons.size < group.length` falliscono, prima e
+    dopo; nessuna data da cambiare. Aggiunta una prova pura che lo verifica a ogni giro (verde per costruzione, nessun rosso
+    da annotare). `ripristino-1f`: tolti `console.log` e `afterEach(sleep(100))`.
+  - **Rinviati**: guasto durante la copia degli oggetti nel ripristino, T8 (documentazione); `--no-deps` per `check` e
+    `init` nel timer, W5 e T8; spazio del volume e ripiego della cache in `/tmp`, nota di capacità in T8 e W5.
+  - **Accettati**: pacchetto `ssh` di Alpine non fissato alla revisione (già annotato); segreti nell'ambiente (rischio
+    accettato).
+- [x] Verifica come la CI (W3-11), 2026-11-07, dal coordinatore: `install --frozen-lockfile`, lint,
+  Prettier su tutti i file di Git (a gruppi con `node .../prettier.cjs`: con `pnpm exec` la riga di
+  comando di Windows è troppo lunga), typecheck, build, test di tutti i pacchetti, `db:verify`,
+  copertura 93,64 % delle righe, e2e 69/69; `test:images` 213/213 e `check-image` (3920 voci) dal
+  correttore.
 
 ### T8 — Documenti e chiusura
 
