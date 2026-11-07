@@ -185,14 +185,54 @@ Percorsi nuovi: `infra/docker/backup.Dockerfile`, `infra/deploy/backup/` per gli
 
 ### T6 — Prova di ripristino completo (W3-7, W3-8)
 
-- [ ] Stack `amoris-production` locale dalle immagini (come la T10 della W2), migrazioni, seme
-  sintetico **sull'archivio dello stack**, non su quello di sviluppo (lezione della W2).
-- [ ] Repository di prova secondo D263; backup; conteggi delle righe di ogni tabella e SHA-256 di
-  ogni oggetto salvati come riferimento (solo numeri e impronte, nessun contenuto).
-- [ ] `down`, volumi **di prova** rimossi su conferma (PLAN §7 riga 7); stack nuovo, migrazioni
-  **non** eseguite (le porta il dump); ripristino; confronto; e2e di lettura verdi attraverso
-  Caddy.
-- [ ] Tempo del backup e del ripristino misurati e annotati.
+Eseguita il 2026-11-07, solo dati sintetici, progetto Compose `amoris-production` locale; file d'ambiente,
+chiavi e riferimenti nello scratchpad (fuori da Git). Dati e tempi sono di una prova piccola, non della produzione.
+
+- [x] Stack `amoris-production` locale dalle immagini `amoris-{web,admin,api,scrub,backup}:prova` (la `backup`
+  rietichettata da `prova-1f`, più recente del Dockerfile), `up -d --wait` (44 s, a freddo), `migrate` (8 s, migrazioni
+  in 2,9 s), seme con `tests/e2e/prepara.ts` sul database e sull'archivio **dello stack** (16 s; ricrea `amoris_e2e` e lo
+  migra da sé). Il seme mette 1 oggetto per bucket: aggiunti con `mc` (immagine del Compose, per digest) 4 oggetti
+  pubblici e 3 riservati, casuali o di testo: 3 MiB, 68 KiB, 1 byte, **0 byte**, nome con spazi, percorso annidato.
+  Totale 5 pubblici + 4 riservati.
+- [x] Riferimento: 34 tabelle (schema `public` e `drizzle`, 12 migrazioni), 75 righe in tutto; estensioni `citext` 1.6,
+  `pgcrypto` 1.3, `unaccent` 1.1 (più `plpgsql` 1.0); SHA-256 e dimensione di ognuno dei 9 oggetti.
+- [x] SFTP di prova (D263): `sftp-prova.Dockerfile`, contenitore `amoris-t6-sftp`, chiavi in un volume Docker (la chiave
+  dell'host vuole 0600: da cartella di Windows sarebbe rifiutata) e repository in un secondo volume, entrambi fuori dal
+  progetto Compose; collegato a `amoris-production_backup-out` con alias, porta 2222.
+- [x] Backup: `init` (6 s, `repository: created`), `backup` (7 s: dump 97 959 byte, 9 oggetti, 6 432 582 byte; una
+  istantanea), `check` (2 s), tutti con esito `ok`. Tempi di script; con l'avvio del contenitore ogni comando dura
+  circa 5 s in più. Repository sull'SFTP: 4 232 KiB.
+- [x] `down -v` del solo progetto, dopo aver elencato i sette volumi (`backup-{cache,data,state}`, `caddy-{config,data}`,
+  `db-data`, `objects-data`) e staccato l'SFTP; nessun volume del progetto rimasto.
+- [x] Stack 2 con volumi nuovi: `up -d --wait` (27 s), **senza** `migrate` e **senza** `prepara.ts`. L'API all'avvio
+  non scrive nel database (zero schemi, zero relazioni): `restore latest` con **tutto lo stack acceso** funziona, 2 s di
+  script (7 s con il contenitore), `ok`, stessa istantanea, stesse dimensioni.
+- [x] Confronto: stesse 34 tabelle con le stesse righe (75), stesse estensioni e versioni, stessi 9 SHA-256 e byte
+  (compreso l'oggetto da 0 byte e quello annidato); zero differenze.
+- [x] E2e attraverso Caddy (`E2E_STACK_URL`, senza `prepara.ts`): `regole-strutturali.spec.ts` e
+  `titolo-nel-head.spec.ts`, 2 spec, **8 prove su 8 verdi** (6 s): pagina del seme resa dal database ripristinato, 404,
+  JSON-LD, robots, intestazioni dell'area. In più, come prova dell'accesso con gli account ripristinati,
+  `cms/accesso.spec.ts`, 5 su 5 (scrive solo sessioni; eseguita dopo il confronto). Esclusi i 23 spec di `cms/`
+  restanti: scrivono contenuti, media, account o impostazioni. Il PDF pubblico ripristinato si legge da
+  `/media/...` (200, 554 byte) e la sitemap risponde 200.
+- [x] Pulizia: `down -v` dello stack 2, contenitore e volumi `amoris-t6-*` rimossi (`docker rm -v` per il volume
+  anonimo dell'immagine di base), rete di prova tolta dal Compose; volumi 41 prima e 41 dopo, identici per nome;
+  `amoris-dev-*` accesi e intatti; immagini `amoris-*:prova` restano (tolta solo `amoris-sftp-prova:t6`).
+- **Sequenza (segnaposto per i segreti):** file d'ambiente `<generato>` fuori da Git; `docker compose -f
+  infra/deploy/compose.yml [-f tests/compose.e2e.yml] --env-file <file> up -d --wait`; `--profile release run --rm
+  migrate`; `--profile backup run --rm backup init|backup|check`. Dopo la perdita dei volumi: `up -d --wait`, **non**
+  `migrate`, poi `--profile backup run --rm backup restore latest` (o l'identificativo).
+- **Difetti:** nessuno dello script né delle immagini; nessuna correzione. Non riverificato in questo giro il rifiuto
+  (65) di un ripristino su destinazione piena (l'uscita è risultata vuota): resta coperto da `ripristino-1f.test.ts`.
+- **Per la T7:** su Windows servono `MSYS_NO_PATHCONV=1` e il file d'ambiente con percorso in forma `C:/...`; il
+  `down` deve avere `--profile backup` (e `release`) per togliere anche il contenitore creato e le reti; la rete
+  `backup-out` esiste solo dopo `create`/`run` del backup (la prova ha usato `create backup`, poi `network connect`
+  dell'SFTP). L'immagine di base dell'SFTP dichiara un volume anonimo: `docker rm -v`.
+- **Per la T8 (README e `docs/deploy/backup-verification.md`):** scrivere la sequenza sopra; dire che il ripristino
+  vuole database e bucket vuoti (volumi nuovi, `objects-init` crea i bucket vuoti) e che le migrazioni le porta il
+  dump; tempi e dimensioni della prova (solo conteggi: 34 tabelle, 75 righe, 9 oggetti, 4 232 KiB di repository, 2 s
+  di ripristino); estensioni provate; chiavi dell'host dell'SFTP nel volume e `known_hosts` con `[host]:porta`;
+  e2e di lettura e che gli spec di `cms/` non vanno rieseguiti su uno stack da conservare.
 
 ### T7 — Revisione e verifica
 
