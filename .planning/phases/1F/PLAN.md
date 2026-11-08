@@ -144,6 +144,7 @@ Già decise per la 1F:
 | ~~**D228**~~ | Chi esegue i comandi sul server | **DR-357**: impianto da handoff, rilasci da GitHub Actions avviata a mano |
 | ~~**D226**~~ | Accesso allo staging | **DR-375**: sottodominio con DNS e password |
 | ~~**D265**~~ | Accelerazione della 1F | **DR-374**: ordini subito; W5 sul server senza dati in parallelo alla W4 |
+| ~~**D270**~~…~~**D274**~~ | Security review (`W4-PLAN.md` §4) | **DR-383**…**DR-387**: revisore agente; TOTP; nessuna cifratura a riposo con rischio approvato per iscritto dal Centro; `pnpm audit` nella CI; segreti nell'ambiente accettati |
 
 Ancora aperte, da chiedere con `grill-me` prima della wave indicata. Nessuna wave parte
 con una decisione bloccante aperta.
