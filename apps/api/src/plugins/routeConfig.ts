@@ -25,8 +25,12 @@ declare module 'fastify' {
      * la scelta della veste, lo stato del servizio e la specifica.
      */
     area?: AdminArea;
+    /** `false`: i rifiuti (4xx) di questa rotta anonima non lasciano righe di registro. */
+    auditRefusals?: false;
     /** Ammessa anche con il cambio password obbligatorio in sospeso: tutte le altre rotte autenticate lo rifiutano. */
     allowWithPendingPasswordChange?: true;
+    /** Ammessa anche con il secondo fattore da attivare o verificare: tutte le altre rotte autenticate lo rifiutano (DR-384). */
+    allowWithoutSecondFactor?: true;
   }
 }
 

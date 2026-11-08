@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { schema } from '@amoris/db';
 import { errorResponses } from '../../lib/openapiErrors.js';
+import { anonymousLimit } from '../../lib/anonymousLimit.js';
 import { hashAddress } from '../../lib/crypto.js';
 import {
   evaluateSubmissionAttempts,
@@ -51,7 +52,12 @@ export async function formSubmissionRoutes(app: FastifyInstance): Promise<void> 
     '/forms/:slug/submissions',
     {
       // Nessuna sessione da proteggere: è una rotta anonima, come l'accesso.
-      config: { csrf: false as const },
+      config: {
+        csrf: false as const,
+        // Rifiuti anonimi senza righe di registro né scritture a database (R6).
+        auditRefusals: false as const,
+        rateLimit: anonymousLimit(app.config.HTTP_ANON_WRITES_PER_MINUTE),
+      },
       schema: {
         tags: ['pubblico'],
         summary: 'Invia una compilazione di un form pubblico, salvata senza email (DR-108)',
@@ -130,7 +136,9 @@ export async function formSubmissionRoutes(app: FastifyInstance): Promise<void> 
         payload: parsed.data,
         ipHash,
         userAgent:
-          typeof request.headers['user-agent'] === 'string' ? request.headers['user-agent'] : null,
+          typeof request.headers['user-agent'] === 'string'
+            ? request.headers['user-agent'].slice(0, 500)
+            : null,
       });
 
       const paymentField = fields.find((field) => field.type === 'payment-single');

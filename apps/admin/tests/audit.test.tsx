@@ -274,6 +274,10 @@ describe('registro delle operazioni', () => {
     expect(actionLabel('content.terms.update')).toBe('Ha cambiato le categorie');
   });
 
+  it('T6j: lo sblocco di un account da riga di comando si legge «Accesso sbloccato»', () => {
+    expect(actionLabel('auth.login_unblocked')).toBe('Accesso sbloccato');
+  });
+
   it('un’azione senza etichetta mostra il codice grezzo', async () => {
     renderPage();
     expect(await screen.findByText('nuova.azione')).toBeInTheDocument();
@@ -456,6 +460,17 @@ describe('registro delle operazioni', () => {
     );
     renderPage();
     expect(await screen.findByText(/elenco delle persone non si è caricato/)).toBeInTheDocument();
+  });
+
+  // DR-396: l'elenco delle persone chiede una conferma recente; il filtro dice dove darla.
+  it('se l’elenco delle persone chiede la conferma lo dice accanto al filtro', async () => {
+    apiMock.mockImplementation((path: string) =>
+      path === '/accounts'
+        ? Promise.reject(new ApiError(403, 'CONFIRMATION_REQUIRED', 'Conferma.'))
+        : Promise.resolve({ items: [modifica], nextCursor: null }),
+    );
+    renderPage();
+    expect(await screen.findByText(/conferma recente.*«Persone e permessi»/)).toBeInTheDocument();
   });
 
   it('senza righe mostra lo stato vuoto', async () => {

@@ -3,12 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { AREA_DEFINITIONS } from '../lib/areas';
-import { useSession } from '../lib/session';
+import { secondFactorPending, useSession } from '../lib/session';
 
 /**
  * La radice non è una schermata: è uno smistamento. Chi non ha sessione va
- * all'accesso, chi ha già una veste entra nella sua area, chi ne ha più d'una
- * va a scegliere (`ux-proposals.md` §4.3).
+ * all'accesso, chi non ha verificato il secondo fattore va a farlo (DR-384), chi ha
+ * già una veste entra nella sua area, chi ne ha più d'una va a scegliere
+ * (`ux-proposals.md` §4.3).
  */
 export default function Home(): null {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Home(): null {
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace('/accesso');
+    else if (secondFactorPending(user)) router.replace('/secondo-fattore');
     else if (user.mustChangePassword) router.replace('/password');
     else if (user.activeArea) router.replace(AREA_DEFINITIONS[user.activeArea].href);
     else router.replace('/scelta-area');

@@ -100,3 +100,40 @@ describe('ci.yml: lavoro delle immagini', () => {
     expect(job).not.toMatch(/ssh|SSH_/);
   });
 });
+
+/**
+ * Catena di fornitura della CI (1F-W4 T6d, rilievo R15, DR-386): azioni fissate per SHA,
+ * `pnpm audit` bloccante e scansione dei segreti con un'immagine fissata per digest.
+ */
+describe('ci.yml: catena di fornitura', () => {
+  const lines = ciText.split('\n');
+
+  it('fissa ogni azione a uno SHA completo con il commento della versione', () => {
+    const uses = lines.filter((line) => /^\s*(-\s+)?uses:/.test(line));
+    expect(uses.length).toBeGreaterThan(0);
+    for (const line of uses) {
+      expect(line, line).toMatch(/uses: [\w.-]+\/[\w.-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+\s*$/);
+    }
+  });
+
+  it('esegue pnpm audit bloccante subito dopo l’installazione', () => {
+    const text = lines.filter((line) => !/^\s*#/.test(line)).join('\n');
+    const install = text.indexOf('run: pnpm install --frozen-lockfile');
+    const audit = text.indexOf('run: pnpm audit --prod --audit-level=high');
+    expect(install).toBeGreaterThan(-1);
+    expect(audit).toBeGreaterThan(install);
+    // Tra l'installazione e l'audit c'è solo il nome del passo dell'audit stesso.
+    expect(text.slice(install, audit).match(/- name:/g)).toHaveLength(1);
+    expect(text).not.toContain('continue-on-error');
+  });
+
+  it('scansiona i segreti con gitleaks dall’immagine fissata per digest', () => {
+    const text = lines.filter((line) => !/^\s*#/.test(line)).join('\n');
+    expect(text).toContain(
+      'ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f',
+    );
+    expect(text).toContain('--redact');
+    expect(text).toMatch(/fetch-depth: 0/);
+    expect(text).not.toMatch(/gitleaks-action/);
+  });
+});

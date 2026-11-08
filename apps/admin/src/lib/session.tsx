@@ -25,15 +25,26 @@ export interface RoleHeld {
   readonly areas: readonly AreaId[];
 }
 
+/** Stato del secondo fattore della sessione (DR-384): solo `verified` apre le aree. */
+export type SecondFactorState = 'verified' | 'activation_required' | 'verification_required';
+
 export interface CurrentUser {
   readonly userId: string;
   readonly email: string;
   readonly fullName: string;
   readonly mustChangePassword: boolean;
+  readonly secondFactor: SecondFactorState;
   readonly permissions: readonly string[];
   readonly activeRoleId: string | null;
   readonly activeArea: AreaId | null;
   readonly rolesHeld: readonly RoleHeld[];
+}
+
+/** Vero se la sessione aspetta ancora il secondo fattore: viene prima del cambio della password, come nell'API. */
+export function secondFactorPending(user: CurrentUser): boolean {
+  return (
+    user.secondFactor === 'activation_required' || user.secondFactor === 'verification_required'
+  );
 }
 
 /** Una veste: una coppia ruolo-area posseduta. È questo che il commutatore commuta. */

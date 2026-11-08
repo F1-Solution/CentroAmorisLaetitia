@@ -28,11 +28,36 @@ export const roleHeld = z.object({
   areas: z.array(z.enum(ADMIN_AREAS)),
 });
 
+/** Dove si è col secondo fattore: solo `verified` autorizza qualcosa (DR-384). */
+export const secondFactorState = z.enum([
+  'verified',
+  'activation_required',
+  'verification_required',
+]);
+
+const totpCode = z.string().regex(/^\d{6}$/, 'il codice è di 6 cifre');
+
+export const secondFactorCodeBody = z.object({ code: totpCode });
+
+/** Conferma con la password **oppure** con il codice, non entrambi (DR-391). */
+export const confirmBody = z
+  .object({ password: z.string().min(1).max(1024).optional(), code: totpCode.optional() })
+  .refine((body) => (body.password === undefined) !== (body.code === undefined), {
+    message: 'serve la password oppure il codice, non entrambi',
+  });
+
+export const enrollment = z.object({
+  /** Segreto in Base32, mostrato solo qui: la persona lo inserisce nell'app di autenticazione. */
+  secret: z.string(),
+  otpauthUri: z.string(),
+});
+
 export const currentUser = z.object({
   userId: z.string(),
   email: z.string(),
   fullName: z.string(),
   mustChangePassword: z.boolean(),
+  secondFactor: secondFactorState,
   /** I permessi del **ruolo attivo**. Vuoti finche' la veste non e' scelta. */
   permissions: z.array(z.string()),
   activeRoleId: z.string().nullable(),

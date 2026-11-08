@@ -18,6 +18,7 @@ import {
   passwordRefusalMessage,
   roleLabel,
 } from './accountLabels';
+import { ConfirmIdentityDialog, isConfirmationRequired } from './ConfirmIdentityDialog';
 import { CreateAccountForm } from './CreateAccountForm';
 import { EditAccountDialog } from './EditAccountDialog';
 import { TemporaryPasswordPanel } from './TemporaryPasswordPanel';
@@ -26,6 +27,8 @@ import './Accounts.css';
 
 type Pending = { kind: 'deactivate' | 'reset' | 'roles' | 'identity'; account: Account };
 type Revealed = { personName: string; password: string };
+/** Richiesta rifiutata per conferma scaduta (DR-396): la lettura dell'elenco o una scrittura da ripetere. */
+type Confirmation = { kind: 'load' } | { kind: 'task'; task: () => Promise<void> };
 
 /** Lascia l'avviso alla schermata di accesso; senza memoria del browser l'avviso semplicemente non compare. */
 function rememberAccessNotice(code: string): void {
@@ -57,14 +60,20 @@ export function AccountsScreen(): React.JSX.Element {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordRefusals, setPasswordRefusals] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [listNeedsConfirmation, setListNeedsConfirmation] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const result = await api<{ items: Account[] }>('/accounts');
       setAccounts(result.items);
       setError(null);
+      setListNeedsConfirmation(false);
     } catch (caught) {
-      setError(accountErrorMessage(caught));
+      if (isConfirmationRequired(caught)) {
+        setListNeedsConfirmation(true);
+        setConfirmation({ kind: 'load' });
+      } else setError(accountErrorMessage(caught));
     } finally {
       setLoading(false);
     }
@@ -83,6 +92,10 @@ export function AccountsScreen(): React.JSX.Element {
     try {
       await task();
     } catch (caught) {
+      if (isConfirmationRequired(caught)) {
+        setConfirmation({ kind: 'task', task });
+        return;
+      }
       const refusal = passwordRefusalMessage(caught);
       if (refusal) {
         setPasswordError(refusal);
@@ -163,6 +176,14 @@ export function AccountsScreen(): React.JSX.Element {
       setPending(null);
       setRevealed({ personName: account.fullName, password: result.temporaryPassword });
     });
+
+  /** Conferma riuscita: si ripete ciò che l'API aveva rifiutato. */
+  function onConfirmed(): void {
+    const done = confirmation;
+    setConfirmation(null);
+    if (done?.kind === 'load') void load();
+    else if (done?.kind === 'task') void run(done.task);
+  }
 
   function openPending(next: Pending): void {
     setActionError(null);
@@ -276,6 +297,21 @@ export function AccountsScreen(): React.JSX.Element {
         </Alert>
       ) : null}
 
+      {listNeedsConfirmation && !confirmation ? (
+        <Alert
+          variant="info"
+          title="Conferma necessaria"
+          action={
+            <Button variant="secondary" onClick={() => setConfirmation({ kind: 'load' })}>
+              Conferma ora
+            </Button>
+          }
+        >
+          Per vedere e gestire gli account serve una conferma recente con la password o con il
+          codice.
+        </Alert>
+      ) : null}
+
       {notice ? (
         <Alert variant="success" title="Fatto">
           {notice}
@@ -310,7 +346,7 @@ export function AccountsScreen(): React.JSX.Element {
         </div>
       ) : null}
 
-      {!error ? (
+      {!error && !listNeedsConfirmation ? (
         <DataTable
           caption="Persone con accesso all’area amministrativa"
           columns={columns}
@@ -321,7 +357,14 @@ export function AccountsScreen(): React.JSX.Element {
         />
       ) : null}
 
-      {canManage && (pending?.kind === 'deactivate' || pending?.kind === 'reset') ? (
+      {confirmation ? (
+        <ConfirmIdentityDialog onConfirmed={onConfirmed} onCancel={() => setConfirmation(null)} />
+      ) : null}
+
+      {/* Una finestra alla volta: durante la conferma quella dell'azione resta in sospeso. */}
+      {canManage &&
+      !confirmation &&
+      (pending?.kind === 'deactivate' || pending?.kind === 'reset') ? (
         <ConfirmAccountDialog
           kind={pending.kind}
           account={pending.account}
@@ -336,7 +379,7 @@ export function AccountsScreen(): React.JSX.Element {
         />
       ) : null}
 
-      {canManage && pending?.kind === 'identity' ? (
+      {canManage && !confirmation && pending?.kind === 'identity' ? (
         <EditAccountDialog
           account={pending.account}
           isSelf={pending.account.id === user?.userId}
@@ -351,7 +394,7 @@ export function AccountsScreen(): React.JSX.Element {
         />
       ) : null}
 
-      {canManage && pending?.kind === 'roles' ? (
+      {canManage && !confirmation && pending?.kind === 'roles' ? (
         <RolesDialog
           account={pending.account}
           isSelf={pending.account.id === user?.userId}

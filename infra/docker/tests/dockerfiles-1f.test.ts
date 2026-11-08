@@ -91,6 +91,24 @@ describe.each(APPS)('%s.Dockerfile', (app) => {
   });
 });
 
+describe('versione di Node (1F-W4 T6a, DR-389)', () => {
+  const nvmrc = readFileSync(path.join(repoRoot, '.nvmrc'), 'utf8').trim();
+
+  it('.nvmrc è Node 26.12.1, linea LTS in supporto', () => {
+    expect(nvmrc).toBe('26.12.1');
+  });
+
+  it.each(APPS)('%s.Dockerfile usa in ogni stadio il Node di .nvmrc', (app) => {
+    const froms = stages(read(app))
+      .map((stage) => stage.from)
+      .filter((from) => from.startsWith('node:'));
+    expect(froms.length).toBeGreaterThan(0);
+    for (const from of froms) {
+      expect(from.startsWith(`node:${nvmrc}-bookworm-slim@sha256:`), from).toBe(true);
+    }
+  });
+});
+
 describe('backup.Dockerfile: servizio di backup (1F-W3 T1, DR-366)', () => {
   const text = (): string => read('backup');
   const all = (): Stage[] => stages(text());

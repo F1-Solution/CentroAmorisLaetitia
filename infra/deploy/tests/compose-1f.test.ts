@@ -35,10 +35,16 @@ const BASE_ENV: Readonly<Record<string, string>> = {
   CADDY_HTTPS_PORT: '443',
   SITE_URL: 'https://www.esempio.invalid',
   POSTGRES_PASSWORD: 'password-sintetica-del-database-di-prova',
+  DB_OWNER_PASSWORD: 'password-sintetica-del-proprietario-di-prova',
+  DB_APP_PASSWORD: 'password-sintetica-del-ruolo-applicativo',
+  DB_BACKUP_PASSWORD: 'password-sintetica-del-ruolo-di-backup',
   S3_ACCESS_KEY: 'chiave-sintetica-archivio',
   S3_SECRET_KEY: 'segreto-sintetico-archivio-abbastanza-lungo',
+  S3_API_SECRET_KEY: 'segreto-sintetico-utente-api-abbastanza-lungo',
+  S3_BACKUP_SECRET_KEY: 'segreto-sintetico-utente-backup-abbastanza-lungo',
   IP_HASH_SALT: 'sale-sintetico-per-il-compose-abbastanza-lungo',
   CSRF_SECRET: 'segreto-sintetico-per-il-compose-abbastanza-lungo',
+  TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
   SCRUB_SERVICE_TOKEN: 'gettone-sintetico-del-servizio-di-pulizia-1f',
 };
 
@@ -70,7 +76,7 @@ const BACKUP_ENV: Readonly<Record<string, string>> = {
  */
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -110,6 +116,7 @@ interface Service {
   security_opt?: string[];
   healthcheck?: { test?: string[] };
   restart?: string;
+  logging?: { driver?: string; options?: Record<string, string> };
   init?: boolean;
   command?: string[] | null;
   entrypoint?: string[];
@@ -121,7 +128,15 @@ interface Service {
 interface Config {
   name: string;
   services: Record<string, Service>;
-  networks: Record<string, { internal?: boolean; name?: string }>;
+  networks: Record<
+    string,
+    {
+      internal?: boolean;
+      name?: string;
+      ipam?: { config?: { subnet?: string }[] };
+      driver_opts?: Record<string, string>;
+    }
+  >;
   volumes: Record<string, { name?: string }>;
   secrets?: Record<string, { file?: string; environment?: string }>;
 }
@@ -187,7 +202,7 @@ describe('variabili obbligatorie (W2-6)', () => {
 describe('servizi e immagini (W2-1, ADR-009 §4.4)', () => {
   it('avvia caddy, sito, area, API, pulizia, database e archivio; le migrazioni solo a parte', () => {
     expect(Object.keys(production.services).sort()).toEqual(
-      ['admin', 'api', 'caddy', 'db', 'objects', 'objects-init', 'scrub', 'web'].sort(),
+      ['admin', 'api', 'caddy', 'db', 'db-init', 'objects', 'objects-init', 'scrub', 'web'].sort(),
     );
     expect(Object.keys(release.services)).toContain('migrate');
     const migrate = release.services.migrate;
@@ -250,9 +265,22 @@ describe('porte e reti (W2-5, DR-359)', () => {
     }
   });
 
+  it('backup-out ha sottorete e bridge fissi, modificabili e diversi dalla rete app (R13)', () => {
+    const out = backup.networks['backup-out'];
+    expect(out?.ipam?.config?.[0]?.subnet).toBe('10.77.86.0/24');
+    expect(out?.driver_opts?.['com.docker.network.bridge.name']).toBe('amoris-bkp-out');
+    expect(backup.networks.app?.ipam?.config?.[0]?.subnet).not.toBe('10.77.86.0/24');
+    const changed = config(
+      { ...BACKUP_ENV, BACKUP_OUT_SUBNET: '10.77.90.0/24', BACKUP_OUT_BRIDGE: 'bkp-test' },
+      ['backup'],
+    ).networks['backup-out'];
+    expect(changed?.ipam?.config?.[0]?.subnet).toBe('10.77.90.0/24');
+    expect(changed?.driver_opts?.['com.docker.network.bridge.name']).toBe('bkp-test');
+  });
+
   it('database e archivio non stanno sulla rete di Caddy', () => {
     const caddyNetworks = new Set(Object.keys(production.services.caddy?.networks ?? {}));
-    for (const name of ['db', 'objects', 'objects-init', 'scrub']) {
+    for (const name of ['db', 'db-init', 'objects', 'objects-init', 'scrub']) {
       const shared = Object.keys(production.services[name]?.networks ?? {}).filter((network) =>
         caddyNetworks.has(network),
       );
@@ -325,6 +353,20 @@ describe('limiti (W2-5, DR-263, DR-334)', () => {
   });
 });
 
+describe('rotazione dei log (1F-W4 T6f, DR-390)', () => {
+  it('ogni servizio, anche quello a termine e il backup, usa json-file da 10 MB per 5 file', () => {
+    for (const stack of [production, staging, release, backup]) {
+      for (const [name, service] of Object.entries(stack.services)) {
+        expect(service.logging, name).toEqual({
+          driver: 'json-file',
+          options: { 'max-size': '10m', 'max-file': '5' },
+        });
+      }
+    }
+    expect(Object.keys(backup.services)).toContain('backup');
+  });
+});
+
 describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
   const service = () => backup.services.backup;
   const outNetwork = 'backup-out';
@@ -376,15 +418,15 @@ describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
     const members = Object.entries(backup.services)
       .filter(([, other]) => Object.keys(other.networks ?? {}).includes(outNetwork))
       .map(([name]) => name);
-    expect(members).toEqual(['backup']);
+    expect(members).toEqual(['backup', 'restore']);
   });
 
   it('solo le tre variabili dell’API e la password di restic portano un segreto nell’ambiente', () => {
     const env = service()?.environment ?? {};
     expect(env).toMatchObject({
-      PGPASSWORD: BASE_ENV.POSTGRES_PASSWORD,
-      S3_ACCESS_KEY: BASE_ENV.S3_ACCESS_KEY,
-      S3_SECRET_KEY: BASE_ENV.S3_SECRET_KEY,
+      PGPASSWORD: BASE_ENV.DB_BACKUP_PASSWORD,
+      S3_ACCESS_KEY: 'amoris-backup',
+      S3_SECRET_KEY: BASE_ENV.S3_BACKUP_SECRET_KEY,
       RESTIC_PASSWORD: BACKUP_ENV.RESTIC_PASSWORD,
     });
     const allowed = ['PGPASSWORD', 'S3_ACCESS_KEY', 'S3_SECRET_KEY', 'RESTIC_PASSWORD'];
@@ -424,7 +466,7 @@ describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
   it('destinazione e database arrivano dalle variabili; la porta SFTP vale 23 se non indicata', () => {
     expect(service()?.environment).toMatchObject({
       PGHOST: 'db',
-      PGUSER: 'amoris',
+      PGUSER: 'amoris_backup',
       PGDATABASE: 'amoris',
       S3_ENDPOINT: 'http://objects:9000',
       S3_BUCKET_PUBLIC: 'media-public',
@@ -458,7 +500,7 @@ describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
 
   it('senza profilo, con l’esempio completo, gli altri servizi restano gli stessi', () => {
     expect(Object.keys(production.services).sort()).toEqual(
-      ['admin', 'api', 'caddy', 'db', 'objects', 'objects-init', 'scrub', 'web'].sort(),
+      ['admin', 'api', 'caddy', 'db', 'db-init', 'objects', 'objects-init', 'scrub', 'web'].sort(),
     );
     for (const [name, other] of Object.entries(production.services)) {
       expect(Object.keys(other.networks ?? {}), name).not.toContain(outNetwork);
@@ -577,7 +619,20 @@ describe('Caddy per ambiente', () => {
     return result.stdout.trim();
   }
 
+  let stagingBase = '';
+  // Hash di una password sintetica, generato al volo: nessun hash nel repository.
+  let stagingHash = '';
+
   beforeAll(() => {
+    stagingHash = run([
+      'run',
+      '--rm',
+      caddyImage(),
+      'caddy',
+      'hash-password',
+      '--plaintext',
+      'password-sintetica',
+    ]);
     spawnSync('docker', ['network', 'rm', network]);
     run(['network', 'create', network]);
     started.push(
@@ -621,6 +676,9 @@ describe('Caddy per ambiente', () => {
       `AMORIS_ENV=${env}`,
       '-e',
       'CADDY_SITE_ADDRESS=:80',
+      ...(env === 'staging'
+        ? ['-e', 'STAGING_BASIC_AUTH_USER=prova', '-e', `STAGING_BASIC_AUTH_HASH=${stagingHash}`]
+        : []),
       '-v',
       `${path.join(deployDir, 'caddy')}:/etc/caddy:ro`,
       caddyImage(),
@@ -631,11 +689,18 @@ describe('Caddy per ambiente', () => {
     return `http://127.0.0.1:${match[1]}`;
   }
 
+  const STAGING_AUTH = {
+    Authorization: `Basic ${Buffer.from('prova:password-sintetica').toString('base64')}`,
+  };
+
   async function get(base: string, pathname: string): Promise<Response> {
     const deadline = Date.now() + 20_000;
     for (;;) {
       try {
-        const response = await fetch(`${base}${pathname}`, { redirect: 'manual' });
+        const response = await fetch(`${base}${pathname}`, {
+          redirect: 'manual',
+          headers: base === stagingBase ? STAGING_AUTH : {},
+        });
         // All'avvio il finto servizio può non essere ancora pronto.
         if (response.status !== 502 || Date.now() > deadline) return response;
       } catch (error) {
@@ -647,10 +712,12 @@ describe('Caddy per ambiente', () => {
 
   it('in staging nessuna pagina è indicizzabile e robots.txt rifiuta tutto', async () => {
     const base = startCaddy('staging');
+    stagingBase = base;
+    expect((await fetch(`${base}/robots.txt`)).status).toBe(401);
     const robots = await get(base, '/robots.txt');
     expect(robots.status).toBe(200);
     expect(await robots.text()).toMatch(/^User-agent: \*\s+Disallow: \/\s*$/);
-    for (const pathname of ['/', '/una-pagina/', '/admin/', '/api/health/live', '/media/x.jpg']) {
+    for (const pathname of ['/', '/una-pagina/', '/admin/', '/api/auth/me', '/media/x.jpg']) {
       const response = await get(base, pathname);
       expect(response.status, pathname).toBe(200);
       expect(response.headers.get('x-robots-tag'), pathname).toBe('noindex, nofollow');

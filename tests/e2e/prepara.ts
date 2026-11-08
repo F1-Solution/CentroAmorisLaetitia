@@ -54,7 +54,7 @@ function prepara(): void {
   const env = ambienteDeiServer();
   const databaseUrl = urlPerDatabase(DATABASE_E2E);
 
-  for (const chiave of ['IP_HASH_SALT', 'CSRF_SECRET']) {
+  for (const chiave of ['IP_HASH_SALT', 'CSRF_SECRET', 'TOTP_ENCRYPTION_KEY']) {
     if (!env[chiave]) {
       throw new Error(
         `${chiave} non è impostata. Serve al servizio (ADR-007 §3.1 controllo 12): ` +

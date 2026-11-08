@@ -64,7 +64,11 @@ function hostPort(id: string, containerPort: string): number {
   return Number(match[1]);
 }
 
-function startCaddy(env: string, siteAddress: string): string {
+function startCaddy(
+  env: string,
+  siteAddress: string,
+  extraEnv: Readonly<Record<string, string>> = {},
+): string {
   const id = run([
     'run',
     '-d',
@@ -78,12 +82,18 @@ function startCaddy(env: string, siteAddress: string): string {
     `AMORIS_ENV=${env}`,
     '-e',
     `CADDY_SITE_ADDRESS=${siteAddress}`,
+    ...Object.entries(extraEnv).flatMap(([key, value]) => ['-e', `${key}=${value}`]),
     '-v',
     `${path.join(deployDir, 'caddy')}:/etc/caddy:ro`,
     caddyImage,
   ]);
   started.push(id);
   return id;
+}
+
+/** Hash bcrypt di una password sintetica, generato al volo con Caddy: nessun hash nel repository. */
+function syntheticHash(password: string): string {
+  return run(['run', '--rm', caddyImage, 'caddy', 'hash-password', '--plaintext', password]);
 }
 
 async function get(base: string, pathname: string, headers: Record<string, string> = {}) {
@@ -138,8 +148,30 @@ describe('instradamento e intestazioni (HTTP, indirizzo :80)', () => {
   });
 
   it('/api arriva all’API senza il prefisso, che risponde dalla radice', async () => {
-    expect(await (await get(base, '/api/health/live')).text()).toBe('api /health/live');
     expect(await (await get(base, '/api/auth/session')).text()).toBe('api /auth/session');
+    expect(await (await get(base, '/api/auth/me')).text()).toBe('api /auth/me');
+    expect(await (await get(base, '/api/accounts')).text()).toBe('api /accounts');
+  });
+
+  it('T6j: /api/openapi.json e /api/health/* rispondono 404 da Caddy, comprese le varianti di percorso', async () => {
+    for (const pathname of [
+      '/api/openapi.json',
+      '/api/openapi.json/',
+      '/api/health/ready',
+      '/api/health/live',
+      '/api/health',
+      '/api/health/',
+      '/api/health/qualunque',
+      '/api/HEALTH/ready',
+      '/api/Openapi.json',
+      '/api/./health/ready',
+      '/api//health/ready',
+      '/api/%68ealth/ready',
+    ]) {
+      const response = await get(base, pathname);
+      expect(response.status, pathname).toBe(404);
+      expect(await response.text(), pathname).not.toMatch(/^api /);
+    }
   });
 
   it('/forms e /media vanno all’API, /admin all’area, il resto al sito', async () => {
@@ -313,5 +345,110 @@ describe('HTTPS con il certificato interno (nome *.localhost)', () => {
     expect(maxAge).toBeGreaterThan(0);
     expect(maxAge).toBeLessThanOrEqual(86_400);
     expect(hsts).not.toMatch(/preload|includeSubDomains/i);
+  });
+});
+
+describe('staging protetto da password (DR-375, rilievo R1)', () => {
+  const USER = 'redattore-prova';
+  const PASSWORD = 'password-sintetica-di-prova';
+  const PATHS = [
+    '/',
+    '/chi-siamo/',
+    '/admin',
+    '/admin/contenuti',
+    '/api/openapi.json',
+    '/api/health/live',
+    '/api/auth/me',
+    '/media/x',
+    '/forms/contatti/submissions',
+    '/robots.txt',
+  ];
+  let hash = '';
+  let base = '';
+  let id = '';
+
+  const basic = (user: string, password: string) => ({
+    Authorization: `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`,
+  });
+
+  beforeAll(() => {
+    hash = syntheticHash(PASSWORD);
+    id = startCaddy('staging', ':80', {
+      STAGING_BASIC_AUTH_USER: USER,
+      STAGING_BASIC_AUTH_HASH: hash,
+    });
+    base = `http://127.0.0.1:${hostPort(id, '80/tcp')}`;
+  });
+
+  it('senza credenziali ogni percorso risponde 401 con WWW-Authenticate', async () => {
+    for (const pathname of PATHS) {
+      const response = await fetch(`${base}${pathname}`, { redirect: 'manual' });
+      expect(response.status, pathname).toBe(401);
+      expect(response.headers.get('www-authenticate'), pathname).toMatch(/^Basic/i);
+      expect(await response.text(), pathname).not.toMatch(/^(web|admin|api) /);
+    }
+  });
+
+  it('con credenziali sbagliate (utente o password) risponde 401', async () => {
+    for (const headers of [basic(USER, 'sbagliata'), basic('altro', PASSWORD), basic('', '')]) {
+      for (const pathname of ['/', '/admin', '/api/openapi.json', '/robots.txt']) {
+        const response = await fetch(`${base}${pathname}`, { redirect: 'manual', headers });
+        expect(response.status, pathname).toBe(401);
+      }
+    }
+  });
+
+  it('con le credenziali giuste la richiesta arriva all’applicazione', async () => {
+    const headers = basic(USER, PASSWORD);
+    expect(await (await get(base, '/chi-siamo/', headers)).text()).toBe('web /chi-siamo/');
+    expect(await (await get(base, '/admin/contenuti', headers)).text()).toBe(
+      'admin /admin/contenuti',
+    );
+    expect(await (await get(base, '/api/auth/me', headers)).text()).toBe('api /auth/me');
+    expect((await get(base, '/api/openapi.json', headers)).status).toBe(404);
+    expect(await (await get(base, '/media/x', headers)).text()).toBe('api /media/x');
+    expect(await (await get(base, '/forms/a/submissions', headers)).text()).toBe(
+      'api /forms/a/submissions',
+    );
+    const robots = await get(base, '/robots.txt', headers);
+    expect(await robots.text()).toMatch(/Disallow: \//);
+    expect(robots.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+  });
+
+  it('il controllo di salute interno risponde senza credenziali', () => {
+    const result = spawnSync(
+      'docker',
+      ['exec', id, 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:2020/health/live'],
+      { encoding: 'utf8' },
+    );
+    expect(result.status, result.stderr).toBe(0);
+  });
+
+  it('la produzione non chiede nessuna autenticazione', async () => {
+    const production = `http://127.0.0.1:${hostPort(startCaddy('production', ':80'), '80/tcp')}`;
+    for (const pathname of ['/', '/admin', '/api/auth/me', '/robots.txt']) {
+      const response = await get(production, pathname);
+      expect(response.status, pathname).toBe(200);
+      expect(response.headers.get('www-authenticate'), pathname).toBeNull();
+    }
+  });
+
+  it.each([
+    ['utente e hash mancanti', {}],
+    ['utente e hash vuoti', { STAGING_BASIC_AUTH_USER: '', STAGING_BASIC_AUTH_HASH: '' }],
+    ['hash mancante', { STAGING_BASIC_AUTH_USER: USER }],
+    ['utente mancante', { STAGING_BASIC_AUTH_HASH: 'x' }],
+    ['hash non valido', { STAGING_BASIC_AUTH_USER: USER, STAGING_BASIC_AUTH_HASH: 'non-un-hash' }],
+  ])('con %s Caddy non parte (fallisce chiuso)', async (_name, extra) => {
+    const failing = startCaddy('staging', ':80', extra);
+    const deadline = Date.now() + 20_000;
+    let running = 'true';
+    while (Date.now() < deadline) {
+      running = run(['inspect', '-f', '{{.State.Running}}', failing]);
+      if (running === 'false') break;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    expect(running).toBe('false');
+    expect(run(['inspect', '-f', '{{.State.ExitCode}}', failing])).not.toBe('0');
   });
 });

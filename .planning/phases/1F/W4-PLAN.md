@@ -83,39 +83,39 @@ eccezioni), `infra/deploy/firewall/` (regole `DOCKER-USER`, se confermate in T6)
 
 ### T1 — Scansione dei segreti (1F-4)
 
-- [ ] gitleaks in contenitore, sola lettura, senza rete: `git` sull'intera cronologia di tutti i
+- [x] gitleaks in contenitore, sola lettura, senza rete: `git` sull'intera cronologia di tutti i
   rami, `dir` sul working tree (escluse le cartelle ignorate da Git, **mai** `source-private/`),
   `--redact`, rapporto JSON nella scratchpad, mai nel repository.
-- [ ] gitleaks `dir` sul filesystem esportato di ciascuna delle cinque immagini
+- [x] gitleaks `dir` sul filesystem esportato di ciascuna delle cinque immagini
   (`docker export` delle immagini costruite da `1afed56`), a integrazione di `check-image.mjs`.
-- [ ] Triage: per ogni rilievo, file, commit, regola e verdetto (vero, falso positivo, dato
+- [x] Triage: per ogni rilievo, file, commit, regola e verdetto (vero, falso positivo, dato
   sintetico). Un vero segreto in cronologia **non** si cancella riscrivendo la storia senza
   conferma: prima rotazione del segreto, poi proposta all'utente con impatto e rientro.
-- [ ] Prova sentinella: un segreto finto in un file temporaneo non tracciato fa rilevare la
+- [x] Prova sentinella: un segreto finto in un file temporaneo non tracciato fa rilevare la
   scansione (poi il file si toglie). Esito in rapporto: conteggi, regole, verdetti; nessun valore.
 
 ### T2 — Dipendenze e immagini
 
-- [ ] `pnpm audit --prod` (JSON) sull'intero workspace; elenco per severità, pacchetto, percorso.
-- [ ] Scansione delle cinque immagini (DR-386) (pacchetti di sistema e `node_modules`).
-- [ ] Triage: raggiungibilità dal codice o dal contenitore, correzione disponibile, proposta.
+- [x] `pnpm audit --prod` (JSON) sull'intero workspace; elenco per severità, pacchetto, percorso.
+- [x] Scansione delle cinque immagini (DR-386) (pacchetti di sistema e `node_modules`).
+- [x] Triage: raggiungibilità dal codice o dal contenitore, correzione disponibile, proposta.
   Nessun aggiornamento di dipendenza in questa attività: le correzioni vanno in T6.
 
 ### T3 — Prove di ADR-007 §8 sullo stack d'immagini
 
 Stack `amoris-production` locale dalle immagini di `1afed56`, seme sintetico, attraverso Caddy.
 
-- [ ] Limitazione dei tentativi: per account e per IP, ritardo progressivo; **l'IP che conta è
+- [x] Limitazione dei tentativi: per account e per IP, ritardo progressivo; **l'IP che conta è
   quello del client visto da Caddy**: prova che un `X-Forwarded-For` falsificato dal client non
   sposta il conteggio (rossa se lo sposta).
-- [ ] Revoca: una sessione revocata, e tutte le sessioni di una persona, rifiutate alla richiesta
+- [x] Revoca: una sessione revocata, e tutte le sessioni di una persona, rifiutate alla richiesta
   successiva; rotazione del token dopo accesso e cambio password.
-- [ ] Cookie in produzione: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, nessun dominio esteso;
+- [x] Cookie in produzione: `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, nessun dominio esteso;
   CSRF rifiutato senza il token a doppio invio su ogni rotta che modifica.
-- [ ] Enumerazione: stesso messaggio e tempi confrontabili per utente inesistente e password errata.
-- [ ] `pnpm --filter api` prova del conteggio delle righe verde, regola invariata; il numero entra
+- [x] Enumerazione: stesso messaggio e tempi confrontabili per utente inesistente e password errata.
+- [x] `pnpm --filter api` prova del conteggio delle righe verde, regola invariata; il numero entra
   nel rapporto.
-- [ ] Dati: nessun IP in chiaro in `sessions`, `audit_log`, `form_submissions` dello stack
+- [x] Dati: nessun IP in chiaro in `sessions`, `audit_log`, `form_submissions` dello stack
   sintetico (interrogazione che conta le corrispondenze a un'espressione di indirizzo, senza
   stampare valori). Stack fermato con `down`; volumi rimossi su conferma.
 
@@ -127,44 +127,75 @@ Agente `security-reviewer`, sola lettura, contesto nuovo. Riceve: il perimetro q
 riferimenti del preambolo, gli esiti grezzi di T1–T3. Non riceve: ipotesi su dove stiano i
 problemi. Non legge `source-private/`, file `.env`, dump né il database di sviluppo.
 
-- [ ] Autenticazione: i 12 controlli di ADR-007 §3.1 uno per uno; area amministrativa e mappa
+- [x] Autenticazione: i 12 controlli di ADR-007 §3.1 uno per uno; area amministrativa e mappa
   delle aree; ruoli e permessi; durata delle sessioni (il parere non convalida 12 ore / 30 giorni).
-- [ ] Ogni rotta dell'API: autenticazione, permesso, CSRF, validazione d'ingresso, limiti di
+- [x] Ogni rotta dell'API: autenticazione, permesso, CSRF, validazione d'ingresso, limiti di
   dimensione, errori che non trapelano dettagli; rotte pubbliche `/forms` e `/media`.
-- [ ] Tre tabelle: chi le legge e le scrive, digest con sale, `audit_log.detail`, log applicativi
+- [x] Tre tabelle: chi le legge e le scrive, digest con sale, `audit_log.detail`, log applicativi
   e del servizio di backup, esportazioni.
-- [ ] Caricamenti e servizio di pulizia: tipi, dimensioni, percorso, isolamento del contenitore.
-- [ ] `Caddyfile`: TLS, HSTS, intestazioni, CSP, instradamento, staging non indicizzabile e
+- [x] Caricamenti e servizio di pulizia: tipi, dimensioni, percorso, isolamento del contenitore.
+- [x] `Caddyfile`: TLS, HSTS, intestazioni, CSP, instradamento, staging non indicizzabile e
   protetto (DR-375).
-- [ ] Compose e immagini: utenti, capacità, reti, porte, segreti nell'ambiente, separazione
+- [x] Compose e immagini: utenti, capacità, reti, porte, segreti nell'ambiente, separazione
   effettiva di staging e produzione sullo stesso server (MI-06 domanda 12), credenziali di MinIO.
-- [ ] Backup: chi può cancellare le istantanee, uscita della rete `backup-out`, custodia (DR-380).
-- [ ] CI e catena di fornitura: permessi del `GITHUB_TOKEN`, azioni per etichetta o per SHA,
+- [x] Backup: chi può cancellare le istantanee, uscita della rete `backup-out`, custodia (DR-380).
+- [x] CI e catena di fornitura: permessi del `GITHUB_TOKEN`, azioni per etichetta o per SHA,
   immagini di base per digest, lockfile.
-- [ ] Requisiti tecnici del parere MI-06 (3e, 7b, 12) con esito per ciascuno.
-- [ ] Rapporto: per ogni rilievo severità, file e riga, scenario concreto, correzione proposta.
+- [x] Requisiti tecnici del parere MI-06 (3e, 7b, 12) con esito per ciascuno.
+- [x] Rapporto: per ogni rilievo severità, file e riga, scenario concreto, correzione proposta.
 
 ### T5 — Decisioni sugli esiti
 
-- [ ] Coordinatore: verifica di ogni rilievo critico o alto sul codice (riproduzione o prova),
+- [x] Coordinatore: verifica di ogni rilievo critico o alto sul codice (riproduzione o prova),
   scarto motivato dei falsi positivi.
-- [ ] Rilievi che chiedono una scelta (costo, UX, architettura, rischio da accettare): `grill-me`,
+- [x] Rilievi che chiedono una scelta (costo, UX, architettura, rischio da accettare): `grill-me`,
   round di massimo 5, numeri da D275; registrazione in `decision-register.md`.
 
 ### T6 — Correzioni (Sonnet, prova prima)
 
-Ordine: critici, alti, medi decisi in T5, rinvii W4 del README §9. Per ciascuna correzione la
-prova rossa prima, poi verde. Correzioni già prevedibili, da confermare con gli esiti:
+Perimetro deciso in T5 (DR-388…DR-392, rapporto della T4 con i rilievi R1–R29). Ordine: base
+Node per prima (ogni prova successiva gira sulla base nuova), poi alti, medi, bassi, TOTP per
+ultimo. Per ciascuna correzione la prova rossa prima, poi verde; una suite Docker alla volta.
 
-- [ ] Utente di servizio di MinIO limitato ai due bucket per l'API (README §9), creato da
-  `objects-init`; prova: l'API non elenca né scrive fuori dai due bucket.
-- [ ] Regole `DOCKER-USER` per la rete `backup-out` (solo Storage Box sulla porta 23 e DNS):
-  script e prova in un contenitore Linux con privilegi di rete, **applicazione sul server nella
-  W5** con il suo handoff.
-- [ ] `/health/ready` dell'API e archivio a oggetti: secondo l'esito del revisore.
-- [ ] TOTP nell'area amministrativa (DR-384); `pnpm audit --prod` nella CI (DR-386).
-- [ ] Se il conteggio delle righe di autenticazione supera 500 nel nucleo: **stop** e
-  ripresentazione all'utente (ADR-007 §6, DR-070), senza cambiare la regola.
+- [x] **T6a — R2** (DR-389): Node **26.12.1** su `bookworm-slim` fissato per digest in `.nvmrc`,
+  CI e nei cinque Dockerfile; verifica come la CI e `test:images` sulla base nuova.
+- [x] **T6b — R17**: `npm`, `npx`, `corepack` e intestazioni tolti dallo stadio `runtime` delle
+  quattro immagini Node; `gosu` tolto da `backup`; prova in `check-image` o nelle prove
+  d'immagine; nuova scansione Trivy (solo conteggi).
+- [x] **T6c — R16**: drizzle-orm ≥ 0.45.2, zod ≥ 4.6.6, fastify ≥ 5.12.6; `override` dove serve;
+  eslint fuori dalle dipendenze di produzione di `@amoris/config` o eccezione motivata;
+  `pnpm audit --prod --audit-level=high` verde.
+- [x] **T6d — R15** (DR-386): azioni della CI fissate per SHA completo con commento della
+  versione; `pnpm audit --prod` bloccante; gitleaks nella CI; eccezioni versionate.
+- [x] **T6e — R1** (DR-375): `basic_auth` davanti a tutto lo staging (hash in variabile
+  d'ambiente, mai nel repository); prova 401 su sito, `/admin`, `/api/openapi.json`.
+- [x] **T6f — R3** (DR-390): log dell'API con metodo, percorso senza query, esito, durata,
+  `requestId` e digest con sale dell'IP; rotazione `json-file` 10 MB × 5 per ogni servizio del
+  Compose; prova che il log catturato non contenga né IP né query.
+- [x] **T6g — R10, R11**: ruolo applicativo del database senza `SUPERUSER` (proprietario solo per
+  `migrate`, sola lettura per `backup`); utente di servizio di MinIO limitato ai due bucket per
+  l'API e in sola lettura per il backup, creato da `objects-init`; prove.
+- [x] **T6h — R5, R6, R7, R8, R19, R28**: righe `too_many_attempts` fuori dal conteggio e
+  procedura di sblocco da CLI; tetto HTTP per indirizzo sulle rotte anonime senza scrittura a
+  database, niente audit per i rifiuti anonimi, indici su `ip_hash`; HMAC dell'email digitata;
+  prefisso /64 per IPv6; `trustProxy` ristretto alla rete di Caddy; `user_agent` troncato a 500.
+- [x] **T6i — R13**: script delle regole `DOCKER-USER` per `backup-out` (Storage Box porta 23 e
+  DNS) con prova in un contenitore Linux con privilegi di rete; applicazione nella W5 da handoff.
+- [x] **T6j — R18, R22, R25, R26a, R26c, R27**: `backup-data` svuotato a fine esecuzione;
+  `/api/openapi.json` e `/api/health/*` non pubblici da Caddy; pulizia di sessioni scadute e
+  tentativi falliti, sessioni revocate dopo un ripristino; `setPassword` e revoca in una
+  transazione; `no-store` su `/auth/me` e `/auth/sessions`; configurazione di produzione
+  validata (chiavi S3 obbligatorie, minimi Argon2, segreti diversi).
+- [x] **T6k — R9** (DR-391): sessione 14 giorni, inattività 8 ore, cookie senza `maxAge`.
+- [x] **T6l — R4** (DR-384, DR-388, DR-395…DR-399): TOTP nell'area amministrativa con
+  `node:crypto`, senza dipendenze nuove; conferma (password o TOTP) entro 10 minuti per ogni rotta
+  di `users.manage` (DR-391, DR-396); reimpostazione solo da CLI (DR-397).
+  - [x] **T6l-a** (API): nucleo 772 oltre 650, stop; D281…D285 decise, soglia del nucleo **800**
+    (DR-395), regola di conteggio invariata.
+  - [x] **T6l-b** (area ed e2e): schermata del secondo fattore (attivazione e verifica), rinvii
+    della sessione, conferma recente in «Persone e permessi»; prove unitarie ed e2e.
+- [ ] Rinviati alla W5 con handoff: R12, R14 (Storage Box), R20, R21 (DR-364), R24. Annotati
+  nel rapporto: R23, R26b, R26d–f, R29.
 
 ### T7 — Riesame e verifica
 
@@ -185,7 +216,7 @@ prova rossa prima, poi verde. Correzioni già prevedibili, da confermare con gli
 
 ## 4. Decisioni
 
-Prese il 2026-11-08 (round con `grill-with-ui`, riepilogo in [`W4-decisioni.md`](W4-decisioni.md)).
+Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decisioni.md`](W4-decisioni.md)), D275…D279 in T5 sugli esiti della T4, D280 sul perimetro della T6, D281…D285 nella T6l.
 
 | id | Decisione | Esito |
 |---|---|---|
@@ -194,6 +225,17 @@ Prese il 2026-11-08 (round con `grill-with-ui`, riepilogo in [`W4-decisioni.md`]
 | ~~**D272**~~ | Cifratura a riposo delle tre tabelle | **DR-385**: solo backup e trasporto cifrati; rischio residuo **approvato per iscritto dal Centro** prima dei dati sul server |
 | ~~**D273**~~ | Audit delle dipendenze e delle immagini | **DR-386**: una tantum nella W4; `pnpm audit --prod` bloccante su critici e alti nella CI |
 | ~~**D274**~~ | Segreti nell'ambiente dei contenitori | **DR-387**: rischio accettato in Fase 1; si riapre se la revisione trova un percorso di esposizione |
+| ~~**D275**~~ | TOTP oltre le 500 righe del nucleo (R4) | **DR-388**: terza deroga, soglia del nucleo 650, TOTP con `node:crypto`; riesame con Better Auth prima del gestionale |
+| ~~**D276**~~ | Versione di Node (R2) | **DR-389**: Node 26.12.1 su `bookworm-slim` per digest |
+| ~~**D277**~~ | Contenuto e durata dei log (R3) | **DR-390**: niente IP in chiaro né query; digest con sale dell'IP; rotazione 10 MB × 5 |
+| ~~**D278**~~ | Sessioni e conferma per le operazioni delicate (R9) | **DR-391**: 14 giorni, 8 ore di inattività, cookie di sessione; conferma entro 10 minuti per gli account |
+| ~~**D279**~~ | Perimetro della T6 | **DR-392**: alti, medi tranne R12 e R14 (W5), bassi R18, R19, R22, R25, R26a, R26c, R27, R28 |
+| ~~**D280**~~ | T6j e T6k nella T6 | **DR-393**: restano nella T6, prima del commit |
+| ~~**D281**~~ | Nucleo a 772 righe con il TOTP | **DR-395**: quarta deroga, soglia del nucleo 800, riesame con Better Auth prima del gestionale |
+| ~~**D282**~~ | Conferma anche per leggere gli account | **DR-396**: sì, ogni rotta con `users.manage` |
+| ~~**D283**~~ | Reimpostazione del secondo fattore | **DR-397**: solo il manutentore da CLI |
+| ~~**D284**~~ | Rischio della prima attivazione | **DR-398**: accettato, password temporanea su canale sicuro |
+| ~~**D285**~~ | Rotazione di `TOTP_ENCRYPTION_KEY` | **DR-399**: nessuna in Fase 1, reimpostazione di tutti i secondi fattori se compromessa |
 
 Conseguenze sulle attività:
 

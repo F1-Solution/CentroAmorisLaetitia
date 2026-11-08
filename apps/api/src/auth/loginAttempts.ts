@@ -1,8 +1,8 @@
 import { schema, type Database } from '@amoris/db';
 import { and, eq, gte, sql } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import type { Config } from '../config.js';
-import { AUTH_ACTIONS } from './audit.js';
+import { AUTH_ACTIONS, writeAudit } from './audit.js';
 
 /**
  * ADR-007 §3.1 controllo 8: limitazione dei tentativi per indirizzo IP **e** per
@@ -20,12 +20,10 @@ export interface AttemptVerdict {
   readonly failures: number;
 }
 
-/**
- * L'identificativo tentato non entra a registro in chiaro: potrebbe essere
- * l'indirizzo di una persona che con questo servizio non c'entra nulla.
- */
-export function identifierDigest(identifier: string): string {
-  return createHash('sha256').update(identifier.trim().toLowerCase(), 'utf8').digest('hex');
+/** HMAC con una sottochiave di `IP_HASH_SALT`: l'indirizzo digitato non si ricava dal registro con un dizionario. */
+export function identifierDigest(identifier: string, salt: string): string {
+  const key = createHmac('sha256', salt).update('amoris:identifier-digest:v1', 'utf8').digest();
+  return createHmac('sha256', key).update(identifier.trim().toLowerCase(), 'utf8').digest('hex');
 }
 
 export const IDENTIFIER_ENTITY = 'auth.identifier';
@@ -40,16 +38,28 @@ export async function evaluateAttempts(
 ): Promise<AttemptVerdict> {
   const since = new Date(Date.now() - config.LOGIN_WINDOW_MINUTES * 60_000);
 
+  const digest = identifierDigest(identifier, config.IP_HASH_SALT);
+  // I rifiuti per troppi tentativi non sono fallimenti: il blocco scade dopo l'ultimo fallimento vero.
   const failed = and(
     eq(schema.auditLog.action, action),
     eq(schema.auditLog.outcome, 'failure'),
     gte(schema.auditLog.occurredAt, since),
+    sql`coalesce(${schema.auditLog.detail}->>'reason', '') <> 'too_many_attempts'`,
   );
+  // Lo sblocco da CLI azzera il conteggio dell'account: conta solo ciò che viene dopo.
+  const afterUnblock = sql`${schema.auditLog.occurredAt} > coalesce((select max(occurred_at) from audit_log where action = ${AUTH_ACTIONS.loginUnblocked} and entity_id = ${digest}), '-infinity'::timestamptz)`;
 
   const [perAccount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(schema.auditLog)
-    .where(and(failed, eq(schema.auditLog.entityId, identifierDigest(identifier))));
+    .where(
+      and(
+        failed,
+        eq(schema.auditLog.entityType, IDENTIFIER_ENTITY),
+        eq(schema.auditLog.entityId, digest),
+        afterUnblock,
+      ),
+    );
 
   const perIp = ipHash
     ? await db
@@ -70,4 +80,35 @@ export async function evaluateAttempts(
     failures,
     delayMs: Math.min(failures * config.LOGIN_DELAY_STEP_MS, config.LOGIN_DELAY_MAX_MS),
   };
+}
+
+/** Sblocco di un account da CLI: una riga di registro dopo la quale il conteggio riparte da zero; ritorna i fallimenti azzerati. */
+export async function unblockAccount(
+  db: Database,
+  config: Config,
+  identifier: string,
+): Promise<number> {
+  const digest = identifierDigest(identifier, config.IP_HASH_SALT);
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.auditLog)
+    .where(
+      and(
+        eq(schema.auditLog.entityType, IDENTIFIER_ENTITY),
+        eq(schema.auditLog.entityId, digest),
+        eq(schema.auditLog.outcome, 'failure'),
+        gte(
+          schema.auditLog.occurredAt,
+          new Date(Date.now() - config.LOGIN_WINDOW_MINUTES * 60_000),
+        ),
+        sql`coalesce(${schema.auditLog.detail}->>'reason', '') <> 'too_many_attempts'`,
+      ),
+    );
+  await writeAudit(db, {
+    action: AUTH_ACTIONS.loginUnblocked,
+    entityType: IDENTIFIER_ENTITY,
+    entityId: digest,
+    detail: { source: 'cli' },
+  });
+  return row?.count ?? 0;
 }

@@ -28,12 +28,15 @@ export interface AuditEntry {
   readonly actorArea?: AdminArea | null;
 }
 
-export async function writeAudit(db: Database, entry: AuditEntry): Promise<void> {
+export async function writeAudit(db: Pick<Database, 'insert'>, entry: AuditEntry): Promise<void> {
   await writeAuditMany(db, [entry]);
 }
 
 /** Più righe in un solo inserimento, per le righe nate dalla stessa richiesta. */
-export async function writeAuditMany(db: Database, entries: readonly AuditEntry[]): Promise<void> {
+export async function writeAuditMany(
+  db: Pick<Database, 'insert'>,
+  entries: readonly AuditEntry[],
+): Promise<void> {
   if (entries.length === 0) return;
   await db.insert(schema.auditLog).values(
     entries.map((entry) => ({
@@ -61,4 +64,11 @@ export const AUTH_ACTIONS = {
   sessionsRevoked: 'auth.sessions_revoked',
   /** Cambio di veste: `ux-proposals.md` §4.3 lo vuole tracciato. */
   contextChanged: 'auth.context_changed',
+  /** Sblocco di un account da CLI (R5). */
+  loginUnblocked: 'auth.login_unblocked',
+  /** Codice del secondo fattore, giusto o sbagliato: i fallimenti si contano come quelli dell'accesso (DR-384). */
+  secondFactor: 'auth.second_factor',
+  secondFactorActivated: 'auth.second_factor_activated',
+  /** Reimpostazione del secondo fattore da CLI. */
+  secondFactorReset: 'auth.second_factor_reset',
 } as const;

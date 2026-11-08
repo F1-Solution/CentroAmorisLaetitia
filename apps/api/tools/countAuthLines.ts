@@ -45,6 +45,10 @@ export const CORE_FILES = [
   'auth/sessions.ts',
   'plugins/auth.ts',
   'plugins/csrf.ts',
+  // Wave 1F-W4 (T6j): la pulizia cancella sessioni e tentativi falliti, quindi è logica di sessioni e di tentativi.
+  'maintenance/purgeAuthData.ts',
+  // Wave 1F-W4 (T6l-a, DR-384): il TOTP è crittografia e sessioni, quindi logica di autenticazione.
+  'auth/totp.ts',
 ] as const;
 
 export const WRAPPER_FILES = [
@@ -59,11 +63,12 @@ export const WRAPPER_FILES = [
 
 /**
  * Soglia di ADR-007 §6 contromisura 3, portata da 300 a 500 il 2026-09-21 da
- * DR-070. La regola di conteggio qui sopra **non** cambia: cambiare la regola
+ * DR-070, da 500 a 650 il 2026-11-08 da DR-388 e da 650 a 800 lo stesso giorno da DR-395 (TOTP).
+ * La regola di conteggio qui sopra **non** cambia: cambiare la regola
  * dopo aver visto il numero e cambiare la soglia sono due cose diverse, e solo
  * la seconda è stata decisa.
  */
-export const THRESHOLD = 500;
+export const THRESHOLD = 800;
 
 function countExecutableLines(source: string): number {
   let inBlockComment = false;

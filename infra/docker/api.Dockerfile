@@ -2,8 +2,8 @@
 # produzione installati da `pnpm deploy`. Si costruisce dalla radice del repository:
 #   docker build -f infra/docker/api.Dockerfile -t amoris-api:<commit> .
 
-# Node 25.0.0 come `.nvmrc`, Debian 12 slim (glibc per i binari di sharp e argon2), fissato per digest.
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS build
+# Node 26.12.1 come `.nvmrc`, Debian 12 slim (glibc per i binari di sharp e argon2), fissato per digest.
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS build
 ENV CI=true PNPM_HOME=/pnpm PATH=/pnpm:$PATH npm_config_store_dir=/pnpm/store
 RUN npm install --global --no-fund --no-audit pnpm@11.6.0
 WORKDIR /repo
@@ -17,10 +17,13 @@ RUN pnpm --filter @amoris/api build \
 RUN pnpm --filter @amoris/api deploy --prod --legacy /out \
  && cd /out && node -e "require('sharp'); require('@node-rs/argon2')"
 
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS runtime
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS runtime
+# Via npm, corepack e intestazioni di Node: a runtime non servono (DR-392).
 RUN groupadd --system --gid 10001 amoris \
  && useradd --system --uid 10001 --gid amoris --no-create-home --home-dir /nonexistent \
-    --shell /usr/sbin/nologin amoris
+    --shell /usr/sbin/nologin amoris \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/include/node
 ENV NODE_ENV=production API_HOST=0.0.0.0 API_PORT=3002 TMPDIR=/tmp
 WORKDIR /app
 # File di root in sola lettura per l'utente: scrive solo in /tmp.

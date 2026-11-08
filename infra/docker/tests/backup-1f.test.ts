@@ -97,6 +97,20 @@ function dockerBuild(args: string[]): Promise<{ status: number | null; stderr: s
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Contenuto del volume dei dati di appoggio, dotfile compresi: dopo ogni esecuzione deve essere vuoto (R18). */
+const dataListing = (): string =>
+  docker([
+    'run',
+    '--rm',
+    '-v',
+    `${V.data}:/d:ro`,
+    '--entrypoint',
+    'ls',
+    IMAGE,
+    '-A',
+    '/d',
+  ]).stdout.trim();
+
 /** Ogni uscita dei contenitori di backup: serve alla prova finale sui dati che non devono comparire. */
 const outputs: string[] = [];
 let buildResult: { status: number | null; stderr: string } | undefined;
@@ -631,6 +645,9 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
     expect(line.started_at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
     expect(line.duration_seconds).toBeGreaterThanOrEqual(0);
 
+    // R18: la copia in chiaro non resta sul disco fra un backup e l'altro.
+    expect(dataListing()).toBe('');
+
     // Il file di stato è lo stesso contenuto, scritto in una cartella separata dai dati.
     expect(readVolumeFile(V.state, 'last-backup.json').trim()).toBe(run.stdout.trim());
     const leftovers = docker([
@@ -792,7 +809,8 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
         '-A',
         '/d/db',
       ]);
-      expect(files.stdout.trim()).toBe('database.dump');
+      expect(files.stdout.trim()).toBe('');
+      expect(dataListing()).toBe('');
     });
   }, 180_000);
 
@@ -802,6 +820,8 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
       expect(run.status).not.toBe(0);
       expect(line).toMatchObject({ outcome: 'error', failed_step: 'objects_mirror' });
       expect(line.exit_code).toBe(run.status);
+      // Il dump era già scritto: a backup fallito non resta nulla in chiaro (R18).
+      expect(dataListing()).toBe('');
     });
   }, 180_000);
 
@@ -1017,6 +1037,36 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
       expect(run.stdout).toContain('rc=1');
       expect(run.stdout).toContain('"failed_step":"restic_backup"');
       expect(run.stdout).toContain('"exit_code":1');
+    }, 180_000);
+
+    it('R18: una terminazione a metà backup (SIGTERM dopo il dump) lascia /backup/data vuoto', () => {
+      const script = [
+        'printf \'#!/bin/sh\ncase "$3" in backup) kill -TERM $PPID; sleep 2;; esac\nexec /usr/local/bin/restic "$@"\n\' > /shim/restic',
+        'chmod +x /shim/restic',
+        'PATH=/shim:$PATH amoris-backup backup; echo "rc=$?"',
+      ].join('\n');
+      const args = runArgs({ ...BASE_ENV }, ['-c', script], 'sh');
+      args.splice(1, 0, '--tmpfs', '/shim:exec,mode=1777');
+      const run = docker(args);
+      outputs.push(`${run.stdout}\n${run.stderr}`);
+      expect(run.stdout).toContain('rc=143');
+      expect(run.stdout).toContain('"failed_step":"unexpected"');
+      expect(dataListing()).toBe('');
+    }, 180_000);
+
+    it('R18: lo svuotamento non tocca stato e cache, che stanno fuori da /backup/data', () => {
+      const run = docker(
+        runArgs(
+          { ...BASE_ENV },
+          [
+            '-c',
+            'echo x > /backup/state/segno-fuori-dati; echo x > /backup/cache/segno-fuori-dati; amoris-backup backup >/dev/null; echo "rc=$?"; cat /backup/state/segno-fuori-dati /backup/cache/segno-fuori-dati; rm -f /backup/state/segno-fuori-dati /backup/cache/segno-fuori-dati',
+          ],
+          'sh',
+        ),
+      );
+      expect(run.stdout.trim().split('\n')).toEqual(['rc=0', 'x', 'x']);
+      expect(dataListing()).toBe('');
     }, 180_000);
 
     it('bassi: un host che comincia con un trattino è rifiutato con 78', () => {

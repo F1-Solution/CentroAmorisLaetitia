@@ -20,6 +20,7 @@ import {
 import type { AdminArea } from './auth/areas.js';
 import { mediaLimitsOf, type Config } from './config.js';
 import { configureImageEngine } from './lib/imageEngine.js';
+import { addressPrefix, hashAddress } from './lib/crypto.js';
 import { createObjectStore, type ObjectStore } from './lib/objectStore.js';
 import { createMediaRuntime, type MediaRuntime } from './modules/media/runtime.js';
 import { accountRoutes } from './modules/accounts/routes.js';
@@ -117,6 +118,9 @@ function pathOfZodIssue(issue: unknown): string {
 /** Pino accetta qualunque valore; il tipo di Fastify pretende messaggio e traccia, che un errore di query non deve avere. */
 type LogErrSerializer = NonNullable<NonNullable<FastifyLoggerOptions['serializers']>['err']>;
 
+type LogReqSerializer = NonNullable<NonNullable<FastifyLoggerOptions['serializers']>['req']>;
+type LogResSerializer = NonNullable<NonNullable<FastifyLoggerOptions['serializers']>['res']>;
+
 export async function buildApp(config: Config, options: BuildOptions = {}) {
   const app = Fastify({
     logger: {
@@ -124,11 +128,24 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
       // Nei log non entrano intestazioni di autenticazione né cookie.
       redact: ['req.headers.authorization', 'req.headers.cookie'],
       // Un errore di query entra ridotto a nome, codice e vincolo: mai query, parametri o valori.
-      serializers: { err: serializeLogError as LogErrSerializer },
+      // DR-390: della richiesta solo metodo, percorso senza query e digest con sale dell'IP; della risposta l'esito.
+      serializers: {
+        err: serializeLogError as LogErrSerializer,
+        req: ((request: { method?: string; url?: string; ip?: string }) => ({
+          method: request.method,
+          path: (request.url ?? '').split(/[?#]/)[0],
+          ipHash: hashAddress(request.ip, config.IP_HASH_SALT)?.toString('hex'),
+        })) as LogReqSerializer,
+        res: ((reply: { statusCode?: number }) => ({
+          statusCode: reply.statusCode,
+        })) as LogResSerializer,
+      },
+      // Senza il nome della macchina: nel log restano solo i dati di DR-390.
+      base: { pid: process.pid },
       ...(options.logStream ? { stream: options.logStream } : {}),
     },
-    // Il proxy davanti è Caddy (ADR-003): l'indirizzo del client arriva da lui.
-    trustProxy: true,
+    // Il proxy davanti è Caddy (ADR-003): ci si fida di `X-Forwarded-For` solo da lui, mai di default.
+    trustProxy: config.TRUSTED_PROXY.length > 0 ? config.TRUSTED_PROXY : false,
   }).withTypeProvider<ZodTypeProvider>();
 
   // Zod come unica fonte di verità: validazione, tipi e OpenAPI (ADR-001 §3).
@@ -172,7 +189,13 @@ export async function buildApp(config: Config, options: BuildOptions = {}) {
    * Il conteggio per account e il ritardo progressivo stanno nel modulo `auth`,
    * perché hanno bisogno di sapere **chi** sta tentando.
    */
-  await app.register(rateLimit, { global: false, max: 300, timeWindow: '1 minute' });
+  await app.register(rateLimit, {
+    global: false,
+    max: 300,
+    timeWindow: '1 minute',
+    // Per prefisso /64 per IPv6, come il digest a registro (R8).
+    keyGenerator: (request) => addressPrefix(request.ip),
+  });
 
   registerAuth(app);
   registerCsrf(app);

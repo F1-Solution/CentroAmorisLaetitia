@@ -32,8 +32,16 @@ x-hardened: &hardened
   security_opt: ['no-new-privileges:true']
   restart: unless-stopped
 
+# Rotazione dei log di ogni servizio: 5 file da 10 MB (DR-390).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
 services:
   caddy:
+    logging: *logging
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
     restart: unless-stopped
     mem_limit: 128m
@@ -46,6 +54,9 @@ services:
     environment:
       AMORIS_ENV: ${AMORIS_ENV}
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?manca CADDY_SITE_ADDRESS (nome del sito, per esempio www.dominio.it)}
+      # Solo lo staging le usa (basic_auth); in produzione restano vuote e ignorate.
+      STAGING_BASIC_AUTH_USER: ${STAGING_BASIC_AUTH_USER:-}
+      STAGING_BASIC_AUTH_HASH: ${STAGING_BASIC_AUTH_HASH:-}
     ports:
       - '${CADDY_HTTP_PORT:?manca CADDY_HTTP_PORT}:80'
       - '${CADDY_HTTPS_PORT:?manca CADDY_HTTPS_PORT}:443'
@@ -67,6 +78,7 @@ services:
       start_period: 10s
 
   web:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX:?manca IMAGE_PREFIX (per esempio ghcr.io/proprietario/amoris)}-web:${IMAGE_TAG:?manca IMAGE_TAG (hash del commit delle immagini)}
     mem_limit: 384m
@@ -79,6 +91,7 @@ services:
     networks: [app]
 
   admin:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX}-admin:${IMAGE_TAG}
     mem_limit: 256m
@@ -88,6 +101,7 @@ services:
     networks: [app]
 
   api:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX}-api:${IMAGE_TAG}
     mem_limit: 640m
@@ -96,12 +110,16 @@ services:
         required: true
     environment:
       <<: *media-limits
-      DATABASE_URL: postgres://${POSTGRES_USER:-amoris}:${POSTGRES_PASSWORD:?manca POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-amoris}
+      # Ruolo applicativo: niente superutente, niente DDL (T6g).
+      DATABASE_URL: postgres://amoris_app:${DB_APP_PASSWORD:?manca DB_APP_PASSWORD}@db:5432/${POSTGRES_DB:-amoris}
       IP_HASH_SALT: ${IP_HASH_SALT:?manca IP_HASH_SALT}
       CSRF_SECRET: ${CSRF_SECRET:?manca CSRF_SECRET}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?manca TOTP_ENCRYPTION_KEY}
+      TRUSTED_PROXY: ${APP_SUBNET:-10.77.84.0/24}
       S3_ENDPOINT: http://objects:9000
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?manca S3_ACCESS_KEY}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:?manca S3_SECRET_KEY}
+      # Utente di servizio limitato ai due bucket, non l'amministratore dell'archivio (T6g).
+      S3_ACCESS_KEY: amoris-api
+      S3_SECRET_KEY: ${S3_API_SECRET_KEY:?manca S3_API_SECRET_KEY}
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
       S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-media-private}
       SCRUB_SERVICE_URL: http://scrub:3003
@@ -111,6 +129,7 @@ services:
     networks: [app, data, scrub]
     depends_on:
       db: { condition: service_healthy }
+      db-init: { condition: service_completed_successfully }
       objects-init: { condition: service_completed_successfully }
       scrub: { condition: service_healthy }
 
@@ -118,6 +137,7 @@ services:
   # /tmp contiene originale e file ripulito del video più grande; se è troppo piccolo il
   # servizio non parte (controllo all'avvio).
   scrub:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX}-scrub:${IMAGE_TAG}
     mem_limit: 1g
@@ -131,6 +151,7 @@ services:
     networks: [scrub]
 
   db:
+    logging: *logging
     image: postgres:17.11-alpine@sha256:562a6e0a66b5136bc28bef5944bbc2ddddf8ea0058d4016b96cee63f2edaf143
     restart: unless-stopped
     mem_limit: 512m
@@ -153,16 +174,46 @@ services:
       retries: 10
       start_period: 20s
 
+  # Ruoli del database (T6g): gira a ogni `up`, come superutente, e riallinea ruoli, password e privilegi.
+  # Solo qui e in `db` sta la password del superutente.
+  db-init:
+    logging: *logging
+    <<: *hardened
+    image: postgres:17.11-alpine@sha256:562a6e0a66b5136bc28bef5944bbc2ddddf8ea0058d4016b96cee63f2edaf143
+    restart: 'no'
+    user: postgres
+    mem_limit: 64m
+    entrypoint:
+      - /bin/sh
+      - -c
+      - exec psql -X --no-password -q -v ON_ERROR_STOP=1 -v owner_pw="$$DB_OWNER_PASSWORD" -v app_pw="$$DB_APP_PASSWORD" -v backup_pw="$$DB_BACKUP_PASSWORD" -f /init/roles.sql
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-amoris}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?manca POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-amoris}
+      DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?manca DB_OWNER_PASSWORD}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?manca DB_APP_PASSWORD}
+      DB_BACKUP_PASSWORD: ${DB_BACKUP_PASSWORD:?manca DB_BACKUP_PASSWORD}
+    volumes:
+      - ./db-init/roles.sql:/init/roles.sql:ro
+    tmpfs:
+      - /tmp:size=1m
+    networks: [data]
+    depends_on:
+      db: { condition: service_healthy }
+
   # Immagini Chainguard fissate per digest (DR-101), utente 65532.
   objects:
+    logging: *logging
     image: cgr.dev/chainguard/minio@sha256:f74600a1a46330cdbda1ef760d17a96bd6e0f4a6f0a2c49792ca3ee7e4c6fa18
     restart: unless-stopped
     mem_limit: 384m
     security_opt: ['no-new-privileges:true']
     command: server /data
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?manca S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?manca S3_SECRET_KEY}
       MINIO_BROWSER: 'off'
     volumes:
       - objects-data:/data
@@ -174,11 +225,13 @@ services:
       retries: 10
       start_period: 10s
 
-  # Crea i due bucket di ADR-004 §3.6 e poi esce; rieseguirlo non fa danno.
+  # Crea i due bucket di ADR-004 §3.6 e i due utenti di servizio (API e backup), poi esce; rieseguirlo non fa danno.
+  # Solo qui e in `objects` stanno le credenziali principali dell'archivio.
   objects-init:
+    logging: *logging
     image: cgr.dev/chainguard/minio-client@sha256:5feb4dcc570e7578f82e6c84384849e6557d005fb9b06f714c63f7184883b13f
     restart: 'no'
-    mem_limit: 64m
+    mem_limit: 128m
     security_opt: ['no-new-privileges:true']
     depends_on:
       objects: { condition: service_healthy }
@@ -187,13 +240,22 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
       S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-media-private}
-    entrypoint: ['/bin/sh', '/init/create-buckets.sh']
+      S3_API_USER: amoris-api
+      S3_API_SECRET_KEY: ${S3_API_SECRET_KEY:?manca S3_API_SECRET_KEY}
+      S3_BACKUP_USER: amoris-backup
+      S3_BACKUP_SECRET_KEY: ${S3_BACKUP_SECRET_KEY:?manca S3_BACKUP_SECRET_KEY}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /bin/sh /init/create-buckets.sh && /bin/sh /init/create-service-users.sh
     volumes:
       - ../compose/create-buckets.sh:/init/create-buckets.sh:ro
+      - ./objects/create-service-users.sh:/init/create-service-users.sh:ro
     networks: [data]
 
   # Migrazioni (ADR-009 §4.4): solo con `--profile release run --rm migrate`, mai all'avvio.
   migrate:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX}-api:${IMAGE_TAG}
     profiles: ['release']
@@ -201,16 +263,19 @@ services:
     mem_limit: 256m
     command: ['node', 'bin/migrate.js']
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-amoris}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-amoris}
+      # Ruolo proprietario degli oggetti: solo `migrate` e il ripristino lo usano (T6g).
+      DATABASE_URL: postgres://amoris_owner:${DB_OWNER_PASSWORD:?manca DB_OWNER_PASSWORD}@db:5432/${POSTGRES_DB:-amoris}
     tmpfs:
       - /tmp:size=16m,mode=1777
     networks: [data]
     depends_on:
       db: { condition: service_healthy }
+      db-init: { condition: service_completed_successfully }
 
   # Backup (1F-W3, DR-366/367): nessun processo acceso, parte solo con `--profile backup run --rm backup <comando>`
   # da un timer dell'host (W5); gira solo in produzione (DR-372): il vincolo sta nel timer, non qui.
   backup:
+    logging: *logging
     <<: *hardened
     image: ${IMAGE_PREFIX}-backup:${IMAGE_TAG}
     profiles: ['backup']
@@ -224,13 +289,14 @@ services:
       # restic tiene la memoria sotto il limite del contenitore.
       GOMEMLIMIT: 256MiB
       PGHOST: db
-      PGUSER: ${POSTGRES_USER:-amoris}
+      # Ruoli di sola lettura (T6g): `pg_dump` e copia dei bucket non scrivono nulla.
+      PGUSER: amoris_backup
       PGDATABASE: ${POSTGRES_DB:-amoris}
       # Come per l'API: valori dal file d'ambiente (visibili con `docker inspect`, rischio accettato).
-      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${DB_BACKUP_PASSWORD:?manca DB_BACKUP_PASSWORD}
       S3_ENDPOINT: http://objects:9000
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
-      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_ACCESS_KEY: amoris-backup
+      S3_SECRET_KEY: ${S3_BACKUP_SECRET_KEY:?manca S3_BACKUP_SECRET_KEY}
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-media-public}
       S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-media-private}
       RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
@@ -252,7 +318,20 @@ services:
     networks: [data, backup-out]
     depends_on:
       db: { condition: service_healthy }
+      db-init: { condition: service_completed_successfully }
       objects: { condition: service_healthy }
+
+  # Ripristino (T6g): stesso servizio del backup, ma scrive. Database come proprietario degli oggetti,
+  # archivio come utente dell'API (lettura e scrittura nei due bucket). Mai superutente né chiavi principali.
+  #   docker compose ... --profile backup run --rm restore restore latest
+  restore:
+    extends:
+      service: backup
+    environment:
+      PGUSER: amoris_owner
+      PGPASSWORD: ${DB_OWNER_PASSWORD:?manca DB_OWNER_PASSWORD}
+      S3_ACCESS_KEY: amoris-api
+      S3_SECRET_KEY: ${S3_API_SECRET_KEY:?manca S3_API_SECRET_KEY}
 
 # Chiave SSH e known_hosts del backup: file dell'host in /run/secrets, con percorso predefinito non
 # segreto. Le altre variabili del backup sono vuote o predefinite apposta: lo staging non le imposta e
@@ -267,11 +346,22 @@ secrets:
 networks:
   # Unica rete con uscita: Caddy riceve dall'esterno e chiede i certificati.
   edge: {}
-  app: { internal: true }
+  # Sottorete fissa: l'API si fida di `X-Forwarded-For` solo da questa rete (TRUSTED_PROXY), dove stanno Caddy e le applicazioni.
+  app:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${APP_SUBNET:-10.77.84.0/24}
   data: { internal: true }
   scrub: { internal: true }
-  # Solo per il backup, verso la Storage Box; la destinazione la limita il firewall dell'host (W4).
-  backup-out: {}
+  # Solo per il backup, verso la Storage Box; la destinazione la limita `firewall/backup-out.sh` sull'host (1F-W4 T6i).
+  # Sottorete e bridge fissi, perché le regole li indicano; il backup gira solo in produzione (DR-372).
+  backup-out:
+    ipam:
+      config:
+        - subnet: ${BACKUP_OUT_SUBNET:-10.77.86.0/24}
+    driver_opts:
+      com.docker.network.bridge.name: ${BACKUP_OUT_BRIDGE:-amoris-bkp-out}
 
 volumes:
   db-data:

@@ -29,6 +29,7 @@ const config = loadConfig({
   LOG_LEVEL: 'fatal',
   IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
   CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+  TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
 });
 
 let app: Awaited<ReturnType<typeof buildApp>>;

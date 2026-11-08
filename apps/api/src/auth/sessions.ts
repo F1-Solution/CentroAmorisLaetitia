@@ -26,8 +26,14 @@ export interface RoleHeld {
   readonly areas: readonly AdminArea[];
 }
 
+/** Stato del secondo fattore della sessione (DR-384): solo `verified` autorizza qualcosa. */
+export type SecondFactorState = 'verified' | 'activation_required' | 'verification_required';
+
 export interface ResolvedSession {
   readonly sessionId: string;
+  readonly secondFactor: SecondFactorState;
+  /** Ultima conferma con password o codice, per le operazioni che la richiedono di nuovo (DR-391). */
+  readonly confirmedAt: Date | null;
   readonly user: SessionOwner;
   /**
    * I permessi **del ruolo attivo**, non l'unione dei ruoli posseduti
@@ -65,6 +71,8 @@ export async function issueSession(
   config: Config,
   userId: string,
   origin: Origin,
+  /** Se presente, la sessione nasce con il secondo fattore già verificato e confermata in quel momento. */
+  verifiedAt: Date | null = null,
 ): Promise<IssuedSession> {
   const token = generateSessionToken();
   const now = new Date();
@@ -78,6 +86,8 @@ export async function issueSession(
       issuedAt: now,
       lastSeenAt: now,
       expiresAt,
+      secondFactorVerifiedAt: verifiedAt,
+      lastConfirmedAt: verifiedAt,
       userAgent: origin.userAgent?.slice(0, 500) ?? null,
       ipHash: hashAddress(origin.ip, config.IP_HASH_SALT),
     })
@@ -110,6 +120,9 @@ export async function resolveSession(
       mustChangePassword: schema.users.mustChangePassword,
       activeRoleId: schema.sessions.activeRoleId,
       activeArea: schema.sessions.activeArea,
+      secondFactorVerifiedAt: schema.sessions.secondFactorVerifiedAt,
+      lastConfirmedAt: schema.sessions.lastConfirmedAt,
+      totpActivatedAt: schema.users.totpActivatedAt,
     })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
@@ -130,8 +143,15 @@ export async function resolveSession(
     .set({ lastSeenAt: now })
     .where(eq(schema.sessions.id, row.sessionId));
 
+  const verified = row.secondFactorVerifiedAt !== null;
   return {
     sessionId: row.sessionId,
+    secondFactor: verified
+      ? 'verified'
+      : row.totpActivatedAt
+        ? 'verification_required'
+        : 'activation_required',
+    confirmedAt: row.lastConfirmedAt,
     user: {
       userId: row.userId,
       email: row.email,
@@ -140,7 +160,8 @@ export async function resolveSession(
     },
     // Senza veste scelta non si autorizza nulla: la schermata di scelta è
     // l'unica cosa che si raggiunge, e non chiede permessi.
-    permissions: row.activeRoleId ? await permissionsOfRole(db, row.activeRoleId) : new Set(),
+    permissions:
+      verified && row.activeRoleId ? await permissionsOfRole(db, row.activeRoleId) : new Set(),
     activeRoleId: row.activeRoleId,
     activeArea: row.activeArea,
     rolesHeld: await rolesHeldBy(db, row.userId),
@@ -229,7 +250,7 @@ export async function revokeSession(db: Database, sessionId: string): Promise<vo
 
 /** Controllo 6, seconda metà: tutte le sessioni di una persona in un colpo solo. */
 export async function revokeAllSessions(
-  db: Database,
+  db: Pick<Database, 'update'>,
   userId: string,
   except?: string,
 ): Promise<number> {

@@ -469,6 +469,8 @@ beforeAll(async () => {
       `INSERT INTO pagine_sintetiche (titolo) VALUES ('${MARK_DB}'), ('titolo inventato due'), ('titolo inventato tre');`,
       "INSERT INTO righe_figlie (pagina_id, testo) VALUES (1, 'x'), (1, 'y'), (3, 'z');",
       "INSERT INTO utenti_sintetici (nome) VALUES ('nome inventato');",
+      'CREATE TABLE sessions (id serial PRIMARY KEY, revoked_at timestamptz);',
+      "INSERT INTO sessions (revoked_at) VALUES (NULL), (NULL), ('2026-01-01T00:00:00Z');",
     ].join('\n'),
   );
   if (seed.status !== 0) throw new Error(seed.stderr);
@@ -580,8 +582,20 @@ describe('ripristino su database e bucket nuovi, con dati sintetici', () => {
     );
     expect(readStateFile('last-restore.json').trim()).toBe(run.stdout.trim());
     expect(destFingerprint()).toEqual(first);
-    // La cartella di lavoro non resta nel volume dei dati.
-    expect(listVolume(V.dataDest)).not.toContain('.restore');
+    // R18: dopo il ripristino il volume dei dati di appoggio è vuoto.
+    expect(listVolume(V.dataDest)).toBe('');
+    // R25: le sessioni del dump non tornano valide; la riga di esito dice quante ne ha chiuse.
+    expect(
+      psql(
+        C.dbDest,
+        'SELECT count(*) FILTER (WHERE revoked_at IS NULL), count(*) FROM sessions',
+      ).stdout.trim(),
+    ).toBe('0|3');
+    expect(line).toMatchObject({ sessions_revoked: 2 });
+    // L'origine non è toccata.
+    expect(psql(C.db, 'SELECT count(*) FROM sessions WHERE revoked_at IS NULL').stdout.trim()).toBe(
+      '2',
+    );
   }, 180_000);
 
   it('con latest ripristina l’istantanea più recente su una destinazione di nuovo vuota', () => {

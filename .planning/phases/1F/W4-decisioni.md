@@ -56,3 +56,51 @@ Nessuna.
 ## Discussioni aperte
 
 Nessuna.
+
+---
+
+# 1F-W4 T5 — Decisioni D275…D279 sugli esiti della T4
+
+Round del 2026-11-08 sugli esiti del revisore separato (0 critici, 4 alti, 13 medi, 12 bassi).
+Registrate come DR-388…DR-392; tutte e cinque seguono la raccomandazione.
+
+| id | DR | Decisione | Scartate |
+|---|---|---|---|
+| D275 | DR-388 | **B** — terza deroga ad ADR-007 §6: soglia del solo nucleo a 650 righe, TOTP con `node:crypto`, regola di conteggio invariata, riesame con Better Auth prima del gestionale | A (Better Auth subito): riscrive codice appena provato a ridosso della produzione |
+| D276 | DR-389 | **B** — Node 26.12.1 LTS (fino al 2029-04-30) su `bookworm-slim` per digest | A (Node 24.22.1): scade un anno prima |
+| D277 | DR-390 | **B** — log senza IP in chiaro né query, con il digest con sale dell'IP; rotazione 10 MB × 5 | A (nessun digest): abusi non ricostruibili dai log; C (IP in chiaro sei mesi): dato personale nei log |
+| D278 | DR-391 | **A** — sessione 14 giorni, 8 ore di inattività, cookie di sessione; conferma entro 10 minuti per gestire gli account | B (30 giorni, 12 ore): finestra lunga; C (7 giorni): rientro settimanale |
+| D279 | DR-392 | **A** — alti, medi tranne R12 e R14 (W5), bassi a basso costo; resto annotato o rinviato a W5 | B (solo il minimo): R5 e R10 sul server; C (tutto): 5–6 giorni |
+
+## Rischi
+
+- **DR-388:** è la terza deroga alla stessa contromisura; se il TOTP supera 650 righe di nucleo,
+  stop e nuova ripresentazione.
+- **DR-389:** Node 26 è LTS da 11 giorni; incompatibilità di Next o dei moduli nativi emergono
+  dalla verifica come la CI della T6a, prima delle altre correzioni.
+- **DR-392:** R12 e R14 restano aperti fino alla configurazione della Storage Box nella W5;
+  finché mancano, il backup non resiste a un server compromesso del tutto.
+
+---
+
+# 1F-W4 T6l — Decisioni D281…D285 sul TOTP
+
+Round del 2026-11-08, aperto quando il TOTP ha portato il nucleo a 772 righe contro la soglia di
+650 (DR-388 impone lo stop). Registrate come DR-395…DR-399; tutte e cinque seguono la
+raccomandazione.
+
+| id | DR | Decisione | Scartate |
+|---|---|---|---|
+| D281 | DR-395 | **A** — quarta deroga ad ADR-007 §6: soglia del solo nucleo a 800, TOTP com'è, regola di conteggio invariata, riesame con Better Auth prima del gestionale | B (Better Auth subito): giorni o settimane in più e i 12 controlli da riprovare |
+| D282 | DR-396 | **A** — conferma entro 10 minuti per ogni rotta con `users.manage`, anche elenco e dettaglio | B (solo le modifiche): email e ruoli visibili da una sessione lasciata aperta |
+| D283 | DR-397 | **A** — reimpostazione del secondo fattore solo dal manutentore, da riga di comando | B (anche dall'area): un account compromesso toglie il secondo fattore agli altri |
+| D284 | DR-398 | **A** — rischio della prima attivazione accettato; password temporanea su canale sicuro, rimedio con DR-397 | B (codice monouso di attivazione): un giorno e un flusso in più |
+| D285 | DR-399 | **A** — nessuna rotazione di `TOTP_ENCRYPTION_KEY` in Fase 1; se compromessa, reimpostazione di tutti i secondi fattori | B (comando di rotazione): mezza giornata e un comando da provare |
+
+## Rischi
+
+- **DR-395:** quarta deroga alla stessa contromisura: la soglia protegge meno; il riesame con
+  Better Auth prima della fase gestionale resta il presidio.
+- **DR-397:** chi perde il telefono resta fuori finché il manutentore non interviene.
+- **DR-398:** la password temporanea intercettata permette a un estraneo di attivare il proprio
+  dispositivo prima della persona; si consegna su un canale sicuro (handoff della `1F-W5`).

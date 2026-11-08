@@ -16,3 +16,14 @@ strictDepBuilds: false
 # sharp 0.35.5 corregge GHSA-wq5f-xc86-pv6w, anche per la copia facoltativa di next.
 overrides:
   sharp: 0.35.5
+  # fast-uri 3.1.9 e 4.2.3 correggono gli avvisi dei validatori di schema di Fastify e di swagger.
+  'fast-uri@3': 3.1.9
+  'fast-uri@4': 4.2.3
+  # ip-address 10.7.4 corregge l'avviso di @fastify/rate-limit.
+  ip-address: 10.7.4
+  # source-map-js 1.2.2 corregge l'avviso di postcss, tirato da next.
+  source-map-js: 1.2.2
+
+# Eccezioni a `pnpm audit`: ogni GHSA va qui con una riga di motivo e la data di riesame, e si rimuove alla scadenza.
+auditConfig:
+  ignoreGhsas: []

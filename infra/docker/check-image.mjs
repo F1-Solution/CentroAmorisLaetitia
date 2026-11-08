@@ -8,7 +8,8 @@
  * - file d'ambiente (`.env`, `.env.*`; `.env.example` ammesso);
  * - chiavi o certificati fuori dalle cartelle dei certificati di sistema;
  * - cartelle di sorgenti private (`source-private`, `source-readonly`, `.reference`) o `.git`;
- * - indirizzi `localhost` o `127.0.0.1` nel codice che Next manda al browser (DR-360).
+ * - indirizzi `localhost` o `127.0.0.1` nel codice che Next manda al browser (DR-360);
+ * - strumenti mai usati a runtime: npm, npx, corepack, intestazioni di Node e gosu (DR-392).
  *
  * Esce con 0 se l'immagine è pulita, 1 se trova file vietati (elencati su stderr), 2 se
  * l'immagine manca o Docker non risponde. Usa solo moduli di Node: gira anche fuori dal monorepo.
@@ -29,6 +30,16 @@ const SYSTEM_CERT_DIRS = [
   'usr/lib/ssl/',
   'usr/local/share/ca-certificates/',
 ];
+// Percorsi (file o cartelle) che il runtime non deve portare: via la superficie d'attacco inutile.
+const FORBIDDEN_TOOLS = [
+  'usr/local/lib/node_modules/npm',
+  'usr/local/lib/node_modules/corepack',
+  'usr/local/bin/npm',
+  'usr/local/bin/npx',
+  'usr/local/bin/corepack',
+  'usr/local/include/node',
+  'usr/local/bin/gosu',
+];
 const PRIVATE_DIRS = new Set(['source-private', 'source-readonly', '.reference', '.git']);
 const KEY_FILE = /(\.(pem|key|pfx|p12|jks)|^id_(rsa|dsa|ecdsa|ed25519))$/i;
 // `.env`, `.env.<qualcosa>` e `<nome>.env`, come `ambiente/production.env`.
@@ -43,6 +54,9 @@ export function pathIssue(filePath) {
   const segments = filePath.split('/');
   const name = segments.at(-1) ?? '';
   if (segments.some((segment) => PRIVATE_DIRS.has(segment))) return 'sorgente privata o storia Git';
+  if (FORBIDDEN_TOOLS.some((tool) => filePath === tool || filePath.startsWith(`${tool}/`))) {
+    return 'strumento non usato a runtime';
+  }
   if (ENV_FILE.test(name) && name !== '.env.example') return "file d'ambiente";
   if (KEY_FILE.test(name) && !SYSTEM_CERT_DIRS.some((dir) => filePath.startsWith(dir))) {
     return 'chiave o certificato';

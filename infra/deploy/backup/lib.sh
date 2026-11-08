@@ -7,6 +7,7 @@ DATA_DIR=${BACKUP_DATA_DIR:-/backup/data}
 STATE_DIR=${BACKUP_STATE_DIR:-/backup/state}
 WORK_DIR=
 RESTORE_DIR=
+SESSIONS_REVOKED=
 
 CMD=
 STARTED_EPOCH=0
@@ -41,7 +42,14 @@ acquire_lock() {
   HAVE_LOCK=1
 }
 
-# Uscita senza riga di esito: la emette come unexpected; i residui nei dati si tolgono solo con il lock.
+# Svuota /backup/data (R18): la copia in chiaro non resta sul disco; agisce solo sul contenuto di quella cartella.
+empty_data_dir() {
+  [ -n "$DATA_DIR" ] && [ "$DATA_DIR" != / ] && [ -d "$DATA_DIR" ] || return 0
+  chmod -R u+rwX "$DATA_DIR" 2>/dev/null || true
+  find "$DATA_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+}
+
+# Uscita senza riga di esito: la emette come unexpected; i dati si svuotano solo con il lock, anche dopo un errore.
 cleanup() {
   rc=$?
   trap - EXIT
@@ -50,13 +58,7 @@ cleanup() {
     emit error unexpected "$rc"
   fi
   if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
-  if [ -n "$HAVE_LOCK" ]; then
-    if [ -n "$RESTORE_DIR" ]; then
-      chmod -R u+rwX "$RESTORE_DIR" 2>/dev/null || true
-      rm -rf "$RESTORE_DIR"
-    fi
-    rm -f "$DATA_DIR/db/.database.dump.tmp"
-  fi
+  if [ -n "$HAVE_LOCK" ]; then empty_data_dir; fi
   exit "$rc"
 }
 
@@ -69,6 +71,7 @@ compose() {
   extra=
   [ -z "$REPO_STATE" ] || extra=",\"repository\":\"$REPO_STATE\""
   [ -z "$STATE_UNWRITTEN" ] || extra="$extra,\"state_written\":false"
+  [ -z "$SESSIONS_REVOKED" ] || extra="$extra,\"sessions_revoked\":$SESSIONS_REVOKED"
   printf '{"command":"%s","outcome":"%s","started_at":"%s","duration_seconds":%s,"dump_bytes":%s,"objects_bytes":%s,"objects_count":%s,"snapshot_id":%s,"failed_step":%s,"exit_code":%s%s}' \
     "$CMD" "$1" "$STARTED_ISO" "$(($(date +%s) - STARTED_EPOCH))" "$DUMP_BYTES" "$OBJECTS_BYTES" \
     "$OBJECTS_COUNT" "$(json_string_or_null "$SNAPSHOT_ID")" "$(json_string_or_null "$2")" "$3" "$extra"

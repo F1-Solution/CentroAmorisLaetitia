@@ -1,6 +1,13 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { ACCESSO_ENTRAMBI, ADMIN_URL, API_URL } from '../support/ambiente';
-import { entra, esci, intestazioniApi } from '../support/sessione';
+import {
+  accedi,
+  attivaSecondoFattore,
+  entra,
+  esci,
+  intestazioniApi,
+  superaSecondoFattore,
+} from '../support/sessione';
 
 /**
  * Persone e permessi (1G-W1): il ciclo di vita di un account nel browser e il
@@ -13,13 +20,6 @@ const SUFFISSO = Date.now().toString(36);
 const NOME = `Nuova redazione di prova ${SUFFISSO}`;
 const EMAIL = `nuova.redazione.${SUFFISSO}@esempio.invalid`;
 const PASSWORD_SCELTA = 'password-scelta-dalla-persona-1';
-
-async function accedi(page: Page, email: string, password: string): Promise<void> {
-  await page.goto(`${ADMIN_URL}/admin/accesso`);
-  await page.getByLabel('Indirizzo di posta').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Entra' }).click();
-}
 
 test.describe('persone e permessi', () => {
   test('ciclo completo: crea, primo accesso con cambio password, disattiva', async ({ page }) => {
@@ -49,8 +49,10 @@ test.describe('persone e permessi', () => {
     await expect(pannello).toHaveCount(0);
     await esci(page);
 
-    // 2. Il nuovo account è portato a cambiare la password prima di ogni altra cosa.
+    // 2. Il nuovo account attiva il secondo fattore (DR-384), poi è portato a cambiare la password
+    // prima di ogni altra cosa.
     await accedi(page, EMAIL, temporanea);
+    await attivaSecondoFattore(page);
     await page.waitForURL(/\/admin\/password/);
     await page.goto(`${ADMIN_URL}/admin/redazione/pagine`);
     await page.waitForURL(/\/admin\/password/);
@@ -96,6 +98,7 @@ test.describe('persone e permessi', () => {
 
   test('chi ha entrambi i ruoli sceglie l’area e può cambiarla', async ({ page }) => {
     await accedi(page, ACCESSO_ENTRAMBI.email, ACCESSO_ENTRAMBI.password);
+    await superaSecondoFattore(page);
     await page.waitForURL(/\/admin\/scelta-area/);
     await expect(page.getByRole('button', { name: 'Redazione' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Impostazioni' })).toBeVisible();

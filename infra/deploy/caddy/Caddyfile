@@ -45,6 +45,12 @@ http://127.0.0.1:2020 {
 	# Regole dell'ambiente: production.caddy o staging.caddy.
 	import {$AMORIS_ENV}.caddy
 
+	# Specifica e controlli di salute si leggono solo dall'interno (R22): da fuori 404.
+	@apiInternal path /api/openapi.json* /api/health /api/health/*
+	handle @apiInternal {
+		respond 404
+	}
+
 	# L'API risponde dalla radice: il prefisso /api si toglie qui.
 	handle_path /api/* {
 		reverse_proxy api:3002

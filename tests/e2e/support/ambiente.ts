@@ -119,11 +119,15 @@ export function ambienteDeiServer(): Record<string, string> {
     // §3.1 controllo 8 è provato dai test del servizio, non da qui.
     LOGIN_MAX_PER_IP: '1000',
     LOGIN_MAX_PER_ACCOUNT: '1000',
+    // Tutte le prove arrivano da 127.0.0.1: i tetti HTTP per indirizzo (1F-W4 T6h) sono provati dai test del servizio.
+    HTTP_ANON_WRITES_PER_MINUTE: '100000',
+    HTTP_PUBLIC_READ_PER_MINUTE: '100000',
   };
 
   for (const chiave of [
     'IP_HASH_SALT',
     'CSRF_SECRET',
+    'TOTP_ENCRYPTION_KEY',
     'S3_ENDPOINT',
     'S3_REGION',
     'S3_ACCESS_KEY',

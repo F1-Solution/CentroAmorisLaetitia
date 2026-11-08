@@ -135,7 +135,7 @@ async function counted(email: string) {
       and(
         eq(schema.auditLog.action, 'auth.password_changed'),
         eq(schema.auditLog.outcome, 'failure'),
-        eq(schema.auditLog.entityId, identifierDigest(email)),
+        eq(schema.auditLog.entityId, identifierDigest(email, harness.config.IP_HASH_SALT)),
       ),
     );
 }

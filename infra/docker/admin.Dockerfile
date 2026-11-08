@@ -3,8 +3,8 @@
 # origine (DR-360).
 #   docker build -f infra/docker/admin.Dockerfile -t amoris-admin:<commit> .
 
-# Node 25.0.0 come `.nvmrc`, Debian 12 slim, fissato per digest.
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS build
+# Node 26.12.1 come `.nvmrc`, Debian 12 slim, fissato per digest.
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS build
 ENV CI=true PNPM_HOME=/pnpm PATH=/pnpm:$PATH npm_config_store_dir=/pnpm/store NEXT_TELEMETRY_DISABLED=1
 RUN npm install --global --no-fund --no-audit pnpm@11.6.0
 WORKDIR /repo
@@ -15,10 +15,13 @@ RUN pnpm install --frozen-lockfile --offline
 ENV NODE_ENV=production NEXT_PUBLIC_API_URL= NEXT_PUBLIC_SITE_URL=
 RUN pnpm --filter @amoris/admin build
 
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS runtime
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS runtime
+# Via npm, corepack e intestazioni di Node: a runtime non servono (DR-392).
 RUN groupadd --system --gid 10001 amoris \
  && useradd --system --uid 10001 --gid amoris --no-create-home --home-dir /nonexistent \
-    --shell /usr/sbin/nologin amoris
+    --shell /usr/sbin/nologin amoris \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/include/node
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3001 TMPDIR=/tmp
 WORKDIR /app
 # File di root in sola lettura per l'utente: scrive solo in /tmp e nella cache di Next.

@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { takeAccessNotice } from '../../lib/accessNotice';
 import { ApiError } from '../../lib/api';
 import { AREA_DEFINITIONS } from '../../lib/areas';
-import { useSession, vestmentsOf } from '../../lib/session';
+import { secondFactorPending, useSession, vestmentsOf } from '../../lib/session';
 
 /**
  * Accesso. ADR-007 §3.1 controllo 9: il messaggio di errore è **uno solo** per
@@ -38,6 +38,10 @@ export default function AccessoPage(): React.JSX.Element {
   // Chi ha già una sessione non vede la schermata di accesso.
   useEffect(() => {
     if (loading || !user) return;
+    if (secondFactorPending(user)) {
+      router.replace('/secondo-fattore');
+      return;
+    }
     if (user.mustChangePassword) {
       router.replace('/password');
       return;
@@ -51,6 +55,11 @@ export default function AccessoPage(): React.JSX.Element {
     setError(null);
     try {
       const next = await signIn(email, password);
+      // Dopo la password il secondo fattore (DR-384): l'API non concede altro finché non è verificato.
+      if (secondFactorPending(next)) {
+        router.replace('/secondo-fattore');
+        return;
+      }
       if (next.mustChangePassword) {
         router.replace('/password');
         return;

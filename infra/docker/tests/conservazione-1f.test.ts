@@ -681,13 +681,21 @@ function walk(dir: string): string[] {
 
 describe('cifratura: il repository non contiene i dati in chiaro', () => {
   it('controllo positivo: le stringhe stanno in chiaro nei dati sottoposti a backup', () => {
-    const dump = volumeShell(V.data, `grep -c '${MARK_DB}' /v/db/database.dump`);
-    expect(dump.status).toBe(0);
-    expect(Number(dump.stdout.trim())).toBeGreaterThanOrEqual(1);
-    const body = volumeShell(V.data, `grep -rl '${MARK_BODY}' /v/objects | wc -l`);
-    expect(Number(body.stdout.trim())).toBe(2);
-    const names = volumeShell(V.data, `find /v/objects -name '*${MARK_NAME}*' | wc -l`);
-    expect(Number(names.stdout.trim())).toBeGreaterThanOrEqual(2);
+    // Dopo il backup /backup/data è vuoto (R18): i dati in chiaro si rileggono dall'istantanea.
+    const plain = resticShell(
+      [
+        'restic_run restore latest --host amoris --tag amoris-backup --target /tmp/r >/dev/null 2>&1 || exit 1',
+        `grep -c '${MARK_DB}' /tmp/r/backup/data/db/database.dump`,
+        `grep -rl '${MARK_BODY}' /tmp/r/backup/data/objects | wc -l`,
+        `find /tmp/r/backup/data/objects -name '*${MARK_NAME}*' | wc -l`,
+      ].join('; '),
+    );
+    expect(plain.status, plain.stdout + plain.stderr).toBe(0);
+    const [dump = '0', body = '0', names = '0'] = plain.stdout.trim().split('\n');
+    expect(Number(dump)).toBeGreaterThanOrEqual(1);
+    expect(Number(body)).toBe(2);
+    expect(Number(names)).toBeGreaterThanOrEqual(2);
+    expect(volumeShell(V.data, 'ls -A /v').stdout.trim()).toBe('');
   });
 
   it('nessuna stringa nota, né nome di oggetto, in nessun file del repository', () => {

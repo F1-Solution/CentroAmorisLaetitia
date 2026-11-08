@@ -1,6 +1,7 @@
 import { schema, type Database } from '@amoris/db';
 import { eq } from 'drizzle-orm';
 import { AUTH_ACTIONS, writeAudit } from '../../auth/audit.js';
+import { consumeCode } from '../../auth/totp.js';
 import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../auth/loginAttempts.js';
 import type { Config } from '../../config.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
@@ -17,6 +18,7 @@ export interface Credentials {
   readonly passwordHash: string | null;
   readonly isActive: boolean;
   readonly mustChangePassword: boolean;
+  readonly totpActive: boolean;
 }
 
 export async function findByEmail(db: Database, email: string): Promise<Credentials | null> {
@@ -28,11 +30,14 @@ export async function findByEmail(db: Database, email: string): Promise<Credenti
       passwordHash: schema.users.passwordHash,
       isActive: schema.users.isActive,
       mustChangePassword: schema.users.mustChangePassword,
+      totpActivatedAt: schema.users.totpActivatedAt,
     })
     .from(schema.users)
     .where(eq(schema.users.email, email.trim()))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  const { totpActivatedAt, ...rest } = row;
+  return { ...rest, totpActive: totpActivatedAt !== null };
 }
 
 /**
@@ -102,7 +107,7 @@ export async function verifyCurrentPassword(
     actorLabel: actor.fullName,
     // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
     entityType: IDENTIFIER_ENTITY,
-    entityId: identifierDigest(actor.email),
+    entityId: identifierDigest(actor.email, config.IP_HASH_SALT),
     sessionId: actor.sessionId,
     ipHash,
     detail: source === 'account' ? { source } : {},
@@ -110,8 +115,44 @@ export async function verifyCurrentPassword(
   return 'invalid';
 }
 
-export async function setPassword(
+/**
+ * Verifica un codice del secondo fattore con il conteggio dei tentativi del controllo 8, per account e per
+ * indirizzo, come la password (DR-384); un fallimento lascia la riga a registro che il conteggio legge, mai il codice.
+ */
+export async function verifyCode(
   db: Database,
+  config: Config,
+  actor: SessionActor,
+  code: string,
+  ipHash: Buffer | null,
+  purpose: 'activate' | 'verify' | 'confirm',
+): Promise<CurrentPasswordVerdict> {
+  const attempts = await evaluateAttempts(
+    db,
+    config,
+    actor.email,
+    ipHash,
+    AUTH_ACTIONS.secondFactor,
+  );
+  if (attempts.delayMs > 0) await new Promise((resolve) => setTimeout(resolve, attempts.delayMs));
+  if (attempts.blocked) return 'blocked';
+  if (await consumeCode(db, config, actor.userId, code)) return 'ok';
+  await writeAudit(db, {
+    action: AUTH_ACTIONS.secondFactor,
+    outcome: 'failure',
+    actorUserId: actor.userId,
+    actorLabel: actor.fullName,
+    entityType: IDENTIFIER_ENTITY,
+    entityId: identifierDigest(actor.email, config.IP_HASH_SALT),
+    sessionId: actor.sessionId,
+    ipHash,
+    detail: { purpose },
+  });
+  return 'invalid';
+}
+
+export async function setPassword(
+  db: Pick<Database, 'update'>,
   config: Config,
   userId: string,
   newPassword: string,

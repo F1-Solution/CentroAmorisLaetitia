@@ -9,6 +9,7 @@ import { AREA_DEFINITIONS, isAreaId } from '../../lib/areas';
 import { FILTERABLE_ACTION_OPTIONS, actionLabel } from '../../lib/auditLabels';
 import { useSession, vestmentsOf } from '../../lib/session';
 import { AreaShell } from '../AreaShell';
+import { isConfirmationRequired } from '../accounts/ConfirmIdentityDialog';
 import { ContentPicker } from './ContentPicker';
 import { actorText, auditErrorMessage, buildQuery, dateTime, objectText } from './auditFormat';
 import { NO_FILTERS } from './types';
@@ -22,6 +23,9 @@ interface PersonOption {
 
 const PEOPLE_FAILED =
   'L’elenco delle persone non si è caricato: il filtro per persona non è disponibile.';
+/** DR-396: l'elenco delle persone chiede una conferma recente, che si dà in «Persone e permessi». */
+const PEOPLE_NEED_CONFIRMATION =
+  'Il filtro per persona chiede una conferma recente: confermala in «Persone e permessi», poi torna qui.';
 
 const VIEWS: readonly { id: AuditView; label: string }[] = [
   { id: 'changes', label: 'Modifiche al sito' },
@@ -71,7 +75,7 @@ export function AuditScreen(): React.JSX.Element {
   const [draft, setDraft] = useState<AuditFilters>(NO_FILTERS);
   const [applied, setApplied] = useState<AuditFilters>(NO_FILTERS);
   const [people, setPeople] = useState<readonly PersonOption[]>([]);
-  const [peopleFailed, setPeopleFailed] = useState(false);
+  const [peopleFailed, setPeopleFailed] = useState<string | null>(null);
   const [chosenContent, setChosenContent] = useState<ContentOption | null>(null);
   const { user } = useSession();
   const canOpenEditor = vestmentsOf(user).some((vestment) => vestment.area === 'redazione');
@@ -87,7 +91,9 @@ export function AuditScreen(): React.JSX.Element {
   useEffect(() => {
     api<{ items: PersonOption[] }>('/accounts')
       .then((result) => setPeople(result.items))
-      .catch(() => setPeopleFailed(true));
+      .catch((caught: unknown) =>
+        setPeopleFailed(isConfirmationRequired(caught) ? PEOPLE_NEED_CONFIRMATION : PEOPLE_FAILED),
+      );
   }, []);
 
   const loadFirst = useCallback(async (nextView: AuditView, filters: AuditFilters) => {
@@ -171,7 +177,7 @@ export function AuditScreen(): React.JSX.Element {
       >
         <SelectField
           label="Persona"
-          {...(peopleFailed ? { helpText: PEOPLE_FAILED } : {})}
+          {...(peopleFailed ? { helpText: peopleFailed } : {})}
           value={draft.actorUserId}
           onChange={(event) => set({ actorUserId: event.target.value })}
           options={[

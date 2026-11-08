@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AREA_DEFINITIONS, type AreaId } from '../lib/areas';
 import { choiceUrlFor } from '../lib/returnPath';
-import { useSession, vestmentsOf } from '../lib/session';
+import { secondFactorPending, useSession, vestmentsOf } from '../lib/session';
 
 export interface AreaShellProps {
   /** Area a cui la schermata appartiene. Se non è quella attiva, si cambia veste. */
@@ -43,6 +43,10 @@ export function useAreaAccess(area: AreaId): boolean {
       router.replace('/accesso');
       return;
     }
+    if (secondFactorPending(user)) {
+      router.replace('/secondo-fattore');
+      return;
+    }
     if (user.mustChangePassword) {
       router.replace('/password');
       return;
@@ -60,7 +64,13 @@ export function useAreaAccess(area: AreaId): boolean {
     }
   }, [loading, user, area, router]);
 
-  return !loading && !!user && !user.mustChangePassword && user.activeArea === area;
+  return (
+    !loading &&
+    !!user &&
+    !secondFactorPending(user) &&
+    !user.mustChangePassword &&
+    user.activeArea === area
+  );
 }
 
 /** Monta la schermata solo dopo che il guscio l'ha ammessa, così i suoi caricamenti non partono prima del rinvio. */

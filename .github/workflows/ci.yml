@@ -61,6 +61,7 @@ jobs:
       # in alcun documento (ADR-009 §4.3).
       IP_HASH_SALT: '0000000000000000000000000000000000000000000000000000000000000000'
       CSRF_SECRET: '1111111111111111111111111111111111111111111111111111111111111111'
+      TOTP_ENCRYPTION_KEY: '3333333333333333333333333333333333333333333333333333333333333333'
       # Sale dell'importer: lo pretende la configurazione letta dalla prova dell'archivio.
       IMPORTER_IP_HASH_SALT: '2222222222222222222222222222222222222222222222222222222222222222'
       # Archivio a oggetti delle prove end-to-end: stessi valori di
@@ -73,17 +74,32 @@ jobs:
       S3_BUCKET_PRIVATE: media-private
 
     steps:
-      - uses: actions/checkout@v5
+      # Storia completa: gitleaks scansiona anche i commit precedenti.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
       - name: Installazione
         run: pnpm install --frozen-lockfile
+
+      # DR-386: avvisi alti o critici sulle dipendenze di produzione bloccano; le eccezioni stanno in pnpm-workspace.yaml.
+      - name: Audit delle dipendenze di produzione
+        run: pnpm audit --prod --audit-level=high
+
+      # DR-386: gitleaks v8.30.1 dall'immagine fissata per digest; --redact nasconde i valori, esce con 1 se trova segreti.
+      - name: Scansione dei segreti
+        run: |
+          docker run --rm -v "$PWD:/repo:ro" -w /repo \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            git --redact --no-banner --exit-code 1 --log-level warn /repo
 
       - name: Lint
         run: pnpm lint
@@ -154,7 +170,7 @@ jobs:
 
       - name: Rapporto delle prove end-to-end
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: playwright-report
           path: playwright-report/
@@ -180,10 +196,10 @@ jobs:
       APP: ${{ matrix.app }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # Solo Node per lo script di controllo: senza pnpm, la cache automatica di setup-node fallirebbe.
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
           package-manager-cache: false

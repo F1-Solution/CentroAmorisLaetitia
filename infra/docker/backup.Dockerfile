@@ -21,9 +21,10 @@ COPY --from=cgr.dev/chainguard/minio-client@sha256:5feb4dcc570e7578f82e6c8438484
 RUN mkdir -p -m 0755 /usr/local/lib/amoris-backup
 COPY --chmod=0755 infra/deploy/backup/amoris-backup /usr/local/bin/amoris-backup
 COPY --chmod=0644 infra/deploy/backup/lib.sh /usr/local/lib/amoris-backup/lib.sh
-# Cartelle dei volumi (dati di appoggio, stato, cache di restic): i volumi nuovi ne ereditano il proprietario.
+# Cartelle dei volumi (dati di appoggio, stato, cache di restic) e via gosu ereditato dalla base, mai usato (DR-392).
 RUN mkdir -p /backup/data /backup/state /backup/cache \
- && chown -R 10003:10003 /backup
+ && chown -R 10003:10003 /backup \
+ && rm -f /usr/local/bin/gosu
 # Il servizio non avvia PostgreSQL: via l'avvio dell'immagine di base.
 ENTRYPOINT []
 USER backup

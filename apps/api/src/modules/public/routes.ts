@@ -38,6 +38,7 @@ import {
   seoForTerm,
   termByPath,
 } from './service.js';
+import { anonymousLimit } from '../../lib/anonymousLimit.js';
 import { searchPublished } from './search.js';
 import { assemblePage, publicDocument, siteTitle } from './page.js';
 import { parseByteRange } from '../../lib/objectStore.js';
@@ -54,6 +55,7 @@ const iso = (value: Date | null) => (value ? value.toISOString() : null);
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
+  const readLimit = anonymousLimit(app.config.HTTP_PUBLIC_READ_PER_MINUTE, { allowDirect: true });
 
   typed.get(
     '/content',
@@ -104,6 +106,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
   typed.get(
     '/redirect',
     {
+      config: { rateLimit: readLimit },
       schema: {
         tags: ['pubblico'],
         summary: 'La regola di reindirizzamento che vale per un percorso',
@@ -130,6 +133,7 @@ export async function publicRoutes(app: FastifyInstance): Promise<void> {
   typed.get(
     '/search',
     {
+      config: { rateLimit: readLimit },
       schema: {
         tags: ['pubblico'],
         summary: 'Ricerca fra pagine, articoli e download pubblicati, come la sorgente',

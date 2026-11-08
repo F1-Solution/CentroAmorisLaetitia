@@ -498,6 +498,7 @@ describe('ambiente dei programmi (M2)', () => {
     DATABASE_URL: 'postgres://sintetico@esempio.invalid/db',
     S3_SECRET_KEY: 'segreto-sintetico',
     CSRF_SECRET: 'csrf-sintetico',
+    TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
     IP_HASH_SALT: 'sale-sintetico',
   };
 

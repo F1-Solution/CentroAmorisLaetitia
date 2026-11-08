@@ -32,6 +32,11 @@ export const users = pgTable(
     isActive: boolean().notNull().default(true),
     mustChangePassword: boolean().notNull().default(false),
     lastLoginAt: timestamp({ withTimezone: true }),
+    /** Segreto TOTP cifrato (AES-256-GCM); senza `totpActivatedAt` è ancora in attesa di attivazione (DR-384). */
+    totpSecretEnc: text(),
+    totpActivatedAt: timestamp({ withTimezone: true }),
+    /** Ultimo passo da 30 secondi accettato: un codice già usato non vale due volte. */
+    totpLastStep: bigint({ mode: 'number' }),
     /** `wp_users.ID`, per l'idempotenza dell'import. */
     legacyId: bigint({ mode: 'number' }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -122,6 +127,10 @@ export const sessions = pgTable(
      * sarebbe**. Nulla fra l'accesso e la scelta dell'area.
      */
     activeArea: adminArea(),
+    /** Nullo finché il secondo fattore non è stato verificato: la sessione non autorizza nulla (DR-384). */
+    secondFactorVerifiedAt: timestamp({ withTimezone: true }),
+    /** Ultima conferma con password o codice, per le operazioni che la richiedono di nuovo (DR-391). */
+    lastConfirmedAt: timestamp({ withTimezone: true }),
   },
   (t) => [
     unique('sessions_token_digest_unique').on(t.tokenDigest),
@@ -159,5 +168,7 @@ export const auditLog = pgTable(
     index('audit_log_occurred_at_idx').on(t.occurredAt.desc().nullsFirst()),
     index('audit_log_entity_idx').on(t.entityType, t.entityId),
     index('audit_log_actor_idx').on(t.actorUserId, t.occurredAt.desc().nullsFirst()),
+    // Conteggio dei fallimenti per indirizzo (controllo 8): non parziale, perché l'esito arriva come parametro.
+    index('audit_log_ip_idx').on(t.action, t.outcome, t.ipHash, t.occurredAt),
   ],
 );

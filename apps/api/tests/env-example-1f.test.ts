@@ -25,10 +25,16 @@ const composePath = path.join(repoRoot, 'infra', 'deploy', 'compose.yml');
 /** Segreti dell'ambiente di produzione: vuoti nell'esempio, con il comando che li genera. */
 const SECRETS = [
   'POSTGRES_PASSWORD',
+  'DB_OWNER_PASSWORD',
+  'DB_APP_PASSWORD',
+  'DB_BACKUP_PASSWORD',
   'S3_ACCESS_KEY',
   'S3_SECRET_KEY',
+  'S3_API_SECRET_KEY',
+  'S3_BACKUP_SECRET_KEY',
   'IP_HASH_SALT',
   'CSRF_SECRET',
+  'TOTP_ENCRYPTION_KEY',
   'SCRUB_SERVICE_TOKEN',
 ] as const;
 

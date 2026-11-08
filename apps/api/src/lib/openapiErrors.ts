@@ -11,6 +11,8 @@ export const errorBody = z.object({
     code: z.string(),
     message: z.string(),
     requestId: z.string().optional(),
+    /** Solo con `SECOND_FACTOR_REQUIRED`: se il secondo fattore va attivato o verificato. */
+    step: z.enum(['activate', 'verify']).optional(),
     details: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
   }),
 });
@@ -21,7 +23,7 @@ export const noContent = z.null().describe('Operazione eseguita, nessun contenut
 const descriptions: Record<number, string> = {
   400: 'Richiesta non valida',
   401: 'Accesso mancante o scaduto',
-  403: 'Operazione non consentita, o token anti-CSRF assente',
+  403: 'Operazione non consentita, token anti-CSRF assente, secondo fattore o conferma richiesti',
   404: 'Risorsa non trovata',
   406: 'La richiesta non è un modulo multipart con un file',
   409: 'Conflitto con lo stato attuale',

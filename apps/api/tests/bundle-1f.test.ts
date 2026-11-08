@@ -48,6 +48,7 @@ function childEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
 const SYNTHETIC_SECRETS = {
   IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
   CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+  TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
 };
 
 function runNode(script: string, env: Record<string, string>) {
@@ -100,6 +101,9 @@ describe('bundle di produzione dell API (DR-358)', () => {
       'server.js',
       'bin/migrate.js',
       'bin/account-create.js',
+      'bin/account-unblock.js',
+      'bin/account-reset-totp.js',
+      'bin/auth-purge.js',
       'bin/scrub-server.js',
     ]) {
       expect(existsSync(path.join(distDir, file)), file).toBe(true);
@@ -134,6 +138,8 @@ describe('bundle di produzione dell API (DR-358)', () => {
       env: childEnv({
         ...SYNTHETIC_SECRETS,
         NODE_ENV: 'production',
+        S3_ACCESS_KEY: 'chiave-sintetica',
+        S3_SECRET_KEY: 'segreto-s3-sintetico',
         LOG_LEVEL: 'warn',
         API_HOST: '127.0.0.1',
         API_PORT: String(port),

@@ -47,3 +47,10 @@
   font-size: var(--amoris-text-lg-size);
   line-height: var(--amoris-text-lg-line);
 }
+
+/* Chiave del secondo fattore: va a capo fra i gruppi, mai fuori dalla scheda. */
+.amoris-access__key {
+  overflow-wrap: anywhere;
+  font-size: var(--amoris-text-lg-size);
+  line-height: var(--amoris-text-lg-line);
+}

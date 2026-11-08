@@ -1,5 +1,6 @@
 import { DEFAULT_MEDIA_LIMITS, type MediaLimits } from '@amoris/contracts';
 import type { ScrubTools } from './modules/media/scrub.js';
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 /**
@@ -26,6 +27,14 @@ const secret = (nome: string) =>
 /** Una variabile vuota vale come assente (`.env` e Compose le lasciano spesso così). */
 const emptyAsAbsent = (value: unknown): unknown => (value === '' ? undefined : value);
 
+/** Indirizzo o sottorete CIDR (IPv4 o IPv6). */
+const isAddressOrCidr = (value: string): boolean => {
+  const [address = '', bits, extra] = value.split('/');
+  if (extra !== undefined || isIP(address) === 0) return false;
+  if (bits === undefined) return true;
+  return /^\d+$/.test(bits) && Number(bits) <= (isIP(address) === 4 ? 32 : 128);
+};
+
 const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
@@ -35,6 +44,22 @@ const configSchema = z.object({
   DATABASE_URL: z
     .string({ error: 'manca, ed è obbligatoria: è l’indirizzo del database' })
     .min(1, 'è vuota: serve l’indirizzo del database'),
+  /**
+   * Indirizzi o sottoreti (CIDR) dei proxy di cui ci si fida per `X-Forwarded-For`, separati da virgole.
+   * Vuoto, ed è il predefinito sicuro: nessuna fiducia, l'indirizzo del client è quello della connessione.
+   */
+  TRUSTED_PROXY: z
+    .string()
+    .default('')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0),
+    )
+    .refine((entries) => entries.every(isAddressOrCidr), {
+      error: 'deve essere un elenco di indirizzi IP o sottoreti CIDR separati da virgole',
+    }),
   /** Origini ammesse, separate da virgole. */
   CORS_ORIGINS: z
     .string()
@@ -50,6 +75,15 @@ const configSchema = z.object({
   IP_HASH_SALT: secret('IP_HASH_SALT'),
   /** Segreto da cui si deriva il token anti-CSRF legato alla sessione. */
   CSRF_SECRET: secret('CSRF_SECRET'),
+  /** Chiave AES-256 (32 byte esadecimali) che cifra i segreti TOTP a riposo (DR-384, DR-388). */
+  TOTP_ENCRYPTION_KEY: z
+    .string({
+      error:
+        'TOTP_ENCRYPTION_KEY manca, ed è obbligatoria: è un segreto e non ha valore predefinito',
+    })
+    .regex(/^[0-9a-fA-F]{64}$/, 'deve essere di 64 caratteri esadecimali (32 byte)'),
+  /** DR-391: oltre questi minuti dall'ultima conferma, la gestione degli account chiede di nuovo password o codice. */
+  CONFIRMATION_MAX_MINUTES: z.coerce.number().int().min(1).default(10),
 
   /** ADR-007 §3.1 controllo 1: parametri di Argon2id dichiarati in configurazione. */
   ARGON2_MEMORY_KIB: z.coerce.number().int().min(8192).default(19456),
@@ -59,9 +93,9 @@ const configSchema = z.object({
   /** ADR-007 §3.1 controllo 3. */
   SESSION_COOKIE_NAME: z.string().min(1).default('amoris_sessione'),
   CSRF_COOKIE_NAME: z.string().min(1).default('amoris_csrf'),
-  /** ADR-007 §3.1 controllo 4: inattività 12 ore, assoluta 30 giorni. */
-  SESSION_IDLE_HOURS: z.coerce.number().int().min(1).default(12),
-  SESSION_ABSOLUTE_DAYS: z.coerce.number().int().min(1).default(30),
+  /** ADR-007 §3.1 controllo 4, DR-391: inattività 8 ore, assoluta 14 giorni (in produzione non di più). */
+  SESSION_IDLE_HOURS: z.coerce.number().int().min(1).default(8),
+  SESSION_ABSOLUTE_DAYS: z.coerce.number().int().min(1).default(14),
 
   /** ADR-007 §3.1 controllo 8. */
   LOGIN_WINDOW_MINUTES: z.coerce.number().int().min(1).default(15),
@@ -85,6 +119,13 @@ const configSchema = z.object({
   FORM_SUBMIT_MAX_PER_IP: z.coerce.number().int().min(1).default(20),
   FORM_SUBMIT_MAX_PER_FORM_AND_IP: z.coerce.number().int().min(1).default(5),
   FORM_SUBMIT_MIN_SECONDS: z.coerce.number().int().min(0).default(3),
+
+  /**
+   * Tetti HTTP per indirizzo (prefisso /64 per IPv6), in memoria e senza scritture a database:
+   * accesso e invio dei form, e le letture pubbliche di ricerca e redirect.
+   */
+  HTTP_ANON_WRITES_PER_MINUTE: z.coerce.number().int().min(1).default(30),
+  HTTP_PUBLIC_READ_PER_MINUTE: z.coerce.number().int().min(1).default(120),
 
   /** Archivio a oggetti (ADR-004). Serve al modulo dei media. */
   S3_ENDPOINT: z.string().min(1).default('http://127.0.0.1:9000'),
@@ -124,8 +165,39 @@ const configSchema = z.object({
   SCRUB_SERVICE_TOKEN: z.preprocess(emptyAsAbsent, secret('SCRUB_SERVICE_TOKEN').optional()),
 });
 
+/** Minimi Argon2id di OWASP: 19 MiB di memoria, 2 iterazioni. */
+const PRODUCTION_ARGON2_MIN_KIB = 19456;
+
+/** Controlli solo di produzione (R27, R9): chiavi S3, minimi Argon2, tetti di sessione, segreti distinti. */
+function checkProduction(config: z.infer<typeof configSchema>, context: z.RefinementCtx): void {
+  const issue = (path: string, message: string) =>
+    context.addIssue({ code: 'custom', path: [path], message });
+  if (!config.S3_ACCESS_KEY) issue('S3_ACCESS_KEY', 'manca, ed è obbligatoria in produzione');
+  if (!config.S3_SECRET_KEY) issue('S3_SECRET_KEY', 'manca, ed è obbligatoria in produzione');
+  if (config.ARGON2_MEMORY_KIB < PRODUCTION_ARGON2_MIN_KIB) {
+    issue('ARGON2_MEMORY_KIB', `in produzione servono almeno ${PRODUCTION_ARGON2_MIN_KIB} KiB`);
+  }
+  if (config.ARGON2_TIME_COST < 2) issue('ARGON2_TIME_COST', 'in produzione servono almeno 2');
+  if (config.SESSION_ABSOLUTE_DAYS > 14)
+    issue('SESSION_ABSOLUTE_DAYS', 'in produzione al massimo 14 (DR-391)');
+  if (config.SESSION_IDLE_HOURS > 8)
+    issue('SESSION_IDLE_HOURS', 'in produzione al massimo 8 (DR-391)');
+  const secrets = [
+    ['IP_HASH_SALT', config.IP_HASH_SALT],
+    ['CSRF_SECRET', config.CSRF_SECRET],
+    ['TOTP_ENCRYPTION_KEY', config.TOTP_ENCRYPTION_KEY],
+    ['SCRUB_SERVICE_TOKEN', config.SCRUB_SERVICE_TOKEN],
+  ] as const;
+  secrets.forEach(([name, value], index) => {
+    if (value !== undefined && secrets.slice(0, index).some(([, other]) => other === value)) {
+      issue(name, 'deve essere diverso dagli altri segreti');
+    }
+  });
+}
+
 /** Con l'indirizzo del servizio di pulizia il gettone è obbligatorio. */
 const checkedSchema = configSchema.superRefine((config, context) => {
+  if (config.NODE_ENV === 'production') checkProduction(config, context);
   if (config.SCRUB_SERVICE_URL !== undefined && config.SCRUB_SERVICE_TOKEN === undefined) {
     context.addIssue({
       code: 'custom',

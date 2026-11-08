@@ -15,6 +15,7 @@ const minima = {
   DATABASE_URL: 'postgres://finto:finto@localhost:5432/finto',
   IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
   CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+  TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
 };
 
 describe('configurazione', () => {
@@ -47,5 +48,13 @@ describe('configurazione', () => {
       CORS_ORIGINS: 'http://localhost:3000 , ,http://localhost:3001',
     });
     expect(config.CORS_ORIGINS).toEqual(['http://localhost:3000', 'http://localhost:3001']);
+  });
+
+  // Il Compose imposta TRUSTED_PROXY alla sottorete delle applicazioni: se il CIDR non passa, l'API non parte.
+  it('accetta come proxy fidati indirizzi e sottoreti CIDR, e rifiuta prefissi non numerici', () => {
+    const config = loadConfig({ ...minima, TRUSTED_PROXY: '10.77.84.0/24, 127.0.0.1, fd00::/64' });
+    expect(config.TRUSTED_PROXY).toEqual(['10.77.84.0/24', '127.0.0.1', 'fd00::/64']);
+    expect(() => loadConfig({ ...minima, TRUSTED_PROXY: '10.0.0.0/33' })).toThrow(ConfigError);
+    expect(() => loadConfig({ ...minima, TRUSTED_PROXY: '10.0.0.0/dd' })).toThrow(ConfigError);
   });
 });

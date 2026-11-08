@@ -109,6 +109,10 @@ export function registerAuditHook(app: FastifyInstance): void {
     // che solo loro conoscono: qui si raddoppierebbe soltanto.
     if (route.startsWith('/auth/')) return payload;
 
+    // Rifiuti anonimi (limitatore, validazione): non si scrive a database per chi non ha fatto nulla.
+    const refused = reply.statusCode >= 400 && reply.statusCode < 500;
+    if (refused && request.routeOptions.config.auditRefusals === false) return payload;
+
     const declared = request.declaredAudit;
     const params = request.params as Record<string, string> | undefined;
 

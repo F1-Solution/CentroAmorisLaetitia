@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { isIPv6 } from 'node:net';
 
 /**
  * Primitive crittografiche del servizio. Stanno qui e in nessun altro posto:
@@ -25,10 +26,40 @@ export function csrfTokenForSession(sessionToken: string, secret: string): strin
   return createHmac('sha256', secret).update(sessionToken, 'utf8').digest('base64url');
 }
 
-/** Digest con sale dell'indirizzo IP: a registro non finisce mai l'indirizzo. */
+/** Chiave dell'indirizzo: l'IPv4 intero, per IPv6 il prefisso /64; un IPv4 mappato in IPv6 vale come IPv4. */
+export function addressPrefix(address: string): string {
+  const bare = (address.split('%')[0] ?? address).toLowerCase();
+  if (!isIPv6(bare)) return bare;
+  const [head = '', tail] = bare.split('::');
+  const side = (part: string): string[] =>
+    part === ''
+      ? []
+      : part.split(':').flatMap((group) => {
+          const v4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(group);
+          if (!v4) return [group];
+          const [, a, b, c, d] = v4.map(Number);
+          return [((a! << 8) | b!).toString(16), ((c! << 8) | d!).toString(16)];
+        });
+  const first = side(head);
+  const last = side(tail ?? '');
+  const fill = tail === undefined ? [] : Array<string>(8 - first.length - last.length).fill('0');
+  const groups = [...first, ...fill, ...last].map((group) => parseInt(group, 16));
+  if (groups.slice(0, 5).every((group) => group === 0) && groups[5] === 0xffff) {
+    const [, , , , , , x, y] = groups;
+    return [x! >> 8, x! & 255, y! >> 8, y! & 255].join('.');
+  }
+  return (
+    groups
+      .slice(0, 4)
+      .map((group) => group.toString(16))
+      .join(':') + '::/64'
+  );
+}
+
+/** Digest con sale dell'indirizzo IP (prefisso /64 per IPv6): a registro non finisce mai l'indirizzo. */
 export function hashAddress(address: string | undefined, salt: string): Buffer | null {
   if (!address) return null;
-  return createHmac('sha256', salt).update(address, 'utf8').digest();
+  return createHmac('sha256', salt).update(addressPrefix(address), 'utf8').digest();
 }
 
 /** Confronto a tempo costante, tollerante a lunghezze diverse. */

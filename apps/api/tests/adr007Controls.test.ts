@@ -1,7 +1,7 @@
 import { schema } from '@amoris/db';
 import { and, eq } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { identifierDigest } from '../src/auth/loginAttempts.js';
 import { ConfigError, loadConfig } from '../src/config.js';
 import { tokenDigest } from '../src/lib/crypto.js';
 import {
@@ -411,7 +411,7 @@ describe('controllo 9 — nessuna enumerazione degli account', () => {
         .from(schema.auditLog)
         .where(eq(schema.auditLog.action, 'auth.login'));
 
-      const digest = createHash('sha256').update(tentato, 'utf8').digest('hex');
+      const digest = identifierDigest(tentato, proprio.config.IP_HASH_SALT);
       expect(righe.some((riga) => riga.entityId === digest)).toBe(true);
       expect(righe.some((riga) => riga.entityId === tentato)).toBe(false);
       expect(JSON.stringify(righe)).not.toContain(tentato);

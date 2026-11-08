@@ -42,6 +42,10 @@ const SYNTHETIC_API_ENV = {
   DATABASE_URL: 'postgres://nessuno:nessuno@127.0.0.1:59999/inesistente',
   IP_HASH_SALT: 'sale-sintetico-per-le-immagini-abbastanza-lungo',
   CSRF_SECRET: 'segreto-sintetico-per-le-immagini-abbastanza-lungo',
+  TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
+  S3_ACCESS_KEY: 'chiave-sintetica-per-le-immagini',
+  // Sintetico e a bassa entropia: gitleaks della CI non lo scambia per una chiave vera.
+  S3_SECRET_KEY: 'sintetico-sintetico-sintetico-sintetico',
 };
 
 const APPS: Record<'web' | 'admin' | 'api' | 'scrub', AppSpec> = {

@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { formaConfrontabile, primaDifferenza } from '../../visual/confrontoHtml';
 import { ACCESSO_ENTRAMBI, ADMIN_URL, API_URL, WEB_URL } from '../support/ambiente';
-import { entra, intestazioniApi } from '../support/sessione';
+import { accedi, entra, intestazioniApi, superaSecondoFattore } from '../support/sessione';
 
 /**
  * L'anteprima delle bozze sul sito (1G-W5, T7): `/anteprima/<id>/` si vede solo con la sessione
@@ -133,10 +133,8 @@ function attendiIntestazioniDiAnteprima(headers: Record<string, string>, dove: s
 
 /** Entra come la persona con entrambi i ruoli, scegliendo Redazione: è un'altra persona rispetto alla redazione del seme. */
 async function entraComeAltraRedazione(page: Page): Promise<void> {
-  await page.goto(`${ADMIN_URL}/admin/accesso`);
-  await page.getByLabel('Indirizzo di posta').fill(ACCESSO_ENTRAMBI.email);
-  await page.getByLabel('Password').fill(ACCESSO_ENTRAMBI.password);
-  await page.getByRole('button', { name: 'Entra' }).click();
+  await accedi(page, ACCESSO_ENTRAMBI.email, ACCESSO_ENTRAMBI.password);
+  await superaSecondoFattore(page);
   await page.waitForURL(/\/admin\/(scelta-area|redazione|impostazioni)/);
   if (page.url().includes('scelta-area')) {
     await page.getByRole('button', { name: 'Redazione', exact: false }).first().click();

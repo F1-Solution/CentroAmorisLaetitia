@@ -10,6 +10,7 @@ import { buildApp } from '../../src/app.js';
 import { loadConfig, type Config } from '../../src/config.js';
 import type { AdminArea } from '../../src/auth/areas.js';
 import { PERMISSIONS } from '../../src/auth/permissions.js';
+import { tokenDigest } from '../../src/lib/crypto.js';
 import { hashPassword } from '../../src/lib/password.js';
 import type { ObjectStore } from '../../src/lib/objectStore.js';
 
@@ -94,9 +95,15 @@ export function testConfig(databaseUrl: string, overrides: Record<string, string
     DATABASE_URL: databaseUrl,
     IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
     CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+    TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
     // I test non devono aspettare mezzo secondo per ogni accesso.
     LOGIN_UNIFORM_MS: '0',
     LOGIN_DELAY_STEP_MS: '0',
+    // Le prove arrivano da 127.0.0.1 e a volte simulano il proxy con `X-Forwarded-For`.
+    TRUSTED_PROXY: '127.0.0.1',
+    // Molti accessi e letture dallo stesso indirizzo: i tetti HTTP si abbassano solo nelle prove dedicate.
+    HTTP_ANON_WRITES_PER_MINUTE: '100000',
+    HTTP_PUBLIC_READ_PER_MINUTE: '100000',
     // Le prove caricano molti file dallo stesso indirizzo.
     MEDIA_WRITES_PER_MINUTE: '100000',
     // I programmi della pulizia dei metadati: in locale `qpdf` può stare fuori dal PATH.
@@ -206,11 +213,30 @@ export interface SignInOptions {
    * è in alcuna area (`ux-proposals.md` §4.3).
    */
   readonly area?: AdminArea | null;
+  /**
+   * Di norma la sessione di prova nasce con il secondo fattore già verificato e confermata ora, così le prove
+   * che non riguardano il TOTP non lo ripetono; `false` lascia la sessione in attesa, come in produzione.
+   */
+  readonly secondFactorVerified?: boolean;
+}
+
+/** Segna come verificata e confermata la sessione del cookie dato, direttamente a database. */
+export async function verifySessionDirectly(harness: Harness, token: string): Promise<void> {
+  const now = new Date();
+  await harness.db
+    .update(schema.sessions)
+    .set({ secondFactorVerifiedAt: now, lastConfirmedAt: now })
+    .where(eq(schema.sessions.tokenDigest, tokenDigest(token)));
 }
 
 /** Esegue l'accesso, sceglie la veste e restituisce ciò che serve dopo. */
 export async function signIn(harness: Harness, options: SignInOptions = {}): Promise<Signed> {
-  const { email = TEST_EMAIL, password = TEST_PASSWORD, area = 'redazione' } = options;
+  const {
+    email = TEST_EMAIL,
+    password = TEST_PASSWORD,
+    area = 'redazione',
+    secondFactorVerified = true,
+  } = options;
   const response = await harness.app.inject({
     method: 'POST',
     url: '/auth/login',
@@ -224,6 +250,8 @@ export async function signIn(harness: Harness, options: SignInOptions = {}): Pro
   const session = cookies.find((entry) => entry.name === harness.config.SESSION_COOKIE_NAME);
   const csrf = cookies.find((entry) => entry.name === harness.config.CSRF_COOKIE_NAME);
   if (!session || !csrf) throw new Error('i cookie di sessione non sono stati impostati');
+
+  if (secondFactorVerified) await verifySessionDirectly(harness, session.value);
 
   const cookie = `${session.name}=${session.value}; ${csrf.name}=${csrf.value}`;
   const signed: Signed = {

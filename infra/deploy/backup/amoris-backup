@@ -192,6 +192,11 @@ STATS
     -d "$PGDATABASE" "$root/db/database.dump" >/dev/null 2>&1 || rc=$?
   [ "$rc" -eq 0 ] || fail db_restore "$rc"
 
+  # R25: le sessioni del dump non tornano valide, prima di riaprire il servizio.
+  rc=0
+  SESSIONS_REVOKED=$(psql --no-password -XAtq -v ON_ERROR_STOP=1 -c "WITH r AS (UPDATE sessions SET revoked_at = now() WHERE revoked_at IS NULL RETURNING 1) SELECT count(*) FROM r" 2>/dev/null) || rc=$?
+  [ "$rc" -eq 0 ] || fail sessions_revoke "$rc"
+
   restored=0
   for bucket in "$S3_BUCKET_PUBLIC" "$S3_BUCKET_PRIVATE"; do
     rc=0

@@ -56,6 +56,9 @@ CREATE TABLE users (
     is_active       boolean NOT NULL DEFAULT true,
     must_change_password boolean NOT NULL DEFAULT false,
     last_login_at   timestamptz,
+    totp_secret_enc text,                      -- segreto TOTP cifrato; senza totp_activated_at e' in attesa di attivazione (DR-384)
+    totp_activated_at timestamptz,
+    totp_last_step  bigint,                    -- ultimo passo da 30 s accettato: anti-riuso
     legacy_id       bigint,                    -- wp_users.ID, per idempotenza dell'import
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now(),
@@ -120,6 +123,10 @@ CREATE TABLE sessions (
     -- Area in cui si sta lavorando (ux-proposals.md §4.4 punto 2): il servizio
     -- rifiuta i dati di un'altra area anche quando il permesso ci sarebbe.
     active_area     admin_area,
+    -- Nullo finche' il secondo fattore non e' verificato (DR-384).
+    second_factor_verified_at timestamptz,
+    -- Ultima conferma con password o codice (DR-391).
+    last_confirmed_at timestamptz,
     CONSTRAINT sessions_token_digest_unique UNIQUE (token_digest)
 );
 
@@ -149,6 +156,7 @@ CREATE TABLE audit_log (
 CREATE INDEX audit_log_occurred_at_idx ON audit_log (occurred_at DESC);
 CREATE INDEX audit_log_entity_idx      ON audit_log (entity_type, entity_id);
 CREATE INDEX audit_log_actor_idx       ON audit_log (actor_user_id, occurred_at DESC);
+CREATE INDEX audit_log_ip_idx          ON audit_log (action, outcome, ip_hash, occurred_at);
 
 
 -- =====================================================================
@@ -534,6 +542,7 @@ CREATE TABLE form_submissions (
 );
 
 CREATE INDEX form_submissions_form_idx ON form_submissions (form_id, submitted_at DESC);
+CREATE INDEX form_submissions_ip_idx   ON form_submissions (ip_hash, submitted_at);
 
 
 -- =====================================================================

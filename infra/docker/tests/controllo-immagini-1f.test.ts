@@ -36,6 +36,20 @@ const CLEAN: Record<string, string> = {
 };
 
 const CASES: Record<string, { files: Record<string, string>; expected: string }> = {
+  npm: {
+    files: { 'usr/local/lib/node_modules/npm/bin/npm-cli.js': 'finto\n' },
+    expected: 'usr/local/lib/node_modules/npm/bin/npm-cli.js',
+  },
+  npmeseguibile: { files: { 'usr/local/bin/npx': 'finto\n' }, expected: 'usr/local/bin/npx' },
+  corepack: {
+    files: { 'usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs': 'finto\n' },
+    expected: 'usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs',
+  },
+  intestazioni: {
+    files: { 'usr/local/include/node/node.h': 'finto\n' },
+    expected: 'usr/local/include/node/node.h',
+  },
+  gosu: { files: { 'usr/local/bin/gosu': 'finto\n' }, expected: 'usr/local/bin/gosu' },
   env: { files: { 'app/.env.production': 'X=1\n' }, expected: 'app/.env.production' },
   envlungo: { files: { [`${LONG_DIR}.env`]: 'X=1\n' }, expected: `${LONG_DIR}.env` },
   ambiente: {

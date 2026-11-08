@@ -85,6 +85,20 @@
       "when": 1793229925364,
       "tag": "0011_immagini_importate_senza_didascalia_del_media",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794152083182,
+      "tag": "0012_indici_per_indirizzo",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794173625716,
+      "tag": "0013_secondo_fattore_totp",
+      "breakpoints": true
     }
   ]
 }

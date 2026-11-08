@@ -1,5 +1,64 @@
+import { createHash } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
-import { ACCESSO, ACCESSO_AMMINISTRAZIONE, ADMIN_URL } from './ambiente';
+import postgres from 'postgres';
+import {
+  ACCESSO,
+  ACCESSO_AMMINISTRAZIONE,
+  ADMIN_URL,
+  DATABASE_E2E,
+  urlPerDatabase,
+} from './ambiente';
+import { codiceTotp, passoCorrente } from './totp';
+
+/** Il cookie della sessione: lo stesso nome predefinito dell'API (`SESSION_COOKIE_NAME`). */
+const COOKIE_SESSIONE = process.env.SESSION_COOKIE_NAME ?? 'amoris_sessione';
+
+/** Inserisce indirizzo e password e preme «Entra»; dopo la password viene il secondo fattore. */
+export async function accedi(page: Page, email: string, password: string): Promise<void> {
+  await page.goto(`${ADMIN_URL}/admin/accesso`);
+  await page.getByLabel('Indirizzo di posta').fill(email);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Entra' }).click();
+}
+
+/**
+ * Supera il secondo fattore senza app di autenticazione: come l'harness dell'API, segna come
+ * verificata e confermata ora, a database, la sola sessione del browser (DR-384). Serve alle prove
+ * che non riguardano il TOTP; il flusso vero, con i codici, sta in `cms/secondo-fattore.spec.ts`.
+ */
+export async function superaSecondoFattore(page: Page): Promise<void> {
+  await page.waitForURL(/\/admin\/secondo-fattore/);
+  const token = (await page.context().cookies()).find((voce) => voce.name === COOKIE_SESSIONE);
+  if (!token) throw new Error(`cookie ${COOKIE_SESSIONE} assente dopo l'accesso`);
+  const digest = createHash('sha256').update(token.value, 'utf8').digest();
+  const sql = postgres(urlPerDatabase(DATABASE_E2E), { max: 1 });
+  try {
+    const segnate = await sql`
+      update sessions set second_factor_verified_at = now(), last_confirmed_at = now()
+      where token_digest = ${digest} and revoked_at is null`;
+    if (segnate.count !== 1) throw new Error('sessione del browser non trovata a database');
+  } finally {
+    await sql.end();
+  }
+  await page.goto(`${ADMIN_URL}/admin/`);
+}
+
+/** Attiva il secondo fattore dalla schermata, come farebbe la persona con l'app; rende la chiave e il passo usato. */
+export async function attivaSecondoFattore(
+  page: Page,
+): Promise<{ readonly chiave: string; readonly passo: number }> {
+  await page.waitForURL(/\/admin\/secondo-fattore/);
+  await page.getByRole('button', { name: 'Mostra la chiave' }).click();
+  const chiave = (await page.getByLabel('Chiave da inserire nell’app').innerText()).replace(
+    /\s/g,
+    '',
+  );
+  const passo = passoCorrente();
+  await page.getByLabel('Codice di 6 cifre').fill(codiceTotp(chiave, passo));
+  await page.getByRole('button', { name: 'Attiva' }).click();
+  await page.waitForURL((url) => !url.pathname.includes('secondo-fattore'));
+  return { chiave, passo };
+}
 
 /**
  * Entra nell'area amministrativa nella veste richiesta.
@@ -11,11 +70,8 @@ import { ACCESSO, ACCESSO_AMMINISTRAZIONE, ADMIN_URL } from './ambiente';
  */
 export async function entra(page: Page, area: 'Redazione' | 'Impostazioni'): Promise<void> {
   const accesso = area === 'Impostazioni' ? ACCESSO_AMMINISTRAZIONE : ACCESSO;
-  await page.goto(`${ADMIN_URL}/admin/accesso`);
-
-  await page.getByLabel('Indirizzo di posta').fill(accesso.email);
-  await page.getByLabel('Password').fill(accesso.password);
-  await page.getByRole('button', { name: 'Entra' }).click();
+  await accedi(page, accesso.email, accesso.password);
+  await superaSecondoFattore(page);
 
   await page.waitForURL(/\/admin\/(scelta-area|redazione|impostazioni)/);
 

@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { ADMIN_URL } from '../support/ambiente';
-import { entra, esci } from '../support/sessione';
+import { accedi, attivaSecondoFattore, entra, esci } from '../support/sessione';
 
 /**
  * DR-282 (1G-W7, T2i): l'amministrazione cambia nome ed email di un account
@@ -14,13 +14,6 @@ const NOME = `Identità di prova ${SUFFISSO}`;
 const NOME_NUOVO = `Identità rinominata ${SUFFISSO}`;
 const EMAIL = `identita.${SUFFISSO}@example.invalid`;
 const EMAIL_NUOVA = `identita.nuova.${SUFFISSO}@example.invalid`;
-
-async function accedi(page: Page, email: string, password: string): Promise<void> {
-  await page.goto(`${ADMIN_URL}/admin/accesso`);
-  await page.getByLabel('Indirizzo di posta').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Entra' }).click();
-}
 
 test('l’amministrazione cambia nome ed email; si entra col nuovo indirizzo e non col vecchio', async ({
   page,
@@ -53,7 +46,8 @@ test('l’amministrazione cambia nome ed email; si entra col nuovo indirizzo e n
   await expect(page.getByText('Accesso non riuscito')).toBeVisible();
   await expect(page).toHaveURL(/\/admin\/accesso/);
 
-  // Il nuovo sì, con la stessa password: porta al cambio obbligatorio.
+  // Il nuovo sì, con la stessa password: dopo il secondo fattore porta al cambio obbligatorio.
   await accedi(page, EMAIL_NUOVA, temporanea);
+  await attivaSecondoFattore(page);
   await page.waitForURL(/\/admin\/password/);
 });

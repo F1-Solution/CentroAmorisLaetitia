@@ -1,8 +1,9 @@
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { AUTH_ACTIONS, writeAudit } from '../../auth/audit.js';
 import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../auth/loginAttempts.js';
+import { activateSecondFactor, beginEnrollment, markSession } from '../../auth/totp.js';
 import {
   issueSession,
   listSessions,
@@ -16,15 +17,19 @@ import {
 } from '../../auth/sessions.js';
 import type { Config } from '../../config.js';
 import { csrfTokenForSession, hashAddress } from '../../lib/crypto.js';
+import { anonymousLimit } from '../../lib/anonymousLimit.js';
 import { errorResponses, noContent } from '../../lib/openapiErrors.js';
 import { sessionOf } from '../../plugins/auth.js';
 import {
   acknowledged,
   changePasswordBody,
   chooseContextBody,
+  confirmBody,
   currentUser,
+  enrollment,
   loginBody,
   revokedCount,
+  secondFactorCodeBody,
   sessionSummary,
 } from './schemas.js';
 import {
@@ -32,6 +37,7 @@ import {
   findByEmail,
   markLogin,
   setPassword,
+  verifyCode,
   verifyCurrentPassword,
 } from './service.js';
 
@@ -62,15 +68,13 @@ function serialiseRoles(roles: readonly RoleHeld[]) {
   return roles.map((role) => ({ ...role, areas: [...role.areas] }));
 }
 
-/** ADR-007 §3.1 controllo 3, in un posto solo per non poterlo scrivere diverso. */
+/** ADR-007 §3.1 controllo 3; senza `maxAge`, cookie di sessione del browser (DR-391): la scadenza vera è sul server. */
 function setSessionCookies(reply: FastifyReply, config: Config, session: IssuedSession): void {
-  const maxAge = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 1000));
   reply.setCookie(config.SESSION_COOKIE_NAME, session.token, {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
     path: '/',
-    maxAge,
   });
   // Questo il client deve poterlo leggere: è la metà del doppio invio.
   reply.setCookie(config.CSRF_COOKIE_NAME, csrfTokenForSession(session.token, config.CSRF_SECRET), {
@@ -78,7 +82,6 @@ function setSessionCookies(reply: FastifyReply, config: Config, session: IssuedS
     secure: true,
     sameSite: 'lax',
     path: '/',
-    maxAge,
   });
 }
 
@@ -91,7 +94,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     {
       // Non c'è ancora una sessione da proteggere: l'accesso è difeso dalla
       // limitazione dei tentativi del controllo 8, non dal token anti-CSRF.
-      config: { csrf: false as const },
+      config: {
+        csrf: false as const,
+        rateLimit: anonymousLimit(app.config.HTTP_ANON_WRITES_PER_MINUTE),
+      },
       schema: {
         tags: ['autenticazione'],
         summary: 'Apre una sessione',
@@ -103,7 +109,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const started = Date.now();
       const { email, password } = request.body;
       const ipHash = ipOf(request.ip);
-      const digest = identifierDigest(email);
+      const digest = identifierDigest(email, app.config.IP_HASH_SALT);
 
       /** Controllo 9: ogni esito occupa lo stesso tempo, riuscito o fallito. */
       const uniform = async () => {
@@ -183,15 +189,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const only = choices.length === 1 ? choices[0] : undefined;
       if (only) await setActiveContext(app.db, session.sessionId, only.roleId, only.area);
 
-      const permissions = only ? await permissionsOfRole(app.db, only.roleId) : new Set<string>();
       await uniform();
 
+      // La sessione nasce in attesa del secondo fattore (DR-384): nessun permesso finché non è verificato.
       return reply.send({
         userId: candidate.userId,
         email: candidate.email,
         fullName: candidate.fullName,
         mustChangePassword: candidate.mustChangePassword,
-        permissions: [...permissions],
+        secondFactor: candidate.totpActive ? 'verification_required' : 'activation_required',
+        permissions: [],
         activeRoleId: only?.roleId ?? null,
         activeArea: only?.area ?? null,
         rolesHeld: serialiseRoles(rolesHeld),
@@ -241,6 +248,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
       return reply.send({
         ...session.user,
+        secondFactor: session.secondFactor,
         permissions: [...(await permissionsOfRole(app.db, roleId))],
         activeRoleId: roleId,
         activeArea: area,
@@ -253,7 +261,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/me',
     {
       // Nessuna sessione è il caso normale della schermata di accesso: 204, non un errore (1G-24).
-      config: { allowWithPendingPasswordChange: true },
+      config: { allowWithPendingPasswordChange: true, allowWithoutSecondFactor: true },
       schema: {
         tags: ['autenticazione'],
         summary: 'Chi è la sessione in corso; 204 se nessuna sessione è valida',
@@ -261,10 +269,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      void reply.header('Cache-Control', 'no-store');
       const session = request.auth;
       if (!session) return reply.code(204).send(null);
       return reply.send({
         ...session.user,
+        secondFactor: session.secondFactor,
         permissions: [...session.permissions],
         activeRoleId: session.activeRoleId,
         activeArea: session.activeArea,
@@ -277,7 +287,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/logout',
     {
       onRequest: app.requireSession,
-      config: { allowWithPendingPasswordChange: true },
+      config: { allowWithPendingPasswordChange: true, allowWithoutSecondFactor: true },
       schema: {
         tags: ['autenticazione'],
         summary: 'Chiude la sessione in corso',
@@ -343,14 +353,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      await setPassword(app.db, app.config, session.user.userId, request.body.newPassword);
       // Controllo 5: il cambio password rigenera il token. Le altre sessioni
-      // cadono — controllo 6 — e questa riparte con un token nuovo.
-      await revokeAllSessions(app.db, session.user.userId);
-      const renewed = await issueSession(app.db, app.config, session.user.userId, {
-        ip: request.ip,
-        userAgent: request.headers['user-agent'],
+      // cadono — controllo 6 — e questa riparte con un token nuovo; password e revoca insieme.
+      await app.db.transaction(async (tx) => {
+        await setPassword(tx, app.config, session.user.userId, request.body.newPassword);
+        await revokeAllSessions(tx, session.user.userId);
       });
+      // La sessione che cambia la password ha già il secondo fattore verificato e ha appena confermato la password.
+      const renewed = await issueSession(
+        app.db,
+        app.config,
+        session.user.userId,
+        { ip: request.ip, userAgent: request.headers['user-agent'] },
+        new Date(),
+      );
       await writeAudit(app.db, {
         action: AUTH_ACTIONS.passwordChanged,
         actorUserId: session.user.userId,
@@ -360,6 +376,180 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       });
 
       setSessionCookies(reply, app.config, renewed);
+      return reply.send({ ok: true as const });
+    },
+  );
+
+  /** Rotte del secondo fattore: raggiungibili prima che sia verificato, e anche col cambio password in sospeso. */
+  const preSecondFactor = {
+    onRequest: app.requireSession,
+    config: { allowWithPendingPasswordChange: true, allowWithoutSecondFactor: true },
+  } as const;
+  const tooMany = (request: FastifyRequest, reply: FastifyReply) =>
+    reply.code(429).send({
+      error: {
+        code: 'TOO_MANY_ATTEMPTS',
+        message: 'Troppi tentativi. Riprovare più tardi.',
+        requestId: request.id,
+      },
+    });
+  const wrongCode = (request: FastifyRequest, reply: FastifyReply) =>
+    reply.code(403).send({
+      error: {
+        code: 'INVALID_SECOND_FACTOR_CODE',
+        message: 'Codice non corretto.',
+        requestId: request.id,
+      },
+    });
+  const wrongState = (request: FastifyRequest, reply: FastifyReply) =>
+    reply.code(409).send({
+      error: {
+        code: 'SECOND_FACTOR_NOT_APPLICABLE',
+        message: 'Questa operazione non è possibile nello stato attuale del secondo fattore.',
+        requestId: request.id,
+      },
+    });
+
+  typed.post(
+    '/auth/second-factor/setup',
+    {
+      ...preSecondFactor,
+      schema: {
+        tags: ['autenticazione'],
+        summary:
+          'Genera un nuovo segreto in attesa di attivazione; 409 se il secondo fattore è già attivo',
+        response: { 200: enrollment, ...errorResponses(401, 403, 409) },
+      },
+    },
+    async (request, reply) => {
+      void reply.header('Cache-Control', 'no-store');
+      const session = sessionOf(request);
+      if (session.secondFactor !== 'activation_required') return wrongState(request, reply);
+      const started = await beginEnrollment(app.db, app.config, session.user);
+      if (!started) return wrongState(request, reply);
+      return reply.send({ secret: started.secret, otpauthUri: started.uri });
+    },
+  );
+
+  typed.post(
+    '/auth/second-factor/activate',
+    {
+      ...preSecondFactor,
+      schema: {
+        tags: ['autenticazione'],
+        summary: 'Attiva il secondo fattore con un codice valido e verifica la sessione',
+        body: secondFactorCodeBody,
+        response: { 200: acknowledged, ...errorResponses(400, 401, 403, 409, 429) },
+      },
+    },
+    async (request, reply) => {
+      const session = sessionOf(request);
+      if (session.secondFactor !== 'activation_required') return wrongState(request, reply);
+      const ipHash = ipOf(request.ip);
+      const actor = { ...session.user, sessionId: session.sessionId };
+      const verdict = await verifyCode(
+        app.db,
+        app.config,
+        actor,
+        request.body.code,
+        ipHash,
+        'activate',
+      );
+      if (verdict === 'blocked') return tooMany(request, reply);
+      if (verdict === 'invalid') return wrongCode(request, reply);
+      await activateSecondFactor(app.db, session.user.userId);
+      await markSession(app.db, session.sessionId, true);
+      await writeAudit(app.db, {
+        action: AUTH_ACTIONS.secondFactorActivated,
+        actorUserId: session.user.userId,
+        actorLabel: session.user.fullName,
+        sessionId: session.sessionId,
+        ipHash,
+      });
+      return reply.send({ ok: true as const });
+    },
+  );
+
+  typed.post(
+    '/auth/second-factor/verify',
+    {
+      ...preSecondFactor,
+      schema: {
+        tags: ['autenticazione'],
+        summary: 'Verifica il codice del secondo fattore e sblocca la sessione',
+        body: secondFactorCodeBody,
+        response: { 200: acknowledged, ...errorResponses(400, 401, 403, 409, 429) },
+      },
+    },
+    async (request, reply) => {
+      const session = sessionOf(request);
+      if (session.secondFactor !== 'verification_required') return wrongState(request, reply);
+      const ipHash = ipOf(request.ip);
+      const actor = { ...session.user, sessionId: session.sessionId };
+      const verdict = await verifyCode(
+        app.db,
+        app.config,
+        actor,
+        request.body.code,
+        ipHash,
+        'verify',
+      );
+      if (verdict === 'blocked') return tooMany(request, reply);
+      if (verdict === 'invalid') return wrongCode(request, reply);
+      await markSession(app.db, session.sessionId, true);
+      await writeAudit(app.db, {
+        action: AUTH_ACTIONS.secondFactor,
+        actorUserId: session.user.userId,
+        actorLabel: session.user.fullName,
+        sessionId: session.sessionId,
+        ipHash,
+        detail: { purpose: 'verify' },
+      });
+      return reply.send({ ok: true as const });
+    },
+  );
+
+  typed.post(
+    '/auth/confirm',
+    {
+      onRequest: app.requireSession,
+      schema: {
+        tags: ['autenticazione'],
+        summary:
+          'Conferma con la password oppure con il codice del secondo fattore: rinnova la conferma recente che la gestione degli account richiede',
+        body: confirmBody,
+        response: { 200: acknowledged, ...errorResponses(400, 401, 403, 429) },
+      },
+    },
+    async (request, reply) => {
+      const session = sessionOf(request);
+      const ipHash = ipOf(request.ip);
+      const actor = { ...session.user, sessionId: session.sessionId };
+      const { password, code } = request.body;
+      const verdict =
+        code !== undefined
+          ? await verifyCode(app.db, app.config, actor, code, ipHash, 'confirm')
+          : await verifyCurrentPassword(
+              app.db,
+              app.config,
+              actor,
+              password ?? '',
+              ipHash,
+              'account',
+            );
+      if (verdict === 'blocked') return tooMany(request, reply);
+      if (verdict === 'invalid') {
+        return code !== undefined
+          ? wrongCode(request, reply)
+          : reply.code(403).send({
+              error: {
+                code: 'INVALID_CREDENTIALS',
+                message: 'Indirizzo o password non corretti.',
+                requestId: request.id,
+              },
+            });
+      }
+      await markSession(app.db, session.sessionId, false);
       return reply.send({ ok: true as const });
     },
   );
@@ -375,6 +565,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      void reply.header('Cache-Control', 'no-store');
       const session = sessionOf(request);
       const rows = await listSessions(app.db, session.user.userId);
       return reply.send(

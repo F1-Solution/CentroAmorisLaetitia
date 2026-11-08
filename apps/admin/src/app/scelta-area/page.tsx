@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../lib/api';
 import { AREA_DEFINITIONS, type AreaId } from '../../lib/areas';
 import { readReturnParam, safeReturnPath } from '../../lib/returnPath';
-import { useSession, vestmentsOf, type Vestment } from '../../lib/session';
+import { secondFactorPending, useSession, vestmentsOf, type Vestment } from '../../lib/session';
 
 /** Meta dopo la scelta: il percorso di arrivo se è dell'area scelta, altrimenti la home dell'area. */
 function destinationFor(area: AreaId): string {
@@ -42,6 +42,10 @@ export default function SceltaAreaPage(): React.JSX.Element | null {
     if (loading) return;
     if (!user) {
       router.replace('/accesso');
+      return;
+    }
+    if (secondFactorPending(user)) {
+      router.replace('/secondo-fattore');
       return;
     }
     if (user.mustChangePassword) {

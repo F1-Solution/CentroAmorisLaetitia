@@ -4,8 +4,8 @@
 # (ci.yml, DR-268). Nessun node_modules: il servizio non usa moduli nativi.
 #   docker build -f infra/docker/scrub.Dockerfile -t amoris-scrub:<commit> .
 
-# Node 25.0.0 come `.nvmrc`, Debian 12 slim, fissato per digest.
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS build
+# Node 26.12.1 come `.nvmrc`, Debian 12 slim, fissato per digest.
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS build
 ENV CI=true PNPM_HOME=/pnpm PATH=/pnpm:$PATH npm_config_store_dir=/pnpm/store
 RUN npm install --global --no-fund --no-audit pnpm@11.6.0
 WORKDIR /repo
@@ -18,7 +18,7 @@ RUN pnpm --filter @amoris/api build \
  && echo '{"type":"module"}' > /repo/scrub-package.json
 
 # Programmi della pulizia: versione e impronta si aggiornano insieme a ci.yml.
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS tools
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS tools
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends unzip xz-utils \
  && rm -rf /var/lib/apt/lists/*
@@ -33,10 +33,13 @@ RUN mkdir -p /opt/qpdf /opt/ffmpeg/bin \
  && /opt/qpdf/bin/qpdf --version \
  && /opt/ffmpeg/bin/ffmpeg -version | head -n 1
 
-FROM node:25.0.0-bookworm-slim@sha256:cb4db5ec2a285632fbd8ff2fc2cc3c4cc393245b0e4d8419fc08909bf29c52ea AS runtime
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS runtime
+# Via npm, corepack e intestazioni di Node: a runtime non servono (DR-392).
 RUN groupadd --system --gid 10002 scrub \
  && useradd --system --uid 10002 --gid scrub --no-create-home --home-dir /nonexistent \
-    --shell /usr/sbin/nologin scrub
+    --shell /usr/sbin/nologin scrub \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/include/node
 ENV NODE_ENV=production SCRUB_HOST=0.0.0.0 SCRUB_PORT=3003 TMPDIR=/tmp \
     QPDF_PATH=/opt/qpdf/bin/qpdf FFMPEG_PATH=/opt/ffmpeg/bin/ffmpeg FFPROBE_PATH=/opt/ffmpeg/bin/ffprobe
 COPY --from=tools /opt/qpdf /opt/qpdf

@@ -1,0 +1,2 @@
+CREATE INDEX "audit_log_ip_idx" ON "audit_log" USING btree ("action","outcome","ip_hash","occurred_at");--> statement-breakpoint
+CREATE INDEX "form_submissions_ip_idx" ON "form_submissions" USING btree ("ip_hash","submitted_at");

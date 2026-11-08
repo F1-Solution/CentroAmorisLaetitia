@@ -87,5 +87,6 @@ export const formSubmissions = pgTable(
   (t) => [
     unique('form_submissions_legacy_unique').on(t.legacyId),
     index('form_submissions_form_idx').on(t.formId, t.submittedAt.desc().nullsFirst()),
+    index('form_submissions_ip_idx').on(t.ipHash, t.submittedAt),
   ],
 );

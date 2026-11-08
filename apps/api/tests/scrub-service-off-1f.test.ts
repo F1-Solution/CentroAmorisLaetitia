@@ -109,6 +109,7 @@ describe('configurazione del servizio di pulizia', () => {
     DATABASE_URL: 'postgres://sintetico@127.0.0.1:5432/sintetico',
     IP_HASH_SALT: 'sale-sintetico-per-i-test-abbastanza-lungo',
     CSRF_SECRET: 'segreto-sintetico-per-i-test-abbastanza-lungo',
+    TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
   };
 
   it("l'indirizzo senza gettone non parte", async () => {

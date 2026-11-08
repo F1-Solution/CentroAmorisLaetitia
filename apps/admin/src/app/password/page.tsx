@@ -6,7 +6,7 @@ import { Alert, Button, TextField } from '@amoris/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
-import { useSession } from '../../lib/session';
+import { secondFactorPending, useSession } from '../../lib/session';
 
 const MIN_LENGTH = 12;
 
@@ -26,10 +26,13 @@ export default function PasswordPage(): React.JSX.Element | null {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/accesso');
+    if (loading) return;
+    if (!user) router.replace('/accesso');
+    // Il secondo fattore viene prima: con la sola password l'API non concede il cambio (DR-384).
+    else if (secondFactorPending(user)) router.replace('/secondo-fattore');
   }, [loading, user, router]);
 
-  if (loading || !user) return null;
+  if (loading || !user || secondFactorPending(user)) return null;
 
   async function onSubmit(event: React.FormEvent): Promise<void> {
     event.preventDefault();
