@@ -1,5 +1,5 @@
 /**
- * Pulizia periodica: cancella sessioni scadute o revocate e tentativi d'accesso falliti da più di 30 giorni.
+ * Pulizia periodica: cancella sessioni scadute o revocate e righe dei tentativi da più di 30 giorni.
  *
  *     pnpm --filter @amoris/api auth:purge
  */
@@ -11,9 +11,9 @@ const config = loadConfig(process.env as Record<string, string | undefined>);
 const { db, close } = createDatabase({ url: config.DATABASE_URL, maxConnections: 1 });
 
 try {
-  const { sessions, loginFailures } = await purgeAuthData(db);
+  const { sessions, attempts } = await purgeAuthData(db);
   console.error(
-    `Pulizia eseguita: ${sessions} sessioni e ${loginFailures} tentativi falliti cancellati.`,
+    `Pulizia eseguita: ${sessions} sessioni e ${attempts} righe di tentativi cancellate.`,
   );
 } catch (error) {
   console.error(

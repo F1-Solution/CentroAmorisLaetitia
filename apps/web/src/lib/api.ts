@@ -1,5 +1,7 @@
 import type { BlockDocument, FormsMap, MediaMap, PostListsMap, SlidersMap } from '@amoris/blocks';
+import { headers } from 'next/headers';
 import { apiUrl } from './apiUrl';
+import { visitorHeaders } from './visitor';
 
 /**
  * Lettura dei dati del sito pubblico, solo dal modulo `public` dell'API (DR-104):
@@ -41,6 +43,9 @@ async function read<T>(path: string, options: ReadOptions = {}): Promise<T | nul
 }
 
 const q = (path: string) => encodeURIComponent(path);
+
+/** L'indirizzo del visitatore della richiesta in corso, per le letture che l'API limita per visitatore (DR-401). */
+const visitor = async () => visitorHeaders((await headers()).get('x-forwarded-for'));
 
 export interface Seo {
   readonly title: string;
@@ -158,8 +163,10 @@ export const getMenu = (key: string) =>
 export const getSettings = async () =>
   (await read<Record<string, unknown>>('/public/settings')) ?? {};
 
-export const getRedirect = (path: string) =>
-  read<{ targetPath: string; statusCode: number }>(`/public/redirect?path=${q(path)}`);
+export const getRedirect = async (path: string) =>
+  read<{ targetPath: string; statusCode: number }>(`/public/redirect?path=${q(path)}`, {
+    headers: await visitor(),
+  });
 
 export const getTerm = (path: string) =>
   read<{
@@ -194,5 +201,7 @@ export function settingString(settings: Record<string, unknown>, key: string): s
 }
 
 /** Ricerca del sito pubblico (DR-144); 5 risultati per pagina come la sorgente. */
-export const searchContents = (query: string, page: number) =>
-  read<SearchPage>(`/public/search?s=${encodeURIComponent(query)}&page=${page}`);
+export const searchContents = async (query: string, page: number) =>
+  read<SearchPage>(`/public/search?s=${encodeURIComponent(query)}&page=${page}`, {
+    headers: await visitor(),
+  });

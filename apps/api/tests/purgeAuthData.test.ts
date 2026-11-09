@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { purgeAuthData } from '../src/maintenance/purgeAuthData.js';
 import { createHarness, type Harness } from './_support/harness.js';
 
-/** 1F-W4 T6j (R25): la pulizia toglie solo sessioni vecchie e fallimenti d'accesso vecchi. Righe sintetiche. */
+/** 1F-W4 T6j (R25) e T7 (N4): la pulizia toglie solo sessioni vecchie e righe vecchie dei tentativi. Righe sintetiche. */
 
 let h: Harness;
 const DAY = 86_400_000;
@@ -24,10 +24,19 @@ const session = (expiresAt: Date, revokedAt: Date | null) => ({
   expiresAt,
   revokedAt,
 });
-const audit = (action: string, outcome: 'success' | 'failure', days: number, reason?: string) => ({
+const IDENTIFIER = 'auth.identifier';
+const audit = (
+  action: string,
+  outcome: 'success' | 'failure',
+  days: number,
+  reason?: string,
+  entityType: string | null = outcome === 'failure' ? IDENTIFIER : null,
+) => ({
   action,
   outcome,
   occurredAt: ago(days),
+  entityType,
+  entityId: entityType ? 'digest-sintetico' : null,
   detail: reason ? { reason } : {},
 });
 
@@ -50,12 +59,17 @@ describe('purgeAuthData', () => {
       audit('auth.login', 'failure', 40, 'too_many_attempts'), // via
       audit('auth.login', 'failure', 29, 'invalid_credentials'), // resta
       audit('auth.login', 'success', 90), // resta
-      audit('auth.password_changed', 'failure', 90, 'invalid_credentials'), // resta
+      // N4 della T7 (DR-403): ogni riga con il digest dell'identificativo scade come i fallimenti d'accesso.
+      audit('auth.password_changed', 'failure', 90), // via
+      audit('auth.second_factor', 'failure', 31), // via
+      audit('auth.second_factor', 'failure', 29), // resta
+      audit('auth.login_unblocked', 'success', 31, undefined, IDENTIFIER), // via
+      audit('auth.password_changed', 'success', 90), // resta: il cambio riuscito, senza digest
       audit('account.create', 'success', 400), // resta
     ]);
 
     const result = await purgeAuthData(h.db);
-    expect(result).toEqual({ sessions: 2, loginFailures: 2 });
+    expect(result).toEqual({ sessions: 2, attempts: 5 });
 
     const left = await h.db.select({ id: schema.sessions.id }).from(schema.sessions);
     expect(left).toHaveLength(3);
@@ -67,12 +81,13 @@ describe('purgeAuthData', () => {
       'account.create/success',
       'auth.login/failure',
       'auth.login/success',
-      'auth.password_changed/failure',
+      'auth.password_changed/success',
+      'auth.second_factor/failure',
     ]);
   });
 
   it('una seconda esecuzione non trova più nulla', async () => {
-    expect(await purgeAuthData(h.db)).toEqual({ sessions: 0, loginFailures: 0 });
+    expect(await purgeAuthData(h.db)).toEqual({ sessions: 0, attempts: 0 });
     const [count] = await h.db
       .select({ n: sql<number>`count(*)::int` })
       .from(schema.auditLog)

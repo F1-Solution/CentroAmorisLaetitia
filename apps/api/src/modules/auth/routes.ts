@@ -2,7 +2,12 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { AUTH_ACTIONS, writeAudit } from '../../auth/audit.js';
-import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../auth/loginAttempts.js';
+import {
+  evaluateAttempts,
+  identifierDigest,
+  IDENTIFIER_ENTITY,
+  oneAtATime,
+} from '../../auth/loginAttempts.js';
 import { activateSecondFactor, beginEnrollment, markSession } from '../../auth/totp.js';
 import {
   issueSession,
@@ -52,6 +57,12 @@ import {
  */
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** DR-400: tetto per sessione su ciascuna rotta del codice e della conferma, in memoria e prima del conteggio a database. */
+const perSessionLimit = {
+  ...anonymousLimit(10),
+  keyGenerator: (request: FastifyRequest) => request.auth?.sessionId ?? request.ip,
+};
 
 /**
  * Le vesti fra cui scegliere: una per ogni coppia ruolo-area posseduta.
@@ -119,7 +130,28 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         }
       };
 
-      const attempts = await evaluateAttempts(app.db, app.config, email, ipHash);
+      // DR-400: conteggio, verifica e fallimento nella coda dell'account; il ritardo si sconta dopo.
+      const { attempts, candidate } = await oneAtATime(email, async () => {
+        const attempts = await evaluateAttempts(app.db, app.config, email, ipHash);
+        if (attempts.blocked) return { attempts, candidate: null };
+        const found = await findByEmail(app.db, email);
+        if ((await checkPassword(found, password, app.config)) && found) {
+          return { attempts, candidate: found };
+        }
+        await writeAudit(app.db, {
+          action: AUTH_ACTIONS.login,
+          outcome: 'failure',
+          entityType: IDENTIFIER_ENTITY,
+          // Digest, non indirizzo: potrebbe essere di una persona che con
+          // questo servizio non c'entra nulla.
+          entityId: digest,
+          // Che l'indirizzo esista o no non si scrive: sarebbe la stessa
+          // enumerazione che il controllo 9 vieta di far trapelare.
+          detail: { reason: 'invalid_credentials' },
+          ipHash,
+        });
+        return { attempts, candidate: null };
+      });
       if (attempts.delayMs > 0) await pause(attempts.delayMs);
 
       if (attempts.blocked) {
@@ -141,22 +173,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      const candidate = await findByEmail(app.db, email);
-      const ok = await checkPassword(candidate, password, app.config);
-
-      if (!ok || !candidate) {
-        await writeAudit(app.db, {
-          action: AUTH_ACTIONS.login,
-          outcome: 'failure',
-          entityType: IDENTIFIER_ENTITY,
-          // Digest, non indirizzo: potrebbe essere di una persona che con
-          // questo servizio non c'entra nulla.
-          entityId: digest,
-          // Che l'indirizzo esista o no non si scrive: sarebbe la stessa
-          // enumerazione che il controllo 9 vieta di far trapelare.
-          detail: { reason: 'invalid_credentials' },
-          ipHash,
-        });
+      if (!candidate) {
         await uniform();
         return reply.code(401).send({
           error: {
@@ -385,6 +402,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     onRequest: app.requireSession,
     config: { allowWithPendingPasswordChange: true, allowWithoutSecondFactor: true },
   } as const;
+  const preSecondFactorLimited = {
+    ...preSecondFactor,
+    config: { ...preSecondFactor.config, rateLimit: perSessionLimit },
+  } as const;
   const tooMany = (request: FastifyRequest, reply: FastifyReply) =>
     reply.code(429).send({
       error: {
@@ -434,7 +455,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   typed.post(
     '/auth/second-factor/activate',
     {
-      ...preSecondFactor,
+      ...preSecondFactorLimited,
       schema: {
         tags: ['autenticazione'],
         summary: 'Attiva il secondo fattore con un codice valido e verifica la sessione',
@@ -473,7 +494,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   typed.post(
     '/auth/second-factor/verify',
     {
-      ...preSecondFactor,
+      ...preSecondFactorLimited,
       schema: {
         tags: ['autenticazione'],
         summary: 'Verifica il codice del secondo fattore e sblocca la sessione',
@@ -513,6 +534,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     '/auth/confirm',
     {
       onRequest: app.requireSession,
+      config: { rateLimit: perSessionLimit },
       schema: {
         tags: ['autenticazione'],
         summary:

@@ -36,10 +36,12 @@ begin() {
 }
 
 # Lock esclusivo non bloccante sul volume di stato: una sola esecuzione di backup o ripristino alla volta.
+# Preso il lock si svuota /backup/data: un SIGKILL o un OOM precedenti saltano il trap d'uscita (DR-403).
 acquire_lock() {
   exec 9>"$STATE_DIR/.lock" || fail state_write 74
   flock -n 9 || fail busy 75
   HAVE_LOCK=1
+  empty_data_dir
 }
 
 # Svuota /backup/data (R18): la copia in chiaro non resta sul disco; agisce solo sul contenuto di quella cartella.

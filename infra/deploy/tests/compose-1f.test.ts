@@ -46,6 +46,8 @@ const BASE_ENV: Readonly<Record<string, string>> = {
   CSRF_SECRET: 'segreto-sintetico-per-il-compose-abbastanza-lungo',
   TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
   SCRUB_SERVICE_TOKEN: 'gettone-sintetico-del-servizio-di-pulizia-1f',
+  // DR-402: obbligatoria e diversa per ambiente, così due stack sullo stesso server non si sovrappongono.
+  APP_SUBNET: '10.77.84.0/24',
 };
 
 const STAGING_ENV: Readonly<Record<string, string>> = {
@@ -55,6 +57,7 @@ const STAGING_ENV: Readonly<Record<string, string>> = {
   CADDY_HTTP_PORT: '8080',
   CADDY_HTTPS_PORT: '8443',
   SITE_URL: 'https://prova.esempio.invalid',
+  APP_SUBNET: '10.77.85.0/24',
 };
 
 const REQUIRED = Object.keys(BASE_ENV);
@@ -76,7 +79,7 @@ const BACKUP_ENV: Readonly<Record<string, string>> = {
  */
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|APP_SUBNET)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -263,6 +266,14 @@ describe('porte e reti (W2-5, DR-359)', () => {
       if (name === 'caddy') continue;
       expect(Object.keys(service.networks ?? {}), name).not.toContain('edge');
     }
+  });
+
+  it('rete app e TRUSTED_PROXY dell API seguono l APP_SUBNET di ciascun ambiente (N3, DR-402)', () => {
+    const subnetOf = (resolved: Config) => resolved.networks.app?.ipam?.config?.[0]?.subnet;
+    expect(subnetOf(production)).toBe('10.77.84.0/24');
+    expect(subnetOf(staging)).toBe('10.77.85.0/24');
+    expect(production.services.api?.environment?.TRUSTED_PROXY).toBe('10.77.84.0/24');
+    expect(staging.services.api?.environment?.TRUSTED_PROXY).toBe('10.77.85.0/24');
   });
 
   it('backup-out ha sottorete e bridge fissi, modificabili e diversi dalla rete app (R13)', () => {

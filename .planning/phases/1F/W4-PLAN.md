@@ -199,10 +199,16 @@ ultimo. Per ciascuna correzione la prova rossa prima, poi verde; una suite Docke
 
 ### T7 — Riesame e verifica
 
-- [ ] Il revisore riesamina il solo diff delle correzioni; nessun critico o alto aperto.
-- [ ] Verifica come la CI (W4-10), `test:images`, `check-image`, e2e attraverso Caddy sullo stack
-  d'immagini; nuova scansione gitleaks del working tree.
+- [x] Il revisore riesamina il solo diff delle correzioni (`6c6e4ed..57c4ae6`): 0 critici, 1 alto
+  (N1), 2 medi (N2, N3), 6 bassi (N4–N9); D286…D290 decise (DR-400…DR-404).
+- [x] **T7a — correzioni del riesame** (prova rossa prima per ciascuna): N1 (DR-400), N2 e N8
+  (DR-401), N3 (DR-402), N4 e N5 (DR-403); riesame del revisore sul solo diff di queste
+  correzioni: N1–N5 e N8 chiusi, 0 critici, 0 alti, 0 medi, 6 bassi annotati (R-A…R-F).
+- [x] Verifica come la CI (W4-10), `test:images` (340/340), `check-image`, e2e attraverso Caddy
+  sullo stack delle immagini `w4-t7a` (71/71); gitleaks su cronologia (144 commit, 0) e immagini.
 - [ ] Sito e area ricompilati per lo sviluppo, server spenti, volumi di prova rimossi su conferma.
+  Server spenti; ricompilazione con `riavvia-sviluppo.ps1` alla riaccensione; volumi alla chiusura
+  della T8 (DR-404), più due volumi anonimi nati in questa sessione, da cancellare su conferma.
 
 ### T8 — Documenti e chiusura
 
@@ -216,7 +222,7 @@ ultimo. Per ciascuna correzione la prova rossa prima, poi verde; una suite Docke
 
 ## 4. Decisioni
 
-Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decisioni.md`](W4-decisioni.md)), D275…D279 in T5 sugli esiti della T4, D280 sul perimetro della T6, D281…D285 nella T6l.
+Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decisioni.md`](W4-decisioni.md)), D275…D279 in T5 sugli esiti della T4, D280 sul perimetro della T6, D281…D285 nella T6l. Il 2026-11-09: D286…D290 nella T7 sugli esiti del riesame.
 
 | id | Decisione | Esito |
 |---|---|---|
@@ -236,6 +242,11 @@ Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decision
 | ~~**D283**~~ | Reimpostazione del secondo fattore | **DR-397**: solo il manutentore da CLI |
 | ~~**D284**~~ | Rischio della prima attivazione | **DR-398**: accettato, password temporanea su canale sicuro |
 | ~~**D285**~~ | Rotazione di `TOTP_ENCRYPTION_KEY` | **DR-399**: nessuna in Fase 1, reimpostazione di tutti i secondi fattori se compromessa |
+| ~~**D286**~~ | N1: corsa sui tentativi (alto) | **DR-400**: coda in memoria per account nei 7 punti, tetto di 10 al minuto per sessione su codice e conferma, un solo processo API scritto in ADR-007 |
+| ~~**D287**~~ | N2: ricerca e redirect esenti per la via del sito | **DR-401**: il sito inoltra l'indirizzo del visitatore, esenzione tolta, prova inversa di N8 |
+| ~~**D288**~~ | N3: fiducia nella sottorete `app` | **DR-402**: `APP_SUBNET` obbligatoria e diversa per ambiente; fiducia nella sottorete accettata |
+| ~~**D289**~~ | Bassi del riesame | **DR-403**: N4, N5, N8 subito; N6 e timer di R25 alla W5; N9 e R27 nel rapporto |
+| ~~**D290**~~ | Risorse Docker di prova | **DR-404**: volumi e immagini di prova elencati cancellati alla chiusura della T8 |
 
 Conseguenze sulle attività:
 

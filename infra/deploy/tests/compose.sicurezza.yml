@@ -1,9 +1,15 @@
 # Aggiunte al Compose di produzione **solo per le prove di sicurezza** (1F-W4 T3): mai sul server.
-# Apre il database e l'archivio su 127.0.0.1 per scrivere il seme sintetico e contare le righe,
-# e **non tocca nessuna variabile dell'API**: limiti e attese dell'accesso restano quelli veri.
+# Apre il database e l'archivio su 127.0.0.1 per scrivere il seme sintetico e contare le righe.
+# Dell'API tocca solo i tetti HTTP per indirizzo (1F-W4 T6h), perché tutte le prove arrivano dallo
+# stesso indirizzo: limiti dei tentativi e attese dell'accesso restano quelli veri.
 #
 #   docker compose -f infra/deploy/compose.yml -f infra/deploy/tests/compose.sicurezza.yml ...
 services:
+  api:
+    environment:
+      HTTP_ANON_WRITES_PER_MINUTE: '100000'
+      HTTP_PUBLIC_READ_PER_MINUTE: '100000'
+
   db:
     ports:
       - '127.0.0.1:${SIC_DB_PORT:?manca SIC_DB_PORT}:5432'

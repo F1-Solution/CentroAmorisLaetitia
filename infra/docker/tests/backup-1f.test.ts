@@ -1054,6 +1054,25 @@ describe('script di backup con database, archivio e SFTP sintetici', () => {
       expect(dataListing()).toBe('');
     }, 180_000);
 
+    it('N5: il residuo di una terminazione brutale si svuota all avvio, prima del dump', () => {
+      // SIGKILL o OOM saltano il trap d'uscita: il residuo simulato deve sparire appena preso il lock (DR-403).
+      const script = [
+        'echo x > /backup/data/residuo-sigkill',
+        'printf \'#!/bin/sh\ncase "$3" in backup) ls -A /backup/data > /shim/visto;; esac\nexec /usr/local/bin/restic "$@"\n\' > /shim/restic',
+        'chmod +x /shim/restic',
+        'PATH=/shim:$PATH amoris-backup backup >/dev/null; echo "rc=$?"; cat /shim/visto',
+      ].join('\n');
+      const args = runArgs({ ...BASE_ENV }, ['-c', script], 'sh');
+      args.splice(1, 0, '--tmpfs', '/shim:exec,mode=1777');
+      const run = docker(args);
+      outputs.push(`${run.stdout}\n${run.stderr}`);
+      const lines = run.stdout.trim().split('\n');
+      expect(lines[0]).toBe('rc=0');
+      expect(lines).toContain('db');
+      expect(lines).not.toContain('residuo-sigkill');
+      expect(dataListing()).toBe('');
+    }, 180_000);
+
     it('R18: lo svuotamento non tocca stato e cache, che stanno fuori da /backup/data', () => {
       const run = docker(
         runArgs(

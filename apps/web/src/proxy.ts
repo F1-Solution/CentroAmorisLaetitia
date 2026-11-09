@@ -4,6 +4,7 @@ import { languageOf } from './lib/wpDate';
 import { asNextParams, isPreviewPath } from './lib/previewPath';
 import { siteUrl } from './lib/site';
 import { apiUrl } from './lib/apiUrl';
+import { visitorHeaders } from './lib/visitor';
 
 /**
  * Ciò che si risponde prima di rendere una pagina.
@@ -24,9 +25,9 @@ interface Rule {
   readonly statusCode: number;
 }
 
-async function api<T>(path: string): Promise<T | null> {
+async function api<T>(path: string, headers: Record<string, string> = {}): Promise<T | null> {
   try {
-    const response = await fetch(`${API_URL}${path}`, { cache: 'no-store' });
+    const response = await fetch(`${API_URL}${path}`, { cache: 'no-store', headers });
     return response.ok ? ((await response.json()) as T) : null;
   } catch {
     // Servizio non raggiungibile: la pagina lo dirà; un redirect mancato non deve bloccarla.
@@ -90,7 +91,10 @@ export async function proxy(request: NextRequest) {
     if (response) return response;
   }
 
-  const rule = await api<Rule>(`/public/redirect?path=${encodeURIComponent(path)}`);
+  const rule = await api<Rule>(
+    `/public/redirect?path=${encodeURIComponent(path)}`,
+    visitorHeaders(request.headers.get('x-forwarded-for')),
+  );
   if (!rule) return NextResponse.next();
   const target = rule.targetPath.startsWith('/')
     ? new URL(rule.targetPath, request.nextUrl.origin)

@@ -104,3 +104,26 @@ raccomandazione.
 - **DR-397:** chi perde il telefono resta fuori finché il manutentore non interviene.
 - **DR-398:** la password temporanea intercettata permette a un estraneo di attivare il proprio
   dispositivo prima della persona; si consegna su un canale sicuro (handoff della `1F-W5`).
+
+---
+
+# 1F-W4 T7 — Decisioni D286…D290 sul riesame delle correzioni
+
+Round del 2026-11-09 sul riesame del revisore separato del diff `6c6e4ed..57c4ae6` (0 critici,
+1 alto, 2 medi, 6 bassi). Registrate come DR-400…DR-404; tutte e cinque seguono la
+raccomandazione.
+
+| id | DR | Decisione | Scartate |
+|---|---|---|---|
+| D286 | DR-400 | **A** — coda in memoria per account su conteggio, verifica e registrazione nei 7 punti (accesso, password attuale, codice); tetto di 10 richieste al minuto per sessione su codice e conferma; un solo processo API scritto in ADR-007 | B (blocco consultivo di PostgreSQL): connessioni occupate sotto raffica e nucleo oltre 795 righe; C (solo tetto HTTP): accesso e password esposti |
+| D287 | DR-401 | **A** — il sito inoltra l'indirizzo del visitatore, esenzione tolta, 120 al minuto per visitatore su ricerca e redirect; prova inversa di N8 | B (tetto complessivo): chi attacca blocca la ricerca a tutti; C (rinvio alla W5): rischio aperto |
+| D288 | DR-402 | **B** — `APP_SUBNET` obbligatoria e diversa per ambiente; fiducia nell'intera sottorete `app` accettata in Fase 1 | A (indirizzi fissi): tre variabili per ambiente; C (rinvio): conflitto delle sottoreti fino alla W5 |
+| D289 | DR-403 | **A** — N4, N5, N8 subito; N6 e timer di R25 nell'handoff della W5; N9 e R27 nel rapporto | B (nessuna correzione): digest senza scadenza, copia in chiaro dopo un arresto forzato |
+| D290 | DR-404 | **A** — volumi `amoris-w4t7_*`, due anonimi e immagini di prova elencate cancellati alla chiusura della T8 | B (solo volumi), C (niente): disco occupato |
+
+## Rischi
+
+- **DR-400:** la coda vale per un solo processo API; con più repliche la corsa si riapre e la
+  decisione va ripresa (ADR-007).
+- **DR-402:** un contenitore `web` o `admin` compromesso può dichiarare un indirizzo falso
+  all'API e aggirare i tetti per indirizzo.

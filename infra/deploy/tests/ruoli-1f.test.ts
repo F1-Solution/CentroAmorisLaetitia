@@ -22,7 +22,7 @@ const deployDir = path.join(repoRoot, 'infra', 'deploy');
 const composeFile = path.join(deployDir, 'compose.yml');
 const overrideFile = path.join(import.meta.dirname, 'compose.sicurezza.yml');
 const rolesScript = path.join(deployDir, 'db-init', 'roles.sql');
-const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-1afed56';
+const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-t7a';
 const PROJECT = `amoris-prova-ruoli-${process.pid}`;
 
 const composeText = readFileSync(composeFile, 'utf8');
@@ -227,6 +227,8 @@ beforeAll(async () => {
     CSRF_SECRET: hex(24),
     TOTP_ENCRYPTION_KEY: 'cd'.repeat(32),
     SCRUB_SERVICE_TOKEN: hex(24),
+    // Obbligatoria dal riesame della T7 (DR-402).
+    APP_SUBNET: '10.77.84.0/24',
     RESTIC_PASSWORD: hex(18),
     BACKUP_SFTP_HOST: 'sftp.esempio.invalid',
     BACKUP_SFTP_USER: 'utente',

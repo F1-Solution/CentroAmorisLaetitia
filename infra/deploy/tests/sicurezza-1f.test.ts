@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
@@ -41,7 +41,7 @@ const overrideFile = path.join(import.meta.dirname, 'compose.sicurezza.yml');
 const snapshotFile = path.join(repoRoot, 'apps', 'api', 'tests', 'openapi.snapshot.json');
 
 const MUTAZIONE = process.env.SICUREZZA_MUTAZIONE ?? '';
-const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-1afed56';
+const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-t7a';
 const PROJECT = `amoris-prova-sicurezza-${process.pid}`;
 
 /** Persone del seme sintetico (`apps/api/tools/seedSintetico.ts`), tutte con `SEED_PASSWORD`. */
@@ -372,11 +372,25 @@ async function login(
   return call('POST', '/api/auth/login', { headers, body: { email, password } });
 }
 
-/** Accesso riuscito più scelta della veste di redazione, come fa l'area amministrativa. */
+/**
+ * Segna verificata e confermata ora, a database, la sola sessione del token dato: come l'harness
+ * dell'API, le prove che non riguardano il secondo fattore non lo ripetono (DR-384). Il rifiuto
+ * delle sessioni non verificate è provato a parte, attraverso Caddy.
+ */
+async function verifySecondFactor(token: string): Promise<void> {
+  const digest = createHash('sha256').update(token, 'utf8').digest();
+  const marked = await sql`
+    UPDATE sessions SET second_factor_verified_at = now(), last_confirmed_at = now()
+    WHERE token_digest = ${digest} AND revoked_at IS NULL`;
+  if (marked.count !== 1) throw new Error('sessione di prova non trovata a database');
+}
+
+/** Accesso riuscito, secondo fattore verificato e scelta della veste di redazione, come fa l'area. */
 async function signIn(email: string = REDAZIONE): Promise<Session> {
   const reply = await login(email);
   if (reply.status !== 200) throw new Error(`accesso di prova fallito (${reply.status})`);
   const session = sessionFrom(reply);
+  await verifySecondFactor(session.token);
   const roles = (json(reply).rolesHeld ?? []) as { roleId: string; areas: string[] }[];
   const role = roles.find((held) => held.areas.includes('redazione'));
   if (role) {
@@ -491,6 +505,8 @@ beforeAll(async () => {
     CSRF_SECRET: secrets.csrf,
     TOTP_ENCRYPTION_KEY: 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd',
     SCRUB_SERVICE_TOKEN: secrets.scrub,
+    // Obbligatoria dal riesame della T7 (DR-402).
+    APP_SUBNET: '10.77.84.0/24',
     SIC_DB_PORT: String(dbPort),
     SIC_OBJECTS_PORT: String(objectsPort),
   };
@@ -807,7 +823,9 @@ describe('cookie in produzione (controllo 3)', () => {
     expect(attributes.get('samesite')?.toLowerCase()).toBe('lax');
     expect(attributes.get('path')).toBe('/');
     expect(attributes.has('domain')).toBe(false);
-    expect(Number(attributes.get('max-age'))).toBeGreaterThan(0);
+    // DR-391: cookie di sessione del browser, senza scadenza propria; i limiti li applica il server.
+    expect(attributes.has('max-age')).toBe(false);
+    expect(attributes.has('expires')).toBe(false);
   });
 
   it('il cookie anti-CSRF è Secure, SameSite=Lax, Path=/, senza Domain e leggibile dal client', async () => {
@@ -912,6 +930,33 @@ describe('CSRF a doppio invio su ogni rotta che modifica dati (controllo 7)', ()
   it('l’accesso non pretende il token, perché non c’è ancora una sessione', async () => {
     const reply = await login(REDAZIONE);
     expect(reply.status).toBe(200);
+  });
+});
+
+describe('secondo fattore attraverso Caddy (DR-384)', () => {
+  it('dopo la sola password la sessione non ottiene nulla, nemmeno la scelta della veste', async () => {
+    const reply = await login(REDAZIONE);
+    expect(reply.status).toBe(200);
+    expect(json(reply).secondFactor).toMatch(/^(activation|verification)_required$/);
+    expect(json(reply).permissions).toEqual([]);
+    const session = sessionFrom(reply);
+
+    const read = await call('GET', '/api/contents', { headers: { Cookie: session.cookie } });
+    expect(read.status).toBe(403);
+    expect(errorCode(read)).toBe('SECOND_FACTOR_REQUIRED');
+
+    const roles = (json(reply).rolesHeld ?? []) as { roleId: string; areas: string[] }[];
+    const context = await call('POST', '/api/auth/context', {
+      headers: session.writeHeaders,
+      body: { roleId: roles[0]?.roleId ?? randomUUID(), area: 'redazione' },
+    });
+    expect(context.status).toBe(403);
+    expect(errorCode(context)).toBe('SECOND_FACTOR_REQUIRED');
+
+    // `/auth/me` resta leggibile: è da lì che l'area sa di dover chiedere il codice.
+    const me = await call('GET', '/api/auth/me', { headers: { Cookie: session.cookie } });
+    expect(me.status).toBe(200);
+    expect(json(me).secondFactor).toBe(json(reply).secondFactor);
   });
 });
 

@@ -115,7 +115,8 @@ services:
       IP_HASH_SALT: ${IP_HASH_SALT:?manca IP_HASH_SALT}
       CSRF_SECRET: ${CSRF_SECRET:?manca CSRF_SECRET}
       TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?manca TOTP_ENCRYPTION_KEY}
-      TRUSTED_PROXY: ${APP_SUBNET:-10.77.84.0/24}
+      # Tutta la sottorete app, non il solo Caddy: rischio accettato in Fase 1 (DR-402).
+      TRUSTED_PROXY: ${APP_SUBNET:?manca APP_SUBNET}
       S3_ENDPOINT: http://objects:9000
       # Utente di servizio limitato ai due bucket, non l'amministratore dell'archivio (T6g).
       S3_ACCESS_KEY: amoris-api
@@ -347,11 +348,12 @@ networks:
   # Unica rete con uscita: Caddy riceve dall'esterno e chiede i certificati.
   edge: {}
   # Sottorete fissa: l'API si fida di `X-Forwarded-For` solo da questa rete (TRUSTED_PROXY), dove stanno Caddy e le applicazioni.
+  # Obbligatoria e diversa per produzione e staging, che stanno sullo stesso server (DR-402).
   app:
     internal: true
     ipam:
       config:
-        - subnet: ${APP_SUBNET:-10.77.84.0/24}
+        - subnet: ${APP_SUBNET:?manca APP_SUBNET (sottorete della rete app, diversa per produzione e staging, per esempio 10.77.84.0/24 e 10.77.85.0/24)}
   data: { internal: true }
   scrub: { internal: true }
   # Solo per il backup, verso la Storage Box; la destinazione la limita `firewall/backup-out.sh` sull'host (1F-W4 T6i).

@@ -141,14 +141,29 @@ describe('R6: tetti HTTP anonimi senza scritture a database', () => {
     expect((await h.db.select().from(schema.auditLog)).length).toBe(before);
   });
 
-  it('le chiamate dirette dalla rete interna, senza X-Forwarded-For, non condividono il tetto', async () => {
-    for (let i = 0; i < 6; i++) {
+  // N2 e N8 della T7 (DR-401): l'esenzione delle chiamate interne è tolta, il sito inoltra l'indirizzo del visitatore.
+  it('una chiamata dalla rete interna senza X-Forwarded-For non è esente: oltre il tetto 429', async () => {
+    const codes: number[] = [];
+    for (let i = 0; i < 4; i++) {
       const response = await h.app.inject({
         method: 'GET',
         url: '/public/redirect?path=/x-interno',
       });
-      expect(response.statusCode).toBe(404);
+      codes.push(response.statusCode);
     }
+    expect(codes).toEqual([404, 404, 404, 429]);
+  });
+
+  it('la ricerca inoltrata dal sito con l indirizzo del visitatore si conta per visitatore', async () => {
+    const search = (visitor: string) =>
+      h.app.inject({
+        method: 'GET',
+        url: '/public/search?s=prova&page=1',
+        headers: { 'x-forwarded-for': visitor },
+      });
+    for (let i = 0; i < 3; i++) expect((await search('203.0.113.50')).statusCode).toBe(200);
+    expect((await search('203.0.113.50')).statusCode).toBe(429);
+    expect((await search('203.0.113.51')).statusCode).toBe(200);
   });
 
   it('form: 400 di validazione e 429 non scrivono né registro né compilazioni', async () => {

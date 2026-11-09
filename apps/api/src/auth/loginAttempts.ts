@@ -28,6 +28,24 @@ export function identifierDigest(identifier: string, salt: string): string {
 
 export const IDENTIFIER_ENTITY = 'auth.identifier';
 
+const queues = new Map<string, Promise<unknown>>();
+
+/**
+ * DR-400: per account conteggio, verifica e registrazione del fallimento girano uno alla volta, così una raffica
+ * parallela non legge il conteggio prima delle scritture; vale per un solo processo API (ADR-007, Fase 1).
+ */
+export async function oneAtATime<T>(identifier: string, work: () => Promise<T>): Promise<T> {
+  const key = identifier.trim().toLowerCase();
+  const turn = (queues.get(key) ?? Promise.resolve()).then(work);
+  const settled = turn.catch(() => undefined);
+  queues.set(key, settled);
+  try {
+    return await turn;
+  } finally {
+    if (queues.get(key) === settled) queues.delete(key);
+  }
+}
+
 /** `action` distingue i fallimenti contati: l'accesso, o il cambio password che verifica la password attuale. */
 export async function evaluateAttempts(
   db: Database,

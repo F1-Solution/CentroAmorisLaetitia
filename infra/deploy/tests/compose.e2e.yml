@@ -10,6 +10,9 @@ services:
       LOGIN_DELAY_STEP_MS: '0'
       LOGIN_MAX_PER_IP: '1000'
       LOGIN_MAX_PER_ACCOUNT: '1000'
+      # Tutte le prove arrivano dallo stesso indirizzo: i tetti HTTP (1F-W4 T6h) li provano i test del servizio.
+      HTTP_ANON_WRITES_PER_MINUTE: '100000'
+      HTTP_PUBLIC_READ_PER_MINUTE: '100000'
 
   db:
     ports:

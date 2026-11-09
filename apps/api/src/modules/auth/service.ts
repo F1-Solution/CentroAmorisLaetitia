@@ -2,7 +2,12 @@ import { schema, type Database } from '@amoris/db';
 import { eq } from 'drizzle-orm';
 import { AUTH_ACTIONS, writeAudit } from '../../auth/audit.js';
 import { consumeCode } from '../../auth/totp.js';
-import { evaluateAttempts, identifierDigest, IDENTIFIER_ENTITY } from '../../auth/loginAttempts.js';
+import {
+  evaluateAttempts,
+  identifierDigest,
+  IDENTIFIER_ENTITY,
+  oneAtATime,
+} from '../../auth/loginAttempts.js';
 import type { Config } from '../../config.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
 
@@ -89,30 +94,15 @@ export async function verifyCurrentPassword(
   /** `account`: la verifica viene da una modifica dell'account, e la riga di conteggio non si mostra nel registro. */
   source: 'password' | 'account' = 'password',
 ): Promise<CurrentPasswordVerdict> {
-  const attempts = await evaluateAttempts(
+  return countedAttempt(
     db,
     config,
-    actor.email,
+    actor,
     ipHash,
     AUTH_ACTIONS.passwordChanged,
+    async () => checkPassword(await findByEmail(db, actor.email), password, config),
+    source === 'account' ? { source } : {},
   );
-  if (attempts.delayMs > 0) await new Promise((resolve) => setTimeout(resolve, attempts.delayMs));
-  if (attempts.blocked) return 'blocked';
-  const owner = await findByEmail(db, actor.email);
-  if (await checkPassword(owner, password, config)) return 'ok';
-  await writeAudit(db, {
-    action: AUTH_ACTIONS.passwordChanged,
-    outcome: 'failure',
-    actorUserId: actor.userId,
-    actorLabel: actor.fullName,
-    // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
-    entityType: IDENTIFIER_ENTITY,
-    entityId: identifierDigest(actor.email, config.IP_HASH_SALT),
-    sessionId: actor.sessionId,
-    ipHash,
-    detail: source === 'account' ? { source } : {},
-  });
-  return 'invalid';
 }
 
 /**
@@ -127,28 +117,48 @@ export async function verifyCode(
   ipHash: Buffer | null,
   purpose: 'activate' | 'verify' | 'confirm',
 ): Promise<CurrentPasswordVerdict> {
-  const attempts = await evaluateAttempts(
+  return countedAttempt(
     db,
     config,
-    actor.email,
+    actor,
     ipHash,
     AUTH_ACTIONS.secondFactor,
+    () => consumeCode(db, config, actor.userId, code),
+    { purpose },
   );
-  if (attempts.delayMs > 0) await new Promise((resolve) => setTimeout(resolve, attempts.delayMs));
-  if (attempts.blocked) return 'blocked';
-  if (await consumeCode(db, config, actor.userId, code)) return 'ok';
-  await writeAudit(db, {
-    action: AUTH_ACTIONS.secondFactor,
-    outcome: 'failure',
-    actorUserId: actor.userId,
-    actorLabel: actor.fullName,
-    entityType: IDENTIFIER_ENTITY,
-    entityId: identifierDigest(actor.email, config.IP_HASH_SALT),
-    sessionId: actor.sessionId,
-    ipHash,
-    detail: { purpose },
+}
+
+/** Conteggio, verifica e fallimento nella coda dell'account (DR-400); il ritardo progressivo si sconta fuori dalla coda. */
+async function countedAttempt(
+  db: Database,
+  config: Config,
+  actor: SessionActor,
+  ipHash: Buffer | null,
+  action: string,
+  check: () => Promise<boolean>,
+  detail: Record<string, string>,
+): Promise<CurrentPasswordVerdict> {
+  const { delayMs, verdict } = await oneAtATime(actor.email, async () => {
+    const attempts = await evaluateAttempts(db, config, actor.email, ipHash, action);
+    const outcome = (verdict: CurrentPasswordVerdict) => ({ delayMs: attempts.delayMs, verdict });
+    if (attempts.blocked) return outcome('blocked');
+    if (await check()) return outcome('ok');
+    await writeAudit(db, {
+      action,
+      outcome: 'failure',
+      actorUserId: actor.userId,
+      actorLabel: actor.fullName,
+      // Lo stesso digest dell'accesso: è la chiave del conteggio per account.
+      entityType: IDENTIFIER_ENTITY,
+      entityId: identifierDigest(actor.email, config.IP_HASH_SALT),
+      sessionId: actor.sessionId,
+      ipHash,
+      detail,
+    });
+    return outcome('invalid');
   });
-  return 'invalid';
+  if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+  return verdict;
 }
 
 export async function setPassword(

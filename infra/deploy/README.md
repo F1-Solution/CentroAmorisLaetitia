@@ -70,7 +70,7 @@ reti di produzione e di staging non si toccano.
 
 ### Indirizzo del client e sottorete interna
 
-L'API si fida di `X-Forwarded-For` solo dalla rete interna `app` (variabile `TRUSTED_PROXY`, fissata dal Compose uguale ad `APP_SUBNET`, predefinita `10.77.84.0/24`). Produzione e staging sullo stesso server impostano due `APP_SUBNET` diverse nel proprio file d'ambiente. Senza `TRUSTED_PROXY` l'API non si fida di nessuno.
+L'API si fida di `X-Forwarded-For` solo dalla rete interna `app` (variabile `TRUSTED_PROXY`, fissata dal Compose uguale ad `APP_SUBNET`). `APP_SUBNET` è obbligatoria e diversa per ambiente (DR-402): `10.77.84.0/24` in produzione e `10.77.85.0/24` in staging, ciascuna nel proprio file d'ambiente; senza, il Compose non parte. La fiducia vale per tutta la sottorete, quindi anche per sito e area: un loro contenitore compromesso potrebbe dichiarare un indirizzo falso (rischio accettato in Fase 1, DR-402). Il sito inoltra all'API l'indirizzo del visitatore ricevuto da Caddy, così ricerca e redirect si limitano per visitatore (DR-401). Senza `TRUSTED_PROXY` l'API non si fida di nessuno.
 
 ### Sblocco di un account bloccato per troppi tentativi
 
@@ -94,13 +94,13 @@ Esito atteso: «Secondo fattore reimpostato: N sessioni chiuse. Operazione regis
 
 ### Pulizia di sessioni e tentativi falliti
 
-Cancella le sessioni scadute o revocate da più di 30 giorni e le righe di registro dei tentativi d'accesso falliti (`auth.login` con esito `failure`, rifiuti per troppi tentativi compresi) più vecchie di 30 giorni; nessun'altra riga del registro. Si lancia a mano; il timer di systemd che la esegue ogni giorno si crea nella W5:
+Cancella le sessioni scadute o revocate da più di 30 giorni e, più vecchie di 30 giorni, le righe di registro dei tentativi: accessi falliti (rifiuti per troppi tentativi compresi), password o codice del secondo fattore sbagliati e sblocchi da CLI (DR-403); nessun'altra riga del registro. Si lancia a mano; il timer di systemd che la esegue ogni giorno si crea nella W5:
 
 ```
 docker compose -f infra/deploy/compose.yml --env-file <file> run --rm --no-deps api node bin/auth-purge.js
 ```
 
-Esito atteso: «Pulizia eseguita: N sessioni e M tentativi falliti cancellati.»; con codice diverso da 0 non ha cancellato nulla di cui fidarsi. La durata del registro delle operazioni è una decisione ancora aperta e questo comando non la tocca.
+Esito atteso: «Pulizia eseguita: N sessioni e M righe di tentativi cancellate.»; con codice diverso da 0 non ha cancellato nulla di cui fidarsi. La durata del registro delle operazioni è una decisione ancora aperta e questo comando non la tocca.
 
 ## 4. Verifica
 

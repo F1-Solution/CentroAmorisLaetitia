@@ -55,7 +55,7 @@ const iso = (value: Date | null) => (value ? value.toISOString() : null);
 
 export async function publicRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
-  const readLimit = anonymousLimit(app.config.HTTP_PUBLIC_READ_PER_MINUTE, { allowDirect: true });
+  const readLimit = anonymousLimit(app.config.HTTP_PUBLIC_READ_PER_MINUTE);
 
   typed.get(
     '/content',
