@@ -69,7 +69,7 @@ L'adeguatezza dei DPA va valutata nella MI-06 (DR-073, DR-303): il confronto non
 
 ## 4. Stato del repository
 
-Aggiornato alla T8 della `1F-W3` (2026-11-07):
+Aggiornato alla T8 della `1F-W4` (2026-11-09):
 
 - `infra/compose/` resta lo sviluppo. `infra/docker/` contiene i Dockerfile di `web`,
   `admin`, `api`, `scrub` e `backup` e lo script di controllo dei file delle immagini;
@@ -88,6 +88,14 @@ Aggiornato alla T8 della `1F-W3` (2026-11-07):
   handoff HO-059, da eseguire nella W5. Registro delle cancellazioni da riapplicare dopo un
   ripristino nella `1F-W6` (DR-381). Il parere scritto MI-06 è in
   `docs/legal/MI-06-parere-privacy.md` (DR-382).
+- Security review della `1F-W4` in `docs/deploy/security-review-1F.md`: revisore agente a
+  contesto nuovo (DR-383), nessun critico o alto aperto. Area amministrativa con TOTP per tutti
+  gli account e conferma recente per la gestione degli account; sessioni di 14 giorni con 8 ore
+  di inattività; Node 26.12.1; ruoli del database e utenti dell'archivio a privilegi minimi;
+  staging con password; CI con `pnpm audit`, gitleaks e azioni fissate per SHA. Nucleo
+  dell'autenticazione 789 su 800 righe (DR-395). Le azioni sul server sono in HO-061 (`1F-W5`).
+- Nessuna cifratura a riposo in Fase 1: rischio approvato per iscritto dal Centro (DR-385,
+  DR-394). Dati del Centro sul server solo dopo la chiusura della `1F-W4` (DR-374).
 
 ## 5. Decisioni del secondo round (2026-10-28)
 

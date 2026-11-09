@@ -206,23 +206,25 @@ ultimo. Per ciascuna correzione la prova rossa prima, poi verde; una suite Docke
   correzioni: N1–N5 e N8 chiusi, 0 critici, 0 alti, 0 medi, 6 bassi annotati (R-A…R-F).
 - [x] Verifica come la CI (W4-10), `test:images` (340/340), `check-image`, e2e attraverso Caddy
   sullo stack delle immagini `w4-t7a` (71/71); gitleaks su cronologia (144 commit, 0) e immagini.
-- [ ] Sito e area ricompilati per lo sviluppo, server spenti, volumi di prova rimossi su conferma.
-  Server spenti; ricompilazione con `riavvia-sviluppo.ps1` alla riaccensione; volumi alla chiusura
-  della T8 (DR-404), più due volumi anonimi nati in questa sessione, da cancellare su conferma.
+- [x] Sito e area ricompilati per lo sviluppo, server spenti, volumi di prova rimossi su conferma.
+  Server spenti; ricompilazione con `riavvia-sviluppo.ps1` alla riaccensione; volumi e immagini di
+  prova cancellati (DR-404), più tre volumi anonimi nati nella sessione (DR-407).
 
 ### T8 — Documenti e chiusura
 
-- [ ] `docs/deploy/security-review-1F.md`: perimetro, metodo e versioni degli strumenti, esiti per
+- [x] `docs/deploy/security-review-1F.md`: perimetro, metodo e versioni degli strumenti, esiti per
   area, 12 controlli di ADR-007, tre tabelle, scansioni (solo conteggi e verdetti), rilievi con
   severità ed esito, rischi accettati con DR, rinvii a wave nominate, limiti della revisione.
-- [ ] ADR-007 (§8, esito 1F), `database-schema.md` §8 punto 5, `infra/deploy/README.md` §9,
-  CONTEXT §4, PLAN §8 aggiornati; handoff per azioni sul server nate dagli esiti (eseguiti in W5).
-- [ ] Audit di chiusura della wave contro W4-1…W4-11 **prima** della richiesta di commit.
+- [x] ADR-007 (§8, esito 1F), `database-schema.md` §8 punto 5, `infra/deploy/README.md` §9,
+  CONTEXT §4, PLAN §8 aggiornati; handoff per azioni sul server nate dagli esiti (eseguiti in W5):
+  HO-061.
+- [x] Audit di chiusura della wave contro W4-1…W4-11 **prima** della richiesta di commit
+  (rapporto §13): W4-1…W4-10 soddisfatti (W4-5 con DR-405, W4-8 con DR-408); W4-11 con commit e CI.
 - [ ] Commit e push su conferma; CI verde; riga `PHASE:1F WAVE:1F-W4 STATUS:complete`.
 
 ## 4. Decisioni
 
-Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decisioni.md`](W4-decisioni.md)), D275…D279 in T5 sugli esiti della T4, D280 sul perimetro della T6, D281…D285 nella T6l. Il 2026-11-09: D286…D290 nella T7 sugli esiti del riesame.
+Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decisioni.md`](W4-decisioni.md)), D275…D279 in T5 sugli esiti della T4, D280 sul perimetro della T6, D281…D285 nella T6l. Il 2026-11-09: D286…D290 nella T7 sugli esiti del riesame, D291…D294 nella T8 all'audit di chiusura.
 
 | id | Decisione | Esito |
 |---|---|---|
@@ -247,6 +249,10 @@ Prese il 2026-11-08: D270…D274 con `grill-with-ui` (riepilogo in [`W4-decision
 | ~~**D288**~~ | N3: fiducia nella sottorete `app` | **DR-402**: `APP_SUBNET` obbligatoria e diversa per ambiente; fiducia nella sottorete accettata |
 | ~~**D289**~~ | Bassi del riesame | **DR-403**: N4, N5, N8 subito; N6 e timer di R25 alla W5; N9 e R27 nel rapporto |
 | ~~**D290**~~ | Risorse Docker di prova | **DR-404**: volumi e immagini di prova elencati cancellati alla chiusura della T8 |
+| ~~**D291**~~ | Avvisi residui delle immagini (W4-5) | **DR-405**: accettati in Fase 1; nuova scansione Trivy al primo rilascio della W5 |
+| ~~**D292**~~ | Bassi R-E e R-F del riesame | **DR-406**: annotati nel rapporto |
+| ~~**D293**~~ | Tre volumi anonimi di prova | **DR-407**: cancellati |
+| ~~**D294**~~ | `/health/ready` senza archivio | **DR-408**: rinviato alla sonda della `1F-W8` (D227) |
 
 Conseguenze sulle attività:
 

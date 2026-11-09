@@ -224,7 +224,7 @@ Regole vincolanti, che valgono dal primo giorno:
 | 2 | Se riprodurre o correggere i difetti di metadati della sorgente | decisione **D13**, R-18 |
 | 3 | Se il ruolo attivo è uno per volta o è l'unione dei permessi | domanda delle proposte di UX; lo schema regge entrambe |
 | 4 | Conservazione e cancellazione delle 425 compilazioni | MI-06, **validazione legale** |
-| 5 | Cifratura a riposo delle tabelle con dati personali | Fase 1F, con la security review |
+| 5 | Cifratura a riposo delle tabelle con dati personali | **Decisa nella `1F-W4`:** nessuna cifratura a riposo in Fase 1; cifrati backup e trasporto; rischio approvato per iscritto dal Centro (DR-385, DR-394); riesame prima della fase gestionale o di categorie di dati diverse (`docs/deploy/security-review-1F.md` §6) |
 
 ## 9. Verifica prevista
 
@@ -236,4 +236,7 @@ si riesegue senza errori.
 gravità `error`; `import_id_map` copre ogni riga importata.
 
 **Fase 1F:** security review sulle tre tabelle del §7; nessun indirizzo IP in chiaro
-in alcuna tabella.
+in alcuna tabella. *Esito della `1F-W4`:* nessuna corrispondenza a un indirizzo in chiaro in
+`sessions`, `audit_log` e `form_submissions` dello stack sintetico; il digest dell'email digitata
+è ora un HMAC con chiave e scade dopo 30 giorni (DR-403). Dettaglio in
+`docs/deploy/security-review-1F.md` §6.

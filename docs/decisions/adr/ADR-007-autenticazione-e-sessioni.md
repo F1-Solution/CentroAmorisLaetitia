@@ -13,7 +13,9 @@
 | Data | Che cosa è cambiato |
 |---|---|
 | 2026-09-14 | Prima stesura, approvata in blocco con DR-038. |
+| 2026-11-09 | **Esito della verifica della Fase 1F** (wave `1F-W4`, §8). Security review in `docs/deploy/security-review-1F.md`: i 12 controlli del §3.1 spuntati uno per uno, limitazione dei tentativi e revoca provate attraverso Caddy sullo stack d'immagini, conteggio delle righe rifatto con regola invariata, nessun segreto nel repository, nella cronologia o nelle immagini. |
 | 2026-11-09 | **Tentativi serializzati per account, revisione dichiarata da DR-400** (wave `1F-W4`, rilievo N1 del riesame). Il rischio residuo del controllo 8 — conteggio letto prima e fallimento scritto dopo, superabile con richieste parallele — è chiuso da una coda in memoria per account su accesso, password attuale e codice del secondo fattore, con un tetto per sessione su ciascuna rotta del codice e della conferma. Vincolo nuovo: **un solo processo API** finché vale questa coda. Righe rimisurate con regola invariata: **nucleo 789** su 800 (DR-395), **totale 1989**. |
+| 2026-11-08 | **Secondo fattore, sessioni più corte e due deroghe alla soglia, revisione dichiarata da DR-384, DR-388, DR-391, DR-395…DR-399** (wave `1F-W4`). TOTP per tutti gli account dell'area; controlli 3 e 4 aggiornati (cookie di sessione, 14 giorni e 8 ore); conferma recente per `users.manage`. Soglia del §6 contromisura 3 portata a 650 (DR-388) e poi a 800 (DR-395) per il solo nucleo; regola di conteggio invariata. |
 | 2026-10-27 | **Nome ed email di un account modificabili, revisione dichiarata da DR-282** (wave `1G-W7`). DR-282 approva che da «Persone e permessi» chi ha `users.manage` cambi nome ed email; l'indirizzo resta unico senza distinzione di maiuscole e cambiarlo **chiude tutte le sessioni** della persona (controllo 6). La propria email si può cambiare e si chiude anche la sessione in uso. **DR-288 (D184 = C), decisa dall'utente:** sul **proprio** account ogni modifica — nome, email, ruoli, stato — e la reimpostazione della propria password chiedono la **password attuale**; assente 400 `CURRENT_PASSWORD_REQUIRED`, errata 403 `INVALID_CREDENTIALS` con lo stesso conteggio dei tentativi e lo stesso registro del fallimento di `/auth/password` (controlli 8 e 10), nessuna scrittura in caso di rifiuto; per gli account altrui nulla cambia. Il registro porta i nomi dei campi cambiati, mai i valori né la password. I 12 controlli del §3.1 restano invariati nella sostanza; controllo 8 e §5 aggiornati. Righe rimisurate: **nucleo 469** su 500 invariato, **totale 1407** (1335 con la sola DR-282), deroga di DR-066 invariata per il totale. |
 | 2026-10-20 | **Gestione minima degli account, revisione dichiarata da DR-224** (wave `1G-W1`). L'area Impostazioni ha «Persone e permessi» (DR-219): elenco, creazione, disattivazione, riattivazione, ruoli, reimpostazione della password. Nuovo ruolo `amministrazione` con i permessi `users.manage`, `audit.read` e `site.settings.write` (DR-220, DR-227). La password temporanea è generata dal sistema, mostrata una sola volta, e impone il cambio al primo accesso (DR-228). Il controllo 11 esclude ancora il recupero in autonomia: la reimpostazione da parte dell'amministrazione **è** la reimpostazione manuale che ammette. I 12 controlli del §3.1 restano invariati; §3.2 e §5 aggiornati. Righe rimisurate: **nucleo 469** su 500, **totale 1298**, deroga di DR-066 invariata per il totale. |
 | 2026-09-21 | **La soglia del §6 contromisura 3 passa da 300 a 500 righe**, decisione **DR-070**, che supera DR-066 sul punto della soglia e non sulla deroga. Con la soglia nuova il **nucleo la rispetta** (437) e il **totale la supera ancora** (859): la deroga di DR-066 resta in vigore per la lettura del totale. La regola di conteggio non cambia. |
@@ -89,14 +91,19 @@ registrazione pubblica, nessun provider esterno, nessun secondo fattore, uno o d
 account creati a mano. Non c'è quasi nulla di ciò che rende difficile
 l'autenticazione.
 
+> **Revisione del 2026-11-08 (wave `1F-W4`).** Il secondo fattore è entrato in Fase 1: TOTP
+> nell'area amministrativa per tutti gli account (DR-384), con `node:crypto` e senza dipendenze
+> nuove; reimpostazione solo da riga di comando sul server (DR-397); conferma con password o
+> codice entro 10 minuti per ogni rotta di gestione degli account (DR-391, DR-396).
+
 ### 3.1 Controlli obbligatori — nessuno è facoltativo
 
 | # | Controllo | Attuazione |
 |---|---|---|
 | 1 | Password | Argon2id da libreria collaudata, parametri dichiarati in configurazione |
 | 2 | Token di sessione | 256 bit da generatore crittografico; a database si conserva il suo **digest**, mai il token in chiaro |
-| 3 | Cookie | `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, senza dominio esteso |
-| 4 | Scadenza | inattività 12 ore, assoluta 30 giorni, entrambe applicate lato server |
+| 3 | Cookie | `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, senza dominio esteso; cookie di sessione, senza `Max-Age` né `Expires` (DR-391) |
+| 4 | Scadenza | inattività **8 ore**, assoluta **14 giorni**, entrambe applicate lato server; in produzione valori più alti non partono (DR-391; fino al 2026-11-08 erano 12 ore e 30 giorni) |
 | 5 | Rotazione | nuovo token a ogni accesso e a ogni cambio di password |
 | 6 | Revoca | invalidazione immediata di una sessione o di tutte le sessioni di una persona |
 | 7 | CSRF | token a doppio invio su ogni richiesta che modifica dati; il solo `SameSite` non basta |
@@ -277,6 +284,17 @@ Tre contromisure, tutte vincolanti:
 > copertura esplicita nella security review della Fase 1F restano vincolanti e
 > invariati.
 
+> **Terza e quarta deroga: soglia del nucleo a 650 e poi a 800. Revisioni dichiarate del
+> 2026-11-08, decisioni DR-388 e DR-395.**
+>
+> La security review della `1F-W4` ha chiesto il secondo fattore (DR-384) e altre correzioni
+> al nucleo. Con il nucleo a 544 righe la soglia è salita a 650 (DR-388); con il TOTP il nucleo
+> è arrivato a 772 e la soglia è salita a 800 (DR-395). Dopo la coda per account di DR-400 il
+> nucleo è **789** su 800 e il totale **1989**. La regola di conteggio non è cambiata e la
+> misura non è stata rifatta per far tornare il numero. È la quarta deroga alla stessa
+> contromisura: la soglia protegge meno, e il **riesame del §3.3 con Better Auth prima della
+> fase gestionale** resta il presidio, vincolante e invariato.
+
 ## 7. Reversibilità
 
 **Alta.** Password e sessioni sono due tabelle e un middleware. Passare a una
@@ -290,3 +308,19 @@ rifanno l'accesso una volta. Con due account è un'operazione di minuti.
 **Fase 1F:** security review esplicita su questo modulo; nessun segreto nel
 repository; la limitazione dei tentativi funziona davvero, provata; le sessioni si
 revocano davvero; il conteggio delle righe della contromisura 3 del §6 è stato verificato.
+
+**Esito della Fase 1F (2026-11-09, wave `1F-W4`).** Rapporto in
+`docs/deploy/security-review-1F.md`, scritto da un revisore agente a contesto nuovo: non è un
+audit umano indipendente né un penetration test (DR-383).
+
+- I 12 controlli del §3.1 spuntati uno per uno: 11 con un test che passa, il 12º (recupero
+  password) fuori perimetro come dichiarato.
+- Limitazione dei tentativi provata attraverso Caddy sullo stack d'immagini: tetto per account,
+  tetto per indirizzo, `X-Forwarded-For` falsificato che non sposta il conteggio, raffiche
+  parallele che non superano il tetto (DR-400).
+- Revoca provata: una sessione, tutte le sessioni di una persona, rotazione dopo accesso e cambio
+  password, sessioni chiuse dopo un ripristino.
+- Conteggio delle righe verificato con la regola invariata: nucleo 789 su 800, totale 1989.
+- Nessun segreto nel repository, nella sua cronologia o nelle immagini: gitleaks con triage
+  motivato dei soli file generati dalla build di Next.
+- Nessun rilievo critico o alto aperto; rischi accettati e rinvii alla `1F-W5` nel rapporto.

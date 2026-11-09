@@ -127,3 +127,22 @@ raccomandazione.
   decisione va ripresa (ADR-007).
 - **DR-402:** un contenitore `web` o `admin` compromesso può dichiarare un indirizzo falso
   all'API e aggirare i tetti per indirizzo.
+
+---
+
+# 1F-W4 T8 — Decisioni D291…D294 all'audit di chiusura
+
+Round del 2026-11-09, aperto dall'audit W4-1…W4-11. Registrate come DR-405…DR-408; tutte e
+quattro seguono la raccomandazione.
+
+| id | DR | Decisione | Scartate |
+|---|---|---|---|
+| D291 | DR-405 | **A** — avvisi residui delle immagini accettati in Fase 1; Trivy di nuovo al primo rilascio della W5 | B (aggiornare subito `mc` e la base Node): 2–3 ore e rischio sul backup a ridosso della chiusura |
+| D292 | DR-406 | **A** — R-E e R-F annotati | B (correggerli subito): prove Docker da rifare per due bassi |
+| D293 | DR-407 | **A** — tre volumi anonimi vuoti cancellati | B (tenerli): nessun motivo |
+| D294 | DR-408 | **A** — `/health/ready` senza archivio rinviato alla sonda della `1F-W8` | B (subito): cambia il contratto e le prove |
+
+## Rischi
+
+- **DR-405:** fino al rilascio della W5 le immagini restano con gli avvisi noti; il nuovo Trivy è
+  una voce obbligatoria dell'HO-061.

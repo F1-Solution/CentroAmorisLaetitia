@@ -325,17 +325,24 @@ repository vero. La taratura sul server è della W5.
 
 ## 9. Da fare nelle wave successive
 
-- **W4, revisione di sicurezza:** CSP da applicare dopo la sola segnalazione. Ruoli del
-  database e utenti dell'archivio con privilegi minimi: fatti (§2).
-- **W4, firewall dell'host:** fatto in `firewall/backup-out.sh` (§8, «Firewall dell'host»): la rete `backup-out`
-  esce solo verso la Storage Box sulla porta 23 e verso il DNS. Resta da applicarlo sul server nella W5.
-- **W4, segreti del backup:** `RESTIC_PASSWORD` e le password dei ruoli di sola lettura stanno
-  nell'ambiente del contenitore e si leggono con `docker inspect`: rischio accettato, uguale a quello
-  dell'API. Solo chiave SSH e `known_hosts` sono file.
+- **W4, revisione di sicurezza: chiusa** (`docs/deploy/security-review-1F.md`). Ruoli del
+  database e utenti dell'archivio con privilegi minimi (§2), staging con password, log senza IP
+  né query, `APP_SUBNET` per ambiente: fatti. La CSP resta in sola segnalazione fino alla W5
+  (R21, DR-364). Le azioni sul server nate dalla revisione sono in HO-061.
+- **W4, firewall dell'host:** fatto in `firewall/backup-out.sh` (§8, «Firewall dell'host»): la rete
+  `backup-out` esce solo verso la Storage Box e verso il DNS. Applicazione, persistenza dopo il
+  riavvio e rinnovo giornaliero nella W5 (HO-061 §6).
+- **W4, segreti nell'ambiente dei contenitori:** `RESTIC_PASSWORD`, le password dei ruoli e i segreti
+  dell'API si leggono con `docker inspect`: rischio accettato in Fase 1 (DR-387), confermato dalla
+  revisione. Solo chiave SSH e `known_hosts` sono file.
+- **W4, `/health/ready`:** non è pubblico (Caddy risponde 404 a `/api/health*`); i controlli
+  interni sono al §4. Non controlla l'archivio a oggetti: nessun rischio di sicurezza (revisione
+  della W4); da riprendere con la sonda esterna della W8 (D227, DR-408).
 - **W5, backup sul server:** timer di systemd che lancia `backup` ogni giorno e `check` ogni
   settimana, con `--no-deps` per `check` (e per `init`); chiavi della Storage Box e `known_hosts`
-  (HO-059); regole `DOCKER-USER` della W4; capacità di `backup-data` e `backup-cache`; timer della pulizia `bin/auth-purge.js`; ripristino
-  con la copia della chiave del Centro (DR-380). Dettaglio in `docs/deploy/backup-verification.md`.
+  (HO-059); regole `DOCKER-USER` della W4; capacità di `backup-data` e `backup-cache`; timer della
+  pulizia `bin/auth-purge.js` (HO-061 §7); ripristino con la copia della chiave del Centro (DR-380).
+  Dettaglio in `docs/deploy/backup-verification.md`.
 - **W5, server:** uno staging su porte diverse da 80 e 443 non ottiene un certificato
   pubblico da solo (instradamento per nome davanti ai due Caddy, o certificato DNS);
   sul server serve la cartella `infra/` intera (`objects-init` usa

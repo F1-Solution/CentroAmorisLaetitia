@@ -145,6 +145,7 @@ Già decise per la 1F:
 | ~~**D226**~~ | Accesso allo staging | **DR-375**: sottodominio con DNS e password |
 | ~~**D265**~~ | Accelerazione della 1F | **DR-374**: ordini subito; W5 sul server senza dati in parallelo alla W4 |
 | ~~**D270**~~…~~**D274**~~ | Security review (`W4-PLAN.md` §4) | **DR-383**…**DR-387**: revisore agente; TOTP; nessuna cifratura a riposo con rischio approvato per iscritto dal Centro; `pnpm audit` nella CI; segreti nell'ambiente accettati |
+| ~~**D275**~~…~~**D290**~~ | Esiti della security review (`W4-PLAN.md` §4) | **DR-388**…**DR-404**: deroghe del nucleo a 650 e 800 righe; Node 26.12.1; log senza IP né query; sessioni 14 giorni e 8 ore con conferma recente; TOTP con reimpostazione da CLI; coda per account sui tentativi; indirizzo del visitatore inoltrato dal sito; `APP_SUBNET` per ambiente; rischio della cifratura a riposo approvato per iscritto (DR-394) |
 
 Ancora aperte, da chiedere con `grill-me` prima della wave indicata. Nessuna wave parte
 con una decisione bloccante aperta.
