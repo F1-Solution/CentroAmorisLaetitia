@@ -220,7 +220,7 @@ ultimo. Per ciascuna correzione la prova rossa prima, poi verde; una suite Docke
   HO-061.
 - [x] Audit di chiusura della wave contro W4-1…W4-11 **prima** della richiesta di commit
   (rapporto §13): W4-1…W4-10 soddisfatti (W4-5 con DR-405, W4-8 con DR-408); W4-11 con commit e CI.
-- [ ] Commit e push su conferma; CI verde; riga `PHASE:1F WAVE:1F-W4 STATUS:complete`.
+- [x] Commit e push su conferma; CI verde; riga `PHASE:1F WAVE:1F-W4 STATUS:complete`.
 
 ## 4. Decisioni
 
