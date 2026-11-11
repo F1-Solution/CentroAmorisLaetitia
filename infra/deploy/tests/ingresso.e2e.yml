@@ -1,0 +1,10 @@
+# Aggiunta all'ingresso comune **solo per la prova locale** (1F-W5 T2b): mai sul server.
+# Pubblica le porte su 127.0.0.1 con numeri liberi, al posto di 80, 443 e 443/udp.
+#
+#   docker compose -f infra/deploy/ingresso/compose.yml -f infra/deploy/tests/ingresso.e2e.yml ...
+services:
+  ingresso:
+    ports: !override
+      - '127.0.0.1:${INGRESS_E2E_HTTP_PORT:?manca INGRESS_E2E_HTTP_PORT}:80'
+      - '127.0.0.1:${INGRESS_E2E_HTTPS_PORT:?manca INGRESS_E2E_HTTPS_PORT}:443'
+      - '127.0.0.1:${INGRESS_E2E_HTTPS_PORT}:443/udp'

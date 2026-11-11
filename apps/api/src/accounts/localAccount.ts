@@ -1,14 +1,14 @@
 /**
- * Crea un account sul database **locale** quando nessuno può entrare: l'unico
- * utente importato non ha password, e il seme sintetico non scrive su un
- * database importato. Non crea ruoli né permessi (ADR-007 §3.2), non
- * sovrascrive un account esistente, e non riporta mai la password.
+ * Crea un account sul database **locale**, o sul servizio `db` di un ambiente con
+ * conferma esplicita (R24). Non crea ruoli né permessi (ADR-007 §3.2), non
+ * sovrascrive un account esistente, e senza password la genera (DR-228).
  */
 import { schema, type Database } from '@amoris/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { writeAudit } from '../auth/audit.js';
 import type { Config } from '../config.js';
-import { hashPassword } from '../lib/password.js';
+import { generateTemporaryPassword, hashPassword } from '../lib/password.js';
 
 export const MIN_PASSWORD_LENGTH = 12;
 
@@ -19,7 +19,8 @@ export class LocalAccountError extends Error {}
 export interface LocalAccountInput {
   readonly email: string;
   readonly fullName: string;
-  readonly password: string;
+  /** Assente: si genera una password temporanea da cambiare al primo accesso. */
+  readonly password?: string | undefined;
   readonly roleKey: string;
 }
 
@@ -27,12 +28,14 @@ export interface LocalAccountResult {
   readonly userId: string;
   readonly email: string;
   readonly roleKey: string;
+  /** Presente solo se generata: va mostrata una volta e mai registrata. */
+  readonly temporaryPassword?: string;
 }
 
 const inputSchema = z.object({
   ACCOUNT_EMAIL: z.email(),
   ACCOUNT_NAME: z.string().trim().min(1),
-  ACCOUNT_PASSWORD: z.string().min(MIN_PASSWORD_LENGTH),
+  ACCOUNT_PASSWORD: z.string().min(MIN_PASSWORD_LENGTH).optional(),
   ACCOUNT_ROLE: z.string().trim().min(1),
 });
 
@@ -55,6 +58,108 @@ export function parseLocalAccountInput(
   };
 }
 
+/** Sul server indirizzo e nome arrivano da due righe di stdin, così non restano in cronologia né nel journal (DR-426). */
+export function parseServerAccountInput(
+  stdinText: string,
+  env: Readonly<Record<string, string | undefined>>,
+): LocalAccountInput {
+  if (env.ACCOUNT_EMAIL !== undefined || env.ACCOUNT_NAME !== undefined) {
+    throw new LocalAccountError(
+      'sul server indirizzo e nome si passano da stdin, non con ACCOUNT_EMAIL o ACCOUNT_NAME',
+    );
+  }
+  const lines = stdinText.split(/\r?\n/);
+  while (lines.length > 0 && lines[lines.length - 1]!.trim() === '') lines.pop();
+  if (lines.length !== 2) {
+    throw new LocalAccountError(
+      'stdin deve contenere esattamente due righe: prima l’indirizzo, poi il nome',
+    );
+  }
+  return parseLocalAccountInput({
+    ACCOUNT_EMAIL: lines[0]!.trim(),
+    ACCOUNT_NAME: lines[1]!.trim(),
+    ACCOUNT_ROLE: env.ACCOUNT_ROLE,
+  });
+}
+
+export interface ServerInputOptions {
+  readonly isTerminal?: boolean;
+  readonly maxBytes?: number;
+  readonly timeoutMs?: number;
+}
+
+/** Legge stdin con limite di dimensione e scadenza; un terminale non è ammesso. */
+export async function readServerInput(
+  stream: AsyncIterable<Uint8Array | string>,
+  options: ServerInputOptions = {},
+): Promise<string> {
+  const { isTerminal = false, maxBytes = 4096, timeoutMs = 30_000 } = options;
+  if (isTerminal) {
+    throw new LocalAccountError('stdin è un terminale: passa indirizzo e nome da file o da pipe');
+  }
+  let timer: NodeJS.Timeout | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new LocalAccountError('stdin: dati non arrivati entro il tempo massimo')),
+      timeoutMs,
+    );
+  });
+  const read = (async () => {
+    const parts: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of stream) {
+      const part = Buffer.from(chunk);
+      size += part.length;
+      if (size > maxBytes) throw new LocalAccountError('stdin: dati oltre il limite ammesso');
+      parts.push(part);
+    }
+    return Buffer.concat(parts).toString('utf8');
+  })();
+  read.catch(() => undefined);
+  try {
+    return await Promise.race([read, expired]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export type AccountMode = 'local' | 'server';
+
+const SERVER_ENVIRONMENTS = new Set(['production', 'staging']);
+
+/** Valida la riga di comando e l'host: modo server solo con `db`, ambiente coincidente e conferma; nulla si scrive prima. */
+export function resolveAccountMode(
+  databaseUrl: string,
+  argv: readonly string[],
+  env: Readonly<Record<string, string | undefined>>,
+): AccountMode {
+  let ambiente: string | undefined;
+  let confirmed = false;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--conferma') confirmed = true;
+    else if (arg === '--ambiente' && i + 1 < argv.length) ambiente = argv[(i += 1)];
+    else throw new LocalAccountError(`argomento sconosciuto o incompleto: ${String(arg)}`);
+  }
+  const host = new URL(databaseUrl).hostname;
+  if (host !== 'db') {
+    assertLocalDatabase(databaseUrl);
+    return 'local';
+  }
+  if (!ambiente || !SERVER_ENVIRONMENTS.has(ambiente) || ambiente !== env.AMORIS_ENV) {
+    throw new LocalAccountError(
+      'sul server serve --ambiente <production|staging> uguale all’ambiente in cui gira il contenitore',
+    );
+  }
+  if (!confirmed) throw new LocalAccountError('sul server serve anche --conferma');
+  if (env.ACCOUNT_PASSWORD !== undefined) {
+    throw new LocalAccountError(
+      'sul server ACCOUNT_PASSWORD non è ammessa: la password temporanea si genera da sola',
+    );
+  }
+  return 'server';
+}
+
 /** Solo un database su questa macchina: lo strumento non tocca mai un ambiente remoto. */
 export function assertLocalDatabase(databaseUrl: string): void {
   const host = new URL(databaseUrl).hostname;
@@ -68,7 +173,8 @@ export async function createLocalAccount(
   config: Config,
   input: LocalAccountInput,
 ): Promise<LocalAccountResult> {
-  const passwordHash = await hashPassword(input.password, config);
+  const temporaryPassword = input.password === undefined ? generateTemporaryPassword() : undefined;
+  const passwordHash = await hashPassword(input.password ?? temporaryPassword!, config);
   return db.transaction(async (tx) => {
     const [role] = await tx
       .select({ id: schema.roles.id })
@@ -90,11 +196,28 @@ export async function createLocalAccount(
 
     const [user] = await tx
       .insert(schema.users)
-      .values({ email: input.email, fullName: input.fullName, passwordHash })
+      .values({
+        email: input.email,
+        fullName: input.fullName,
+        passwordHash,
+        mustChangePassword: temporaryPassword !== undefined,
+      })
       .returning({ id: schema.users.id });
     if (!user) throw new LocalAccountError('account non creato');
     await tx.insert(schema.userRoles).values({ userId: user.id, roleId: role.id });
+    // Da riga di comando non c'è un attore: la riga porta solo origine e ruolo (DR-421).
+    await writeAudit(tx, {
+      action: 'account.create',
+      entityType: 'account',
+      entityId: user.id,
+      detail: { source: 'cli', roleKey: input.roleKey },
+    });
 
-    return { userId: user.id, email: input.email, roleKey: input.roleKey };
+    return {
+      userId: user.id,
+      email: input.email,
+      roleKey: input.roleKey,
+      ...(temporaryPassword === undefined ? {} : { temporaryPassword }),
+    };
   });
 }

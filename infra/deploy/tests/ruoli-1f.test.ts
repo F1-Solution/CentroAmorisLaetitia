@@ -22,7 +22,7 @@ const deployDir = path.join(repoRoot, 'infra', 'deploy');
 const composeFile = path.join(deployDir, 'compose.yml');
 const overrideFile = path.join(import.meta.dirname, 'compose.sicurezza.yml');
 const rolesScript = path.join(deployDir, 'db-init', 'roles.sql');
-const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-t7a';
+const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w5-t4';
 const PROJECT = `amoris-prova-ruoli-${process.pid}`;
 
 const composeText = readFileSync(composeFile, 'utf8');
@@ -64,7 +64,7 @@ let config: Config = { services: {} };
 
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|SIC_)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|SIC_|INGRESS_)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -72,7 +72,7 @@ function cleanProcessEnv(): Record<string, string> {
   );
 }
 
-function compose(args: string[], timeout = 600_000) {
+function compose(args: string[], timeout = 600_000, input?: string) {
   return spawnSync(
     'docker',
     [
@@ -87,7 +87,7 @@ function compose(args: string[], timeout = 600_000) {
       envFile,
       ...args,
     ],
-    { cwd: deployDir, env: cleanProcessEnv(), encoding: 'utf8', timeout },
+    { cwd: deployDir, env: cleanProcessEnv(), encoding: 'utf8', timeout, input },
   );
 }
 
@@ -229,6 +229,11 @@ beforeAll(async () => {
     SCRUB_SERVICE_TOKEN: hex(24),
     // Obbligatoria dal riesame della T7 (DR-402).
     APP_SUBNET: '10.77.84.0/24',
+    // DR-409: obbligatoria dalla T2; qui nessun ingresso parte, il valore serve solo a interpolare il Compose.
+    INGRESS_SUBNET: '10.214.95.0/24',
+    // DR-412: rete d'uscita dei backup, obbligatoria e per ambiente.
+    BACKUP_OUT_SUBNET: '10.77.86.0/24',
+    BACKUP_OUT_BRIDGE: 'amoris-bkp-prod',
     RESTIC_PASSWORD: hex(18),
     BACKUP_SFTP_HOST: 'sftp.esempio.invalid',
     BACKUP_SFTP_USER: 'utente',
@@ -588,4 +593,89 @@ describe('credenziali principali: solo a chi le deve avere', () => {
       .sort();
     expect(holders).toEqual(['db', 'db-init', 'objects', 'objects-init']);
   });
+});
+
+describe('primo account sul server (R24)', () => {
+  const EMAIL = 'primo-account@esempio.invalid';
+  const STDIN = `${EMAIL}\nPersona sintetica\n`;
+  // Indirizzo e nome arrivano da stdin (DR-426): nella riga di comando resta solo il ruolo.
+  const create = (extra: string[], input: string = STDIN, envExtra: string[] = []) =>
+    compose(
+      [
+        'run',
+        '--rm',
+        '--no-deps',
+        '-T',
+        ...envExtra,
+        '-e',
+        // Unico ruolo creato dalle migrazioni su un database vuoto, come nel README §3.
+        'ACCOUNT_ROLE=amministrazione',
+        'api',
+        'node',
+        'bin/account-create.js',
+        ...extra,
+      ],
+      600_000,
+      input,
+    );
+  const SERVER = ['--ambiente', 'production', '--conferma'];
+  const usersWithEmail = async (email: string): Promise<number> => {
+    const { sql } = connect('api');
+    try {
+      return (await sql`SELECT 1 FROM users WHERE email = ${email}`).length;
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  };
+
+  it('senza --conferma rifiuta e non scrive nulla', async () => {
+    const result = create(['--ambiente', 'production']);
+    expect(result.status).toBe(1);
+    expect(result.stdout.trim()).toBe('');
+    expect(await usersWithEmail(EMAIL)).toBe(0);
+  }, 240_000);
+
+  it('rifiuta ACCOUNT_EMAIL e ACCOUNT_NAME nell’ambiente e non scrive nulla', async () => {
+    const other = 'in-ambiente@esempio.invalid';
+    const result = create(SERVER, STDIN, ['-e', `ACCOUNT_EMAIL=${other}`, '-e', 'ACCOUNT_NAME=X']);
+    expect(result.status).toBe(1);
+    expect(result.stdout.trim()).toBe('');
+    expect(result.stderr).toContain('stdin');
+    expect(result.stderr).not.toContain(other);
+    expect(await usersWithEmail(EMAIL)).toBe(0);
+    expect(await usersWithEmail(other)).toBe(0);
+  }, 240_000);
+
+  it('con stdin vuoto, a una riga o con righe in più rifiuta e non scrive nulla', async () => {
+    for (const input of ['', `${EMAIL}\n`, `${STDIN}terza riga\n`]) {
+      const result = create(SERVER, input);
+      expect(result.status, JSON.stringify(input)).toBe(1);
+      expect(result.stdout.trim()).toBe('');
+      expect(result.stderr).toContain('stdin');
+      expect(result.stderr).not.toContain(EMAIL);
+    }
+    expect(await usersWithEmail(EMAIL)).toBe(0);
+  }, 240_000);
+
+  it('con ambiente e conferma crea l’account con la password temporanea, una sola riga su stdout', async () => {
+    const result = create(SERVER);
+    expect(result.status, result.stderr.slice(-500)).toBe(0);
+    const lines = result.stdout.split('\n').filter((line) => line.trim() !== '');
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatch(/^[A-Za-z0-9]{20}$/);
+    expect(result.stderr).not.toContain(lines[0] ?? '');
+    const { sql } = connect('api');
+    try {
+      const rows = await sql`SELECT must_change_password FROM users WHERE email = ${EMAIL}`;
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.must_change_password).toBe(true);
+      const audit = await sql`
+        SELECT a.detail FROM audit_log a JOIN users u ON a.entity_id = u.id::text
+        WHERE u.email = ${EMAIL} AND a.action = 'account.create'`;
+      expect(audit).toHaveLength(1);
+      expect(audit[0]?.detail).toEqual({ source: 'cli', roleKey: 'amministrazione' });
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  }, 240_000);
 });

@@ -1,0 +1,21 @@
+# Ingresso comune di produzione e staging (1F-W5 T2a, DR-409): unico a tenere 80 e 443 e i certificati.
+# Non si fida di nessuno: X-Forwarded-For, X-Real-IP e Forwarded dei client non vanno oltre, e a ogni
+# Caddy d'ambiente arriva come unica voce l'indirizzo del client visto qui. Intestazioni di sicurezza,
+# password dello staging e instradamento restano nei Caddy degli ambienti (ADR-003 §3).
+
+{
+	admin off
+	# Directory ACME dalla variabile: prima l'ambiente di prova di Let's Encrypt, poi quello vero. Nessun indirizzo e-mail.
+	acme_ca {$ACME_CA}
+}
+
+# Controllo di salute del Compose: solo dentro il contenitore, mai pubblicato.
+http://127.0.0.1:2020 {
+	bind 127.0.0.1
+	respond /health/live 200
+}
+
+# Un sito per nome, e solo se il nome è valorizzato: con il nome vuoto il file non si legge e Caddy
+# non chiede alcun certificato (la produzione si attiva nella 1F-W8).
+import siti/{$INGRESS_STAGING_SITE}.sito*
+import siti/{$INGRESS_PRODUCTION_SITE}.sito*

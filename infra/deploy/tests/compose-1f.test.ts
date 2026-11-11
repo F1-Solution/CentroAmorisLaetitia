@@ -31,8 +31,6 @@ const BASE_ENV: Readonly<Record<string, string>> = {
   IMAGE_PREFIX: 'ghcr.io/esempio/amoris',
   IMAGE_TAG: '0123456789abcdef0123456789abcdef01234567',
   CADDY_SITE_ADDRESS: 'www.esempio.invalid',
-  CADDY_HTTP_PORT: '80',
-  CADDY_HTTPS_PORT: '443',
   SITE_URL: 'https://www.esempio.invalid',
   POSTGRES_PASSWORD: 'password-sintetica-del-database-di-prova',
   DB_OWNER_PASSWORD: 'password-sintetica-del-proprietario-di-prova',
@@ -48,16 +46,25 @@ const BASE_ENV: Readonly<Record<string, string>> = {
   SCRUB_SERVICE_TOKEN: 'gettone-sintetico-del-servizio-di-pulizia-1f',
   // DR-402: obbligatoria e diversa per ambiente, così due stack sullo stesso server non si sovrappongono.
   APP_SUBNET: '10.77.84.0/24',
+  // DR-409: rete verso l'ingresso comune, l'unica da cui Caddy accetta l'indirizzo del visitatore.
+  INGRESS_SUBNET: '10.77.88.0/24',
+  // DR-412: rete d'uscita dei backup per ambiente, con la catena del firewall dell'host che la riguarda.
+  BACKUP_OUT_SUBNET: '10.77.86.0/24',
+  BACKUP_OUT_BRIDGE: 'amoris-bkp-prod',
+  // N6: percorsi obbligatori e assoluti, fuori dalla cartella del rilascio.
+  BACKUP_SSH_KEY_PATH: path.join(import.meta.dirname, 'chiave-ssh-sintetica'),
+  BACKUP_KNOWN_HOSTS_PATH: path.join(import.meta.dirname, 'known-hosts-sintetico'),
 };
 
 const STAGING_ENV: Readonly<Record<string, string>> = {
   ...BASE_ENV,
   AMORIS_ENV: 'staging',
   CADDY_SITE_ADDRESS: 'prova.esempio.invalid',
-  CADDY_HTTP_PORT: '8080',
-  CADDY_HTTPS_PORT: '8443',
   SITE_URL: 'https://prova.esempio.invalid',
   APP_SUBNET: '10.77.85.0/24',
+  INGRESS_SUBNET: '10.77.89.0/24',
+  BACKUP_OUT_SUBNET: '10.77.87.0/24',
+  BACKUP_OUT_BRIDGE: 'amoris-bkp-stag',
 };
 
 const REQUIRED = Object.keys(BASE_ENV);
@@ -69,8 +76,12 @@ const BACKUP_ENV: Readonly<Record<string, string>> = {
   BACKUP_SFTP_HOST: 'storage.esempio.invalid',
   BACKUP_SFTP_USER: 'utente-di-prova',
   BACKUP_SFTP_PATH: 'amoris-prova',
-  BACKUP_SSH_KEY_PATH: path.join(import.meta.dirname, 'chiave-ssh-sintetica'),
-  BACKUP_KNOWN_HOSTS_PATH: path.join(import.meta.dirname, 'known-hosts-sintetico'),
+};
+
+/** Valori dello staging sopra `BACKUP_ENV`, che parte dalla produzione. */
+const STAGING_BACKUP: Readonly<Record<string, string>> = {
+  BACKUP_OUT_SUBNET: STAGING_ENV.BACKUP_OUT_SUBNET ?? '',
+  BACKUP_OUT_BRIDGE: STAGING_ENV.BACKUP_OUT_BRIDGE ?? '',
 };
 
 /**
@@ -79,7 +90,7 @@ const BACKUP_ENV: Readonly<Record<string, string>> = {
  */
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|APP_SUBNET)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|APP_SUBNET|INGRESS_)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -110,7 +121,7 @@ interface Service {
   image: string;
   profiles?: string[];
   ports?: unknown[];
-  networks?: Record<string, unknown>;
+  networks?: Record<string, { aliases?: string[] } | null>;
   mem_limit?: string | number;
   environment?: Record<string, string>;
   read_only?: boolean;
@@ -135,6 +146,7 @@ interface Config {
     string,
     {
       internal?: boolean;
+      external?: boolean;
       name?: string;
       ipam?: { config?: { subnet?: string }[] };
       driver_opts?: Record<string, string>;
@@ -233,6 +245,18 @@ describe('servizi e immagini (W2-1, ADR-009 §4.4)', () => {
     expect(production.services.db?.image).toMatch(/^postgres:\d+\.\d+-alpine@sha256:/);
   });
 
+  it('Caddy è della linea 2.11, fissato per digest (DR-416)', () => {
+    expect(production.services.caddy?.image).toMatch(
+      /^caddy:2\.11\.\d+-alpine@sha256:[0-9a-f]{64}$/,
+    );
+  });
+
+  it('il comando caddy hash-password dell’esempio di produzione usa la stessa immagine di Caddy', () => {
+    const example = readFileSync(path.join(deployDir, '.env.production.example'), 'utf8');
+    const match = /docker run --rm -it (\S+) caddy hash-password/.exec(example);
+    expect(match?.[1]).toBe(production.services.caddy?.image);
+  });
+
   it('ogni servizio acceso ha un controllo di salute, nel Compose o nel Dockerfile', () => {
     for (const name of LONG_RUNNING) {
       const service = production.services[name];
@@ -248,23 +272,41 @@ describe('servizi e immagini (W2-1, ADR-009 §4.4)', () => {
 });
 
 describe('porte e reti (W2-5, DR-359)', () => {
-  it('solo Caddy pubblica porte', () => {
-    const published = Object.entries(production.services)
-      .filter(([, service]) => (service.ports?.length ?? 0) > 0)
-      .map(([name]) => name);
-    expect(published).toEqual(['caddy']);
+  it('nessun servizio dell’ambiente pubblica porte: le pubblica l’ingresso comune (DR-409)', () => {
+    for (const stack of [production, staging, backup]) {
+      const published = Object.entries(stack.services)
+        .filter(([, service]) => (service.ports?.length ?? 0) > 0)
+        .map(([name]) => name);
+      expect(published).toEqual([]);
+    }
   });
 
-  it('tutte le reti sono interne, salvo quella di Caddy e quella d’uscita del backup', () => {
-    const external = Object.entries(backup.networks)
-      .filter(([, network]) => network.internal !== true)
-      .map(([name]) => name)
-      .sort();
-    expect(external).toEqual(['backup-out', 'edge']);
-    expect(Object.keys(production.services.caddy?.networks ?? {})).toContain('edge');
+  it('l’unica rete con uscita è quella del backup; Caddy sta su app e sulla rete dell’ingresso', () => {
+    const outbound = Object.entries(backup.networks)
+      .filter(([, network]) => network.internal !== true && network.external !== true)
+      .map(([name]) => name);
+    expect(outbound).toEqual(['backup-out']);
+    expect(Object.keys(production.services.caddy?.networks ?? {}).sort()).toEqual([
+      'app',
+      'ingresso',
+    ]);
     for (const [name, service] of Object.entries(production.services)) {
       if (name === 'caddy') continue;
-      expect(Object.keys(service.networks ?? {}), name).not.toContain('edge');
+      expect(Object.keys(service.networks ?? {}), name).not.toContain('ingresso');
+    }
+  });
+
+  it('la rete dell’ingresso è quella del proprio ambiente, già creata dall’ingresso, con un nome per Caddy', () => {
+    for (const [stack, name] of [
+      [production, 'production'],
+      [staging, 'staging'],
+    ] as const) {
+      expect(stack.networks.ingresso?.external).toBe(true);
+      expect(stack.networks.ingresso?.name).toBe(`amoris-ingresso-${name}`);
+      expect(stack.services.caddy?.networks?.ingresso?.aliases).toEqual([`amoris-${name}-caddy`]);
+      expect(stack.services.caddy?.environment?.INGRESS_SUBNET).toBe(
+        name === 'production' ? '10.77.88.0/24' : '10.77.89.0/24',
+      );
     }
   });
 
@@ -276,17 +318,46 @@ describe('porte e reti (W2-5, DR-359)', () => {
     expect(staging.services.api?.environment?.TRUSTED_PROXY).toBe('10.77.85.0/24');
   });
 
-  it('backup-out ha sottorete e bridge fissi, modificabili e diversi dalla rete app (R13)', () => {
+  it('l API conosce il proprio ambiente, per la conferma del primo account (R24)', () => {
+    expect(production.services.api?.environment?.AMORIS_ENV).toBe('production');
+    expect(staging.services.api?.environment?.AMORIS_ENV).toBe('staging');
+  });
+
+  it('backup-out ha sottorete e bridge dell ambiente, diversi dalle altre reti (R13, DR-412)', () => {
     const out = backup.networks['backup-out'];
     expect(out?.ipam?.config?.[0]?.subnet).toBe('10.77.86.0/24');
-    expect(out?.driver_opts?.['com.docker.network.bridge.name']).toBe('amoris-bkp-out');
-    expect(backup.networks.app?.ipam?.config?.[0]?.subnet).not.toBe('10.77.86.0/24');
-    const changed = config(
-      { ...BACKUP_ENV, BACKUP_OUT_SUBNET: '10.77.90.0/24', BACKUP_OUT_BRIDGE: 'bkp-test' },
-      ['backup'],
-    ).networks['backup-out'];
-    expect(changed?.ipam?.config?.[0]?.subnet).toBe('10.77.90.0/24');
-    expect(changed?.driver_opts?.['com.docker.network.bridge.name']).toBe('bkp-test');
+    expect(out?.driver_opts?.['com.docker.network.bridge.name']).toBe('amoris-bkp-prod');
+    const other = config({ ...BACKUP_ENV, ...STAGING_ENV, ...STAGING_BACKUP }, ['backup']);
+    const stagingOut = other.networks['backup-out'];
+    expect(stagingOut?.ipam?.config?.[0]?.subnet).toBe('10.77.87.0/24');
+    expect(stagingOut?.driver_opts?.['com.docker.network.bridge.name']).toBe('amoris-bkp-stag');
+    const subnets = [
+      backup.networks.app?.ipam?.config?.[0]?.subnet,
+      out?.ipam?.config?.[0]?.subnet,
+      stagingOut?.ipam?.config?.[0]?.subnet,
+      other.networks.app?.ipam?.config?.[0]?.subnet,
+    ];
+    expect(new Set(subnets).size).toBe(subnets.length);
+  });
+
+  it.each(['BACKUP_OUT_SUBNET', 'BACKUP_OUT_BRIDGE'])(
+    '%s è obbligatoria e il messaggio indica i valori dei due ambienti (DR-412)',
+    (key) => {
+      const env = Object.fromEntries(Object.entries(BASE_ENV).filter(([name]) => name !== key));
+      const result = compose(env, ['config', '--quiet']);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain(key);
+      expect(result.stderr).toMatch(/10\.77\.86\.0\/24|amoris-bkp-prod/);
+      expect(result.stderr).toMatch(/10\.77\.87\.0\/24|amoris-bkp-stag/);
+    },
+  );
+
+  it('backup e restore dello staging stanno sulla rete d uscita dello staging (DR-412)', () => {
+    const other = config({ ...BACKUP_ENV, ...STAGING_ENV, ...STAGING_BACKUP }, ['backup']);
+    for (const name of ['backup', 'restore']) {
+      expect(Object.keys(other.services[name]?.networks ?? {}), name).toContain('backup-out');
+    }
+    expect(other.networks['backup-out']?.name).toBe('amoris-staging_backup-out');
   });
 
   it('database e archivio non stanno sulla rete di Caddy', () => {
@@ -469,10 +540,18 @@ describe('servizio di backup (1F-W3 T4, DR-367, DR-372)', () => {
       backup_ssh_key: BACKUP_ENV.BACKUP_SSH_KEY_PATH,
       backup_known_hosts: BACKUP_ENV.BACKUP_KNOWN_HOSTS_PATH,
     });
-    const fallback = config(BASE_ENV, ['backup']).secrets ?? {};
-    expect(fallback.backup_ssh_key?.file).toMatch(/backup-chiavi[\\/]ssh_key$/);
-    expect(fallback.backup_known_hosts?.file).toMatch(/backup-chiavi[\\/]known_hosts$/);
   });
+
+  it.each(['BACKUP_SSH_KEY_PATH', 'BACKUP_KNOWN_HOSTS_PATH'])(
+    'N6: senza %s il Compose non parte e non c’è un percorso predefinito',
+    (key) => {
+      const env = Object.fromEntries(Object.entries(BASE_ENV).filter(([name]) => name !== key));
+      const result = compose(env, ['config', '--quiet']);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain(key);
+      expect(readFileSync(composeFile, 'utf8')).not.toContain('./backup-chiavi');
+    },
+  );
 
   it('destinazione e database arrivano dalle variabili; la porta SFTP vale 23 se non indicata', () => {
     expect(service()?.environment).toMatchObject({
@@ -604,8 +683,7 @@ describe('produzione e staging separati (W2-6, DR-296)', () => {
       Object.values(stack.volumes).map((volume) => volume.name);
     const shared = volumeNames(production).filter((name) => volumeNames(staging).includes(name));
     expect(shared).toEqual([]);
-    const ports = (stack: Config) => JSON.stringify(stack.services.caddy?.ports);
-    expect(ports(production)).not.toBe(ports(staging));
+    expect(production.networks.ingresso?.name).not.toBe(staging.networks.ingresso?.name);
   });
 
   it('un ambiente diverso da production e staging non è ammesso', () => {
@@ -687,6 +765,8 @@ describe('Caddy per ambiente', () => {
       `AMORIS_ENV=${env}`,
       '-e',
       'CADDY_SITE_ADDRESS=:80',
+      '-e',
+      'INGRESS_SUBNET=10.77.88.0/24',
       ...(env === 'staging'
         ? ['-e', 'STAGING_BASIC_AUTH_USER=prova', '-e', `STAGING_BASIC_AUTH_HASH=${stagingHash}`]
         : []),

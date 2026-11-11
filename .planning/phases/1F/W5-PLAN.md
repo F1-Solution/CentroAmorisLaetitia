@@ -93,44 +93,64 @@ T1 non blocca T2…T5, che lavorano in locale.
 
 Se D295 = A:
 
-- [ ] Prove rosse prima, in `caddy-1f` e `compose-1f`: un solo servizio pubblica 80 e 443; le reti
+- [x] Prove rosse prima, in `caddy-1f` e `compose-1f`: un solo servizio pubblica 80 e 443; le reti
   dei due ambienti non si vedono; intestazioni, password dello staging e `robots.txt` uguali
   attraverso l'ingresso; senza nome della produzione l'ingresso non chiede certificati per quel nome.
-- [ ] Progetto Compose dell'ingresso con l'immagine di Caddy già fissata per digest, unico a
+  (T2a: anche `ingresso-1f`, 30 prove.)
+- [x] Progetto Compose dell'ingresso con l'immagine di Caddy già fissata per digest, unico a
   pubblicare 80 e 443, TLS per i nomi valorizzati, inoltro per nome ai Caddy degli ambienti su due
   reti esterne separate.
-- [ ] Caddy degli ambienti senza porte pubblicate, in HTTP dietro l'ingresso, con `trusted_proxies`
+- [x] Caddy degli ambienti senza porte pubblicate, in HTTP dietro l'ingresso, con `trusted_proxies`
   limitato alla rete dell'ingresso; catena dell'indirizzo del visitatore fino all'API (DR-401, DR-402).
-- [ ] Prova della W4 T3 ripetuta attraverso i due salti: un `X-Forwarded-For` falsificato dal client
-  non sposta il conteggio dei tentativi.
-- [ ] Prima emissione verso l'ambiente di prova di ACME, poi verso quello vero (§5).
-- [ ] e2e attraverso l'ingresso sullo stack d'immagini locale; README §1, §3, §6, §7.
+  Prova a livello di Caddy con servizi finti (T2a); con l'API vera nella casella seguente (T2b).
+- [x] Prova della W4 T3 ripetuta attraverso i due salti: un `X-Forwarded-For` falsificato dal client
+  non sposta il conteggio dei tentativi. (T2b: `sicurezza-1f` 61/61, con la prova nuova «visitatori
+  distinti, conteggi distinti» e il controllo negativo `subnet` rosso.)
+- [ ] Prima emissione verso l'ambiente di prova di ACME, poi verso quello vero (§5). Nel codice:
+  `INGRESS_ACME_CA` obbligatoria (T2a); l'emissione si fa sul server nella T7.
+- [x] e2e attraverso l'ingresso sullo stack d'immagini locale; README §1, §3, §6, §7. (T2b: 71/71
+  con il nome `localhost`, perché Node su Windows non risolve `*.localhost`.)
 
 ### T3 — Rilascio, ripristino nello staging e primo account (D297, D298, Sonnet)
 
-- [ ] **T3a** — script di rilascio sul server (se D297 = A): accetta solo `production` o `staging`
+- [x] **T3a** — script di rilascio sul server (se D297 = A): accetta solo `production` o `staging`
   e un hash di 40 caratteri esadecimali; riceve la cartella `infra/` di quel commit e il token del
   registro dall'ingresso standard; `docker login --password-stdin`, `pull`, `up -d --wait`,
   `logout`; migrazioni solo con un indicatore esplicito; riga JSON d'esito senza valori segreti.
-  Prova del comando forzato: ogni altro comando rifiutato.
-- [ ] **T3b** — `.github/workflows/rilascio.yml`: avvio a mano, solo `refs/heads/main`, hash con
+  Prova del comando forzato: ogni altro comando rifiutato. (`rilascio-1f` 51/51 con `sshd` vero e
+  `docker` finto; percorsi in `/opt/amoris`, `corrente` e `rilascio.env` per le unità della T8.)
+- [x] **T3b** — `.github/workflows/rilascio.yml`: avvio a mano, solo `refs/heads/main`, hash con
   le cinque immagini già pubblicate, `permissions: contents: read, packages: read`, una sola
   esecuzione per ambiente alla volta, azioni per SHA, `known_hosts` del server fissato;
-  `actionlint` per digest; prove in `ci-immagini-1f`.
-- [ ] **T3c** — se D298 = A: sottorete, bridge e catena del firewall per ambiente; `firewall-1f`
-  con due ambienti, rossa prima (la seconda applicazione cancella le regole della prima).
-- [ ] **T3d** — primo account (R24): `account-create` eseguibile nel contenitore dell'API sul
+  `actionlint` per digest; prove in `ci-immagini-1f`. (25/25; segreto `RILASCIO_SSH_KEY`, variabili
+  `RILASCIO_HOST` e `RILASCIO_KNOWN_HOSTS`, utente `deploy`, per HO-064.)
+- [x] **T3c** — se D298 = A: sottorete, bridge e catena del firewall per ambiente; `firewall-1f`
+  con due ambienti, rossa prima (la seconda applicazione cancella le regole della prima). (23/23;
+  `10.77.86.0/24` e `amoris-bkp-prod`, `10.77.87.0/24` e `amoris-bkp-stag`.)
+- [x] **T3d** — primo account (R24): `account-create` eseguibile nel contenitore dell'API sul
   database del Compose, con ambiente dichiarato e conferma; password temporanea mostrata una sola
   volta, cambio e attivazione del TOTP obbligatori al primo accesso (DR-228, DR-398). Prova rossa
   prima. Conteggio delle righe dell'autenticazione rifatto con la regola invariata (nucleo 786 su
-  800, DR-395): oltre 800, stop e ripresentazione.
+  800, DR-395): oltre 800, stop e ripresentazione. (Nucleo 789, totale 2109 con `localAccount.ts`;
+  prova nel contenitore in `ruoli-1f` rossa sulle `w4-t7a` come atteso, verde nella T4.)
 
 ### T4 — Basi aggiornate e scansioni (D299, DR-405)
 
-- [ ] Digest delle basi rilette dalle release ufficiali, ciascuna pubblicata da almeno due settimane.
-- [ ] Immagini ricostruite con i comandi della CI; `check-image`; `test:images` una suite alla volta.
-- [ ] Trivy per digest, sola lettura da archivi `docker save`, solo conteggi; gitleaks su cronologia
+- [x] Digest delle basi rilette dalle release ufficiali, ciascuna pubblicata da almeno due settimane.
+  (`mc` a `latest-dev` `20d1b2a3…`; Node 26.12.1, restic 0.19.1, PostgreSQL e MinIO invariati.)
+- [x] Immagini ricostruite con i comandi della CI; `check-image`; `test:images` una suite alla volta.
+  (`w5-t4` da `git archive`; tutte le suite verdi, `ruoli-1f` 15/15 dopo la correzione della prova.)
+- [x] Trivy per digest, sola lettura da archivi `docker save`, solo conteggi; gitleaks su cronologia
   e immagini con `--redact`. Rapporti nella scratchpad, nel repository solo conteggi e verdetti.
+  (Residui accettati in DR-418; gitleaks 0 sulla cronologia, 5 e 5 nei file generati da Next.)
+- [x] **T4b** (DR-416) — Caddy 2.11.7 al digest attuale di `2.11.7-alpine`, Trivy prima
+  dell'adozione; `caddy-1f`, `ingresso-1f`, `compose-1f`, `sicurezza-1f`; e2e nella T5.
+  (`e70b164d…`, Go 1.26.8; Trivy da 6 critici e 100 alti a 1 e 10, residui con correzione 1 e 9 →
+  D312; Caddyfile invariati; suite 65, 18, 30, 61.)
+- [ ] **Caddy 2.11.9** (DR-420, D312 = B) — dal 2026-11-19 digest attuale di `2.11.9-alpine`,
+  Trivy prima dell'adozione e le prove della T4b; nessun rilascio sul server con il 2.11.7.
+- [ ] **MinIO** (DR-417) — dal 2026-11-23 primo digest con build di almeno due settimane e nuova
+  scansione, prima del primo rilascio successivo e comunque prima della W7.
 
 ### T5 — Verifica, riesame e commit candidato
 
@@ -139,18 +159,67 @@ Se D295 = A:
   dell'indirizzo, comando forzato, workflow, firewall, `account-create`), senza le conclusioni del
   coordinatore. Critici e alti riprodotti dal coordinatore e corretti con prova rossa; scelte con
   `grill-me`.
-- [ ] Commit e push su conferma; CI verde. L'hash di questo commit è il **candidato** del primo
-  rilascio.
+- [ ] Commit e push su conferma; CI verde. Per DR-420 il **candidato** del primo rilascio è il
+  commit che porta Caddy 2.11.9, non questo. Per DR-421 (D313 = A) il commit è **uno solo**, dopo
+  la T5a.
+
+### T5a — Correzioni del riesame (DR-421…DR-424, Sonnet, prova rossa prima)
+
+- [x] **T5a-1** — `rilascia.sh`: tetto sui byte decompressi e sul numero di voci (N2); sottorete di
+  `amoris-ingresso-<ambiente>` uguale a `INGRESS_SUBNET` (N4); percorsi delle chiavi di backup
+  assoluti (N6); residui puliti all'avvio (N12); controlli prima di sostituire la cartella (N13);
+  uscita di Docker in un file 600 sul server e al client solo la riga JSON (DR-422);
+  `compose config` con i due `--env-file` reali e un `git archive` vero (N7(c)).
+- [x] **T5a-2** — `account-create` scrive `account.create` con origine `cli` nel registro (N5),
+  prova anche nel contenitore (`ruoli-1f`); `BACKUP_SSH_KEY_PATH` e `BACKUP_KNOWN_HOSTS_PATH`
+  obbligatori e assoluti nell'esempio e nel Compose (N6).
+- [x] **T5a-3** — ingresso e firewall: isolamento con il motivo del fallimento e reti `--internal`
+  (N7(a)); caso `Connection: X-Forwarded-For` (N10); nomi dell'ingresso validati (N11); sottoreti
+  `/0`–`/15` e stessa sottorete dell'altro ambiente rifiutate (N15).
+- [x] **T5a-4** — istruzioni: README §10 con proprietari, permessi, regole `sshd` e gruppo
+  `docker` equivalente a root (N8), «solo da `main`» come comodità (D8), `--force-recreate` per
+  l'ingresso (N14), lettura dell'uscita di un rilascio fallito (DR-422); HO-061 su
+  `rilasci/<ambiente>/corrente` e `segreti/<ambiente>.env` (N9); rapporto di sicurezza con N7(b),
+  N7(d), potatura dei rilasci (N14) e N16 annotati.
+- [x] Nuova verifica come la T5 sulle immagini ricostruite (almeno l'API), e2e attraverso
+  l'ingresso, suite delle immagini una alla volta, gitleaks; riesame separato sul solo diff della
+  T5a; poi la richiesta del commit unico. (`w5-t5a`: tutto verde, 3248 prove, e2e 71 e 71,
+  14 suite; riesame 0 critici, 0 alti, 2 medi, 15 bassi → D318.)
+
+### T5b — Correzioni del riesame della T5a (DR-426, Sonnet, prova rossa prima)
+
+- [ ] **T5b-1** — `rilascia.sh`: cartella `vecchio` rimessa a posto e `.corrente.*` puliti (M2);
+  scadenza sulle letture da stdin (M1); segnali ignorati durante la pulizia (B1); `umask 022`
+  prima dell'estrazione (B4); percorsi del backup senza `/./`, `$` e commenti (B12).
+- [ ] **T5b-2** — `account-create` legge indirizzo e nome da un file 600 o da stdin, non da `-e`
+  (B15).
+- [ ] **T5b-3** — documenti: `ClientAliveInterval 30` e `ClientAliveCountMax 4` nel `Match User
+  deploy` (M1); README, HO-059 e HO-061 allineati (B5, B16) e sul nuovo `account-create`; rapporto
+  di sicurezza con B2, B3, B6–B11, B13, B14 accettati per la Fase 1 e B9 rinviato (DR-427).
+- [ ] Nuova verifica come la T5a, riesame separato sul solo diff della T5b, poi richiesta del
+  commit unico T2–T5b.
+
+### T5c — Dopo il commit unico, con un commit proprio (DR-429, DR-430, Sonnet, prova rossa prima)
+
+- [ ] **T5c-1** — `rilascia.sh`: bassi 1, 2, 3, 6, 7 del riesame della T5b; **entro la T7**.
+- [ ] **T5c-2** — `account-unblock` e `account-reset-totp` leggono l'indirizzo da stdin sul server
+  e rifiutano `ACCOUNT_EMAIL` (DR-429); basso 9; **entro la T9**.
+- [ ] **T5c-3** — documenti: bassi 11 e 12, README §3, 4, 5, 8, 10 annotati nel §7.4.
+- [ ] Verifica: unità dell'API, `rilascio-1f`, `ruoli-1f`, `sicurezza-1f`, e2e; poi richiesta del
+  commit della T5c.
 
 ### T6 — Server, DNS e GitHub (handoff, utente)
 
-Dopo il secondo round (D300…D304) e la T1.
+Dopo il secondo round (D300…D305) e la T1.
 
 - [ ] **HO-062** — indurimento e impianto: utente amministrativo non `root` con sola chiave;
   `PermitRootLogin no`, `PasswordAuthentication no`; firewall con 22 (con limite di frequenza), 80
   e 443; aggiornamenti di sicurezza secondo D300; Docker dal repository ufficiale con versione
   fissata; utente `deploy` con comando forzato (T3a); file d'ambiente dei due ambienti (HO-061 §4)
   fuori dal repository, permessi 600. Una sessione di riserva resta aperta mentre si cambia SSH.
+  Controllo che `INGRESS_SUBNET` di ogni ambiente sia uguale alla sottorete della rete
+  `amoris-ingresso-<ambiente>` (`docker network inspect`): se diversa, tutti i visitatori finiscono
+  in un solo conteggio dei tentativi (T2a).
 - [ ] **HO-063** — record DNS dello staging su Aruba (D304): A, e AAAA se il server ha IPv6;
   verifica con `Resolve-DnsName`. Conferma puntuale.
 - [ ] **HO-064** — GitHub: segreto con la chiave SSH di rilascio, variabile con il `known_hosts`
@@ -160,6 +229,7 @@ Dopo il secondo round (D300…D304) e la T1.
 
 ### T7 — Primo rilascio sullo staging (conferma puntuale)
 
+- [ ] Prerequisito (DR-420): Caddy 2.11.9 adottato e committato, CI verde.
 - [ ] Avvio del workflow con il candidato e `staging`, su conferma. `db-init` e `objects-init`
   escono con 0; **nessuna migrazione**: lo schema arriva con il ripristino della T9 (il ripristino
   rifiuta un database con tabelle).
@@ -248,6 +318,7 @@ Opzioni e motivazioni presentate:
 | **D302** | Separazione dello staging (MI-06, domanda 12) | **A** staging acceso solo per prove e rilasci, limiti di memoria del Compose dichiarati al Centro · **B** sempre acceso, stessi limiti · **C** server separato | **A**: meno superficie esposta e memoria libera; da confermare dopo la misura della T9 |
 | **D303** | HSTS lungo (R20) e CSP applicata (R21, DR-364) | **A** HSTS lungo dopo la verifica di HTTPS della produzione nella W8; violazioni della CSP raccolte dalla console negli e2e e nelle pagine della matrice sullo staging con i contenuti veri (W7), CSP applicata al rilascio se zero violazioni · **B** entrambe come oggi per la Fase 1 · **C** indirizzo di raccolta delle segnalazioni (codice nuovo) | **A**: si decide con dati reali, senza codice nuovo |
 | **D304** | Nome dello staging (DR-375) | **A** `staging.centroamorislaetitia.it` · **B** un nome meno ovvio · **C** un altro dominio | **A**: il nome compare comunque nei registri pubblici dei certificati; la protezione è la password |
+| **D305** | IPv6 dell'ingresso (emerso nella T2a). Una connessione IPv6 verso porte pubblicate su una rete Docker solo IPv4 passa da `docker-proxy`: l'ingresso vede l'indirizzo del bridge, non quello del visitatore, e tutti i visitatori IPv6 finiscono in un solo conteggio dei tentativi. Vale anche per lo stack di oggi | **A** solo record A nella W5, IPv6 rivalutato nella W8 con una prova sul server · **B** IPv6 sulla rete `edge` dell'ingresso (sottorete ULA, `ip6tables`) e record AAAA, con la prova dell'indirizzo IPv6 sul server · **C** record AAAA accettando il conteggio comune degli IPv6 | **A**: lo staging non ha bisogno di IPv6, e la prova su Docker Desktop non vale per il server; HO-063 senza AAAA |
 
 Decisioni della fase che restano fuori da questa wave: D229 (W7), D227 e D230 (W8), D231 (dopo la W9).
 
@@ -268,7 +339,8 @@ Decisioni della fase che restano fuori da questa wave: D229 (W7), D227 e D230 (W
 
 ## 6. Assunzioni dichiarate
 
-- Il candidato del primo rilascio è il commit della T5; le immagini sono quelle della sua CI.
+- Il candidato del primo rilascio è il commit con Caddy 2.11.9 (DR-420); le immagini sono quelle
+  della sua CI.
 - Il server usa Ubuntu 24.04 LTS (DR-353); se il carrello non lo offre, stop (HO-056 §10).
 - Docker si installa dal repository ufficiale di Docker con versione fissata: le versioni dei
   pacchetti di Ubuntu 24.04 vanno confrontate in T6 con quelle provate in sviluppo.

@@ -17,7 +17,7 @@ RUN apk add --no-cache openssh-client-default=10.3_p1-r2 \
  && addgroup -S -g 10003 backup \
  && adduser -S -u 10003 -G backup -H -h /nonexistent -s /sbin/nologin backup
 COPY --from=tools /tmp/restic /usr/local/bin/restic
-COPY --from=cgr.dev/chainguard/minio-client@sha256:5feb4dcc570e7578f82e6c84384849e6557d005fb9b06f714c63f7184883b13f /usr/bin/mc /usr/local/bin/mc
+COPY --from=cgr.dev/chainguard/minio-client@sha256:20d1b2a39ca3b69ce970235e5940c99d0e1c840d2769c16ca1df540f5e17e956 /usr/bin/mc /usr/local/bin/mc
 RUN mkdir -p -m 0755 /usr/local/lib/amoris-backup
 COPY --chmod=0755 infra/deploy/backup/amoris-backup /usr/local/bin/amoris-backup
 COPY --chmod=0644 infra/deploy/backup/lib.sh /usr/local/lib/amoris-backup/lib.sh

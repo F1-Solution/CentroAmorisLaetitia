@@ -1,0 +1,2 @@
+# Riga di /etc/ssh/authorized_keys/deploy per il rilascio da GitHub Actions (DR-411): sostituire AAAA... con la chiave pubblica.
+restrict,command="/opt/amoris/rilascio/rilascia.sh" ssh-ed25519 AAAA... rilascio-github

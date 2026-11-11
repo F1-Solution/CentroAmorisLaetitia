@@ -50,9 +50,9 @@ export const PORTE = {
 } as const;
 
 /**
- * Stack di immagini dietro Caddy (1F-W2 T10): con `E2E_STACK_URL` (per esempio
- * `https://localhost:8443`) le prove non avviano server propri e passano tutte dall'unica
- * origine di Caddy, con l'API sotto `/api` come in produzione.
+ * Stack di immagini dietro l'ingresso comune e Caddy (1F-W2 T10, DR-409): con `E2E_STACK_URL`
+ * (per esempio `https://localhost:8443`) le prove non avviano server propri e passano
+ * tutte dall'unica origine dell'ingresso, con l'API sotto `/api` come in produzione.
  */
 export const STACK_URL = process.env.E2E_STACK_URL?.trim().replace(/\/+$/, '') || undefined;
 

@@ -1,0 +1,7 @@
+# Staging: inoltra al Caddy dello staging, raggiungibile solo sulla rete dedicata.
+{$INGRESS_STAGING_NAME} {
+	reverse_proxy amoris-staging-caddy:80 {
+		header_up -X-Real-IP
+		header_up -Forwarded
+	}
+}

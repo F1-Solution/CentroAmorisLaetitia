@@ -11,16 +11,19 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * Controlli di autenticazione di ADR-007 §3.1/§8 **attraverso Caddy**, sullo stack di
- * produzione avviato dalle immagini già costruite (1F-W4 T3), con seme sintetico.
+ * Controlli di autenticazione di ADR-007 §3.1/§8 **attraverso l'ingresso comune e il Caddy
+ * dell'ambiente** (DR-409), sullo stack di produzione avviato dalle immagini già costruite
+ * (1F-W4 T3), con seme sintetico.
  *
  * Le prove unitarie di `apps/api/tests/adr007Controls.test.ts` passano da `app.inject`: qui si
- * prova il percorso vero (Caddy, `X-Forwarded-For`, cookie `Secure` su HTTPS, CSRF su ogni rotta
- * che modifica) con i valori **predefiniti** dell'API (5 per account, 20 per indirizzo, ritardo
- * progressivo, 350 ms uniformi): per questo non si usa `compose.e2e.yml`, che li alza.
+ * prova il percorso vero (ingresso, Caddy, `X-Forwarded-For` su due salti, cookie `Secure` su
+ * HTTPS, CSRF su ogni rotta che modifica) con i valori **predefiniti** dell'API (5 per account, 20
+ * per indirizzo, ritardo progressivo, 350 ms uniformi): per questo non si usa `compose.e2e.yml`,
+ * che li alza.
  *
- * Il progetto Compose è effimero (`amoris-prova-sicurezza-<pid>`), con segreti generati qui e mai
- * scritti nel repository; `afterAll` lo toglie con `down -v`. Non si toccano altri progetti.
+ * I progetti Compose sono due, effimeri: l'ingresso (`amoris-prova-sicurezza-ing-<pid>`, con
+ * `ingresso.e2e.yml`) e l'ambiente (`amoris-prova-sicurezza-<pid>`), con segreti generati qui e mai
+ * scritti nel repository. `afterAll` li toglie con `down -v`. Non si toccano altri progetti.
  *
  * **Conteggio dei tentativi.** Dopo 20 fallimenti l'indirizzo del client resta bloccato per la
  * finestra (15 minuti), e dopo 5 l'account. L'API li legge dal registro delle operazioni: fra un
@@ -28,8 +31,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * `auth.login` e `auth.password_changed` di fallimento, così che ogni gruppo parta da zero.
  *
  * **Prova rossa.** `SICUREZZA_MUTAZIONE=<nome>` introduce un guasto temporaneo e deve far fallire
- * il gruppo corrispondente: `limiti`, `xff`, `revoca`, `cookie`, `csrf`, `enumerazione`, `dati`.
- * Le mutazioni stanno nei file temporanei di questa prova, mai nel prodotto.
+ * il gruppo corrispondente: `limiti`, `xff`, `revoca`, `cookie`, `csrf`, `enumerazione`, `dati`,
+ * `subnet` (la sottorete fidata dell'ambiente non è quella dell'ingresso: i visitatori si
+ * confondono in un solo conteggio). Le mutazioni stanno nei file temporanei di questa prova, mai
+ * nel prodotto.
  *
  * **Nessun dato reale, nessun segreto né indirizzo IP nei log**: si stampano solo conteggi.
  */
@@ -38,11 +43,22 @@ const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..');
 const deployDir = path.join(repoRoot, 'infra', 'deploy');
 const composeFile = path.join(deployDir, 'compose.yml');
 const overrideFile = path.join(import.meta.dirname, 'compose.sicurezza.yml');
+const ingressDir = path.join(deployDir, 'ingresso');
+const ingressComposeFile = path.join(ingressDir, 'compose.yml');
+const ingressOverrideFile = path.join(import.meta.dirname, 'ingresso.e2e.yml');
 const snapshotFile = path.join(repoRoot, 'apps', 'api', 'tests', 'openapi.snapshot.json');
 
 const MUTAZIONE = process.env.SICUREZZA_MUTAZIONE ?? '';
-const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w4-t7a';
+const IMAGE_TAG = process.env.SICUREZZA_IMAGE_TAG ?? 'w5-t4';
 const PROJECT = `amoris-prova-sicurezza-${process.pid}`;
+const INGRESS_PROJECT = `amoris-prova-sicurezza-ing-${process.pid}`;
+/** Nome pubblico di prova: `*.localhost` ottiene il certificato interno dell'ingresso. */
+const SITE_NAME = 'sicurezza.localhost';
+/** Sottoreti delle prove: fuori da quelle del server (10.77.84-89) e di `ingresso-1f` (10.214.91-92). */
+const INGRESS_PRODUCTION_SUBNET = '10.214.93.0/24';
+const INGRESS_STAGING_SUBNET = '10.214.94.0/24';
+/** Sottorete che l'ambiente si fida nella mutazione `subnet`: non è quella dell'ingresso. */
+const WRONG_INGRESS_SUBNET = '10.214.99.0/24';
 
 /** Persone del seme sintetico (`apps/api/tools/seedSintetico.ts`), tutte con `SEED_PASSWORD`. */
 const REDAZIONE = 'redazione@esempio.invalid';
@@ -77,6 +93,8 @@ let rootCa = '';
 let sql: postgres.Sql;
 let composeFiles: string[] = [];
 let envFile = '';
+let ingressComposeFiles: string[] = [];
+let ingressEnvFile = '';
 let volumesBefore = 0;
 
 // ---------------------------------------------------------------------------------------------
@@ -86,7 +104,7 @@ let volumesBefore = 0;
 /** L'ambiente della macchina senza le chiavi che il Compose interpola: valgono solo quelle della prova. */
 function cleanProcessEnv(): Record<string, string> {
   const drop =
-    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|SIC_)/i;
+    /^(AMORIS_|IMAGE_|CADDY_|SITE_URL|POSTGRES_|DB_|S3_|BACKUP_|IP_HASH_SALT|CSRF_SECRET|SCRUB_|MEDIA_|LOG_LEVEL|COMPOSE_|SIC_|INGRESS_)/i;
   return Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => !drop.test(entry[0]) && entry[1] !== undefined,
@@ -107,6 +125,23 @@ function compose(args: string[], timeout = 600_000) {
       ...args,
     ],
     { cwd: deployDir, env: cleanProcessEnv(), encoding: 'utf8', timeout },
+  );
+}
+
+/** Comando Compose del progetto dell'ingresso (con l'override delle porte locali). */
+function ingressCompose(args: string[], timeout = 300_000) {
+  return spawnSync(
+    'docker',
+    [
+      'compose',
+      '-p',
+      INGRESS_PROJECT,
+      ...ingressComposeFiles.flatMap((file) => ['-f', file]),
+      '--env-file',
+      ingressEnvFile,
+      ...args,
+    ],
+    { cwd: ingressDir, env: cleanProcessEnv(), encoding: 'utf8', timeout },
   );
 }
 
@@ -159,6 +194,39 @@ function mutatedCaddy(edit: (caddyfile: string) => string): string {
   );
 }
 
+/** Copia dell'ingresso con il `Caddyfile` guastato: file di override da aggiungere al Compose dell'ingresso. */
+function mutatedIngress(edit: (caddyfile: string) => string): string {
+  const dir = path.join(workDir, 'ingresso-mutato');
+  cpSync(ingressDir, dir, { recursive: true });
+  const file = path.join(dir, 'Caddyfile');
+  const original = readFileSync(file, 'utf8');
+  const edited = edit(original);
+  if (edited === original)
+    throw new Error('la mutazione dell’ingresso non ha cambiato il Caddyfile');
+  writeFileSync(file, edited);
+  const base = dir.replaceAll('\\', '/');
+  const target = path.join(workDir, 'mutazione-ingresso.yml');
+  writeFileSync(
+    target,
+    `services:\n  ingresso:\n    volumes:\n      - ${base}/Caddyfile:/etc/caddy/Caddyfile:ro\n      - ${base}/siti:/etc/caddy/siti:ro\n`,
+  );
+  return target;
+}
+
+/** Mutazione dell'ingresso, se la mutazione scelta ne ha una. */
+function ingressMutationFiles(): string[] {
+  if (MUTAZIONE !== 'xff') return [];
+  // L'ingresso si fida di ogni client: l'XFF del client resta in testa alla catena.
+  return [
+    mutatedIngress((text) =>
+      text.replace(
+        'admin off',
+        'admin off\n\tservers {\n\t\ttrusted_proxies static 0.0.0.0/0 ::/0\n\t}',
+      ),
+    ),
+  ];
+}
+
 const AFTER_IMPORT = 'import {$AMORIS_ENV}.caddy\n';
 
 function mutationFiles(): string[] {
@@ -179,15 +247,9 @@ function mutationFiles(): string[] {
         ),
       ];
     case 'xff':
-      // Caddy si fida di ogni client: l'XFF del client arriva all'API e vince.
-      return [
-        mutatedCaddy((text) =>
-          text.replace(
-            'admin off',
-            'admin off\n\tservers {\n\t\ttrusted_proxies static 0.0.0.0/0 ::/0\n\t}',
-          ),
-        ),
-      ];
+      // L'ingresso si fida di ogni client (vedi `ingressMutationFiles`) e il Caddy dell'ambiente
+      // prende la prima voce della catena invece dell'ultima: l'XFF del client arriva all'API e vince.
+      return [mutatedCaddy((text) => text.replace('\t\ttrusted_proxies_strict\n', ''))];
     case 'cookie':
       // Toglie `Secure` dai cookie che escono da Caddy.
       return [
@@ -263,11 +325,11 @@ function call(method: string, pathname: string, options: CallOptions = {}): Prom
         port: httpsPort,
         method,
         path: pathname,
-        servername: 'localhost',
+        servername: SITE_NAME,
         ca: rootCa,
         agent: false,
         headers: {
-          Host: `localhost:${httpsPort}`,
+          Host: `${SITE_NAME}:${httpsPort}`,
           'User-Agent': 'prova-sicurezza-1f',
           ...(payload !== undefined
             ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
@@ -489,10 +551,8 @@ beforeAll(async () => {
     AMORIS_ENV: 'production',
     IMAGE_PREFIX: 'amoris',
     IMAGE_TAG,
-    CADDY_SITE_ADDRESS: 'localhost',
-    CADDY_HTTP_PORT: String(httpPort),
-    CADDY_HTTPS_PORT: String(httpsPort),
-    SITE_URL: `https://localhost:${httpsPort}`,
+    CADDY_SITE_ADDRESS: SITE_NAME,
+    SITE_URL: `https://${SITE_NAME}:${httpsPort}`,
     POSTGRES_PASSWORD: secrets.postgres,
     DB_OWNER_PASSWORD: secrets.dbOwner,
     DB_APP_PASSWORD: secrets.dbApp,
@@ -507,6 +567,14 @@ beforeAll(async () => {
     SCRUB_SERVICE_TOKEN: secrets.scrub,
     // Obbligatoria dal riesame della T7 (DR-402).
     APP_SUBNET: '10.77.84.0/24',
+    // DR-412: rete d'uscita dei backup, obbligatoria e per ambiente.
+    BACKUP_OUT_SUBNET: '10.77.86.0/24',
+    BACKUP_OUT_BRIDGE: 'amoris-bkp-prod',
+    // N6: percorsi obbligatori dei segreti del backup; il profilo backup non parte, i file non servono.
+    BACKUP_SSH_KEY_PATH: '/etc/amoris/backup-chiavi/ssh_key',
+    BACKUP_KNOWN_HOSTS_PATH: '/etc/amoris/backup-chiavi/known_hosts',
+    // DR-409: rete verso l'ingresso; nella mutazione `subnet` non è quella vera, e Caddy non si fida dell'ingresso.
+    INGRESS_SUBNET: MUTAZIONE === 'subnet' ? WRONG_INGRESS_SUBNET : INGRESS_PRODUCTION_SUBNET,
     SIC_DB_PORT: String(dbPort),
     SIC_OBJECTS_PORT: String(objectsPort),
   };
@@ -518,6 +586,28 @@ beforeAll(async () => {
   );
   composeFiles = [composeFile, overrideFile, ...mutationFiles()];
 
+  // Ingresso per primo (DR-409): crea le reti a cui l'ambiente si aggancia. Solo la produzione ha il nome.
+  ingressEnvFile = path.join(workDir, 'ingresso.env');
+  writeFileSync(
+    ingressEnvFile,
+    Object.entries({
+      INGRESS_ACME_CA: 'https://acme-staging-v02.api.letsencrypt.org/directory',
+      INGRESS_PRODUCTION_SUBNET,
+      INGRESS_STAGING_SUBNET,
+      INGRESS_PRODUCTION_NAME: SITE_NAME,
+      INGRESS_STAGING_NAME: '',
+      INGRESS_E2E_HTTP_PORT: String(httpPort),
+      INGRESS_E2E_HTTPS_PORT: String(httpsPort),
+    })
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n'),
+  );
+  ingressComposeFiles = [ingressComposeFile, ingressOverrideFile, ...ingressMutationFiles()];
+  const ingressUp = ingressCompose(['up', '-d', '--wait']);
+  if (ingressUp.status !== 0) {
+    throw new Error(`ingresso: docker compose up --wait: ${ingressUp.stderr.slice(-1500)}`);
+  }
+
   mustCompose(['up', '-d', '--wait', 'db', 'objects']);
   mustCompose(['run', '--rm', 'objects-init']);
   mustCompose(['--profile', 'release', 'run', '--rm', 'migrate']);
@@ -528,18 +618,19 @@ beforeAll(async () => {
     throw new Error(`docker compose up --wait: ${started.stderr.slice(-1500)}`);
   }
 
-  // Radice interna di Caddy: emette da sé il certificato per `localhost`.
+  // Radice interna dell'ingresso: emette da sé il certificato per i nomi `*.localhost`.
   const deadline = Date.now() + 60_000;
   for (;;) {
-    const result = compose(
-      ['exec', '-T', 'caddy', 'cat', '/data/caddy/pki/authorities/local/root.crt'],
+    const result = ingressCompose(
+      ['exec', '-T', 'ingresso', 'cat', '/data/caddy/pki/authorities/local/root.crt'],
       30_000,
     );
     if (result.status === 0 && result.stdout.includes('BEGIN CERTIFICATE')) {
       rootCa = result.stdout;
       break;
     }
-    if (Date.now() > deadline) throw new Error('certificato radice interno di Caddy non creato');
+    if (Date.now() > deadline)
+      throw new Error('certificato radice interno dell’ingresso non creato');
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
@@ -586,14 +677,19 @@ afterAll(async () => {
   } catch {
     // La connessione può essere già chiusa.
   }
-  // Solo il progetto effimero, con i suoi dati sintetici.
-  if (composeFiles.length > 0) compose(['down', '-v', '--remove-orphans'], 300_000);
-  const leftovers = spawnSync(
-    'docker',
-    ['ps', '-a', '-q', '--filter', `label=com.docker.compose.project=${PROJECT}`],
-    { encoding: 'utf8', timeout: 60_000 },
-  );
-  const left = leftovers.stdout.split('\n').filter((line) => line.trim() !== '').length;
+  // Solo i progetti effimeri, con i loro dati sintetici: prima l'ambiente, poi l'ingresso che ne tiene le reti.
+  const downFlags = ['-v', '--remove-orphans'];
+  if (composeFiles.length > 0) compose(['down', ...downFlags], 300_000);
+  if (ingressComposeFiles.length > 0) ingressCompose(['down', ...downFlags], 300_000);
+  let left = 0;
+  for (const project of [PROJECT, INGRESS_PROJECT]) {
+    const leftovers = spawnSync(
+      'docker',
+      ['ps', '-a', '-q', '--filter', `label=com.docker.compose.project=${project}`],
+      { encoding: 'utf8', timeout: 60_000 },
+    );
+    left += leftovers.stdout.split('\n').filter((line) => line.trim() !== '').length;
+  }
   info(
     `contenitori rimasti del progetto effimero: ${left}; volumi Docker prima: ${volumesBefore}, dopo: ${countVolumes()}`,
   );
@@ -692,6 +788,113 @@ describe('l’indirizzo del client è quello visto da Caddy, non un X-Forwarded-
     expect(digests).toHaveLength(1);
     const fakeDigests = new Set(spoofed.map(ipDigest));
     expect(digests.some((digest) => fakeDigests.has(digest))).toBe(false);
+    await clearAttempts();
+  }, 300_000);
+});
+
+// ---------------------------------------------------------------------------------------------
+// 2b. Visitatori distinti, conteggi distinti (DR-409): due salti non li confondono
+// ---------------------------------------------------------------------------------------------
+
+interface Client {
+  id: string;
+  address: string;
+}
+
+/**
+ * Un client con indirizzo proprio: un contenitore sulla rete `edge` dell'ingresso, tenuto acceso
+ * finché serve così che due client non riusino lo stesso indirizzo. Lo toglie `stopClient`.
+ */
+function startClient(): Client {
+  const edge = `${INGRESS_PROJECT}_edge`;
+  const ingressId = ingressCompose(['ps', '-q', 'ingresso'], 60_000).stdout.trim();
+  const ingressAddress = spawnSync(
+    'docker',
+    ['inspect', '-f', `{{(index .NetworkSettings.Networks "${edge}").IPAddress}}`, ingressId],
+    { encoding: 'utf8', timeout: 60_000 },
+  ).stdout.trim();
+  const image = /^\s+image: (caddy:\S+)$/m.exec(readFileSync(ingressComposeFile, 'utf8'))?.[1];
+  if (!image || !ingressAddress) throw new Error('immagine o indirizzo dell’ingresso non trovati');
+  const started = spawnSync(
+    'docker',
+    [
+      'run',
+      '-d',
+      '--network',
+      edge,
+      '--add-host',
+      `${SITE_NAME}:${ingressAddress}`,
+      image,
+      'sleep',
+      '900',
+    ],
+    { encoding: 'utf8', timeout: 120_000 },
+  );
+  if (started.status !== 0) throw new Error(`client di prova non avviato: ${started.stderr}`);
+  const id = started.stdout.trim();
+  const address = spawnSync('docker', ['exec', id, 'hostname', '-i'], {
+    encoding: 'utf8',
+    timeout: 60_000,
+  }).stdout.trim();
+  return { id, address };
+}
+
+/** Esegue lo script nel client e restituisce le righe stampate. */
+function runClient(client: Client, script: string): string[] {
+  const result = spawnSync('docker', ['exec', client.id, 'sh', '-c', script], {
+    encoding: 'utf8',
+    timeout: 240_000,
+  });
+  if (result.status !== 0) throw new Error(`client di prova fallito: ${result.stderr.slice(-500)}`);
+  return result.stdout.trim().split('\n');
+}
+
+function stopClient(client: Client | undefined): void {
+  if (client) spawnSync('docker', ['rm', '-f', '-v', client.id], { timeout: 60_000 });
+}
+
+/** Script che fa un accesso e stampa il solo stato HTTP: `wget` di BusyBox con `-S` scrive le intestazioni su stderr. */
+function loginScript(email: string, password: string): string {
+  const body = JSON.stringify({ email, password });
+  return `wget -S -q -O /dev/null --no-check-certificate --header 'Content-Type: application/json' --post-data '${body}' https://${SITE_NAME}/api/auth/login 2>&1 | grep -o 'HTTP/1.1 [0-9]*' | tail -1`;
+}
+
+describe('visitatori distinti hanno conteggi distinti, anche con due salti (DR-409)', () => {
+  it('un client che esaurisce il tetto per indirizzo non blocca un altro client con credenziali giuste', async () => {
+    await clearAttempts();
+    const tag = randomBytes(3).toString('hex');
+    const exhaust = Array.from({ length: 20 }, (_, index) =>
+      loginScript(`visitatore-${tag}-${index}@esempio.invalid`, 'qualunque'),
+    ).join('; ');
+
+    let a: Client | undefined;
+    let b: Client | undefined;
+    try {
+      a = startClient();
+      b = startClient();
+      expect(b.address).not.toBe(a.address);
+
+      // Client A: 20 fallimenti su account diversi, poi anche la password giusta è respinta.
+      const aStatuses = runClient(a, `${exhaust}; ${loginScript(REDAZIONE, secrets.seed)}`).map(
+        (line) => line.trim(),
+      );
+      info(`client A: ${aStatuses.length} risposte, ultima ${aStatuses.at(-1)}`);
+      expect(aStatuses.slice(0, 20).every((status) => status === 'HTTP/1.1 401')).toBe(true);
+      expect(aStatuses.at(-1), 'A ha esaurito il tetto per indirizzo').toBe('HTTP/1.1 429');
+
+      // Client B: indirizzo diverso, stesse credenziali giuste: entra lo stesso.
+      const bStatuses = runClient(b, loginScript(REDAZIONE, secrets.seed));
+      expect(bStatuses.at(-1)?.trim(), 'B non deve subire il blocco di A').toBe('HTTP/1.1 200');
+
+      // Attribuzione: i fallimenti portano solo il digest dell'indirizzo di A.
+      const rows = await sql<{ h: string }[]>`
+        SELECT DISTINCT encode(ip_hash, 'hex') AS h FROM audit_log
+        WHERE action = 'auth.login' AND outcome = 'failure' AND ip_hash IS NOT NULL`;
+      expect(rows.map((row) => row.h)).toEqual([ipDigest(a.address)]);
+    } finally {
+      stopClient(a);
+      stopClient(b);
+    }
     await clearAttempts();
   }, 300_000);
 });
@@ -849,7 +1052,7 @@ describe('cookie in produzione (controllo 3)', () => {
             port: httpPort,
             method: 'POST',
             path: '/api/auth/login',
-            headers: { Host: `localhost:${httpPort}` },
+            headers: { Host: `${SITE_NAME}:${httpPort}` },
             agent: false,
           },
           (response) => {

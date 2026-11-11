@@ -1,0 +1,108 @@
+# Rilascio sul server (1F-W5 T3b, DR-411): avviato a mano, solo da main; l'approvazione è la conferma prima dell'avvio.
+# La chiave SSH può eseguire sul server solo `rilascia.sh` (comando forzato, infra/deploy/rilascio/).
+name: Rilascio
+
+on:
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: Ambiente da aggiornare
+        type: choice
+        required: true
+        options:
+          - staging
+          - production
+      hash:
+        description: Hash del commit (40 caratteri) di cui esistono le cinque immagini
+        type: string
+        required: true
+      migrazioni:
+        description: Esegui le migrazioni del database prima dell'avvio
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+
+# Un rilascio alla volta per ambiente, senza annullare quello in corso.
+concurrency:
+  group: rilascio-${{ inputs.ambiente }}
+  cancel-in-progress: false
+
+jobs:
+  rilascio:
+    name: Rilascio ${{ inputs.ambiente }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Controllo dei dati in ingresso
+        env:
+          AMBIENTE: ${{ inputs.ambiente }}
+          HASH: ${{ inputs.hash }}
+        run: |
+          [ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::il rilascio parte solo da main"; exit 1; }
+          case "$AMBIENTE" in production | staging) ;; *) echo "::error::ambiente non valido"; exit 1 ;; esac
+          printf '%s' "$HASH" | grep -Eq '^[0-9a-f]{40}$' || { echo "::error::l'hash deve avere 40 caratteri esadecimali minuscoli"; exit 1; }
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Il commit è su main
+        env:
+          HASH: ${{ inputs.hash }}
+        run: |
+          git cat-file -e "${HASH}^{commit}" || { echo "::error::commit sconosciuto"; exit 1; }
+          git merge-base --is-ancestor "$HASH" origin/main || { echo "::error::il commit non è raggiungibile da main"; exit 1; }
+
+      - name: Le cinque immagini esistono nel registro
+        env:
+          HASH: ${{ inputs.hash }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          mancanti=0
+          for app in web admin api scrub backup; do
+            if ! docker manifest inspect "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/amoris-${app}:${HASH}" > /dev/null; then
+              echo "::error::manca l'immagine amoris-${app}:${HASH}"
+              mancanti=1
+            fi
+          done
+          exit "$mancanti"
+
+      - name: Rilascio sul server
+        env:
+          AMBIENTE: ${{ inputs.ambiente }}
+          HASH: ${{ inputs.hash }}
+          MIGRAZIONI: ${{ inputs.migrazioni }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RILASCIO_SSH_KEY: ${{ secrets.RILASCIO_SSH_KEY }}
+          RILASCIO_KNOWN_HOSTS: ${{ vars.RILASCIO_KNOWN_HOSTS }}
+          RILASCIO_HOST: ${{ vars.RILASCIO_HOST }}
+        run: |
+          [ -n "$RILASCIO_SSH_KEY" ] || { echo "::error::manca il segreto RILASCIO_SSH_KEY"; exit 1; }
+          [ -n "$RILASCIO_KNOWN_HOSTS" ] || { echo "::error::manca la variabile RILASCIO_KNOWN_HOSTS"; exit 1; }
+          [ -n "$RILASCIO_HOST" ] || { echo "::error::manca la variabile RILASCIO_HOST"; exit 1; }
+          umask 077
+          chiave="$RUNNER_TEMP/rilascio_key"
+          known_hosts="$RUNNER_TEMP/rilascio_known_hosts"
+          printf '%s\n' "$RILASCIO_SSH_KEY" > "$chiave"
+          printf '%s\n' "$RILASCIO_KNOWN_HOSTS" > "$known_hosts"
+          comando="rilascia $AMBIENTE $HASH"
+          if [ "$MIGRAZIONI" = true ]; then comando="$comando --migrazioni"; fi
+          set -o pipefail
+          rc=0
+          esito=$({ printf '%s\n%s\n' "$GITHUB_ACTOR" "$GITHUB_TOKEN"; git archive --format=tar.gz "$HASH" infra; } |
+            ssh -T -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$known_hosts" \
+              -o IdentitiesOnly=yes -i "$chiave" "deploy@$RILASCIO_HOST" "$comando") || rc=$?
+          { echo '### Rilascio'; echo '```json'; printf '%s\n' "$esito"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - name: Cancellazione della chiave
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rilascio_key" "$RUNNER_TEMP/rilascio_known_hosts"

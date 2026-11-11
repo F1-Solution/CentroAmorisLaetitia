@@ -69,6 +69,7 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-059 | [Chiavi dei backup: password del repository e chiave SSH](HO-059-chiavi-dei-backup-1F-W5.md) | 1F | ⏳ **da eseguire nella `1F-W5`** — richiede server (HO-056) e Storage Box (HO-058); due copie cifrate (DR-380) |
 | HO-060 | [Approvazione scritta del rischio residuo di DR-385](HO-060-approvazione-rischio-DR-385-1F-W4.md) | 1F | ✅ **chiuso** 2026-11-08 — approvato dal legale rappresentante (DR-394); originale fuori da Git |
 | HO-061 | [Azioni sul server nate dalla security review](HO-061-azioni-sul-server-dalla-security-review-1F-W5.md) | 1F | ⏳ **da eseguire nella `1F-W5`** — sottoreti per ambiente, firewall di `backup-out`, timer della pulizia, procedura del primo account |
+| HO-065 | [Riavvio di Docker Desktop sulla postazione di sviluppo](HO-065-riavvio-docker-desktop-1F-W5.md) | 1F | ⏳ **da eseguire** — Docker Desktop non parte; verifica della T5b ferma (HO-062…HO-064 riservati alla T6) |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

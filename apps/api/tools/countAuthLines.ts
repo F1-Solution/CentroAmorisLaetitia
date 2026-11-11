@@ -59,6 +59,8 @@ export const WRAPPER_FILES = [
   'modules/accounts/routes.ts',
   'modules/accounts/schemas.ts',
   'modules/accounts/service.ts',
+  // Wave 1F-W5 (T3d): il primo account crea credenziali come modules/accounts/service.ts, quindi conta nel totale.
+  'accounts/localAccount.ts',
 ] as const;
 
 /**

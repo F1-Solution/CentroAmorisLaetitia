@@ -1,0 +1,87 @@
+# =====================================================================
+# Ingresso comune di produzione e staging (1F-W5 T2a; DR-409).
+#
+# Terzo progetto Compose, `amoris-ingresso`: l'unico che pubblica 80, 443 e 443/udp e tiene i certificati.
+# Inoltra per nome al Caddy di ciascun ambiente su due reti interne separate, create qui con sottorete fissa.
+# Si avvia PRIMA degli ambienti, che si agganciano alle reti `amoris-ingresso-production` e `amoris-ingresso-staging`:
+#
+#   docker compose -f infra/deploy/ingresso/compose.yml --env-file <ingresso>.env up -d --wait
+#
+# - Il nome della produzione si lascia vuoto fino alla 1F-W8: senza nome non c'è sito né certificato.
+# - Nessun segreto: l'ingresso non ha password; quella dello staging sta nel Caddy dello staging.
+# - La sottorete di ogni rete deve essere uguale a INGRESS_SUBNET dell'ambiente corrispondente.
+# =====================================================================
+
+name: amoris-ingresso
+
+# Rotazione dei log: 5 file da 10 MB (DR-390), come per gli ambienti.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+services:
+  ingresso:
+    logging: *logging
+    image: caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5
+    restart: unless-stopped
+    mem_limit: 128m
+    cap_drop: ['ALL']
+    cap_add: ['NET_BIND_SERVICE']
+    security_opt: ['no-new-privileges:true']
+    environment:
+      ACME_CA: ${INGRESS_ACME_CA:?manca INGRESS_ACME_CA (directory ACME, prima quella di prova di Let's Encrypt, poi quella vera)}
+      INGRESS_STAGING_NAME: ${INGRESS_STAGING_NAME:-}
+      # Valorizzata solo con il nome: sceglie il file del sito da leggere (siti/<valore>.sito).
+      INGRESS_STAGING_SITE: ${INGRESS_STAGING_NAME:+staging}
+      INGRESS_PRODUCTION_NAME: ${INGRESS_PRODUCTION_NAME:-}
+      INGRESS_PRODUCTION_SITE: ${INGRESS_PRODUCTION_NAME:+produzione}
+    # Controllo dei nomi pubblici (solo minuscole, cifre, `.` e `-`; niente schema, porta, virgole o `*`), poi il comando predefinito dell'immagine.
+    command:
+      - sh
+      - -c
+      - |
+        chk() { case "$$2" in '') ;; [.-]*|*[!a-z0-9.-]*) echo "ingresso: $$1 non valido: serve un nome DNS in minuscolo, senza schema, porta, virgole, spazi o asterischi" >&2; exit 64 ;; esac; }
+        chk INGRESS_STAGING_NAME "$$INGRESS_STAGING_NAME"
+        chk INGRESS_PRODUCTION_NAME "$$INGRESS_PRODUCTION_NAME"
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./siti:/etc/caddy/siti:ro
+      - ingresso-data:/data
+      - ingresso-config:/config
+    # `edge` per prima: da lì arrivano le porte pubblicate, con l'indirizzo vero del client.
+    networks: [edge, produzione, staging]
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:2020/health/live']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  # Unica rete con uscita: porte pubbliche e richieste dei certificati.
+  edge: {}
+  # Una rete interna per ambiente, con sottorete fissa diversa: i due Caddy non si vedono tra loro.
+  produzione:
+    name: amoris-ingresso-production
+    internal: true
+    ipam:
+      config:
+        - subnet: ${INGRESS_PRODUCTION_SUBNET:?manca INGRESS_PRODUCTION_SUBNET (sottorete della rete verso la produzione, per esempio 10.77.88.0/24)}
+  staging:
+    name: amoris-ingresso-staging
+    internal: true
+    ipam:
+      config:
+        - subnet: ${INGRESS_STAGING_SUBNET:?manca INGRESS_STAGING_SUBNET (sottorete della rete verso lo staging, per esempio 10.77.89.0/24)}
+
+volumes:
+  # Certificati e chiavi: da conservare, per non richiederli a ogni riavvio.
+  ingresso-data:
+  ingresso-config:

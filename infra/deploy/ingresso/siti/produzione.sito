@@ -1,0 +1,7 @@
+# Produzione: inoltra al Caddy della produzione, raggiungibile solo sulla rete dedicata.
+{$INGRESS_PRODUCTION_NAME} {
+	reverse_proxy amoris-production-caddy:80 {
+		header_up -X-Real-IP
+		header_up -Forwarded
+	}
+}

@@ -10,9 +10,10 @@
 #   non si toccano. AMORIS_ENV vale `production` o `staging` (deve esistere ambiente/<valore>.env).
 # - Nessun segreto e nessuna etichetta d'immagine hanno valore predefinito: se mancano,
 #   il Compose non parte e dice quale manca.
-# - Solo Caddy pubblica porte. Applicazioni, database, archivio e pulizia stanno su reti
-#   interne, senza uscita verso Internet.
-# - Il backup è a termine, nel profilo `backup`, e ha una rete con uscita propria (`backup-out`).
+# - Nessun servizio dell'ambiente pubblica porte: 80 e 443 li tiene l'ingresso comune (ingresso/compose.yml,
+#   DR-409), che si avvia prima e crea la rete `ingresso` di ciascun ambiente. Caddy qui parla solo HTTP.
+#   Applicazioni, database, archivio e pulizia stanno su reti interne, senza uscita verso Internet.
+# - Il backup è a termine, nel profilo `backup`, e ha una rete con uscita propria (`backup-out`, per ambiente: DR-412).
 # - Le migrazioni non partono mai all'avvio: profilo `release`, comando esplicito (ADR-009 §4.4).
 # - Limiti di memoria: produzione + staging restano sotto 7 GB sugli 8 del server (DR-334).
 # =====================================================================
@@ -42,7 +43,7 @@ x-logging: &logging
 services:
   caddy:
     logging: *logging
-    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    image: caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5
     restart: unless-stopped
     mem_limit: 128m
     cap_drop: ['ALL']
@@ -54,18 +55,20 @@ services:
     environment:
       AMORIS_ENV: ${AMORIS_ENV}
       CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:?manca CADDY_SITE_ADDRESS (nome del sito, per esempio www.dominio.it)}
+      # Rete dell'ingresso di questo ambiente: l'unica da cui Caddy accetta l'indirizzo del visitatore (DR-409).
+      INGRESS_SUBNET: ${INGRESS_SUBNET:?manca INGRESS_SUBNET (sottorete della rete verso l'ingresso, uguale a quella dell'ingresso per questo ambiente, per esempio 10.77.88.0/24 in produzione e 10.77.89.0/24 in staging)}
       # Solo lo staging le usa (basic_auth); in produzione restano vuote e ignorate.
       STAGING_BASIC_AUTH_USER: ${STAGING_BASIC_AUTH_USER:-}
       STAGING_BASIC_AUTH_HASH: ${STAGING_BASIC_AUTH_HASH:-}
-    ports:
-      - '${CADDY_HTTP_PORT:?manca CADDY_HTTP_PORT}:80'
-      - '${CADDY_HTTPS_PORT:?manca CADDY_HTTPS_PORT}:443'
-      - '${CADDY_HTTPS_PORT}:443/udp'
     volumes:
       - ./caddy:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
-    networks: [edge, app]
+    networks:
+      app: {}
+      ingresso:
+        # Nome con cui l'ingresso lo raggiunge: distinto per ambiente.
+        aliases: ['amoris-${AMORIS_ENV}-caddy']
     depends_on:
       web: { condition: service_healthy }
       admin: { condition: service_healthy }
@@ -110,6 +113,8 @@ services:
         required: true
     environment:
       <<: *media-limits
+      # Nome dell'ambiente (non segreto): la creazione del primo account lo vuole uguale a --ambiente.
+      AMORIS_ENV: ${AMORIS_ENV}
       # Ruolo applicativo: niente superutente, niente DDL (T6g).
       DATABASE_URL: postgres://amoris_app:${DB_APP_PASSWORD:?manca DB_APP_PASSWORD}@db:5432/${POSTGRES_DB:-amoris}
       IP_HASH_SALT: ${IP_HASH_SALT:?manca IP_HASH_SALT}
@@ -230,7 +235,7 @@ services:
   # Solo qui e in `objects` stanno le credenziali principali dell'archivio.
   objects-init:
     logging: *logging
-    image: cgr.dev/chainguard/minio-client@sha256:5feb4dcc570e7578f82e6c84384849e6557d005fb9b06f714c63f7184883b13f
+    image: cgr.dev/chainguard/minio-client@sha256:20d1b2a39ca3b69ce970235e5940c99d0e1c840d2769c16ca1df540f5e17e956
     restart: 'no'
     mem_limit: 128m
     security_opt: ['no-new-privileges:true']
@@ -334,19 +339,21 @@ services:
       S3_ACCESS_KEY: amoris-api
       S3_SECRET_KEY: ${S3_API_SECRET_KEY:?manca S3_API_SECRET_KEY}
 
-# Chiave SSH e known_hosts del backup: file dell'host in /run/secrets, con percorso predefinito non
-# segreto. Le altre variabili del backup sono vuote o predefinite apposta: lo staging non le imposta e
-# senza di esse il backup si rifiuta di partire (codice 78), perché il Compose interpola tutto il file
-# anche fuori dal profilo.
+# Chiave SSH e known_hosts del backup: file dell'host in /run/secrets, con percorso assoluto obbligatorio
+# fuori dalle cartelle dei rilasci (N6). Le altre variabili del backup sono vuote o predefinite apposta:
+# lo staging non le imposta e senza di esse il backup si rifiuta di partire (codice 78), perché il
+# Compose interpola tutto il file anche fuori dal profilo.
 secrets:
   backup_ssh_key:
-    file: ${BACKUP_SSH_KEY_PATH:-./backup-chiavi/ssh_key}
+    file: ${BACKUP_SSH_KEY_PATH:?manca BACKUP_SSH_KEY_PATH (percorso assoluto della chiave SSH del backup, fuori dalle cartelle dei rilasci, per esempio /etc/amoris/backup-chiavi/ssh_key)}
   backup_known_hosts:
-    file: ${BACKUP_KNOWN_HOSTS_PATH:-./backup-chiavi/known_hosts}
+    file: ${BACKUP_KNOWN_HOSTS_PATH:?manca BACKUP_KNOWN_HOSTS_PATH (percorso assoluto del known_hosts del backup, fuori dalle cartelle dei rilasci, per esempio /etc/amoris/backup-chiavi/known_hosts)}
 
 networks:
-  # Unica rete con uscita: Caddy riceve dall'esterno e chiede i certificati.
-  edge: {}
+  # Rete verso l'ingresso comune, creata dall'ingresso con sottorete fissa (DR-409): due ambienti non si vedono tra loro.
+  ingresso:
+    external: true
+    name: amoris-ingresso-${AMORIS_ENV}
   # Sottorete fissa: l'API si fida di `X-Forwarded-For` solo da questa rete (TRUSTED_PROXY), dove stanno Caddy e le applicazioni.
   # Obbligatoria e diversa per produzione e staging, che stanno sullo stesso server (DR-402).
   app:
@@ -357,13 +364,13 @@ networks:
   data: { internal: true }
   scrub: { internal: true }
   # Solo per il backup, verso la Storage Box; la destinazione la limita `firewall/backup-out.sh` sull'host (1F-W4 T6i).
-  # Sottorete e bridge fissi, perché le regole li indicano; il backup gira solo in produzione (DR-372).
+  # Sottorete e bridge obbligatori e diversi per ambiente, perché le regole dell'host li indicano (DR-412).
   backup-out:
     ipam:
       config:
-        - subnet: ${BACKUP_OUT_SUBNET:-10.77.86.0/24}
+        - subnet: ${BACKUP_OUT_SUBNET:?manca BACKUP_OUT_SUBNET (sottorete della rete backup-out, diversa per produzione e staging, per esempio 10.77.86.0/24 e 10.77.87.0/24)}
     driver_opts:
-      com.docker.network.bridge.name: ${BACKUP_OUT_BRIDGE:-amoris-bkp-out}
+      com.docker.network.bridge.name: ${BACKUP_OUT_BRIDGE:?manca BACKUP_OUT_BRIDGE (bridge della rete backup-out, diverso per ambiente, amoris-bkp-prod in produzione e amoris-bkp-stag in staging)}
 
 volumes:
   db-data:

@@ -109,6 +109,11 @@ cronologia di Git, che non ha rilievi: per questo `.gitleaks.toml` non serve e n
 | T6b | Trivy, backup | 0 critici e 27 alti, in `restic` e `mc` |
 | T7a, immagini `w4-t7a` (Debian 12.15) | Trivy, web, admin, api, scrub | 1 critico e 36 alti di sistema ciascuna, 2 alti con correzione (`apt` e `libapt-pkg` 2.6.2); nessun avviso nelle dipendenze applicative, `drizzle-orm` compreso |
 | T7a | Trivy, backup | 0 critici e 27 alti nei binari Go (`restic` 23, `mc` 4), tutti con correzione a monte |
+| `1F-W5` T4, immagini `w5-t4` (Node 26.12.1) | Trivy, web, admin, api, scrub | 1 critico e 36 alti ciascuna, 2 alti con correzione (`apt`), accettati con DR-418 |
+| `1F-W5` T4 | Trivy, backup (`mc` di Chainguard aggiornato) | 0 critici e 24 alti (`restic` 23, `mc` 1), accettati con DR-418 |
+| `1F-W5` T4 | Trivy, PostgreSQL 17.11 | 1 critico e 25 alti in `gosu`, senza immagine corretta, accettati con DR-418 |
+| `1F-W5` T4 | Trivy, MinIO in uso | 4 critici e 9 alti, corretti da un digest troppo recente: aggiornamento dal 2026-11-23 (DR-417) |
+| `1F-W5` T4b | Trivy, Caddy 2.10.2 contro 2.11.7, stesso database | da 6 critici e 100 alti a 1 critico e 10 alti; 1 e 9 con correzione, nessun rilascio sul server prima del 2.11.9 (DR-420) |
 
 Il critico residuo delle immagini Node è un avviso di `zlib1g` senza correzione e noto come
 falso positivo (riguarda `minizip`, assente). I due alti con correzione riguardano `apt`, che il
@@ -306,6 +311,68 @@ R25, R27), nessuna non chiusa. Le chiusure parziali sono i rilievi qui sotto.
 
 Il riesame del revisore sul solo diff della T7a è nel §12.
 
+### 7.3 Rilievi del riesame della `1F-W5` (T5)
+
+Il riesame separato del diff T2–T4b della `1F-W5` ha dato 0 critici, 0 alti, 9 medi e 7 bassi.
+Le correzioni sono della T5a, con prova rossa prima, secondo DR-421…DR-424.
+
+| N | Sev. | Sintesi | Esito | Rif. |
+|---|---|---|---|---|
+| N1 | Medio | Visitatori IPv6 tutti con l'indirizzo del bridge dietro l'ingresso | aperto come D305 (secondo round), da decidere prima della T6 | D305 |
+| N2 | Medio | Archivio del rilascio senza tetto sul decompresso | corretto: tetto di 200 MiB decompressi e 20 000 voci, misurato senza scrivere su disco | DR-421 |
+| N3 | Medio | Uscita di Docker e delle migrazioni nel log di GitHub Actions | corretto: uscita in un registro 600 sul server, al client solo la riga JSON; conservazione dei registri da decidere | DR-422 |
+| N4 | Medio | `INGRESS_SUBNET` non confrontata con la rete vera dell'ingresso | corretto: il rilascio si ferma in fase `rete` se la sottorete non è l'unica e uguale | DR-421 |
+| N5 | Medio | `account-create` senza riga nel registro delle operazioni | corretto: riga `account.create` con origine `cli` e ruolo, senza dati personali | DR-421 |
+| N6 | Medio | Chiavi del backup con percorso relativo alla cartella del rilascio | corretto: percorsi obbligatori, assoluti e fuori dai rilasci, controllati dal rilascio | DR-421 |
+| N7 | Medio | Prove che possono passare senza provare ciò che dichiarano | (a) e (c) corrette; (b) lo staging dietro l'ingresso vero si prova sul server nella T7; (d) prove testuali del workflow annotate; la prova del rilascio gira su Ubuntu 22.04, il server su 24.04 | DR-424 |
+| N8 | Medio | Disposizione del server senza proprietari, permessi e regole `sshd` | corretto nel README §10, con il gruppo `docker` dichiarato equivalente a root; impianto con HO-062 | DR-423 |
+| N9 | Medio | HO-061 su un clone invece che sui rilasci | corretto: un solo punto d'avvio, la cartella reale del rilascio corrente | DR-423 |
+| N10 | Basso | `Connection: X-Forwarded-For` potrebbe togliere l'indirizzo all'ingresso | non si riproduce con Caddy 2.11.7; prova aggiunta | DR-424 |
+| N11 | Basso | Nomi pubblici dell'ingresso non validati | corretto: l'ingresso esce con 64 prima di avviare Caddy | DR-424 |
+| N12 | Basso | Residui dopo l'uccisione dello script | corretto: pulizia all'avvio, solo per l'ambiente bloccato | DR-424 |
+| N13 | Basso | Cartella del rilascio sostituita prima dei controlli | corretto: rete prima, cartella dello stesso hash rimessa a posto su errore; resta la finestra di un `SIGKILL` fra i due spostamenti | DR-424 |
+| N14 | Basso | Rilasci vecchi mai cancellati; ingresso non ricreato | `--force-recreate` nel README; potatura dei rilasci annotata, i vecchi servono al rientro | DR-424 |
+| N15 | Basso | Firewall senza legame fra ambiente, sottorete e bridge | corretto: prefissi fuori da `/16`–`/32` e conflitto con l'altro ambiente rifiutati con 64 | DR-424 |
+| N16 | Basso | Margine di memoria nullo; digest vecchio di `mc` nel Compose di sviluppo | annotato: memoria rimisurata nella T9 (D302); il Compose di sviluppo non va sul server | DR-424 |
+
+Il vincolo «solo da `main`» è descritto come comodità, non come controllo (README §10, DR-411).
+DR-420 resta una regola di processo: nel codice nulla impedisce un rilascio con Caddy 2.11.7.
+
+Il riesame separato del solo diff della T5a ha dato 0 critici, 0 alti, 2 medi e 15 bassi, senza
+regressioni. I due medi sono un blocco del rilascio tenuto da un client morto e la perdita della
+cartella dello stesso hash dopo un `SIGKILL`: le correzioni sono nella T5b (§7.4, DR-426).
+
+### 7.4 Rilievi del riesame della T5a
+
+Corretti nella T5b, con prova rossa prima per il codice (DR-426):
+
+| N | Sintesi | Dove |
+|---|---|---|
+| M1 | Blocco del rilascio tenuto da un runner morto | scadenza di 30 s sulle letture in `rilascio/rilascia.sh`; `ClientAliveInterval`/`ClientAliveCountMax` in `README.md` §10 |
+| M2 | `SIGKILL` fra i due spostamenti: copia dell'hash persa | ripristino nella pulizia dei residui di `rilascio/rilascia.sh` |
+| B1 | Secondo segnale durante la pulizia | `rilascio/rilascia.sh` |
+| B4 | `umask` non fissata prima dell'estrazione | `rilascio/rilascia.sh` |
+| B5 | Percorso di `authorized_keys` discordante | `rilascio/authorized_keys.esempio`, `README.md` §10 |
+| B12 | Percorsi del backup troppo permissivi | `rilascio/rilascia.sh` (caratteri ammessi `._/+@-`, lettere e cifre) |
+| B15 | Indirizzo e nome del primo account nel log di `sudo` e nella cronologia | `account-create` legge due righe da standard input; `README.md` §3 |
+| B16 | Handoff sul server con «radice del repository» | HO-059; HO-061 e `README.md` §3 già allineati |
+
+Accettati per la Fase 1 (DR-426), con il rischio residuo indicato dal revisore:
+
+| N | Rischio residuo accettato |
+|---|---|
+| B2 | Un `avvio` fallito con lo stesso hash toglie la cartella su cui i contenitori ricreati hanno i montaggi |
+| B3 | Nessuna prova su segnali, su `migrazioni` o `avvio` falliti, né sulla finestra fra i due spostamenti |
+| B6 | Il blocco `Match User deploy` non è provato dalla prova del rilascio |
+| B7 | Firewall: sottorete con bit d'ospite, sottoreti sovrapposte e `SUBNET6` non confrontate; prove sul solo codice 64 |
+| B8 | La riga `account.create` da CLI non indica chi l'ha eseguita; la prova della transazione non la esercita |
+| B10 | La prova sul Compose vero copre solo `config` |
+| B11 | `assertUnreachable` accetta `timed out`; isolamento provato per nome e non per indirizzo |
+| B13 | Dimensione apparente dei file sparsi non controllata |
+| B14 | Nomi dell'ingresso: passano `a..b`, `a-`, nomi di una sola etichetta e indirizzi IP |
+
+B9 (registri del rilascio senza rotazione né tetto) è rinviato alla `1F-W6` (DR-427).
+
 ## 8. Requisiti del parere MI-06 (domande 3e, 7b, 12)
 
 I requisiti sono da valutare, non conformità: l'esito tecnico non sostituisce 1F-11.
@@ -369,9 +436,10 @@ da eseguire nella `1F-W5`.
   solo conteggi (HO-061 §9).
 - **HSTS** (R20): alzare `max-age` dopo la verifica di HTTPS.
 - **CSP** (R21, DR-364): decisione su nonce o hash e raccolta delle segnalazioni.
-- **Primo account di produzione** (R24): `account-create` rifiuta oggi un database non locale,
-  quindi la procedura si scrive e si prova nella `1F-W5`: password temporanea su canale sicuro,
-  cambio al primo accesso e attivazione del TOTP (DR-228, DR-398).
+- **Primo account di produzione** (R24): `account-create` funziona sul server con
+  `--ambiente … --conferma` e indirizzo e nome da standard input (`infra/deploy/README.md` §3,
+  DR-426); resta da eseguire al primo rilascio, con password temporanea su canale sicuro, cambio al
+  primo accesso e attivazione del TOTP (DR-228, DR-398).
 - **Segreti**: `TOTP_ENCRYPTION_KEY`, chiavi S3 e segreti distinti nel file d'ambiente; spazio di
   `backup-data`. I comandi di sblocco, reimpostazione del secondo fattore (DR-397) e pulizia sono
   già nell'immagine dell'API.

@@ -1,15 +1,15 @@
 {
-  "misuratoIl": "2026-11-09",
+  "misuratoIl": "2026-11-10",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
   "soglia": 800,
   "sogliaPrecedente": 650,
   "sogliaModificataIl": "2026-11-08",
   "nucleo": 789,
-  "totale": 1989,
+  "totale": 2175,
   "esitoNucleo": "rispettata",
   "esitoTotale": "superata",
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "Misura del 2026-11-09 (wave 1F-W4, T7: coda per account sui tentativi, DR-400; scadenza delle righe con il digest dell'identificativo, DR-403): nucleo 789 su 800, totale 1989; soglia di DR-395 invariata, deroga di DR-066 per il totale invariata, riesame con Better Auth prima della fase gestionale. ADR-007 §6 contromisura 3. Precedente (T6l): nucleo 772 su 800, totale 1946.",
+  "conseguenza": "Misura del 2026-11-10 (wave 1F-W5, T5b-2, DR-426: indirizzo e nome del primo account da stdin): nucleo 789 su 800, totale 2175 (2115 dopo T5a-2, DR-421); soglia di DR-395 invariata, deroga di DR-066 per il totale invariata. ADR-007 §6 contromisura 3. Precedente (wave 1F-W4, T7): nucleo 789 su 800, totale 1989.",
   "misuraPrecedente": {
     "misuratoIl": "2026-09-20",
     "nucleo": 437,
@@ -34,6 +34,7 @@
     "modules/auth/service.ts": 138,
     "modules/accounts/routes.ts": 223,
     "modules/accounts/schemas.ts": 9,
-    "modules/accounts/service.ts": 226
+    "modules/accounts/service.ts": 226,
+    "accounts/localAccount.ts": 186
   }
 }

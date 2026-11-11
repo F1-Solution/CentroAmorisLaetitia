@@ -113,6 +113,32 @@ describe('esempio d’ambiente di produzione', () => {
     expect([...required].filter((name) => !active.has(name))).toEqual([]);
   });
 
+  it('DR-409: la rete verso l’ingresso è obbligatoria e le porte pubbliche non sono più dell’ambiente', () => {
+    const keys = readExample().map((line) => line.key);
+    const line = readExample().find((candidate) => candidate.key === 'INGRESS_SUBNET');
+    expect(line?.active).toBe(true);
+    expect(line?.value).toBe('');
+    expect(keys).not.toContain('CADDY_HTTP_PORT');
+    expect(keys).not.toContain('CADDY_HTTPS_PORT');
+  });
+
+  it('DR-412: sottorete e bridge dei backup sono righe attive e vuote, per ambiente', () => {
+    for (const key of ['BACKUP_OUT_SUBNET', 'BACKUP_OUT_BRIDGE']) {
+      const line = readExample().find((candidate) => candidate.key === key);
+      expect(line?.active, key).toBe(true);
+      expect(line?.value, key).toBe('');
+    }
+  });
+
+  it('N6: i percorsi delle chiavi del backup sono righe attive e vuote, con percorso assoluto in commento', () => {
+    for (const key of ['BACKUP_SSH_KEY_PATH', 'BACKUP_KNOWN_HOSTS_PATH']) {
+      const line = readExample().find((candidate) => candidate.key === key);
+      expect(line?.active, key).toBe(true);
+      expect(line?.value, key).toBe('');
+    }
+    expect(readFileSync(examplePath, 'utf8')).toContain('/etc/amoris/backup-chiavi/');
+  });
+
   it('lascia vuote le chiavi obbligatorie del Compose: copiato così com’è non avvia nulla', () => {
     const { required } = composeVariables();
     const filled = readExample().filter(

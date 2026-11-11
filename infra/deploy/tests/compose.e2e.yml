@@ -2,6 +2,9 @@
 # mai sul server. Toglie le attese dell'accesso come l'e2e di sviluppo e apre il database
 # e l'archivio su 127.0.0.1 per scrivere il seme sintetico e per le prove che leggono il database.
 #
+# Lo stack si raggiunge solo dall'ingresso comune (DR-409): prima si avvia l'ingresso con
+# `infra/deploy/tests/ingresso.e2e.yml`, poi lo stack (README §6).
+#
 #   docker compose -f infra/deploy/compose.yml -f infra/deploy/tests/compose.e2e.yml ...
 services:
   api:

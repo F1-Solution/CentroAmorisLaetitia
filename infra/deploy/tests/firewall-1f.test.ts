@@ -21,14 +21,26 @@ const IMAGE =
   'postgres:17.11-alpine@sha256:562a6e0a66b5136bc28bef5944bbc2ddddf8ea0058d4016b96cee63f2edaf143';
 const NAME = `amoris-fw-prova-${process.pid}`;
 
-const SUBNET = '10.77.86.0/24';
-const BRIDGE = 'vb-h';
+/** Due ambienti sullo stesso «host» (DR-412): ognuno ha sottorete, bridge, catena e spazio di rete propri. */
+const ENVS = {
+  production: {
+    subnet: '10.77.86.0/24',
+    bridge: 'vb-h',
+    chain: 'AMORIS-BKP-OUT-PRODUCTION',
+    ns: 'bk',
+  },
+  staging: { subnet: '10.77.87.0/24', bridge: 'vb2-h', chain: 'AMORIS-BKP-OUT-STAGING', ns: 'bs' },
+} as const;
+type EnvName = keyof typeof ENVS;
+const SUBNET = ENVS.production.subnet;
+const BRIDGE = ENVS.production.bridge;
 const SB_HOST = 'storagebox.esempio.invalid';
 const SB_IP = '198.51.100.10';
 const OTHER_IP = '203.0.113.10';
 const OTHER_IP6 = '2001:db8:113::10';
 const DNS_IP = '192.0.2.53';
-const CHAIN = 'AMORIS-BACKUP-OUT';
+const CHAIN = ENVS.production.chain;
+const CHAIN_STAGING = ENVS.staging.chain;
 
 interface Result {
   readonly status: number | null;
@@ -50,22 +62,32 @@ const sh = (script: string, env: Readonly<Record<string, string>> = {}): Result 
     script,
   ]);
 
-/** Lancia lo script come root sull'«host»; di base la Storage Box è nominata e il DNS è quello di prova. */
-const run = (args: readonly string[] = [], env: Readonly<Record<string, string>> = {}): Result =>
+/** Lancia lo script come root sull'«host»; di base è la produzione, con la Storage Box nominata e il DNS di prova. */
+const runFor = (
+  name: EnvName,
+  args: readonly string[] = [],
+  env: Readonly<Record<string, string>> = {},
+): Result =>
   sh(`sh /tmp/backup-out.sh ${args.join(' ')}`, {
+    AMORIS_ENV: name,
     BACKUP_SFTP_HOST: SB_HOST,
-    BACKUP_OUT_SUBNET: SUBNET,
-    BACKUP_OUT_BRIDGE: BRIDGE,
+    BACKUP_OUT_SUBNET: ENVS[name].subnet,
+    BACKUP_OUT_BRIDGE: ENVS[name].bridge,
     BACKUP_OUT_DNS: DNS_IP,
     ...env,
   });
+const run = (args: readonly string[] = [], env: Readonly<Record<string, string>> = {}): Result =>
+  runFor('production', args, env);
 
-/** Il backup (spazio `bk`) prova a collegarsi: true se il servizio risponde. */
-const reach = (ip: string, port: number, v6 = false): boolean => {
+/** Il backup di un ambiente (spazio `bk` o `bs`) prova a collegarsi: true se il servizio risponde. */
+const reachFrom = (ns: string, ip: string, port: number, v6 = false): boolean => {
   const target = v6 ? `TCP6:[${ip}]:${port}` : `TCP:${ip}:${port}`;
-  const r = sh(`ip netns exec bk socat -T3 - ${target},connect-timeout=2 </dev/null | grep -q ok`);
+  const r = sh(
+    `ip netns exec ${ns} socat -T3 - ${target},connect-timeout=2 </dev/null | grep -q ok`,
+  );
   return r.status === 0;
 };
+const reach = (ip: string, port: number, v6 = false): boolean => reachFrom('bk', ip, port, v6);
 
 const chainRules = (): string => sh(`iptables -S ${CHAIN}`).out;
 const dockerUser = (): string => sh('iptables -S DOCKER-USER').out;
@@ -85,6 +107,7 @@ mk() { ns=$1; h=$2; hip=$3; nip=$4; h6=$5; n6=$6
   ip netns exec $ns ip -6 route add default via $h6::1
 }
 mk bk vb-h 10.77.86.1 10.77.86.2 2001:db8:86 2001:db8:86::2
+mk bs vb2-h 10.77.87.1 10.77.87.2 2001:db8:87 2001:db8:87::2
 mk sb vs-h 198.51.100.1 ${SB_IP} 2001:db8:100 2001:db8:100::10
 mk ot vo-h 203.0.113.1 ${OTHER_IP} 2001:db8:113 ${OTHER_IP6}
 mk dn vd-h 192.0.2.1 ${DNS_IP} 2001:db8:2 2001:db8:2::53
@@ -104,9 +127,11 @@ sleep 3
 /** Riporta l'«host» allo stato iniziale: nessuna catena, nessun salto. */
 const RESET = `
 for t in iptables ip6tables; do
-  while $t -D DOCKER-USER -j ${CHAIN} 2>/dev/null; do :; done
-  $t -F ${CHAIN} 2>/dev/null || true
-  $t -X ${CHAIN} 2>/dev/null || true
+  for c in ${CHAIN} ${CHAIN_STAGING}; do
+    while $t -D DOCKER-USER -j $c 2>/dev/null; do :; done
+    $t -F $c 2>/dev/null || true
+    $t -X $c 2>/dev/null || true
+  done
 done
 `;
 
@@ -301,6 +326,7 @@ describe('regole DOCKER-USER di backup-out (R13)', () => {
       `printf 'BACKUP_SFTP_HOST=${SB_HOST}\\nBACKUP_SFTP_PORT=23\\n$(touch /tmp/eseguito)\\n' > /tmp/prova.env`,
     );
     const r = sh(`sh /tmp/backup-out.sh --env-file /tmp/prova.env`, {
+      AMORIS_ENV: 'production',
       BACKUP_OUT_SUBNET: SUBNET,
       BACKUP_OUT_BRIDGE: BRIDGE,
       BACKUP_OUT_DNS: DNS_IP,
@@ -309,5 +335,155 @@ describe('regole DOCKER-USER di backup-out (R13)', () => {
     expect(sh('test -e /tmp/eseguito').status).toBe(1);
     expect(reach(SB_IP, 23)).toBe(true);
     expect(reach(OTHER_IP, 23)).toBe(false);
+  });
+});
+
+describe('due ambienti sullo stesso host (DR-412)', () => {
+  const jumps = (): string[] =>
+    dockerUser()
+      .trim()
+      .split('\n')
+      .filter((l) => l.startsWith('-A DOCKER-USER -j AMORIS-'));
+  const everything = (): string => `${sh('iptables -S').out}${sh('ip6tables -S').out}`;
+  const prodJump = (): string =>
+    jumps()
+      .filter((l) => l.endsWith(CHAIN))
+      .join('\n');
+
+  it('applicati produzione e poi staging, ognuno ha la propria catena e il proprio salto', () => {
+    sh(RESET);
+    expect(runFor('production').status).toBe(0);
+    expect(runFor('staging').status).toBe(0);
+    expect(jumps().sort()).toEqual([
+      `-A DOCKER-USER -j ${CHAIN}`,
+      `-A DOCKER-USER -j ${CHAIN_STAGING}`,
+    ]);
+    expect(chainRules()).toContain(`-A ${CHAIN} -s ${ENVS.production.subnet} -d ${SB_IP}/32`);
+    expect(chainRules()).not.toContain(ENVS.staging.subnet);
+    const staging = sh(`iptables -S ${CHAIN_STAGING}`).out;
+    expect(staging).toContain(`-A ${CHAIN_STAGING} -s ${ENVS.staging.subnet} -d ${SB_IP}/32`);
+    expect(staging).not.toContain(ENVS.production.subnet);
+    expect(sh(`ip6tables -S ${CHAIN_STAGING}`).out).toContain(`-i ${ENVS.staging.bridge}`);
+  });
+
+  it('il traffico ammesso e rifiutato è corretto per ciascuna sottorete', () => {
+    for (const { ns } of Object.values(ENVS)) {
+      expect(reachFrom(ns, SB_IP, 23), ns).toBe(true);
+      expect(reachFrom(ns, DNS_IP, 53), ns).toBe(true);
+      expect(reachFrom(ns, SB_IP, 443), ns).toBe(false);
+      expect(reachFrom(ns, OTHER_IP, 23), ns).toBe(false);
+      expect(reachFrom(ns, OTHER_IP, 443), ns).toBe(false);
+      expect(reachFrom(ns, OTHER_IP6, 443, true), ns).toBe(false);
+    }
+  });
+
+  it('riapplicare lo staging non cambia la catena né il salto della produzione', () => {
+    const before = `${chainRules()}${prodJump()}`;
+    expect(runFor('staging').status).toBe(0);
+    expect(runFor('staging').status).toBe(0);
+    expect(`${chainRules()}${prodJump()}`).toBe(before);
+    expect(jumps()).toHaveLength(2);
+    expect(reachFrom('bk', SB_IP, 23)).toBe(true);
+  });
+
+  it('--check di un ambiente non vede l altro', () => {
+    expect(runFor('production', ['--check']).status).toBe(0);
+    expect(runFor('staging', ['--check']).status).toBe(0);
+    sh(`iptables -D ${CHAIN_STAGING} 2`);
+    expect(runFor('staging', ['--check']).status).toBe(1);
+    expect(runFor('production', ['--check']).status).toBe(0);
+    expect(runFor('staging').status).toBe(0);
+    sh(RESET);
+    expect(runFor('production').status).toBe(0);
+    // Con la sola produzione applicata lo staging non ha regole, e la produzione non ne risente.
+    expect(runFor('staging', ['--check']).status).toBe(1);
+    expect(runFor('production', ['--check']).status).toBe(0);
+  });
+
+  it('senza ambiente, con un ambiente sconosciuto o senza rete esce con 64 e non cambia nulla', () => {
+    const before = everything();
+    for (const env of [
+      { AMORIS_ENV: '' },
+      { AMORIS_ENV: 'collaudo' },
+      { AMORIS_ENV: 'Production' },
+      { BACKUP_OUT_SUBNET: '' },
+      { BACKUP_OUT_BRIDGE: '' },
+    ]) {
+      const r = run([], env);
+      expect(r.status, JSON.stringify(env) + r.out).toBe(64);
+      expect(run(['--check'], env).status, JSON.stringify(env)).toBe(64);
+    }
+    expect(run(['--env', 'collaudo']).status).toBe(64);
+    expect(everything()).toBe(before);
+  });
+
+  it('rifiuta con 64 le sottoreti da /0 a /15 e i prefissi non validi, senza toccare nulla', () => {
+    sh(RESET);
+    const before = everything();
+    for (const subnet of [
+      '0.0.0.0/0',
+      '10.0.0.0/8',
+      '10.77.0.0/15',
+      '10.77.86.0/',
+      '10.77.86.0/ab',
+      '10.77.86.0/33',
+      '10.77.86.0/24/5',
+    ]) {
+      const r = run([], { BACKUP_OUT_SUBNET: subnet });
+      expect(r.status, subnet + r.out).toBe(64);
+      expect(run(['--check'], { BACKUP_OUT_SUBNET: subnet }).status, subnet).toBe(64);
+    }
+    expect(everything()).toBe(before);
+    // Da /16 a /32 il prefisso passa: --check non risponde 64 (mancano solo le regole).
+    for (const subnet of ['10.77.0.0/16', '10.77.86.0/24', '10.77.86.5/32']) {
+      expect(run(['--check'], { BACKUP_OUT_SUBNET: subnet }).status, subnet).toBe(1);
+    }
+  });
+
+  it('si ferma con 64 se la catena dell altro ambiente esiste con la stessa sottorete o lo stesso bridge', () => {
+    sh(RESET);
+    expect(runFor('staging').status).toBe(0);
+    const staging = sh(`iptables -S ${CHAIN_STAGING}`).out;
+    const jumpsBefore = jumps();
+    // --env production con la sottorete dello staging già applicata.
+    const sameSubnet = runFor('production', [], { BACKUP_OUT_SUBNET: ENVS.staging.subnet });
+    expect(sameSubnet.status, sameSubnet.out).toBe(64);
+    const viaFlag = runFor('production', ['--subnet', ENVS.staging.subnet]);
+    expect(viaFlag.status, viaFlag.out).toBe(64);
+    const sameBridge = runFor('production', [], { BACKUP_OUT_BRIDGE: ENVS.staging.bridge });
+    expect(sameBridge.status, sameBridge.out).toBe(64);
+    expect(sh(`iptables -S ${CHAIN}`).status).not.toBe(0);
+    expect(sh(`iptables -S ${CHAIN_STAGING}`).out).toBe(staging);
+    expect(jumps()).toEqual(jumpsBefore);
+    // Anche al contrario.
+    sh(RESET);
+    expect(runFor('production').status).toBe(0);
+    const reverse = runFor('staging', [], { BACKUP_OUT_SUBNET: ENVS.production.subnet });
+    expect(reverse.status, reverse.out).toBe(64);
+    expect(sh(`iptables -S ${CHAIN_STAGING}`).status).not.toBe(0);
+    // Riapplicare lo stesso ambiente con la propria sottorete resta possibile.
+    expect(runFor('production').status).toBe(0);
+    expect(runFor('staging').status).toBe(0);
+  });
+
+  it('--env prevale sull ambiente della shell e AMORIS_ENV si legge dal file con --env-file', () => {
+    sh(RESET);
+    const viaFlag = runFor('production', ['--env', 'staging'], {
+      BACKUP_OUT_SUBNET: ENVS.staging.subnet,
+      BACKUP_OUT_BRIDGE: ENVS.staging.bridge,
+    });
+    expect(viaFlag.status, viaFlag.out).toBe(0);
+    expect(sh(`iptables -S ${CHAIN_STAGING}`).status).toBe(0);
+    expect(sh(`iptables -S ${CHAIN}`).status).not.toBe(0);
+    sh(RESET);
+    sh(
+      `printf 'AMORIS_ENV=staging\\nBACKUP_SFTP_HOST=${SB_HOST}\\nBACKUP_OUT_SUBNET=${ENVS.staging.subnet}\\nBACKUP_OUT_BRIDGE=${ENVS.staging.bridge}\\n' > /tmp/stag.env`,
+    );
+    const r = sh('sh /tmp/backup-out.sh --env-file /tmp/stag.env', { BACKUP_OUT_DNS: DNS_IP });
+    expect(r.status, r.out).toBe(0);
+    expect(sh(`iptables -S ${CHAIN_STAGING}`).status).toBe(0);
+    expect(sh(`iptables -S ${CHAIN}`).status).not.toBe(0);
+    expect(reachFrom('bs', SB_IP, 23)).toBe(true);
+    expect(reachFrom('bs', OTHER_IP, 23)).toBe(false);
   });
 });

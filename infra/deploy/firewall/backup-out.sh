@@ -1,7 +1,7 @@
 #!/bin/sh
 # Regole della catena DOCKER-USER per la rete `backup-out` (1F-W4 T6i, rilievo R13); si lancia da root sull'host.
 #
-# Uso: backup-out.sh [--check] [--env-file FILE] [--host NOME] [--port N] [--ip ADDR]... [--dns ADDR]...
+# Uso: backup-out.sh [--check] [--env production|staging] [--env-file FILE] [--host NOME] [--port N] [--ip ADDR]... [--dns ADDR]...
 #                    [--subnet CIDR] [--bridge NOME] [--ipv6-subnet CIDR]
 #
 # Che cosa fa: la rete esce solo verso la Storage Box (TCP, porta BACKUP_SFTP_PORT) e verso i resolver
@@ -9,22 +9,28 @@
 # Il DNS serve: il resolver integrato di Docker (127.0.0.11) inoltra le richieste esterne dallo spazio di
 # rete del contenitore, quindi passano dalla catena FORWARD con la sottorete di `backup-out` come origine.
 #
-# Idempotente: la catena AMORIS-BACKUP-OUT è riscritta in una sola operazione atomica, senza istanti
+# Per ambiente (DR-412): produzione e staging hanno ciascuno la propria catena (AMORIS-BKP-OUT-PRODUCTION o
+# AMORIS-BKP-OUT-STAGING), la propria sottorete e il proprio bridge; si lancia una volta per ambiente e ogni
+# applicazione tocca solo la catena e il salto del proprio ambiente. Senza ambiente valido esce con 64.
+#
+# Idempotente: la catena è riscritta in una sola operazione atomica, senza istanti
 # aperti, con un solo salto da DOCKER-USER; le altre regole non si toccano.
 # Fallisce chiuso: se la Storage Box o il DNS non si risolvono esce con 2 e non lascia la rete aperta
 # (nessuna regola precedente: tutto rifiutato; regole precedenti: restano, sono già restrittive).
-# Con --check non modifica nulla: esce con 0 se le regole attese ci sono tutte, con 1 se ne manca o ne
-# avanza qualcuna, con 2 se non riesce a calcolarle.
+# Con --check non modifica nulla (e guarda solo il proprio ambiente): esce con 0 se le regole attese ci sono
+# tutte, con 1 se ne manca o ne avanza qualcuna, con 2 se non riesce a calcolarle.
 #
-# Valori da ambiente o da --env-file (solo le righe CHIAVE=valore, mai eseguito): BACKUP_SFTP_HOST,
-# BACKUP_SFTP_PORT (23), BACKUP_OUT_SUBNET (10.77.86.0/24), BACKUP_OUT_BRIDGE (amoris-bkp-out),
+# Valori da ambiente o da --env-file (solo le righe CHIAVE=valore, mai eseguito): AMORIS_ENV (production o
+# staging), BACKUP_SFTP_HOST, BACKUP_SFTP_PORT (23), BACKUP_OUT_SUBNET e BACKUP_OUT_BRIDGE (senza predefiniti:
+# 10.77.86.0/24 e amoris-bkp-prod in produzione, 10.77.87.0/24 e amoris-bkp-stag in staging),
 # BACKUP_OUT_SUBNET6 (vuoto: la rete è solo IPv4), BACKUP_OUT_DNS (vuoto: dai resolver dell'host).
 # I flag prevalgono su tutto. Fuori dalla sottorete non cambia nulla.
 set -eu
 
-CHAIN=AMORIS-BACKUP-OUT
+CHAIN=
 CHECK=0
 ENV_FILE=
+FLAG_ENV=
 FLAG_HOST=
 FLAG_PORT=
 FLAG_SUBNET=
@@ -43,6 +49,7 @@ need_value() { [ "$1" -ge 2 ] || die "manca il valore di $2"; }
 while [ $# -gt 0 ]; do
   case $1 in
     --check) CHECK=1 ;;
+    --env) need_value $# "$1"; FLAG_ENV=$2; shift ;;
     --env-file) need_value $# "$1"; ENV_FILE=$2; shift ;;
     --host) need_value $# "$1"; FLAG_HOST=$2; shift ;;
     --port) need_value $# "$1"; FLAG_PORT=$2; shift ;;
@@ -51,16 +58,17 @@ while [ $# -gt 0 ]; do
     --ipv6-subnet) need_value $# "$1"; FLAG_SUBNET6=$2; shift ;;
     --ip) need_value $# "$1"; FLAG_IPS="$FLAG_IPS $2"; shift ;;
     --dns) need_value $# "$1"; FLAG_DNS="$FLAG_DNS $2"; shift ;;
-    -h | --help) sed -n '2,26p' "$0"; exit 0 ;;
+    -h | --help) sed -n '2,27p' "$0"; exit 0 ;;
     *) die "argomento sconosciuto: $1" ;;
   esac
   shift
 done
 
+AMORIS_ENV_NAME=${AMORIS_ENV:-}
 HOST=${BACKUP_SFTP_HOST:-}
 PORT=${BACKUP_SFTP_PORT:-23}
-SUBNET=${BACKUP_OUT_SUBNET:-10.77.86.0/24}
-BRIDGE=${BACKUP_OUT_BRIDGE:-amoris-bkp-out}
+SUBNET=${BACKUP_OUT_SUBNET:-}
+BRIDGE=${BACKUP_OUT_BRIDGE:-}
 SUBNET6=${BACKUP_OUT_SUBNET6:-}
 DNS_LIST=${BACKUP_OUT_DNS:-}
 
@@ -70,6 +78,7 @@ env_value() {
 }
 if [ -n "$ENV_FILE" ]; then
   [ -r "$ENV_FILE" ] || die "file d'ambiente illeggibile: $ENV_FILE"
+  v=$(env_value AMORIS_ENV); [ -z "$v" ] || AMORIS_ENV_NAME=$v
   v=$(env_value BACKUP_SFTP_HOST); [ -z "$v" ] || HOST=$v
   v=$(env_value BACKUP_SFTP_PORT); [ -z "$v" ] || PORT=$v
   v=$(env_value BACKUP_OUT_SUBNET); [ -z "$v" ] || SUBNET=$v
@@ -77,6 +86,7 @@ if [ -n "$ENV_FILE" ]; then
   v=$(env_value BACKUP_OUT_SUBNET6); [ -z "$v" ] || SUBNET6=$v
   v=$(env_value BACKUP_OUT_DNS); [ -z "$v" ] || DNS_LIST=$v
 fi
+[ -z "$FLAG_ENV" ] || AMORIS_ENV_NAME=$FLAG_ENV
 [ -z "$FLAG_HOST" ] || HOST=$FLAG_HOST
 [ -z "$FLAG_PORT" ] || PORT=$FLAG_PORT
 [ -z "$FLAG_SUBNET" ] || SUBNET=$FLAG_SUBNET
@@ -85,11 +95,24 @@ fi
 [ -z "$FLAG_DNS" ] || DNS_LIST=$FLAG_DNS
 IPS=$FLAG_IPS
 
+# L'ambiente sceglie la catena: senza un valore valido non si tocca nulla.
+case $AMORIS_ENV_NAME in
+  production) CHAIN=AMORIS-BKP-OUT-PRODUCTION ;;
+  staging) CHAIN=AMORIS-BKP-OUT-STAGING ;;
+  *) die "ambiente mancante o sconosciuto (AMORIS_ENV o --env: production o staging): '$AMORIS_ENV_NAME'" ;;
+esac
+[ -n "$SUBNET" ] || die 'manca BACKUP_OUT_SUBNET (10.77.86.0/24 in produzione, 10.77.87.0/24 in staging)'
+[ -n "$BRIDGE" ] || die 'manca BACKUP_OUT_BRIDGE (amoris-bkp-prod in produzione, amoris-bkp-stag in staging)'
+
 # I valori finiscono nelle regole: si accettano solo i caratteri attesi.
 case $PORT in '' | *[!0-9]*) die "porta non valida: $PORT" ;; esac
 [ "$PORT" -ge 1 ] && [ "$PORT" -le 65535 ] || die "porta non valida: $PORT"
 case $SUBNET in */*) ;; *) die "sottorete non valida: $SUBNET" ;; esac
 case $SUBNET in *[!0-9./]*) die "sottorete non valida: $SUBNET" ;; esac
+# Prefisso da /16 a /32: una sottorete più ampia rifiuterebbe (o aprirebbe) il traffico di mezza rete.
+PREFIX=${SUBNET#*/}
+case $PREFIX in '' | *[!0-9]*) die "prefisso della sottorete non valido: $SUBNET" ;; esac
+{ [ "$PREFIX" -ge 16 ] && [ "$PREFIX" -le 32 ]; } || die "prefisso della sottorete fuori da /16-/32: $SUBNET"
 case $SUBNET6 in *[!0-9a-fA-F:/]*) die "sottorete IPv6 non valida: $SUBNET6" ;; esac
 case $BRIDGE in '' | *[!A-Za-z0-9_.-]*) die "nome del bridge non valido: $BRIDGE" ;; esac
 [ "${#BRIDGE}" -le 15 ] || die "nome del bridge troppo lungo (massimo 15): $BRIDGE"
@@ -240,8 +263,20 @@ if [ "$CHECK" = 1 ]; then
   exit "$rc"
 fi
 
+have_chain 4 || { DIE_CODE=1; die 'catena DOCKER-USER assente: Docker non è in esecuzione?'; }
+
+# Un ambiente non deve riscrivere la sottorete o il bridge già protetti dalla catena dell'altro.
+case $CHAIN in
+  AMORIS-BKP-OUT-PRODUCTION) OTHER_CHAIN=AMORIS-BKP-OUT-STAGING ;;
+  *) OTHER_CHAIN=AMORIS-BKP-OUT-PRODUCTION ;;
+esac
+for t in iptables ip6tables; do
+  rules=$("$t" -S "$OTHER_CHAIN" 2>/dev/null) || continue
+  if printf '%s\n' "$rules" | grep -F -q -e " -s $SUBNET " -e " -i $BRIDGE "; then
+    die "la catena $OTHER_CHAIN usa già la sottorete $SUBNET o il bridge $BRIDGE"
+  fi
+done
 DIE_CODE=1
-have_chain 4 || die 'catena DOCKER-USER assente: Docker non è in esecuzione?'
 
 if [ "$RESOLVED" = 0 ]; then
   # Fallire chiuso: se esistono regole precedenti restano, altrimenti si installa il rifiuto totale.

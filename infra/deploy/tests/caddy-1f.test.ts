@@ -1,7 +1,5 @@
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import http from 'node:http';
-import http2 from 'node:http2';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -12,14 +10,15 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * Avvia l'immagine di Caddy del Compose con il suo `Caddyfile` davanti a un finto servizio che
  * risponde con il proprio nome e il percorso ricevuto, e controlla: instradamento (prefisso
  * `/api` tolto, `/forms` all'API), intestazioni di sicurezza, CSP solo in segnalazione,
- * `Cache-Control` dei media lasciato all'API, HTTP → HTTPS, HSTS e HTTP/2 con il certificato
- * interno che Caddy emette da solo per i nomi `*.localhost`.
+ * `Cache-Control` dei media lasciato all'API e indirizzo del visitatore (DR-409). HTTPS, HSTS e
+ * HTTP/2 stanno nell'ingresso comune: li prova `ingresso-1f.test.ts`.
  *
  * **Nessun dato reale**: nessun contenitore vede un database o un archivio.
  */
 
 const deployDir = path.resolve(import.meta.dirname, '..');
-const SITE_NAME = 'amoris.localhost';
+/** Sottorete dell'ingresso nelle prove: non contiene il peer che arriva dall'host. */
+const INGRESS_SUBNET = '10.213.88.0/24';
 
 const caddyImage = (() => {
   const match = /^\s+image: (caddy:\S+)$/m.exec(
@@ -35,6 +34,8 @@ const FAKE_UPSTREAMS = `{
 }
 :3000 {
 	header X-Robots-Tag "all"
+	@eco path /eco
+	respond @eco "web {path} xff=[{header.X-Forwarded-For}] proto=[{header.X-Forwarded-Proto}] host=[{host}] xri=[{header.X-Real-IP}] fwd=[{header.Forwarded}] "
 	respond "web {path}"
 }
 :3001 {
@@ -76,10 +77,10 @@ function startCaddy(
     network,
     '-p',
     '127.0.0.1::80',
-    '-p',
-    '127.0.0.1::443',
     '-e',
     `AMORIS_ENV=${env}`,
+    '-e',
+    `INGRESS_SUBNET=${INGRESS_SUBNET}`,
     '-e',
     `CADDY_SITE_ADDRESS=${siteAddress}`,
     ...Object.entries(extraEnv).flatMap(([key, value]) => ['-e', `${key}=${value}`]),
@@ -245,106 +246,28 @@ describe('instradamento e intestazioni (HTTP, indirizzo :80)', () => {
   });
 });
 
-describe('HTTPS con il certificato interno (nome *.localhost)', () => {
-  let id = '';
-  let httpPort = 0;
-  let httpsPort = 0;
-  let rootCa = '';
+describe('indirizzo del visitatore (DR-409): da fuori della rete dell’ingresso nessuno impone un indirizzo', () => {
+  let base = '';
 
-  beforeAll(async () => {
-    id = startCaddy('production', SITE_NAME);
-    httpPort = hostPort(id, '80/tcp');
-    httpsPort = hostPort(id, '443/tcp');
-    const deadline = Date.now() + 30_000;
-    for (;;) {
-      const result = spawnSync(
-        'docker',
-        ['exec', id, 'cat', '/data/caddy/pki/authorities/local/root.crt'],
-        { encoding: 'utf8' },
-      );
-      if (result.status === 0 && result.stdout.includes('BEGIN CERTIFICATE')) {
-        rootCa = result.stdout;
-        break;
-      }
-      if (Date.now() > deadline) throw new Error('certificato radice interno non creato');
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
+  beforeAll(() => {
+    base = `http://127.0.0.1:${hostPort(startCaddy('production', ':80'), '80/tcp')}`;
   });
 
-  /** Richiesta HTTP/2 con il nome del sito (SNI) e la radice interna di Caddy come fiducia. */
-  async function h2(
-    pathname: string,
-  ): Promise<{ headers: http2.IncomingHttpHeaders; body: string }> {
-    const deadline = Date.now() + 20_000;
-    for (;;) {
-      try {
-        const result = await new Promise<{ headers: http2.IncomingHttpHeaders; body: string }>(
-          (resolve, reject) => {
-            const client = http2.connect(`https://${SITE_NAME}:${httpsPort}`, {
-              ca: rootCa,
-              servername: SITE_NAME,
-              lookup: (_host, options, callback) => {
-                if ((options as { all?: boolean }).all)
-                  callback(null, [{ address: '127.0.0.1', family: 4 }]);
-                else callback(null, '127.0.0.1', 4);
-              },
-            });
-            client.on('error', reject);
-            const request = client.request({ ':path': pathname });
-            let body = '';
-            let headers: http2.IncomingHttpHeaders = {};
-            request.setEncoding('utf8');
-            request.on('response', (h) => (headers = h));
-            request.on('data', (chunk: string) => (body += chunk));
-            request.on('end', () => {
-              client.close();
-              resolve({ headers, body });
-            });
-            request.on('error', reject);
-            request.end();
-          },
-        );
-        if (result.headers[':status'] !== 502 || Date.now() > deadline) return result;
-      } catch (error) {
-        if (Date.now() > deadline) throw error;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-  }
-
-  it('HTTP risponde con un redirect permanente a HTTPS', async () => {
-    // `fetch` ignora l'intestazione Host: serve node:http.
-    const response = await new Promise<http.IncomingMessage>((resolve, reject) => {
-      http
-        .get(
-          {
-            host: '127.0.0.1',
-            port: httpPort,
-            path: '/chi-siamo/?a=1',
-            headers: { Host: SITE_NAME },
-          },
-          resolve,
-        )
-        .on('error', reject);
+  it('un X-Forwarded-For, X-Real-IP o Forwarded dichiarato dal client non arriva all’applicazione', async () => {
+    const response = await get(base, '/eco', {
+      'X-Forwarded-For': '6.6.6.6, 7.7.7.7',
+      'X-Real-IP': '9.9.9.9',
+      Forwarded: 'for=8.8.8.8',
+      'X-Forwarded-Proto': 'https',
     });
-    response.resume();
-    expect(response.statusCode).toBe(308);
-    expect(response.headers.location).toBe(`https://${SITE_NAME}/chi-siamo/?a=1`);
-  });
-
-  it('HTTPS risponde in HTTP/2 con un certificato valido per il nome', async () => {
-    const { headers, body } = await h2('/chi-siamo/');
-    expect(headers[':status']).toBe(200);
-    expect(body).toBe('web /chi-siamo/');
-  });
-
-  it('HSTS con durata breve, senza preload né sottodomini', async () => {
-    const { headers } = await h2('/');
-    const hsts = String(headers['strict-transport-security'] ?? '');
-    const maxAge = Number(/max-age=(\d+)/.exec(hsts)?.[1]);
-    expect(maxAge).toBeGreaterThan(0);
-    expect(maxAge).toBeLessThanOrEqual(86_400);
-    expect(hsts).not.toMatch(/preload|includeSubDomains/i);
+    const seen = await response.text();
+    expect(seen).not.toMatch(/6\.6\.6\.6|7\.7\.7\.7|9\.9\.9\.9|8\.8\.8\.8/);
+    // Unica voce: l'indirizzo del peer, senza virgole.
+    expect(seen).toMatch(/xff=\[\d+\.\d+\.\d+\.\d+\] /);
+    expect(seen).toContain('xri=[]');
+    expect(seen).toContain('fwd=[]');
+    // Il peer non è l'ingresso: la dichiarazione di schema non vale.
+    expect(seen).toContain('proto=[http]');
   });
 });
 

@@ -137,3 +137,175 @@ describe('ci.yml: catena di fornitura', () => {
     expect(text).not.toMatch(/gitleaks-action/);
   });
 });
+
+/**
+ * Workflow di rilascio (1F-W5 T3b, DR-411): letto dal testo di `rilascio.yml`, avviato a mano solo da
+ * `main`, con la grammatica del comando uguale a quella di `rilascia.sh` (T3a).
+ */
+const rilascioText = readFileSync(
+  path.join(repoRoot, '.github', 'workflows', 'rilascio.yml'),
+  'utf8',
+).replace(/\r\n/g, '\n');
+const rilascioCode = rilascioText
+  .split('\n')
+  .filter((line) => !/^\s*#/.test(line))
+  .join('\n');
+const rilasciaScript = readFileSync(
+  path.join(repoRoot, 'infra', 'deploy', 'rilascio', 'rilascia.sh'),
+  'utf8',
+);
+
+/** Contenuto dei blocchi `run:` (a più righe o su una riga). */
+function runBlocks(text: string): string[] {
+  const lines = text.split('\n');
+  const blocks: string[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = /^(\s*)(?:- )?run:\s*(.*)$/.exec(lines[i] as string);
+    if (!m) continue;
+    const indent = (m[1] as string).length;
+    if (m[2] !== '|') {
+      blocks.push(m[2] as string);
+      continue;
+    }
+    const body: string[] = [];
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const line = lines[j] as string;
+      if (line.trim() !== '' && line.length - line.trimStart().length <= indent) break;
+      body.push(line);
+    }
+    blocks.push(body.join('\n'));
+  }
+  return blocks;
+}
+
+describe('rilascio.yml', () => {
+  it('parte solo a mano, con ambiente, hash e migrazioni', () => {
+    const on = /\non:\n((?: {2}.*\n|\n)+)/.exec(rilascioCode)?.[1] ?? '';
+    expect(on.match(/^ {2}[a-z_]+:/gm)).toEqual(['  workflow_dispatch:']);
+    expect(on).toMatch(
+      /ambiente:\n(?: {8}.+\n)*? {8}type: choice\n(?: {8}.+\n)*? {8}required: true\n {8}options:\n {10}- staging\n {10}- production\n/,
+    );
+    expect(on).toMatch(/hash:\n(?: {8}.+\n)*? {8}type: string\n {8}required: true\n/);
+    expect(on).toMatch(/migrazioni:\n(?: {8}.+\n)*? {8}type: boolean\n {8}default: false\n/);
+  });
+
+  it('chiede esattamente contents: read e packages: read', () => {
+    const block = /\npermissions:\n((?: {2}.+\n)+)/.exec(rilascioCode);
+    expect(block?.[1]?.trim().split(/\n\s*/)).toEqual(['contents: read', 'packages: read']);
+  });
+
+  it('tiene un rilascio alla volta per ambiente, senza annullare', () => {
+    expect(rilascioCode).toMatch(
+      /\nconcurrency:\n {2}group: rilascio-\$\{\{ inputs\.ambiente \}\}\n {2}cancel-in-progress: false\n/,
+    );
+  });
+
+  it('ha un solo lavoro, solo su main, con un tempo massimo', () => {
+    const jobs = rilascioCode.slice(rilascioCode.indexOf('\njobs:\n'));
+    expect(jobs.match(/^ {2}[\w-]+:$/gm)).toHaveLength(1);
+    expect(jobs).toMatch(/\n {4}if: github\.ref == 'refs\/heads\/main'\n/);
+    expect(jobs).toMatch(/\n {4}runs-on: ubuntu-24\.04\n/);
+    expect(jobs).toMatch(/\n {4}timeout-minutes: \d+\n/);
+  });
+
+  it('il primo passo ricontrolla il riferimento e il formato dell’hash', () => {
+    const first = runBlocks(rilascioCode)[0] ?? '';
+    expect(first).toContain('GITHUB_REF');
+    expect(first).toContain('refs/heads/main');
+    expect(first).toContain('^[0-9a-f]{40}$');
+    expect(first).toMatch(/exit 1/);
+  });
+
+  it('usa una sola azione esterna, fissata a 40 caratteri come in ci.yml', () => {
+    const uses = [...rilascioCode.matchAll(/^\s*- uses: (\S+) # (v[\d.]+)$/gm)];
+    expect(rilascioCode.match(/\buses:/g)).toHaveLength(uses.length);
+    expect(uses.map((m) => m[1])).toEqual([
+      'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09',
+    ]);
+    expect(ciText).toContain('actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0');
+    expect(uses[0]?.[2]).toBe('v5.1.0');
+    expect(rilascioCode).toMatch(/fetch-depth: 0\n\s+persist-credentials: false\n/);
+  });
+
+  it('controlla che il commit sia su main e che le cinque immagini esistano', () => {
+    const run = runBlocks(rilascioCode).join('\n');
+    expect(run).toContain('git merge-base --is-ancestor "$HASH" origin/main');
+    const ciApps = /app: \[([^\]]+)\]/.exec(ciText)?.[1]?.split(', ');
+    expect(ciApps).toHaveLength(5);
+    expect(run).toContain(`for app in ${(ciApps ?? []).join(' ')}; do`);
+    expect(run).toContain(
+      'docker manifest inspect "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/amoris-${app}:${HASH}"',
+    );
+    expect(run).toContain('docker logout ghcr.io');
+  });
+
+  it('nessuna espressione di ingressi, segreti o variabili dentro un blocco run', () => {
+    const blocks = runBlocks(rilascioCode);
+    expect(blocks.length).toBeGreaterThan(3);
+    for (const block of blocks) {
+      expect(block).not.toContain('${{');
+      expect(block).not.toMatch(/\b(?:inputs|secrets|vars)\./);
+    }
+    expect(rilascioCode).toContain('RILASCIO_SSH_KEY: ${{ secrets.RILASCIO_SSH_KEY }}');
+    expect(rilascioCode).toContain('RILASCIO_KNOWN_HOSTS: ${{ vars.RILASCIO_KNOWN_HOSTS }}');
+    expect(rilascioCode).toContain('RILASCIO_HOST: ${{ vars.RILASCIO_HOST }}');
+  });
+
+  it('SSH rigoroso: BatchMode, host noto, solo la chiave del segreto, utente deploy', () => {
+    const run = runBlocks(rilascioCode).join('\n');
+    expect(run).toContain('-o BatchMode=yes');
+    expect(run).toContain('-o StrictHostKeyChecking=yes');
+    expect(run).toContain('-o UserKnownHostsFile="$known_hosts"');
+    expect(run).toContain('-o IdentitiesOnly=yes');
+    expect(run).toContain('-i "$chiave"');
+    expect(run).toContain('"deploy@$RILASCIO_HOST"');
+    expect(run).toMatch(/umask 077\n(?:.*\n)*?.*> "\$chiave"/);
+    for (const name of ['RILASCIO_SSH_KEY', 'RILASCIO_KNOWN_HOSTS', 'RILASCIO_HOST']) {
+      expect(run).toContain(`[ -n "$${name}" ]`);
+    }
+  });
+
+  it('il token passa solo da stdin e non si stampa mai', () => {
+    const run = runBlocks(rilascioCode).join('\n');
+    const withToken = run
+      .split('\n')
+      .filter((l) => l.includes('$GITHUB_TOKEN'))
+      .map((l) => l.trim());
+    expect(withToken).toHaveLength(2);
+    expect(withToken[0]).toBe(
+      'printf \'%s\' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin',
+    );
+    expect(withToken[1]).toMatch(
+      /^esito=\$\(\{ printf '%s\\n%s\\n' "\$GITHUB_ACTOR" "\$GITHUB_TOKEN"; git archive /,
+    );
+    expect(run).not.toMatch(/set -x|set -[a-z]*x|xtrace/);
+    expect(run).not.toMatch(/echo[^\n]*\$\{?(?:GITHUB_TOKEN|RILASCIO_SSH_KEY)/);
+    expect(run).toContain('git archive --format=tar.gz "$HASH" infra');
+  });
+
+  it('la grammatica del comando è quella di rilascia.sh', () => {
+    expect(rilasciaScript).toContain('case $AMB in production | staging) ;; *) rifiuta ;; esac');
+    expect(rilascioCode).toContain('case "$AMBIENTE" in production | staging)');
+    expect(rilascioCode).toMatch(/options:\n {10}- staging\n {10}- production\n/);
+    expect(rilasciaScript).toContain('[ "$1" = rilascia ]');
+    expect(rilascioCode).toContain('comando="rilascia $AMBIENTE $HASH"');
+    expect(rilasciaScript).toContain('[ "$4" = --migrazioni ]');
+    expect(rilascioCode).toContain('comando="$comando --migrazioni"');
+    expect(rilasciaScript).toContain('[ ${#HASH} -eq 40 ]');
+    expect(rilasciaScript).toContain('*[!0123456789abcdef]*');
+    expect(rilascioCode).toContain('^[0-9a-f]{40}$');
+  });
+
+  it('cancella sempre la chiave e il known_hosts', () => {
+    const last = rilascioCode.slice(rilascioCode.lastIndexOf('      - name:'));
+    expect(last).toContain('if: always()');
+    expect(last).toContain('rm -f "$RUNNER_TEMP/rilascio_key" "$RUNNER_TEMP/rilascio_known_hosts"');
+  });
+
+  it('il JSON del server va nel riepilogo e un’uscita non zero fa fallire il lavoro', () => {
+    const run = runBlocks(rilascioCode).join('\n');
+    expect(run).toContain('>> "$GITHUB_STEP_SUMMARY"');
+    expect(run).toContain('exit "$rc"');
+    expect(run).toContain('set -o pipefail');
+  });
+});

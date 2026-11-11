@@ -1,5 +1,5 @@
 # Caddy di produzione e di staging (1F-W2 T6, T7): instradamento di ADR-003 §3 e intestazioni.
-# Con un nome di dominio Caddy ottiene il certificato e manda HTTP su HTTPS con un 308.
+# Dietro l'ingresso comune (DR-409): qui solo HTTP, certificati e HTTPS stanno nell'ingresso.
 # La cache dei media la decide l'API (`no-cache`, DR-365): qui nessun Cache-Control.
 #
 # Regola che non si viola: **qui dentro non entra nessun redirect di contenuto**.
@@ -8,6 +8,20 @@
 
 {
 	admin off
+	auto_https off
+	servers {
+		# Solo la rete dell'ingresso di questo ambiente dichiara l'indirizzo del visitatore (DR-409).
+		trusted_proxies static {$INGRESS_SUBNET}
+		client_ip_headers X-Forwarded-For
+		trusted_proxies_strict
+	}
+}
+
+# Verso le applicazioni l'indirizzo del visitatore è l'unica voce di X-Forwarded-For.
+(indirizzo_visitatore) {
+	header_up X-Forwarded-For {client_ip}
+	header_up -X-Real-IP
+	header_up -Forwarded
 }
 
 # Controllo di salute del Compose: solo dentro il contenitore, mai pubblicato.
@@ -16,7 +30,7 @@ http://127.0.0.1:2020 {
 	respond /health/live 200
 }
 
-{$CADDY_SITE_ADDRESS} {
+http://{$CADDY_SITE_ADDRESS} {
 	encode zstd gzip
 
 	# `defer`: si applicano dopo la risposta dell'applicazione, così «?» vale davvero «solo se assente».
@@ -53,20 +67,28 @@ http://127.0.0.1:2020 {
 
 	# L'API risponde dalla radice: il prefisso /api si toglie qui.
 	handle_path /api/* {
-		reverse_proxy api:3002
+		reverse_proxy api:3002 {
+			import indirizzo_visitatore
+		}
 	}
 
 	# I media li serve l'API, non lo storage (ADR-004 §3.6); i form inviati dal sito pure.
 	@api path /media/* /forms/*
 	handle @api {
-		reverse_proxy api:3002
+		reverse_proxy api:3002 {
+			import indirizzo_visitatore
+		}
 	}
 
 	handle /admin* {
-		reverse_proxy admin:3001
+		reverse_proxy admin:3001 {
+			import indirizzo_visitatore
+		}
 	}
 
 	handle {
-		reverse_proxy web:3000
+		reverse_proxy web:3000 {
+			import indirizzo_visitatore
+		}
 	}
 }

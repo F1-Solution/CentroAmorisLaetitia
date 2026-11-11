@@ -28,8 +28,8 @@ segnati **[PC]** vanno eseguiti sul computer del manutentore, in PowerShell.
 ## 2. Prerequisiti
 
 - [ ] HO-058 chiuso: hai nome utente e nome del server della Storage Box (non segreti).
-- [ ] Il server esiste, con Docker e la cartella `infra/` del repository (`1F-W5`).
-- [ ] Il file d'ambiente di produzione esiste sul server, con permessi 600.
+- [ ] Il server esiste, con Docker e almeno un rilascio riuscito dell'ambiente (`infra/deploy/README.md` §10): sul server non c'è un clone del repository.
+- [ ] Il file d'ambiente di produzione esiste sul server (`<file-ambiente>` è `/opt/amoris/segreti/production.env`, `root:deploy`, `0640`).
 - [ ] Un computer con OpenSSH (`ssh`, `scp`, `ssh-keygen`) e 7-Zip.
 - [ ] Un gestore di password (lo stesso di HO-056 e HO-058).
 - [ ] Una persona del Centro che custodisce la copia istituzionale, e un supporto per
@@ -65,7 +65,7 @@ segnati **[PC]** vanno eseguiti sul computer del manutentore, in PowerShell.
 4. Apri il file d'ambiente di produzione con `sudoedit "<file-ambiente>"`.
 5. Scrivi la riga `RESTIC_PASSWORD=` seguita dal valore. Salva.
 
-**Esito atteso:** `grep -c '^RESTIC_PASSWORD=.' "<file-ambiente>"` risponde `1`. Non stampare
+**Esito atteso:** `sudo grep -c '^RESTIC_PASSWORD=.' "<file-ambiente>"` risponde `1`. Non stampare
 il valore.
 
 ## 5. Procedura B — Fissa la chiave del server della Storage Box [server]
@@ -148,11 +148,12 @@ password e senza avvisi sulla chiave dell'host.
 
    `BACKUP_SFTP_PATH` è la cartella del repository, relativa alla cartella iniziale della
    Storage Box. La porta 23 è già il valore predefinito.
-3. Controlla i permessi: `ls -l "<file-ambiente>"` deve mostrare `-rw-------`.
-4. Crea il repository, dalla radice del repository sul server:
+3. Controlla i permessi: `sudo ls -l "<file-ambiente>"` deve mostrare `-rw-r-----` (`root:deploy`, `0640`, come in `infra/deploy/README.md` §10).
+4. Crea il repository. Sul server non c'è un clone: si parte dal rilascio in uso, con `<compose>` come in `infra/deploy/README.md` §3 e `<ambiente>` uguale a `production` (o `staging`):
 
    ```bash
-   docker compose -f infra/deploy/compose.yml --env-file "<file-ambiente>" --profile backup run --rm --no-deps backup init
+   R=$(sudo readlink -f /opt/amoris/rilasci/<ambiente>/corrente)
+   sudo docker compose -f "$R/infra/deploy/compose.yml" --env-file "<file-ambiente>" --env-file "$R/rilascio.env" --profile backup run --rm --no-deps backup init
    ```
 
 **Esito atteso:** una riga JSON con `"outcome":"ok"` e `"repository":"created"`. Se il
@@ -286,19 +287,18 @@ del manutentore.
    sudo chown 10003:10003 ~/prova-centro/ssh_key ~/prova-centro/known_hosts
    ```
 
-3. [server] Esegui `check` con **quei** file e quella password, dalla radice del repository:
+3. [server] Esegui `check` con **quei** file e quella password, dal rilascio in uso (`<ambiente>` è `production`). I valori stanno in un terzo file d'ambiente 600, che prevale sugli altri: sulla riga di `sudo` finirebbero nel suo log.
 
    ```bash
-   RESTIC_PASSWORD="$(cat ~/prova-centro/restic-password.txt)" \
-   BACKUP_SSH_KEY_PATH="$HOME/prova-centro/ssh_key" \
-   BACKUP_KNOWN_HOSTS_PATH="$HOME/prova-centro/known_hosts" \
-   docker compose -f infra/deploy/compose.yml --env-file "<file-ambiente>" --profile backup run --rm --no-deps backup check
+   R=$(sudo readlink -f /opt/amoris/rilasci/<ambiente>/corrente)
+   (umask 077 && printf 'RESTIC_PASSWORD=%s\nBACKUP_SSH_KEY_PATH=%s\nBACKUP_KNOWN_HOSTS_PATH=%s\n' "$(cat ~/prova-centro/restic-password.txt)" "$HOME/prova-centro/ssh_key" "$HOME/prova-centro/known_hosts" > ~/prova-centro/prova.env)
+   sudo docker compose -f "$R/infra/deploy/compose.yml" --env-file "<file-ambiente>" --env-file "$R/rilascio.env" --env-file "$HOME/prova-centro/prova.env" --profile backup run --rm --no-deps backup check
    ```
 
 4. [server] Cancella tutto:
 
    ```bash
-   sudo shred -u ~/prova-centro/ssh_key ~/prova-centro/ssh_key.pub ~/prova-centro/restic-password.txt ~/chiavi-backup.tar
+   sudo shred -u ~/prova-centro/ssh_key ~/prova-centro/ssh_key.pub ~/prova-centro/restic-password.txt ~/prova-centro/prova.env ~/chiavi-backup.tar
    sudo rm -rf ~/prova-centro
    ```
 
