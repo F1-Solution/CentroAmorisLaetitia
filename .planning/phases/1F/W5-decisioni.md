@@ -71,7 +71,7 @@ Rilevati il 2026-11-09 (dettaglio in `W5-PLAN.md` §1):
 
 Secondo round, prima della T6 (`W5-PLAN.md` §4): D300 riavvii automatici, D301 accessi e
 istantanee della Storage Box, D302 separazione dello staging, D303 HSTS e CSP, D304 nome dello
-staging.
+staging. Esito del 2026-11-13 in [`W5-decisioni-round2.md`](W5-decisioni-round2.md).
 
 ## Discussioni aperte
 

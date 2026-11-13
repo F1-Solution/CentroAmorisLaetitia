@@ -217,22 +217,23 @@ Se D295 = A:
   copertura 93,91 %, e2e 71/71), e2e attraverso l'ingresso 71/71, `ci-immagini-1f` 29,
   `rilascio-1f` 94, `ruoli-1f` 27, `sicurezza-1f` 61, `compose-1f` 69, `ingresso-1f` 46,
   `immagini-1f` 86.
-- [ ] Commit della T5c su conferma e CI verde.
+- [x] Commit della T5c su conferma e CI verde: `f4f8803` (DR-435), CI 43433100305 verde.
 
 ### T6 — Server, DNS e GitHub (handoff, utente)
 
 Dopo il secondo round (D300…D305) e la T1.
 
-- [ ] **HO-062** — indurimento e impianto: utente amministrativo non `root` con sola chiave;
+- [ ] **HO-062** (bozza scritta il 2026-11-13) — indurimento e impianto: utente amministrativo non `root` con sola chiave;
   `PermitRootLogin no`, `PasswordAuthentication no`; firewall con 22 (con limite di frequenza), 80
   e 443; aggiornamenti di sicurezza secondo D300; Docker dal repository ufficiale con versione
   fissata; utente `deploy` con comando forzato (T3a); file d'ambiente dei due ambienti (HO-061 §4)
-  fuori dal repository, permessi 600. Una sessione di riserva resta aperta mentre si cambia SSH.
+  fuori dal repository, `root:deploy 0640` (README §10). Una sessione di riserva resta aperta mentre si cambia SSH.
   Controllo che `INGRESS_SUBNET` di ogni ambiente sia uguale alla sottorete della rete
   `amoris-ingresso-<ambiente>` (`docker network inspect`): se diversa, tutti i visitatori finiscono
   in un solo conteggio dei tentativi (T2a).
-- [ ] **HO-063** — record DNS dello staging su Aruba (D304): A, e AAAA se il server ha IPv6;
-  verifica con `Resolve-DnsName`. Conferma puntuale.
+- [ ] **HO-063** — record DNS dello staging su Aruba (DR-440): solo A, nessun AAAA (DR-441);
+  verifica con `Resolve-DnsName`; nome attivato nell'ingresso con la directory ACME di prova.
+  Conferma puntuale.
 - [ ] **HO-064** — GitHub: segreto con la chiave SSH di rilascio, variabile con il `known_hosts`
   del server, `sha_pinning_required` attivo, `GITHUB_TOKEN` predefinito in sola lettura, accesso del
   repository ai pacchetti GHCR verificato.
@@ -252,7 +253,7 @@ Dopo il secondo round (D300…D305) e la T1.
 
 - [ ] Rilascio dello **stesso** candidato in `production`, non pubblicata: l'ingresso non instrada il
   suo nome fino alla W8. Stessa build già passata sullo staging (`deployment-gate`).
-- [ ] HO-059, rivisto per D301 (sotto-account, istantanee): chiavi, `known_hosts`, `init`, due copie
+- [ ] HO-059, rivisto per DR-438 (sotto-account, istantanee): chiavi, `known_hosts`, `init`, due copie
   cifrate, verbale.
 - [ ] HO-061 §5 (esiti di `db-init` e `objects-init`), §6 (firewall di `backup-out` con un'uscita
   negata provata, unità e timer), §7 (pulizia giornaliera nei due ambienti).
@@ -321,6 +322,22 @@ Opzioni e motivazioni presentate:
 | **D299** | Basi delle immagini al primo rilascio (DR-405) | **A** DR-405 (Node 26 ultima patch, `mc` di Chainguard, restic) più Trivy, solo conteggi, anche sulle quattro immagini di terzi del Compose (Caddy, PostgreSQL, MinIO, `mc`); di queste si aggiorna solo ciò che ha critici o alti con correzione · **B** anche Caddy 2.11 e l'ultima patch di PostgreSQL 17 e MinIO subito · **C** DR-405 alla lettera, solo le cinque immagini nostre | **A**: copre ciò che va sul server senza cambi non motivati. B cambia versioni senza un rilievo; C lascia scoperte quattro immagini esposte | A: T4 un po' più lunga; ogni base con almeno due settimane |
 
 ### Secondo round — prima della T6 (decide il server)
+
+Preso il 2026-11-13 con `grill-me` in chat (la pagina di `grill-with-ui` non ha ricevuto invii;
+riepilogo in [`W5-decisioni-round2.md`](W5-decisioni-round2.md)). Cinque risposte su sei, tutte
+uguali alla raccomandazione; D303 chiesta a parte lo stesso giorno, anch'essa uguale alla
+raccomandazione.
+
+| id | Decisione | Esito |
+|---|---|---|
+| ~~**D300**~~ | Riavvii dopo gli aggiornamenti di sicurezza | **DR-437**: automatici di notte dopo il backup, con verifica del ritorno (HO-062 §8) |
+| ~~**D301**~~ | Storage Box: accessi e istantanee | **DR-438**: sotto-account limitato per il server, istantanee giornaliere, 10 tenute (HO-058, HO-059 da rivedere) |
+| ~~**D302**~~ | Separazione dello staging | **DR-439**: staging acceso solo per prove e rilasci, limiti dichiarati al Centro, rivisto dopo la T9 |
+| ~~**D303**~~ | HSTS lungo e CSP applicata | **DR-442**: HSTS lungo dopo la verifica di HTTPS nella W8; violazioni CSP raccolte sullo staging nella W7, CSP applicata solo con zero violazioni |
+| ~~**D304**~~ | Nome dello staging | **DR-440**: `staging.centroamorislaetitia.it` (HO-063) |
+| ~~**D305**~~ | IPv6 dell'ingresso | **DR-441**: solo record A nella W5, IPv6 rivalutato nella W8 |
+
+Opzioni e raccomandazioni presentate:
 
 | id | Decisione | Opzioni | Raccomandazione |
 |---|---|---|---|
