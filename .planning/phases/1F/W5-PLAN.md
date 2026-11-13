@@ -201,12 +201,23 @@ Se D295 = A:
 
 ### T5c — Dopo il commit unico, con un commit proprio (DR-429, DR-430, Sonnet, prova rossa prima)
 
-- [ ] **T5c-1** — `rilascia.sh`: bassi 1, 2, 3, 6, 7 del riesame della T5b; **entro la T7**.
-- [ ] **T5c-2** — `account-unblock` e `account-reset-totp` leggono l'indirizzo da stdin sul server
-  e rifiutano `ACCOUNT_EMAIL` (DR-429); basso 9; **entro la T9**.
-- [ ] **T5c-3** — documenti: bassi 11 e 12, README §3, 4, 5, 8, 10 annotati nel §7.4.
-- [ ] Verifica: unità dell'API, `rilascio-1f`, `ruoli-1f`, `sicurezza-1f`, e2e; poi richiesta del
-  commit della T5c.
+- [x] **T5c-1** — `rilascia.sh`: bassi 1, 2, 3, 6, 7 del riesame della T5b; **entro la T7**.
+  Fatta: `rilascio-1f` 94/94.
+- [x] **T5c-2** — `account-unblock` e `account-reset-totp` leggono l'indirizzo da stdin sul server
+  e rifiutano `ACCOUNT_EMAIL` (DR-429); basso 9; **entro la T9**. Fatta: API 60/60, `ruoli-1f`
+  23/23 su `amoris-api:w5-t5c2`, tenuta fino alla verifica (DR-434).
+- [x] **T5c-2b** — `--ambiente` e `--conferma` sul server per `account-unblock` e
+  `account-reset-totp`, come `account-create` (DR-433); immagine `amoris-api:w5-t5c2b`, `ruoli-1f`.
+  Fatta: unità 41/41, `ruoli-1f` 27/27.
+- [x] **T5c-3** — documenti: bassi 11 e 12, README §3 con i comandi da stdin e le opzioni di
+  DR-433, rapporto di sicurezza §7.5 (rilievi del riesame della T5b: corretti e accettati 4, 5, 8, 10).
+- [x] **T5c-4** — `ci.yml`: nuovi tentativi nel passo del browser degli e2e (DR-432), `actionlint`.
+  Fatta: `ci-immagini-1f` 29/29, `actionlint` 0.
+- [x] Verifica sulla fotografia `2f03f42` e immagini `w5-t5c`: come la CI verde (3268 prove,
+  copertura 93,91 %, e2e 71/71), e2e attraverso l'ingresso 71/71, `ci-immagini-1f` 29,
+  `rilascio-1f` 94, `ruoli-1f` 27, `sicurezza-1f` 61, `compose-1f` 69, `ingresso-1f` 46,
+  `immagini-1f` 86.
+- [ ] Commit della T5c su conferma e CI verde.
 
 ### T6 — Server, DNS e GitHub (handoff, utente)
 

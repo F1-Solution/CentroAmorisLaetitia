@@ -138,6 +138,42 @@ describe('ci.yml: catena di fornitura', () => {
   });
 });
 
+/** Passo del browser degli e2e (1F-W5 T5c-4, DR-432): `apt` e il download riprovano su errori di rete. */
+describe('ci.yml: browser degli e2e', () => {
+  const start = ciText.indexOf('      - name: Browser per le prove end-to-end\n');
+  const rest = ciText.slice(start + 1);
+  const end = rest.search(/\n {6}(- name:|#)/);
+  const step = start === -1 ? '' : end === -1 ? rest : rest.slice(0, end);
+  const body = step
+    .split('\n')
+    .filter((line) => !/^\s*#/.test(line))
+    .join('\n');
+
+  it('esiste e ha un tempo massimo', () => {
+    expect(start, 'passo del browser assente').toBeGreaterThan(-1);
+    expect(body).toMatch(/\n {8}timeout-minutes: \d+\n/);
+  });
+
+  it('fa riprovare apt con un file in apt.conf.d scritto con sudo tee', () => {
+    expect(body).toMatch(/sudo tee \/etc\/apt\/apt\.conf\.d\/\S+/);
+    expect(body).toMatch(/Acquire::Retries "\d+"/);
+  });
+
+  it('ripete l’installazione di chromium al massimo tre volte, con pausa crescente', () => {
+    expect(body).toContain('shell: bash');
+    expect(body).toContain('set -euo pipefail');
+    expect(body).toMatch(/for attempt in 1 2 3/);
+    expect(body).toContain('pnpm exec playwright install --with-deps chromium');
+    expect(body).toMatch(/sleep \$\(\(attempt \* 20\)\)/);
+    expect(body).toContain('::warning::');
+    expect(body).toMatch(/exit "\$status"/);
+  });
+
+  it('cita DR-432 nel commento sopra il passo', () => {
+    expect(ciText.slice(Math.max(0, start - 300), start)).toContain('DR-432');
+  });
+});
+
 /**
  * Workflow di rilascio (1F-W5 T3b, DR-411): letto dal testo di `rilascio.yml`, avviato a mano solo da
  * `main`, con la grammatica del comando uguale a quella di `rilascia.sh` (T3a).

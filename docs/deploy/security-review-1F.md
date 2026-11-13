@@ -373,6 +373,32 @@ Accettati per la Fase 1 (DR-426), con il rischio residuo indicato dal revisore:
 
 B9 (registri del rilascio senza rotazione né tetto) è rinviato alla `1F-W6` (DR-427).
 
+### 7.5 Rilievi del riesame della T5b
+
+Il riesame separato del solo diff della T5b ha dato 0 critici, 0 alti, 0 medi e 12 bassi, senza regressioni. Corretti nella T5c, con commit proprio e prova rossa prima per il codice (DR-430):
+
+| N | Sintesi | Dove |
+|---|---|---|
+| 1 | Un TERM durante lo spostamento faceva cancellare il rilascio precedente | ripristino basato sull'esistenza della copia, `rilascio/rilascia.sh` |
+| 2 | Ripristino del residuo non controllato | `rilascio/rilascia.sh`: se lo spostamento fallisce il residuo resta e il registro lo dice |
+| 3 | `rilasci/` creata con permessi 0755 | `rilascio/rilascia.sh`: cartelle create 0700 |
+| 6 | `sleep` orfano e `kill` con variabile non impostata | `rilascio/rilascia.sh` |
+| 7 | Alla scadenza nel registro non restava il motivo | `rilascio/rilascia.sh` (fase `credenziali`) |
+| 9 | `account-create` rifiutava `ACCOUNT_EMAIL` dopo aver letto stdin | rifiuto prima della lettura, messaggi con «indirizzo» e «nome» |
+| 11 | `shred -u` non cancella le copie dell'editor né su SSD, e se `compose` fallisce il file resta | cartella temporanea 700, `nano`, cancellazione come riga a sé, `README.md` §3 |
+| 12 | `prova.env` sicuro solo con password esadecimale | una riga in HO-059 |
+
+Anche `account-unblock` e `account-reset-totp` sul server leggono l'indirizzo da standard input e rifiutano `ACCOUNT_EMAIL` (DR-429), e chiedono `--ambiente <production|staging> --conferma` come `account-create` (DR-433); in sviluppo nulla cambia. `README.md` §3.
+
+Accettati per la Fase 1 (DR-430), con il rischio residuo indicato dal revisore:
+
+| N | Rischio residuo accettato |
+|---|---|
+| 4 | Scadenza solo sulle due righe iniziali: un runner vivo ma fermo può tenere il blocco durante la lettura dell'archivio |
+| 5 | Dopo un `SIGKILL` del padre il sorvegliante può colpire un PID riusato |
+| 8 | Un comando di pulizia bloccato (per esempio il logout di Docker) si ferma solo con `SIGKILL` |
+| 10 | Prove ancora deboli su scadenza a 1 s, orfani, `vecchio` come collegamento, `Match User deploy` e scadenza reale della lettura |
+
 ## 8. Requisiti del parere MI-06 (domande 3e, 7b, 12)
 
 I requisiti sono da valutare, non conformità: l'esito tecnico non sostituisce 1F-11.
@@ -442,7 +468,8 @@ da eseguire nella `1F-W5`.
   primo accesso e attivazione del TOTP (DR-228, DR-398).
 - **Segreti**: `TOTP_ENCRYPTION_KEY`, chiavi S3 e segreti distinti nel file d'ambiente; spazio di
   `backup-data`. I comandi di sblocco, reimpostazione del secondo fattore (DR-397) e pulizia sono
-  già nell'immagine dell'API.
+  già nell'immagine dell'API; sblocco e reimpostazione sul server leggono l'indirizzo da standard
+  input con `--ambiente … --conferma` (`infra/deploy/README.md` §3, DR-429, DR-433).
 - **Custodia delle chiavi del backup** (DR-380, HO-059): custodia a doppia copia non ancora
   esercitata.
 - **Accesso al server**: SSH, aggiornamenti dell'host, rotazione dei log del demone, cifratura del

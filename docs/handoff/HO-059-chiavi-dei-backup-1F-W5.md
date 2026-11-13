@@ -295,6 +295,8 @@ del manutentore.
    sudo docker compose -f "$R/infra/deploy/compose.yml" --env-file "<file-ambiente>" --env-file "$R/rilascio.env" --env-file "$HOME/prova-centro/prova.env" --profile backup run --rm --no-deps backup check
    ```
 
+   Il metodo è sicuro perché la password è esadecimale (`openssl rand -hex 32`, all'inizio di questo handoff): con `$`, `#` o virgolette il parser di Compose la altererebbe.
+
 4. [server] Cancella tutto:
 
    ```bash

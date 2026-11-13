@@ -1,15 +1,15 @@
 {
-  "misuratoIl": "2026-11-10",
+  "misuratoIl": "2026-11-12",
   "regolaDiConteggio": "tools/countAuthLines.ts — righe eseguibili, senza vuote, commenti, import ed export-from",
   "soglia": 800,
   "sogliaPrecedente": 650,
   "sogliaModificataIl": "2026-11-08",
   "nucleo": 789,
-  "totale": 2175,
+  "totale": 2234,
   "esitoNucleo": "rispettata",
   "esitoTotale": "superata",
   "esitoRispettoAllaSoglia": "superata",
-  "conseguenza": "Misura del 2026-11-10 (wave 1F-W5, T5b-2, DR-426: indirizzo e nome del primo account da stdin): nucleo 789 su 800, totale 2175 (2115 dopo T5a-2, DR-421); soglia di DR-395 invariata, deroga di DR-066 per il totale invariata. ADR-007 §6 contromisura 3. Precedente (wave 1F-W4, T7): nucleo 789 su 800, totale 1989.",
+  "conseguenza": "Misura del 2026-11-12 (wave 1F-W5, T5c-2b, DR-433: ambiente e conferma per sblocco e secondo fattore sul server): nucleo 789 su 800, totale 2234. Misura precedente (T5c-2, DR-429): nucleo 789, totale 2218. Precedente (T5b-2, DR-426): nucleo 789, totale 2175 (2115 dopo T5a-2, DR-421); soglia di DR-395 invariata, deroga di DR-066 per il totale invariata. ADR-007 §6 contromisura 3. Precedente (wave 1F-W4, T7): nucleo 789 su 800, totale 1989.",
   "misuraPrecedente": {
     "misuratoIl": "2026-09-20",
     "nucleo": 437,
@@ -35,6 +35,6 @@
     "modules/accounts/routes.ts": 223,
     "modules/accounts/schemas.ts": 9,
     "modules/accounts/service.ts": 226,
-    "accounts/localAccount.ts": 186
+    "accounts/localAccount.ts": 245
   }
 }

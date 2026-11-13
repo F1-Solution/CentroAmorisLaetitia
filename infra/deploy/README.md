@@ -121,12 +121,13 @@ L'API si fida di `X-Forwarded-For` solo dalla rete interna `app` (variabile `TRU
 Sul server il primo account si crea dentro il contenitore dell'API, con la conferma esplicita dell'ambiente (production o staging, uguale a `AMORIS_ENV`); il ruolo (per esempio `amministrazione`) va nell'ambiente del comando, indirizzo e nome su due righe di standard input, mai la password:
 
 ```
-(umask 077; ${EDITOR:-nano} ~/primo-account.txt)
-<compose> run --rm --no-deps -T -e ACCOUNT_ROLE=amministrazione api node bin/account-create.js --ambiente production --conferma < ~/primo-account.txt
-shred -u ~/primo-account.txt
+D=$(mktemp -d ~/account.XXXXXX)
+(umask 077; nano "$D/primo-account.txt")
+<compose> run --rm --no-deps -T -e ACCOUNT_ROLE=amministrazione api node bin/account-create.js --ambiente production --conferma < "$D/primo-account.txt"
+rm -rf "$D"
 ```
 
-Il file (prima riga `<indirizzo>`, seconda `<nome e cognome>`) sta nella home dell'amministratore con permessi 600, perché con `sudo … <` il reindirizzamento lo apre la shell di chi lancia `sudo`, non root; si crea con un editor, non con `echo`, per non lasciare dati nella cronologia, e si cancella subito dopo.
+Il file (prima riga `<indirizzo>`, seconda `<nome e cognome>`) sta in una cartella temporanea con permessi 700 nella home dell'amministratore (`mktemp -d` la crea così), perché con `sudo … <` il reindirizzamento lo apre la shell di chi lancia `sudo`, non root. Si scrive con `nano`, che di base non lascia copie, non con `vim` né con `echo` (la cronologia). La cancellazione della cartella è una riga a sé: va eseguita anche se il comando fallisce. Su un SSD la cancellazione non è garantita, per questo il file vive pochi secondi e contiene solo indirizzo e nome.
 
 Stampa su stdout una sola riga, la password temporanea, mostrata una volta e mai registrata; i messaggi vanno su stderr. Consegnarla alla persona su un canale sicuro (DR-398), non per posta ordinaria né in chat di gruppo. Senza `--ambiente` uguale all'ambiente, senza `--conferma` o con `ACCOUNT_PASSWORD` il comando rifiuta e non scrive nulla. Al primo accesso la persona attiva il codice TOTP (obbligatorio) e poi sceglie una nuova password (DR-228). Se perde il telefono si usa `account-reset-totp` (sezione seguente, DR-397); per toglierle l'accesso si usa il pulsante «Disattiva» sulla sua riga in Impostazioni > Sistema > «Persone e permessi» (`/impostazioni/persone`), poi «Disattiva» nella conferma «Disattiva l'account».
 
@@ -135,8 +136,13 @@ Stampa su stdout una sola riga, la password temporanea, mostrata una volta e mai
 Il blocco scade da solo 15 minuti dopo l'ultimo fallimento vero. Per sbloccare subito un account, senza toccare le altre righe del registro (ne scrive una nuova, `auth.login_unblocked`):
 
 ```
-<compose> run --rm --no-deps -e ACCOUNT_EMAIL=<indirizzo> api node bin/account-unblock.js
+D=$(mktemp -d ~/account.XXXXXX)
+(umask 077; nano "$D/indirizzo.txt")
+<compose> run --rm --no-deps -T api node bin/account-unblock.js --ambiente production --conferma < "$D/indirizzo.txt"
+rm -rf "$D"
 ```
+
+Sul server l'indirizzo è l'unica riga del file, con le stesse cautele del primo account (cartella 700, `nano`, cancellazione come riga a sé). Senza `--ambiente` uguale all'ambiente, senza `--conferma` o con `ACCOUNT_EMAIL` nell'ambiente il comando rifiuta prima di leggere lo standard input e non scrive nulla (DR-429, DR-433). In sviluppo, con il database locale, si usa ancora `ACCOUNT_EMAIL`.
 
 Esito atteso: «Account sbloccato: N fallimenti azzerati. Operazione registrata.»; se l'indirizzo manca, esce con errore.
 
@@ -145,8 +151,13 @@ Esito atteso: «Account sbloccato: N fallimenti azzerati. Operazione registrata.
 Ogni account entra con password e codice TOTP (app di autenticazione). Chi perde il telefono non può reimpostarlo dall'interfaccia: lo fa chi ha accesso al server, con questo comando che toglie il secondo fattore dell'account, chiude tutte le sue sessioni e scrive una riga di registro (`auth.second_factor_reset`, senza segreti). Al prossimo accesso la persona attiva un nuovo secondo fattore:
 
 ```
-<compose> run --rm --no-deps -e ACCOUNT_EMAIL=<indirizzo> api node bin/account-reset-totp.js
+D=$(mktemp -d ~/account.XXXXXX)
+(umask 077; nano "$D/indirizzo.txt")
+<compose> run --rm --no-deps -T api node bin/account-reset-totp.js --ambiente production --conferma < "$D/indirizzo.txt"
+rm -rf "$D"
 ```
+
+Valgono le stesse regole dello sblocco: indirizzo da standard input, `--ambiente` e `--conferma` obbligatori sul server, `ACCOUNT_EMAIL` rifiutato prima di leggere (in sviluppo si usa ancora).
 
 Esito atteso: «Secondo fattore reimpostato: N sessioni chiuse. Operazione registrata.»; se l'indirizzo manca o non corrisponde a nessun account, esce con errore. Verificare l'identità della persona prima di eseguirlo. La chiave `TOTP_ENCRYPTION_KEY` va conservata con gli altri segreti: se si perde, tutti i secondi fattori attivati vanno reimpostati.
 
@@ -470,7 +481,7 @@ Match User deploy
     ClientAliveCountMax 4
 ```
 
-`ClientAliveInterval` e `ClientAliveCountMax` fanno cadere dopo circa due minuti una sessione il cui runner è morto senza chiudere il TCP, così non tiene il blocco del rilascio. Lo script, a sua volta, dà 30 secondi di tempo alle letture dell'ingresso standard (fase `credenziali`).
+`ClientAliveInterval` e `ClientAliveCountMax` fanno cadere dopo circa due minuti una sessione il cui runner è morto senza chiudere il TCP, così non tiene il blocco del rilascio. Lo script, a sua volta, dà 30 secondi di tempo alle letture dell'ingresso standard (fase `credenziali`) e, se scade, lo scrive nel registro del rilascio.
 
 > **Attenzione:** `deploy` è nel gruppo `docker`, quindi **equivale a root** sul server (rischio accettato, DR-411). I permessi sopra proteggono da errori e dai contenitori, non da chi controlla la chiave: la chiave privata è un segreto di pari livello.
 

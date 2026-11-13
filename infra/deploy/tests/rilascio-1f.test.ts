@@ -1063,3 +1063,151 @@ describe('Compose vero con un git archive vero (N7c)', () => {
     expect(ko.stderr).toContain('INGRESS_SUBNET');
   }, 180_000);
 });
+
+describe('correzioni dei bassi del riesame della T5b (T5c-1)', () => {
+  const B = `${ROOT}/rilasci/staging`;
+  /** `mv` finto davanti a quello vero: può fallire o fermarsi dopo lo spostamento verso «vecchio». */
+  const FAKE_MV = `#!/bin/sh
+F=${FINTO}
+for u; do ult=$u; done
+case "$1" in
+  */.tmp.*/vecchio) if [ -e $F/mv-fallisce ]; then exit 1; fi ;;
+esac
+/bin/mv "$@" || exit $?
+case "$ult" in
+  */.tmp.*/vecchio) if [ -e $F/mv-lento ]; then : > $F/mv-fatto; /bin/sleep 3; fi ;;
+esac
+exit 0
+`;
+  const installMv = (): void => {
+    const r = bash('cat > /usr/local/bin/mv; chmod 755 /usr/local/bin/mv', [], FAKE_MV);
+    expect(r.status, r.stderr).toBe(0);
+  };
+  const removeMv = (): void => {
+    bash('rm -f /usr/local/bin/mv');
+  };
+  /** Processi `sleep 15` (l'attesa del sorvegliante nelle prove) ancora vivi. */
+  const orphanSleeps = (): number =>
+    Number(
+      bash(`n=0; for p in /proc/[0-9]*; do
+  if [ "$(tr '\\0' ' ' < $p/cmdline 2>/dev/null)" = 'sleep 15 ' ]; then n=$((n + 1)); fi
+done; echo $n`).stdout.trim(),
+    );
+
+  it('1: un TERM fra lo spostamento di «vecchio» e la registrazione non fa perdere il rilascio precedente', async () => {
+    reset();
+    expect(ssh(rilascia('staging', HASH), stdinOf('vecchio')).status).toBe(0);
+    installMv();
+    try {
+      bash(`touch ${FINTO}/mv-lento`);
+      const second = spawn(
+        'docker',
+        [
+          'exec',
+          '-i',
+          NAME,
+          'bash',
+          '-c',
+          `${stdinOf()} | ${SSH} deploy@127.0.0.1 "$1"`,
+          'bash',
+          rilascia('staging', HASH),
+        ],
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+      const done = new Promise<number | null>((resolve) => second.on('close', resolve));
+      for (let i = 0; i < 120 && !exists(`${FINTO}/mv-fatto`); i += 1) await pause(250);
+      expect(exists(`${FINTO}/mv-fatto`)).toBe(true);
+      termScript();
+      expect(await done).toBe(143);
+    } finally {
+      removeMv();
+    }
+    expect(exists(`${REL('staging', HASH)}/infra/deploy/solo-vecchio`)).toBe(true);
+    expect(corrente()).toBe(HASH);
+  }, 120_000);
+
+  it('2: se il ripristino non riesce, il residuo resta e il caso è nel registro', () => {
+    reset();
+    expect(ssh(rilascia('staging', HASH), stdinOf('vecchio')).status).toBe(0);
+    const r0 = bash(`set -e
+mkdir -p ${B}/.tmp.kill
+mv ${B}/${HASH} ${B}/.tmp.kill/vecchio
+printf '%s\\n' ${HASH} > ${B}/.tmp.kill/hash
+chown -R deploy:deploy ${ROOT}`);
+    expect(r0.status, r0.stderr).toBe(0);
+    installMv();
+    try {
+      bash(`touch ${FINTO}/mv-fallisce`);
+      const r = ssh(rilascia('staging', HASH2));
+      expect(r.status, r.stderr).toBe(0);
+      const out = lastJson(r);
+      expect(exists(`${B}/.tmp.kill/vecchio/infra/deploy/solo-vecchio`)).toBe(true);
+      const log = bash(`cat ${B}/registri/${String(out.registro)}`).stdout;
+      expect(log).toContain('ripristino');
+      expect(log).toContain('.tmp.kill');
+    } finally {
+      removeMv();
+    }
+  });
+
+  it('2b: se il ripristino a fine rilascio non riesce, «vecchio» resta e il rilascio successivo lo rimette', () => {
+    reset();
+    expect(ssh(rilascia('staging', HASH), stdinOf('vecchio')).status).toBe(0);
+    installMv();
+    try {
+      bash(`touch ${FINTO}/mv-fallisce ${FINTO}/pull-fallisce`);
+      const r = ssh(rilascia('staging', HASH));
+      expect(lastJson(r)).toMatchObject({ esito: 'errore', fase: 'pull' });
+      const log = bash(`cat ${B}/registri/${String(lastJson(r).registro)}`).stdout;
+      expect(log).toContain('ripristino');
+    } finally {
+      removeMv();
+      bash(`rm -f ${FINTO}/mv-fallisce ${FINTO}/pull-fallisce`);
+    }
+    expect(listing(B).filter((n) => n.startsWith('.tmp.'))).toHaveLength(1);
+    expect(ssh(rilascia('staging', HASH2)).status).toBe(0);
+    expect(exists(`${REL('staging', HASH)}/infra/deploy/solo-vecchio`)).toBe(true);
+    expect(listing(B).filter((n) => n.startsWith('.tmp.'))).toEqual([]);
+  });
+
+  it('3: rilasci/ e rilasci/<ambiente> create dallo script sono 0700, quelle esistenti non cambiano', () => {
+    reset();
+    expect(ssh(rilascia('staging', HASH)).status).toBe(0);
+    expect(bash(`stat -c %a ${ROOT}/rilasci ${B}`).stdout.trim().split('\n')).toEqual([
+      '700',
+      '700',
+    ]);
+    expect(bash(`stat -c %a ${REL('staging', HASH)}`).stdout.trim()).toBe('755');
+    reset();
+    bash(`mkdir -p ${ROOT}/rilasci/production && chmod 755 ${ROOT}/rilasci ${ROOT}/rilasci/production
+chown -R deploy:deploy ${ROOT}`);
+    expect(ssh(rilascia('production', HASH)).status).toBe(0);
+    expect(
+      bash(`stat -c %a ${ROOT}/rilasci ${ROOT}/rilasci/production`).stdout.trim().split('\n'),
+    ).toEqual(['755', '755']);
+  });
+
+  it('6: dopo molti rilasci interrotti subito dopo le credenziali non resta alcun sleep del sorvegliante', async () => {
+    reset();
+    for (let i = 0; i < 30; i += 1) {
+      ssh(rilascia(), `{ printf '%s\\n%s\\n' '-x' 'gettone'; }`);
+    }
+    // Il sorvegliante gestisce il TERM dopo l'uscita del padre: 5 s bastano, un orfano vivrebbe 15 s.
+    let n = orphanSleeps();
+    for (let i = 0; i < 20 && n > 0; i += 1) {
+      await pause(250);
+      n = orphanSleeps();
+    }
+    expect(n).toBe(0);
+  }, 180_000);
+
+  it('7: la scadenza della lettura delle credenziali lascia il motivo nel registro, senza valori', () => {
+    reset();
+    const r = ssh(rilascia(), `{ printf '%s\\n' '${GH_USER}'; sleep 45; }`);
+    const out = lastJson(r);
+    expect(out).toMatchObject({ esito: 'errore', fase: 'credenziali' });
+    const log = bash(`cat ${B}/registri/${String(out.registro)}`).stdout;
+    expect(log).toContain('lettura delle credenziali');
+    expect(log).not.toContain(GH_USER);
+  }, 180_000);
+});

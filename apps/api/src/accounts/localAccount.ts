@@ -42,10 +42,18 @@ const inputSchema = z.object({
 /** Legge i dati dalle variabili d'ambiente; un errore nomina la variabile, mai il suo valore. */
 export function parseLocalAccountInput(
   env: Readonly<Record<string, string | undefined>>,
+  fieldLabels: Readonly<Record<string, string>> = {},
 ): LocalAccountInput {
   const parsed = inputSchema.safeParse(env);
   if (!parsed.success) {
-    const fields = [...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))];
+    const fields = [
+      ...new Set(
+        parsed.error.issues.map((issue) => {
+          const key = String(issue.path[0]);
+          return fieldLabels[key] ?? key;
+        }),
+      ),
+    ];
     throw new LocalAccountError(
       `variabili mancanti o non valide: ${fields.join(', ')} (la password deve avere almeno ${MIN_PASSWORD_LENGTH} caratteri)`,
     );
@@ -63,11 +71,7 @@ export function parseServerAccountInput(
   stdinText: string,
   env: Readonly<Record<string, string | undefined>>,
 ): LocalAccountInput {
-  if (env.ACCOUNT_EMAIL !== undefined || env.ACCOUNT_NAME !== undefined) {
-    throw new LocalAccountError(
-      'sul server indirizzo e nome si passano da stdin, non con ACCOUNT_EMAIL o ACCOUNT_NAME',
-    );
-  }
+  assertAccountIdentityNotInEnv(env);
   const lines = stdinText.split(/\r?\n/);
   while (lines.length > 0 && lines[lines.length - 1]!.trim() === '') lines.pop();
   if (lines.length !== 2) {
@@ -75,11 +79,58 @@ export function parseServerAccountInput(
       'stdin deve contenere esattamente due righe: prima l’indirizzo, poi il nome',
     );
   }
-  return parseLocalAccountInput({
-    ACCOUNT_EMAIL: lines[0]!.trim(),
-    ACCOUNT_NAME: lines[1]!.trim(),
-    ACCOUNT_ROLE: env.ACCOUNT_ROLE,
-  });
+  return parseLocalAccountInput(
+    {
+      ACCOUNT_EMAIL: lines[0]!.trim(),
+      ACCOUNT_NAME: lines[1]!.trim(),
+      ACCOUNT_ROLE: env.ACCOUNT_ROLE,
+    },
+    { ACCOUNT_EMAIL: 'indirizzo', ACCOUNT_NAME: 'nome' },
+  );
+}
+
+/** Sul server indirizzo e nome non si passano dall'ambiente: il rifiuto precede la lettura di stdin e non riporta i valori. */
+export function assertAccountIdentityNotInEnv(
+  env: Readonly<Record<string, string | undefined>>,
+): void {
+  if (env.ACCOUNT_EMAIL !== undefined || env.ACCOUNT_NAME !== undefined) {
+    throw new LocalAccountError(
+      'sul server indirizzo e nome si passano da stdin, non con ACCOUNT_EMAIL o ACCOUNT_NAME',
+    );
+  }
+}
+
+/** Sul server l'indirizzo dell'account da sbloccare o reimpostare è l'unica riga non vuota di stdin. */
+export function parseServerEmailInput(stdinText: string): string {
+  const lines = stdinText.split(/\r?\n/);
+  while (lines.length > 0 && lines[lines.length - 1]!.trim() === '') lines.pop();
+  if (lines.length !== 1 || lines[0]!.trim() === '') {
+    throw new LocalAccountError('stdin deve contenere una sola riga: l’indirizzo dell’account');
+  }
+  return lines[0]!.trim();
+}
+
+/** Indirizzo dell'account su cui agire: da stdin sul server (host `db`), da ACCOUNT_EMAIL altrove, come prima. */
+export async function readTargetEmail(
+  databaseUrl: string,
+  argv: readonly string[],
+  env: Readonly<Record<string, string | undefined>>,
+  stdin: AsyncIterable<Uint8Array | string>,
+  isTerminal: boolean,
+  missingMessage: string,
+): Promise<string> {
+  if (new URL(databaseUrl).hostname === 'db') {
+    assertServerFlags(parseServerFlags(argv), env);
+    if (env.ACCOUNT_EMAIL !== undefined) {
+      throw new LocalAccountError(
+        'sul server l’indirizzo si passa da stdin, non con ACCOUNT_EMAIL',
+      );
+    }
+    return parseServerEmailInput(await readServerInput(stdin, { isTerminal }));
+  }
+  const email = env.ACCOUNT_EMAIL?.trim();
+  if (!email) throw new LocalAccountError(missingMessage);
+  return email;
 }
 
 export interface ServerInputOptions {
@@ -127,12 +178,13 @@ export type AccountMode = 'local' | 'server';
 
 const SERVER_ENVIRONMENTS = new Set(['production', 'staging']);
 
-/** Valida la riga di comando e l'host: modo server solo con `db`, ambiente coincidente e conferma; nulla si scrive prima. */
-export function resolveAccountMode(
-  databaseUrl: string,
-  argv: readonly string[],
-  env: Readonly<Record<string, string | undefined>>,
-): AccountMode {
+interface ServerFlags {
+  readonly ambiente: string | undefined;
+  readonly confirmed: boolean;
+}
+
+/** Legge `--ambiente <valore>` e `--conferma`; ogni altro argomento è un errore. */
+function parseServerFlags(argv: readonly string[]): ServerFlags {
   let ambiente: string | undefined;
   let confirmed = false;
   for (let i = 0; i < argv.length; i += 1) {
@@ -141,17 +193,35 @@ export function resolveAccountMode(
     else if (arg === '--ambiente' && i + 1 < argv.length) ambiente = argv[(i += 1)];
     else throw new LocalAccountError(`argomento sconosciuto o incompleto: ${String(arg)}`);
   }
-  const host = new URL(databaseUrl).hostname;
-  if (host !== 'db') {
-    assertLocalDatabase(databaseUrl);
-    return 'local';
-  }
+  return { ambiente, confirmed };
+}
+
+/** Sul server servono l'ambiente coincidente con AMORIS_ENV e la conferma. */
+function assertServerFlags(
+  { ambiente, confirmed }: ServerFlags,
+  env: Readonly<Record<string, string | undefined>>,
+): void {
   if (!ambiente || !SERVER_ENVIRONMENTS.has(ambiente) || ambiente !== env.AMORIS_ENV) {
     throw new LocalAccountError(
       'sul server serve --ambiente <production|staging> uguale all’ambiente in cui gira il contenitore',
     );
   }
   if (!confirmed) throw new LocalAccountError('sul server serve anche --conferma');
+}
+
+/** Valida la riga di comando e l'host: modo server solo con `db`, ambiente coincidente e conferma; nulla si scrive prima. */
+export function resolveAccountMode(
+  databaseUrl: string,
+  argv: readonly string[],
+  env: Readonly<Record<string, string | undefined>>,
+): AccountMode {
+  const flags = parseServerFlags(argv);
+  const host = new URL(databaseUrl).hostname;
+  if (host !== 'db') {
+    assertLocalDatabase(databaseUrl);
+    return 'local';
+  }
+  assertServerFlags(flags, env);
   if (env.ACCOUNT_PASSWORD !== undefined) {
     throw new LocalAccountError(
       'sul server ACCOUNT_PASSWORD non è ammessa: la password temporanea si genera da sola',

@@ -678,4 +678,84 @@ describe('primo account sul server (R24)', () => {
       await sql.end({ timeout: 5 });
     }
   }, 240_000);
+
+  // Sblocco e reimpostazione del secondo fattore (DR-429): l'indirizzo è la sola riga di stdin.
+  const tool = (script: string, input: string, envExtra: string[] = [], flags: string[] = SERVER) =>
+    compose(
+      ['run', '--rm', '--no-deps', '-T', ...envExtra, 'api', 'node', `bin/${script}.js`, ...flags],
+      600_000,
+      input,
+    );
+  const auditCount = async (action: string): Promise<number> => {
+    const { sql } = connect('api');
+    try {
+      return (await sql`SELECT 1 FROM audit_log WHERE action = ${action}`).length;
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  };
+
+  for (const [script, action, okText] of [
+    ['account-unblock', 'auth.login_unblocked', 'Account sbloccato'],
+    ['account-reset-totp', 'auth.second_factor_reset', 'Secondo fattore reimpostato'],
+  ] as const) {
+    it(`${script}: legge l’indirizzo da stdin, registra l’operazione e non lo stampa`, async () => {
+      const before = await auditCount(action);
+      const result = tool(script, `${EMAIL}\n`);
+      expect(result.status, result.stderr.slice(-500)).toBe(0);
+      expect(result.stderr).toContain(okText);
+      expect(result.stderr).not.toContain(EMAIL);
+      expect(await auditCount(action)).toBe(before + 1);
+    }, 240_000);
+
+    it(`${script}: con ambiente sbagliato, senza --ambiente o senza --conferma rifiuta e non scrive nulla`, async () => {
+      const before = await auditCount(action);
+      for (const [flags, message] of [
+        [['--ambiente', 'staging', '--conferma'], '--ambiente'],
+        [['--conferma'], '--ambiente'],
+        [['--ambiente', 'production'], '--conferma'],
+        [[], '--ambiente'],
+      ] as const) {
+        const result = tool(script, `${EMAIL}\n`, [], [...flags]);
+        expect(result.status, JSON.stringify(flags)).toBe(1);
+        expect(result.stderr).toContain(message);
+        expect(result.stderr).not.toContain(EMAIL);
+        expect(result.stderr).not.toContain(okText);
+      }
+      expect(await auditCount(action)).toBe(before);
+    }, 240_000);
+
+    it(`${script}: controlla le opzioni prima del rifiuto di ACCOUNT_EMAIL`, async () => {
+      const result = tool(
+        script,
+        `${EMAIL}\n`,
+        ['-e', 'ACCOUNT_EMAIL=in-ambiente@esempio.invalid'],
+        [],
+      );
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('--ambiente');
+    }, 240_000);
+
+    it(`${script}: rifiuta ACCOUNT_EMAIL nell’ambiente prima di leggere stdin`, async () => {
+      const other = 'in-ambiente@esempio.invalid';
+      const before = await auditCount(action);
+      const result = tool(script, `${EMAIL}\n`, ['-e', `ACCOUNT_EMAIL=${other}`]);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('stdin');
+      expect(result.stderr).not.toContain(other);
+      expect(result.stderr).not.toContain(EMAIL);
+      expect(await auditCount(action)).toBe(before);
+    }, 240_000);
+
+    it(`${script}: con stdin vuoto, riga vuota o due righe rifiuta e non scrive nulla`, async () => {
+      const before = await auditCount(action);
+      for (const input of ['', '\n', `${EMAIL}\naltra riga\n`]) {
+        const result = tool(script, input);
+        expect(result.status, JSON.stringify(input)).toBe(1);
+        expect(result.stderr).toContain('stdin');
+        expect(result.stderr).not.toContain(EMAIL);
+      }
+      expect(await auditCount(action)).toBe(before);
+    }, 240_000);
+  }
 });

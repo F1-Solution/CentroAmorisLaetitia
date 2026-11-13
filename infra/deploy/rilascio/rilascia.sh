@@ -52,7 +52,7 @@ TMP=
 REG=
 REGNOME=
 RIL=
-SPOSTATA=0
+RESIDUI_KO=
 WD=
 # Attesa massima delle letture da stdin (30 s); la riga di authorized_keys può ridurla solo per le prove.
 ATTESA=${AMORIS_ATTESA_LETTURE:-30}
@@ -68,12 +68,16 @@ chiudi_registro() {
     unset DOCKER_CONFIG
   fi
 }
-# Se il rilascio fallisce, la cartella dello stesso hash messa da parte torna al suo posto.
+# Se il rilascio fallisce, la cartella dello stesso hash messa da parte torna al suo posto (basta che «vecchio» esista).
 ripristina() {
-  if [ "$ESITO" != ok ] && [ "$SPOSTATA" -eq 1 ] && [ -n "$RIL" ] && [ -n "$TMP" ] &&
+  if [ "$ESITO" != ok ] && [ -n "$RIL" ] && [ -n "$TMP" ] &&
     { [ -e "$TMP/vecchio" ] || [ -L "$TMP/vecchio" ]; }; then
     rm -rf "$RIL"
-    mv "$TMP/vecchio" "$RIL"
+    # Se lo spostamento fallisce, la cartella temporanea resta e il rilascio successivo la rimette.
+    if ! mv "$TMP/vecchio" "$RIL"; then
+      printf 'rilascia: ripristino di %s non riuscito, lasciato in %s\n' "${RIL##*/}" "${TMP##*/}" >&2
+      TMP=
+    fi
   fi
 }
 # Esce con una sola riga JSON sull'uscita standard.
@@ -81,6 +85,10 @@ fine() {
   rc=$?
   trap '' HUP INT TERM
   trap - EXIT
+  # Una scadenza o un segnale durante la lettura delle credenziali lascia il motivo nel registro (nessun valore letto).
+  if [ "$FASE" = credenziali ] && [ "$rc" -eq 143 ] && [ -n "$REG" ]; then
+    printf 'rilascia: lettura delle credenziali interrotta o scaduta (limite %s s)\n' "$ATTESA" >&2
+  fi
   [ -z "$WD" ] || kill "$WD" 2>/dev/null
   chiudi_registro
   ripristina
@@ -113,7 +121,8 @@ dc() {
 }
 
 # Blocco per ambiente: un secondo rilascio in corso è un errore.
-mkdir -p "$BASE" || ko "cartella dei rilasci non scrivibile"
+# Le cartelle create qui sono 0700 (umask 077 solo per questo mkdir); quelle già presenti non cambiano.
+(umask 077 && mkdir -p "$BASE") || ko "cartella dei rilasci non scrivibile"
 exec 9>"$BASE/.blocco"
 flock -n 9 || ko "un altro rilascio di $AMB è in corso"
 
@@ -124,7 +133,11 @@ for residuo in "$BASE"/.tmp.*; do
     h=$(cat "$residuo/hash" 2>/dev/null)
     case $h in *[!0123456789abcdef]*) h= ;; esac
     if [ ${#h} -eq 40 ] && [ ! -e "$BASE/$h" ] && [ ! -L "$BASE/$h" ]; then
-      mv "$residuo/vecchio" "$BASE/$h"
+      # Se lo spostamento fallisce il residuo resta com'è, con il caso nel registro del rilascio.
+      if ! mv "$residuo/vecchio" "$BASE/$h"; then
+        RESIDUI_KO="$RESIDUI_KO ${residuo##*/}"
+        continue
+      fi
     fi
   fi
   if [ -e "$residuo" ] || [ -L "$residuo" ]; then rm -rf "$residuo"; fi
@@ -140,16 +153,24 @@ nome=$(date -u +%Y%m%dT%H%M%SZ)-$HASH.log
 REG=$BASE/registri/$nome
 REGNOME=$nome
 exec 2>>"$REG"
+for residuo in $RESIDUI_KO; do
+  printf 'rilascia: ripristino del residuo %s non riuscito, lasciato dov è\n' "$residuo" >&2
+done
 
 # 2. Credenziali dalle prime due righe dell'ingresso.
 FASE=credenziali
 # Sorvegliante: allo scadere ferma lo script con TERM (JSON d'errore e blocco rilasciato); non tiene né il blocco né i canali.
 PADRE=$$
 (
-  trap 'kill "$SP" 2>/dev/null; exit 0' TERM
+  SP=
+  FERMA=0
+  trap 'FERMA=1; [ -z "${SP:-}" ] || kill "$SP" 2>/dev/null' TERM
   sleep "$ATTESA" &
   SP=$!
+  # Un TERM arrivato prima di SP=$! si riconosce dal flag: lo sleep non resta mai orfano.
+  [ "$FERMA" -eq 0 ] || { kill "$SP" 2>/dev/null; exit 0; }
   wait "$SP"
+  [ "$FERMA" -eq 0 ] || { kill "$SP" 2>/dev/null; exit 0; }
   kill -TERM "$PADRE"
 ) >/dev/null 2>&1 </dev/null 9>&- &
 WD=$!
@@ -236,7 +257,6 @@ RIL=$BASE/$HASH
 printf '%s\n' "$HASH" >"$TMP/hash" || ko "cartella temporanea non scrivibile"
 if [ -e "$RIL" ] || [ -L "$RIL" ]; then
   mv "$RIL" "$TMP/vecchio" || ko "cartella del rilascio non sostituibile"
-  SPOSTATA=1
 fi
 mv "$TMP/x" "$RIL" || ko "cartella del rilascio non creabile"
 

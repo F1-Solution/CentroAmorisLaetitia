@@ -13,6 +13,7 @@
 import { createDatabase } from '@amoris/db';
 import { loadConfig } from '../src/config.js';
 import {
+  assertAccountIdentityNotInEnv,
   createLocalAccount,
   LocalAccountError,
   parseLocalAccountInput,
@@ -26,6 +27,7 @@ const { db, close } = createDatabase({ url: config.DATABASE_URL, maxConnections:
 
 try {
   const mode = resolveAccountMode(config.DATABASE_URL, process.argv.slice(2), process.env);
+  if (mode === 'server') assertAccountIdentityNotInEnv(process.env);
   const input =
     mode === 'server'
       ? parseServerAccountInput(

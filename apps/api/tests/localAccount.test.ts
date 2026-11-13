@@ -7,7 +7,10 @@ import {
   LocalAccountError,
   parseLocalAccountInput,
   parseServerAccountInput,
+  assertAccountIdentityNotInEnv,
+  parseServerEmailInput,
   readServerInput,
+  readTargetEmail,
   resolveAccountMode,
 } from '../src/accounts/localAccount.js';
 import { TEMPORARY_PASSWORD_LENGTH, verifyPassword } from '../src/lib/password.js';
@@ -274,6 +277,203 @@ describe('parseServerAccountInput (indirizzo e nome da stdin, DR-426)', () => {
     expect(() => parseServerAccountInput('x@esempio.invalid\n   \n', ROLE)).toThrow(
       LocalAccountError,
     );
+  });
+});
+
+describe('rilievo 9: controllo dell’ambiente prima di stdin e campi nominati', () => {
+  it('assertAccountIdentityNotInEnv rifiuta ACCOUNT_EMAIL e ACCOUNT_NAME senza riportarne il valore', () => {
+    for (const extra of [
+      { ACCOUNT_EMAIL: 'in-ambiente@esempio.invalid' },
+      { ACCOUNT_NAME: 'Nome In Ambiente' },
+    ]) {
+      try {
+        assertAccountIdentityNotInEnv(extra);
+        expect.unreachable('doveva rifiutare');
+      } catch (error) {
+        expect(error).toBeInstanceOf(LocalAccountError);
+        expect((error as Error).message).toContain('stdin');
+        expect((error as Error).message).not.toContain('esempio.invalid');
+        expect((error as Error).message).not.toContain('Nome In Ambiente');
+      }
+    }
+    expect(() => assertAccountIdentityNotInEnv({ ACCOUNT_ROLE: 'editor' })).not.toThrow();
+  });
+
+  it('gli errori di validazione dello stdin nominano «indirizzo» e «nome», non le variabili', () => {
+    const ROLE = { ACCOUNT_ROLE: 'amministrazione' };
+    const messageOf = (text: string, env = ROLE): string => {
+      try {
+        parseServerAccountInput(text, env);
+      } catch (error) {
+        return (error as Error).message;
+      }
+      return expect.unreachable('doveva rifiutare');
+    };
+    const bad = messageOf('non-un-indirizzo\nPersona\n');
+    expect(bad).toContain('indirizzo');
+    expect(bad).not.toContain('ACCOUNT_EMAIL');
+    expect(bad).not.toContain('non-un-indirizzo');
+    const noName = messageOf('x@esempio.invalid\n   \n');
+    expect(noName).toContain('nome');
+    expect(noName).not.toContain('ACCOUNT_NAME');
+  });
+});
+
+describe('parseServerEmailInput (una sola riga di stdin)', () => {
+  it('legge una riga, con LF o CRLF, spazi ai bordi e righe vuote finali', () => {
+    for (const text of [
+      'x@esempio.invalid\n',
+      '  x@esempio.invalid \r\n',
+      'x@esempio.invalid',
+      'x@esempio.invalid\n\n\n',
+    ]) {
+      expect(parseServerEmailInput(text), JSON.stringify(text)).toBe('x@esempio.invalid');
+    }
+  });
+
+  it('rifiuta vuoto, riga vuota e due righe non vuote, senza riportare i valori', () => {
+    for (const text of ['', '\n', '   \r\n', 'x@esempio.invalid\naltra-riga-sintetica\n']) {
+      try {
+        parseServerEmailInput(text);
+        expect.unreachable(`doveva rifiutare: ${JSON.stringify(text)}`);
+      } catch (error) {
+        expect(error).toBeInstanceOf(LocalAccountError);
+        expect((error as Error).message).toContain('stdin');
+        expect((error as Error).message).not.toContain('esempio.invalid');
+        expect((error as Error).message).not.toContain('altra-riga-sintetica');
+      }
+    }
+  });
+});
+
+describe('readTargetEmail (sblocco e reimpostazione del secondo fattore)', () => {
+  const SERVER_URL = 'postgres://u:p@db:5432/amoris';
+  const LOCAL_URL = 'postgres://u:p@localhost:5432/amoris';
+  async function* lines(text: string): AsyncGenerator<Buffer> {
+    yield Buffer.from(text);
+  }
+  const neverRead: AsyncIterable<Buffer> = {
+    [Symbol.asyncIterator]: () => {
+      throw new Error('stdin non doveva essere letto');
+    },
+  };
+
+  const SERVER_ARGV = ['--ambiente', 'production', '--conferma'];
+  const SERVER_ENV = { AMORIS_ENV: 'production' };
+
+  it('sul server legge l’indirizzo da stdin con ambiente e conferma', async () => {
+    await expect(
+      readTargetEmail(
+        SERVER_URL,
+        SERVER_ARGV,
+        SERVER_ENV,
+        lines('x@esempio.invalid\n'),
+        false,
+        'manca',
+      ),
+    ).resolves.toBe('x@esempio.invalid');
+  });
+
+  it('sul server rifiuta ACCOUNT_EMAIL prima di leggere stdin, indicando stdin e non il valore', async () => {
+    const env = { ...SERVER_ENV, ACCOUNT_EMAIL: 'in-ambiente@esempio.invalid' };
+    const error = await readTargetEmail(
+      SERVER_URL,
+      SERVER_ARGV,
+      env,
+      neverRead,
+      false,
+      'manca',
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(LocalAccountError);
+    expect((error as Error).message).toContain('stdin');
+    expect((error as Error).message).not.toContain('esempio.invalid');
+  });
+
+  it('sul server rifiuta un terminale e uno stdin vuoto', async () => {
+    await expect(
+      readTargetEmail(
+        SERVER_URL,
+        SERVER_ARGV,
+        SERVER_ENV,
+        lines('x@esempio.invalid\n'),
+        true,
+        'manca',
+      ),
+    ).rejects.toBeInstanceOf(LocalAccountError);
+    await expect(
+      readTargetEmail(SERVER_URL, SERVER_ARGV, SERVER_ENV, lines(''), false, 'manca'),
+    ).rejects.toBeInstanceOf(LocalAccountError);
+  });
+
+  it('sul server senza --ambiente, con ambiente sbagliato o senza --conferma rifiuta prima di stdin', async () => {
+    const cases: Array<[string[], Record<string, string>, string]> = [
+      [['--conferma'], SERVER_ENV, '--ambiente'],
+      [['--ambiente', 'production'], SERVER_ENV, '--conferma'],
+      [['--ambiente', 'staging', '--conferma'], SERVER_ENV, '--ambiente'],
+      [['--ambiente', 'production', '--conferma'], {}, '--ambiente'],
+      [['--ambiente', 'sviluppo', '--conferma'], { AMORIS_ENV: 'sviluppo' }, '--ambiente'],
+    ];
+    for (const [argv, env, fragment] of cases) {
+      const error = await readTargetEmail(SERVER_URL, argv, env, neverRead, false, 'manca').catch(
+        (e: unknown) => e,
+      );
+      expect(error, JSON.stringify(argv)).toBeInstanceOf(LocalAccountError);
+      expect((error as Error).message).toContain(fragment);
+    }
+  });
+
+  it('sul server controlla argomenti e ambiente prima del rifiuto di ACCOUNT_EMAIL', async () => {
+    const error = await readTargetEmail(
+      SERVER_URL,
+      [],
+      { ...SERVER_ENV, ACCOUNT_EMAIL: 'in-ambiente@esempio.invalid' },
+      neverRead,
+      false,
+      'manca',
+    ).catch((e: unknown) => e);
+    expect((error as Error).message).toContain('--ambiente');
+  });
+
+  it('sul server rifiuta un argomento sconosciuto', async () => {
+    await expect(
+      readTargetEmail(
+        SERVER_URL,
+        [...SERVER_ARGV, '--altro'],
+        SERVER_ENV,
+        neverRead,
+        false,
+        'manca',
+      ),
+    ).rejects.toThrow('argomento sconosciuto');
+  });
+
+  it('in locale usa ACCOUNT_EMAIL come oggi, senza opzioni né stdin, e segnala la mancanza', async () => {
+    await expect(
+      readTargetEmail(
+        LOCAL_URL,
+        [],
+        { ACCOUNT_EMAIL: ' x@esempio.invalid ' },
+        neverRead,
+        false,
+        'manca',
+      ),
+    ).resolves.toBe('x@esempio.invalid');
+    await expect(readTargetEmail(LOCAL_URL, [], {}, neverRead, false, 'manca')).rejects.toThrow(
+      'manca',
+    );
+  });
+
+  it('con un host né db né locale si comporta come in locale (come oggi)', async () => {
+    await expect(
+      readTargetEmail(
+        'postgres://u:p@altro.esempio.invalid:5432/amoris',
+        [],
+        { ACCOUNT_EMAIL: 'x@esempio.invalid' },
+        neverRead,
+        false,
+        'manca',
+      ),
+    ).resolves.toBe('x@esempio.invalid');
   });
 });
 

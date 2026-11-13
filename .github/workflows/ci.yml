@@ -157,8 +157,25 @@ jobs:
       - name: Lo schema corrisponde alla forma canonica
         run: pnpm db:verify
 
+      # DR-432: apt e il download del browser riprovano, perché i mirror di Ubuntu cadono a volte.
       - name: Browser per le prove end-to-end
-        run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/80-retries > /dev/null
+          for attempt in 1 2 3; do
+            status=0
+            pnpm exec playwright install --with-deps chromium || status=$?
+            if [ "$status" -eq 0 ]; then
+              exit 0
+            fi
+            echo "::warning::Installazione del browser fallita al tentativo $attempt (uscita $status)"
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 20))
+            fi
+          done
+          exit "$status"
 
       # DR-095: copertura misurata sull'insieme dei pacchetti, con soglia
       # dell'80 % su istruzioni, diramazioni, funzioni e righe.
