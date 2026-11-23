@@ -256,4 +256,14 @@ La Storage Box dei backup è di Hetzner, non di Aruba (DR-335): handoff HO-058.
 
 ## 13. Esito
 
-Da compilare dopo la segnalazione.
+Segnalato dall'utente il 2026-11-21: **eseguito, con una difformità aperta**.
+
+- Ordine del 2026-11-14, 11,79 € + IVA al mese come nel ricontrollo; credito di 50 € ricaricato,
+  primo rinnovo il 2026-12-14.
+- Ubuntu Server 24.04 LTS 64 bit; solo IPv4, nessun IPv6; primo accesso riuscito con la chiave
+  `amoris-vps-2026-11` (`SHA256:sl2hWwVKc/ljMCkwWXAePqobaLrkNkeOdSQ2hD6sCBo`). L'indirizzo IPv4 è
+  annotato dal manutentore e non si scrive nel repository.
+- **Data center `CZ-1`**, nella Repubblica Ceca, mentre DR-334 e il §6 chiedono un data center in
+  Italia e di fermarsi se non disponibile. Resta nell'UE e in un data center di proprietà di Aruba;
+  la scelta torna all'utente come **D329** (`1F-W5` §4).
+- Uscita del §8 passo 5 non riportata; il sistema è confermato dalla riga del sistema operativo.

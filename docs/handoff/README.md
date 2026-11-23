@@ -63,16 +63,19 @@ Convenzione: `HO-<numero>-<argomento>.md`.
 | HO-053 | [Liberare memoria per la cattura integrale](HO-053-liberare-memoria-per-la-cattura-1G-W7.md) | 1G | ⏳ **aperto** — serve alla T4 della `1G-W7` |
 | HO-054 | [Incarico della verifica privacy e legale (MI-06)](HO-054-incarico-verifica-privacy-MI-06.md) | 1F | ⏳ **aperto** — ok del professionista sul documento riferito il 2026-11-06 (DR-377); servono le risposte scritte alle 13 domande prima della `1F-W6` |
 | HO-055 | [Liberare memoria per la cattura integrale della `1G-W9`](HO-055-liberare-memoria-per-la-cattura-1G-W9.md) | 1G | ⏳ **aperto** — serve alla T10 della `1G-W9` (2,3 GB liberi su 6) |
-| HO-056 | [Acquisto del server Aruba Cloud VPS O4A8](HO-056-acquisto-server-aruba-1F.md) | 1F | ⏳ **eseguibile** dal 2026-11-06 — DR-374 supera DR-352; fonti ricontrollate il 2026-11-06 |
+| HO-056 | [Acquisto del server Aruba Cloud VPS O4A8](HO-056-acquisto-server-aruba-1F.md) | 1F | ✅ **eseguito** 2026-11-14 — data center `CZ-1` invece che in Italia (DR-334): difformità aperta, D329 |
 | HO-057 | [Liberare disco e riavviare Docker per le immagini](HO-057-liberare-disco-per-le-immagini-1F-W2.md) | 1F | ✅ **chiuso** 2026-11-05 — 122 GB liberi; snapshot di `node` troncato riparato |
-| HO-058 | [Acquisto della Storage Box Hetzner BX11](HO-058-acquisto-storage-box-hetzner-1F.md) | 1F | ⏳ **eseguibile** dal 2026-11-06 — sede Germania (DR-376) |
+| HO-058 | [Acquisto della Storage Box Hetzner BX11](HO-058-acquisto-storage-box-hetzner-1F.md) | 1F | ✅ **eseguito** 2026-11-16 — Falkenstein, DPA concluso; revisione per DR-438 nella T8 |
 | HO-059 | [Chiavi dei backup: password del repository e chiave SSH](HO-059-chiavi-dei-backup-1F-W5.md) | 1F | ⏳ **da eseguire nella `1F-W5`** — richiede server (HO-056) e Storage Box (HO-058); due copie cifrate (DR-380) |
 | HO-060 | [Approvazione scritta del rischio residuo di DR-385](HO-060-approvazione-rischio-DR-385-1F-W4.md) | 1F | ✅ **chiuso** 2026-11-08 — approvato dal legale rappresentante (DR-394); originale fuori da Git |
 | HO-061 | [Azioni sul server nate dalla security review](HO-061-azioni-sul-server-dalla-security-review-1F-W5.md) | 1F | ⏳ **da eseguire nella `1F-W5`** — sottoreti per ambiente, firewall di `backup-out`, timer della pulizia, procedura del primo account |
-| HO-062 | [Indurimento e impianto del server](HO-062-indurimento-e-impianto-del-server-1F-W5.md) | 1F | 📝 **bozza** — utente `gestore`, SSH solo con chiave, `ufw`, aggiornamenti con riavvio notturno (DR-437), Docker fissato, utente `deploy`, ingresso senza nomi, file d'ambiente; dopo HO-056 |
+| HO-062 | [Indurimento e impianto del server](HO-062-indurimento-e-impianto-del-server-1F-W5.md) | 1F | ✅ **eseguito** 2026-11-21, con riserve — regola `OpenSSH` di `ufw` e controlli mancanti in HO-066; ingresso con Caddy 2.11.7 (D330) |
 | HO-063 | [Record DNS dello staging e certificato di prova](HO-063-dns-dello-staging-1F-W5.md) | 1F | 📝 **bozza** — solo record A di `staging.centroamorislaetitia.it` (DR-440, DR-441), directory ACME di prova; conferma puntuale; dopo HO-062 |
-| HO-064 | [GitHub per il rilascio](HO-064-github-per-il-rilascio-1F-W5.md) | 1F | 📝 **bozza** — chiave del rilascio con comando forzato, `known_hosts` per IPv4, `sha_pinning_required`, accesso ai pacchetti GHCR; dopo HO-062 |
+| HO-064 | [GitHub per il rilascio](HO-064-github-per-il-rilascio-1F-W5.md) | 1F | ⏳ **da eseguire** dal 2026-11-21 — chiave del rilascio con comando forzato, `known_hosts` per IPv4, `sha_pinning_required`, accesso ai pacchetti GHCR |
 | HO-065 | [Riavvio di Docker Desktop sulla postazione di sviluppo](HO-065-riavvio-docker-desktop-1F-W5.md) | 1F | ⏳ **da eseguire** — Docker Desktop non parte; verifica della T5b ferma (HO-062…HO-064 riservati alla T6) |
+| HO-066 | [Correzione del firewall e controlli mancanti di HO-062](HO-066-correzione-firewall-e-controlli-1F-W5.md) | 1F | ✅ **eseguito** 2026-11-21 — regola `OpenSSH` tolta; seguito in HO-067 |
+| HO-067 | [Segreti mancanti e aggiornamento di `cloud-init`](HO-067-segreti-mancanti-e-cloud-init-1F-W5.md) | 1F | ⏳ **da eseguire** — sei segreti vuoti nei due file d'ambiente, `cloud-init` da aggiornare a mano; prima della T7 |
+| HO-068 | [Caddy 2.11.9 sull'ingresso del server](HO-068-caddy-2119-sull-ingresso-1F-W5.md) | 1F | 📝 **bozza** — ingresso ricreato con Caddy 2.11.9 (DR-444, DR-446); da eseguire dopo il commit e prima di HO-063 |
 
 ## Chiuse nel Round 3 del 2026-09-14
 

@@ -1,8 +1,6 @@
 # HO-062 — Indurimento e impianto del server (Fase 1F, W5)
 
-**Stato:** 📝 **bozza**, da eseguire nella `1F-W5` T6 dopo HO-056. Non eseguire prima che il
-documento passi a «da eseguire»: in quel momento l'agente indica il commit da cui copiare i file
-(§4.6, §9) e completa il §8.4.
+**Stato:** ✅ **eseguito** il 2026-11-21 dalla bozza, con le riserve del §14 (correzioni in HO-066).
 
 **Scopo:** rendere il server Aruba pronto per i rilasci. Prevede:
 - un utente amministrativo con sola chiave, `root` escluso da SSH, firewall con 22, 80 e 443;
@@ -491,4 +489,26 @@ Differenze fra i nomi di questo documento e il server: <elenco o «nessuna»>
 
 ## 14. Esito
 
-Da compilare dopo la segnalazione.
+Segnalato dall'utente il 2026-11-21: **eseguito, con riserve**. Il documento era ancora in bozza:
+l'unità del §8.4 non c'era e il commit non era stato indicato dall'agente.
+
+- File copiati da `11a9336`, impronte uguali. Per `infra/deploy/` quel commit è uguale a `f4f8803`.
+- `gestore` con `sudo`, fuso `Europe/Rome`. `sshd -T` come atteso: niente `root`, niente password,
+  `allowusers gestore` e `deploy`, comando forzato e niente TTY né inoltro per `deploy`. `root` via
+  SSH rifiutato.
+- Aggiornamenti automatici e riavvio alle 04:30 come DR-437. Dry run e timer del §8.3 non riportati
+  (HO-066 §5.1).
+- Docker 29.10.0 tenuto con `apt-mark hold` (5 pacchetti). Compose v5.8.0: il §9.5 diceva `v2.…`,
+  ma la postazione di sviluppo usa v5.7.0, quindi l'atteso del documento era sbagliato e la
+  versione va bene.
+- `deploy` nei gruppi `deploy`, `docker` e anche `users`, che `adduser` di Ubuntu 24.04 aggiunge
+  da sé; non dà permessi su `/opt/amoris`.
+- Reti dell'ingresso `10.77.88.0/24` e `10.77.89.0/24`. Dall'esterno: 22 aperta, 80 e 443 chiuse
+  (senza nomi), le altre chiuse. File d'ambiente: `4` e `4`, `root:deploy 640`. Chiavi vuote del
+  §11.3 e copie temporanee del §11.4 non riportate (HO-066 §5.2 e §5.3).
+- **Firewall:** prima della regola `LIMIT` sulla 22 c'è `22/tcp (OpenSSH) ALLOW IN`, che arriva
+  dall'immagine di Aruba. `ufw` applica la prima regola che corrisponde, quindi il limite non scatta
+  mai. Si corregge con HO-066 §4.
+- **Caddy dell'ingresso:** l'ingresso è avviato con Caddy 2.11.7. DR-420 vieta rilasci sul server
+  con quella versione. Oggi non serve nomi e 80 e 443 risultano chiuse dall'esterno, ma va portato a
+  2.11.9 prima di HO-063 (**D330**, `1F-W5` §4).

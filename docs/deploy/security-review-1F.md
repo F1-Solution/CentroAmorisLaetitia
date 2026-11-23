@@ -114,6 +114,7 @@ cronologia di Git, che non ha rilievi: per questo `.gitleaks.toml` non serve e n
 | `1F-W5` T4 | Trivy, PostgreSQL 17.11 | 1 critico e 25 alti in `gosu`, senza immagine corretta, accettati con DR-418 |
 | `1F-W5` T4 | Trivy, MinIO in uso | 4 critici e 9 alti, corretti da un digest troppo recente: aggiornamento dal 2026-11-23 (DR-417) |
 | `1F-W5` T4b | Trivy, Caddy 2.10.2 contro 2.11.7, stesso database | da 6 critici e 100 alti a 1 critico e 10 alti; 1 e 9 con correzione, nessun rilascio sul server prima del 2.11.9 (DR-420) |
+| `1F-W5`, Caddy 2.11.9 | Trivy v0.76.1, Caddy 2.11.7 contro 2.11.9 (`003a9780…`, Go 1.27.3), database del 2026-11-21 | da 1 critico e 10 alti a 0 critici e 2 alti; 1 con correzione (`x/net` 0.62.0), accettati con DR-446 |
 
 Il critico residuo delle immagini Node è un avviso di `zlib1g` senza correzione e noto come
 falso positivo (riguarda `minizip`, assente). I due alti con correzione riguardano `apt`, che il
@@ -336,7 +337,7 @@ Le correzioni sono della T5a, con prova rossa prima, secondo DR-421…DR-424.
 | N16 | Basso | Margine di memoria nullo; digest vecchio di `mc` nel Compose di sviluppo | annotato: memoria rimisurata nella T9 (D302); il Compose di sviluppo non va sul server | DR-424 |
 
 Il vincolo «solo da `main`» è descritto come comodità, non come controllo (README §10, DR-411).
-DR-420 resta una regola di processo: nel codice nulla impedisce un rilascio con Caddy 2.11.7.
+DR-420 resta una regola di processo: nel codice nulla impedisce un rilascio con Caddy 2.11.7. Dal 2026-11-22 il codice usa Caddy 2.11.9 (DR-446).
 
 Il riesame separato del solo diff della T5a ha dato 0 critici, 0 alti, 2 medi e 15 bassi, senza
 regressioni. I due medi sono un blocco del rilascio tenuto da un client morto e la perdita della

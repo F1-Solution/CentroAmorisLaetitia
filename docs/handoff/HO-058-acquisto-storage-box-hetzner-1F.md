@@ -166,4 +166,12 @@ Differenze fra i nomi di questo documento e l'interfaccia: <elenco o «nessuna»
 
 ## 12. Esito
 
-Da compilare dopo la segnalazione.
+Segnalato dall'utente il 2026-11-21: **eseguito**.
+
+- Ordine del 2026-11-16, 3,20 € + IVA al mese, nessuna attivazione; sede Germania, Falkenstein
+  (DR-376).
+- DPA concluso il 2026-11-16; il PDF è nel repository in `docs/dpa/` (commit `11a9336`), da valutare per la privacy.
+- SSH support ed External reachability attivi. Nome utente e server sono annotati dal manutentore e
+  non si scrivono nel repository.
+- Sotto-account del server e istantanee giornaliere (DR-438): HO-058 e HO-059 si rivedono nella T8,
+  prima delle chiavi del backup.

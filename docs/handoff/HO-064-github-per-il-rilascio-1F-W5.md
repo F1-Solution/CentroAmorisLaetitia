@@ -1,7 +1,7 @@
 # HO-064 — GitHub per il rilascio: chiave, `known_hosts` e impostazioni di Actions (Fase 1F, W5)
 
-**Stato:** 📝 **bozza**, da eseguire nella `1F-W5` T6 dopo HO-062. Non eseguire prima che il
-documento passi a «da eseguire».
+**Stato:** ⏳ **da eseguire** dal 2026-11-21 (HO-062 e HO-066 eseguiti). Non dipende da HO-063, da
+HO-067 né da Caddy 2.11.9: si può fare subito.
 
 **Scopo:** dare al workflow «Rilascio» (`.github/workflows/rilascio.yml`) ciò che gli serve per
 raggiungere il server, e indurire le impostazioni di GitHub Actions del repository
@@ -25,9 +25,10 @@ server, in `bash`, dall'utente amministrativo creato in HO-062.
 | D295 | Porte 80 e 443 | **DR-409**: ingresso comune; il rilascio controlla la rete `amoris-ingresso-<ambiente>` |
 | D305 | IPv6 | **DR-441**: solo IPv4 nella W5, quindi `RILASCIO_HOST` e `RILASCIO_KNOWN_HOSTS` usano l'indirizzo IPv4, non un nome DNS |
 | D300 | Riavvii notturni | **DR-437**: il server può riavviarsi alle 04:30; non avviare un rilascio in quella finestra |
+| D329 | Data center | **DR-443**: server Aruba in `CZ-1`; non cambia nulla in questo documento |
 | — | Disposizione sul server | `infra/deploy/README.md` §10 (utente `deploy`, `/etc/ssh/authorized_keys/deploy`, `ForceCommand`), impiantata da HO-062 §5 e §6 |
 
-## 2. Fatti letti dall'agente il 2026-11-13 (sola lettura, `gh api`)
+## 2. Fatti letti dall'agente il 2026-11-13 e riletti il 2026-11-21 (sola lettura, `gh api`)
 
 | Impostazione | Valore di oggi | Valore atteso a fine handoff |
 |---|---|---|
@@ -35,6 +36,7 @@ server, in `bash`, dall'utente amministrativo creato in HO-062.
 | Azioni fissate per SHA obbligatorie | `sha_pinning_required: false` | **`true`** (§7) |
 | Permessi predefiniti del `GITHUB_TOKEN` | `read`, nessuna approvazione di PR (repository e organizzazione) | invariato, solo verificato (§7) |
 | Segreti e variabili del repository | nessuno | `RILASCIO_SSH_KEY` (segreto), `RILASCIO_HOST` e `RILASCIO_KNOWN_HOSTS` (variabili) |
+| Pacchetti GHCR `amoris-web`, `-admin`, `-api`, `-scrub`, `-backup` | tutti e cinque `private`, collegati a `F1-Solution/CentroAmorisLaetitia` | invariato; il ruolo in **Manage Actions access** non si legge dall'API e si controlla nel §8 |
 
 I due workflow usano già solo azioni fissate per SHA (`actions/checkout`, `actions/setup-node`,
 `actions/upload-artifact`, `pnpm/action-setup`) e dichiarano i propri permessi (`ci.yml`:
@@ -43,9 +45,11 @@ I due workflow usano già solo azioni fissate per SHA (`actions/checkout`, `acti
 
 ## 3. Prerequisiti
 
-- [ ] HO-062 chiuso: utente `deploy` creato (§5), blocco `Match User deploy` in `sshd_config` (§6),
-  file `/etc/ssh/authorized_keys/deploy` presente e vuoto, `rilascia.sh` in `/opt/amoris/rilascio/`.
-  HO-063 non serve: il rilascio raggiunge il server per indirizzo.
+- [x] HO-062 chiuso il 2026-11-21: utente `deploy` creato (§5), blocco `Match User deploy` in
+  `sshd_config` (§6), file `/etc/ssh/authorized_keys/deploy` presente e vuoto, `rilascia.sh` in
+  `/opt/amoris/rilascio/`. HO-063 non serve: il rilascio raggiunge il server per indirizzo.
+- [x] HO-066 chiuso il 2026-11-21: il limite di `ufw` sulla 22 ora funziona, quindi molti tentativi
+  SSH ravvicinati vengono rifiutati per 30 secondi (§9).
 - [ ] L'indirizzo IPv4 del server (HO-056 §7). Non è segreto.
 - [ ] La CLI `gh` sul PC, autenticata come amministratore (`gh auth status`).
 - [ ] 30 minuti.

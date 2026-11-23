@@ -147,8 +147,11 @@ Se D295 = A:
   dell'adozione; `caddy-1f`, `ingresso-1f`, `compose-1f`, `sicurezza-1f`; e2e nella T5.
   (`e70b164d…`, Go 1.26.8; Trivy da 6 critici e 100 alti a 1 e 10, residui con correzione 1 e 9 →
   D312; Caddyfile invariati; suite 65, 18, 30, 61.)
-- [ ] **Caddy 2.11.9** (DR-420, D312 = B) — dal 2026-11-19 digest attuale di `2.11.9-alpine`,
+- [x] **Caddy 2.11.9** (DR-420, D312 = B) — dal 2026-11-19 digest attuale di `2.11.9-alpine`,
   Trivy prima dell'adozione e le prove della T4b; nessun rilascio sul server con il 2.11.7.
+  (2026-11-22: `003a9780…`, Go 1.27.3; Trivy da 1 critico e 10 alti a 0 e 2, residui in DR-446;
+  `caddy-1f` 18, `ingresso-1f` 46, `compose-1f` 69, `sicurezza-1f` 61; e2e attraverso l'ingresso
+  con le immagini `w5-t5c`.)
 - [ ] **MinIO** (DR-417) — dal 2026-11-23 primo digest con build di almeno due settimane e nuova
   scansione, prima del primo rilascio successivo e comunque prima della W7.
 
@@ -223,7 +226,7 @@ Se D295 = A:
 
 Dopo il secondo round (D300…D305) e la T1.
 
-- [ ] **HO-062** (bozza scritta il 2026-11-13) — indurimento e impianto: utente amministrativo non `root` con sola chiave;
+- [x] **HO-062** (bozza scritta il 2026-11-13) — indurimento e impianto: utente amministrativo non `root` con sola chiave;
   `PermitRootLogin no`, `PasswordAuthentication no`; firewall con 22 (con limite di frequenza), 80
   e 443; aggiornamenti di sicurezza secondo D300; Docker dal repository ufficiale con versione
   fissata; utente `deploy` con comando forzato (T3a); file d'ambiente dei due ambienti (HO-061 §4)
@@ -231,9 +234,16 @@ Dopo il secondo round (D300…D305) e la T1.
   Controllo che `INGRESS_SUBNET` di ogni ambiente sia uguale alla sottorete della rete
   `amoris-ingresso-<ambiente>` (`docker network inspect`): se diversa, tutti i visitatori finiscono
   in un solo conteggio dei tentativi (T2a).
+  (Eseguito il 2026-11-21 dalla bozza, file di `11a9336`; riserve in HO-062 §14.)
+- [x] **HO-066** — regola `OpenSSH` di `ufw` che scavalcava il limite sulla 22 tolta; controlli
+  mancanti di HO-062 eseguiti. (2026-11-21: emersi sei segreti vuoti e `cloud-init` da aggiornare a mano.)
+- [ ] **HO-067** — i sei segreti mancanti nei due file d'ambiente e `cloud-init` aggiornato tenendo
+  la configurazione; prima della T7.
+- [ ] **Caddy 2.11.9 sul server** (DR-444) — dopo il commit dell'aggiornamento, **HO-068** ricrea
+  l'ingresso con la nuova immagine; prima di HO-063.
 - [ ] **HO-063** — record DNS dello staging su Aruba (DR-440): solo A, nessun AAAA (DR-441);
   verifica con `Resolve-DnsName`; nome attivato nell'ingresso con la directory ACME di prova.
-  Conferma puntuale.
+  Conferma puntuale. Solo dopo Caddy 2.11.9 sul server (DR-444).
 - [ ] **HO-064** — GitHub: segreto con la chiave SSH di rilascio, variabile con il `known_hosts`
   del server, `sha_pinning_required` attivo, `GITHUB_TOKEN` predefinito in sola lettura, accesso del
   repository ai pacchetti GHCR verificato.
@@ -347,6 +357,17 @@ Opzioni e raccomandazioni presentate:
 | **D303** | HSTS lungo (R20) e CSP applicata (R21, DR-364) | **A** HSTS lungo dopo la verifica di HTTPS della produzione nella W8; violazioni della CSP raccolte dalla console negli e2e e nelle pagine della matrice sullo staging con i contenuti veri (W7), CSP applicata al rilascio se zero violazioni · **B** entrambe come oggi per la Fase 1 · **C** indirizzo di raccolta delle segnalazioni (codice nuovo) | **A**: si decide con dati reali, senza codice nuovo |
 | **D304** | Nome dello staging (DR-375) | **A** `staging.centroamorislaetitia.it` · **B** un nome meno ovvio · **C** un altro dominio | **A**: il nome compare comunque nei registri pubblici dei certificati; la protezione è la password |
 | **D305** | IPv6 dell'ingresso (emerso nella T2a). Una connessione IPv6 verso porte pubblicate su una rete Docker solo IPv4 passa da `docker-proxy`: l'ingresso vede l'indirizzo del bridge, non quello del visitatore, e tutti i visitatori IPv6 finiscono in un solo conteggio dei tentativi. Vale anche per lo stack di oggi | **A** solo record A nella W5, IPv6 rivalutato nella W8 con una prova sul server · **B** IPv6 sulla rete `edge` dell'ingresso (sottorete ULA, `ip6tables`) e record AAAA, con la prova dell'indirizzo IPv6 sul server · **C** record AAAA accettando il conteggio comune degli IPv6 | **A**: lo staging non ha bisogno di IPv6, e la prova su Docker Desktop non vale per il server; HO-063 senza AAAA |
+
+### Durante la T6 — esiti degli handoff del server
+
+Presi il 2026-11-21 in chat, dopo la verifica di HO-056, HO-058 e HO-062.
+
+| id | Decisione | Opzioni | Esito |
+|---|---|---|---|
+| ~~**D329**~~ | Data center `CZ-1` invece che in Italia (DR-334) | **A** accettare, DR-334 letto come «UE», sede segnalata per MI-06 · **B** nuovo VPS in Italia · **C** chiedere ad Aruba lo spostamento | **DR-443**: A |
+| ~~**D330**~~ | Ingresso avviato con Caddy 2.11.7 (DR-420) | **A** acceso senza nomi, 2.11.9 prima di HO-063 · **B** fermato subito | **DR-444**: A |
+| ~~**D331**~~ | PDF del DPA nel repository | **A** resta · **B** tolto · **C** tolto anche dalla cronologia | **DR-445**: A |
+| ~~**D332**~~ | Alti residui in Caddy 2.11.9 (`x/net`, `go-jose/v3`) | **A** accettati come DR-418 · **B** attendere una release corretta · **C** Caddy compilato con `xcaddy` | **DR-446**: A |
 
 Decisioni della fase che restano fuori da questa wave: D229 (W7), D227 e D230 (W8), D231 (dopo la W9).
 

@@ -65,9 +65,10 @@ del rilascio. I file dei segreti sono `/opt/amoris/segreti/production.env` e `st
    quello di staging. Scrivi anche la rete dei backup (DR-412): `BACKUP_OUT_SUBNET=10.77.86.0/24` e
    `BACKUP_OUT_BRIDGE=amoris-bkp-prod` in produzione, `10.77.87.0/24` e `amoris-bkp-stag` in staging.
 3. Genera ogni segreto con il comando scritto sopra la sua riga. Ogni ambiente ha i propri:
-   **nessun segreto in comune**. Comprende le cinque credenziali a privilegi minimi
+   **nessun segreto in comune**. Comprende `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`,
+   `IP_HASH_SALT`, `CSRF_SECRET`, `SCRUB_SERVICE_TOKEN`, le cinque credenziali a privilegi minimi
    (`DB_OWNER_PASSWORD`, `DB_APP_PASSWORD`, `DB_BACKUP_PASSWORD`, `S3_API_SECRET_KEY`,
-   `S3_BACKUP_SECRET_KEY`) e `TOTP_ENCRYPTION_KEY`.
+   `S3_BACKUP_SECRET_KEY`) e `TOTP_ENCRYPTION_KEY`: ogni riga con «Generare con» sopra.
    Scrivi in ogni file anche `INGRESS_SUBNET`, uguale alla sottorete della rete d'ingresso di quell'ambiente
    (`10.77.88.0/24` in produzione, `10.77.89.0/24` in staging), e i due percorsi del backup (HO-059, obbligatori
    anche in staging): `BACKUP_SSH_KEY_PATH=/etc/amoris/backup-chiavi/ssh_key` e
